@@ -1,8 +1,7 @@
-from django.contrib import admin
-from django.urls import path 
-
-from usuarios.views import *
+from django.urls import path
+from .views import inicio_usuarios, registrar_personal
 
 urlpatterns = [
-    path('', inicio_usuarios, name='inicio_usuarios'), 
+    path('', inicio_usuarios),
+    path('registrar/', registrar_personal),
 ]
