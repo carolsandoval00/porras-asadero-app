@@ -28,5 +28,3 @@ urlpatterns = [
     path('pago/', include ('pago.urls')), 
     path('',  inicio, name='inicio'), 
 ]
-
-

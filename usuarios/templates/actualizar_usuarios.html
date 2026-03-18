@@ -1,0 +1,14 @@
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Nombre</label>
+    <input type="text" name="nombre" value="{{ usuario.nombre }}">
+
+    <label>Email</label>
+    <input type="email" name="email" value="{{ usuario.email }}">
+
+    <label>Teléfono</label>
+    <input type="text" name="telefono" value="{{ usuario.telefono }}">
+
+    <button type="submit">Actualizar</button>
+</form>
