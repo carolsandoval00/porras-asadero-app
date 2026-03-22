@@ -9,6 +9,7 @@ def inicio_usuarios(request):
     return render(request, 'actualizar_usuarios.html', context) 
 
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 from .models import Usuario
 
 def inicio_usuarios(request):
@@ -16,6 +17,7 @@ def inicio_usuarios(request):
     return render(request, 'inicio_usuarios.html', {'usuarios': usuarios})
 
 
+@login_required
 def actualizar_usuarios(request, id):
     usuario = get_object_or_404(Usuario, id=id)
 

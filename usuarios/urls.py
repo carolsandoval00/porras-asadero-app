@@ -7,5 +7,5 @@ from .views import *
 
 urlpatterns = [
     path('', inicio_usuarios, name='inicio_usuarios'),
-    path('actualizar_usuarios/<int:id>/', actualizar_usuarios, name='actualizar_usuarios'),
+    path('actualizar/<int:id>/', actualizar_usuarios, name='actualizar_usuarios'),
 ]
