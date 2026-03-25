@@ -127,4 +127,5 @@ SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')],
 LOGIN_URL = '/usuarios/login/'
 LOGIN_REDIRECT_URL = '/usuarios/'
 LOGOUT_REDIRECT_URL = '/usuarios/login/'
+LOGIN_REDIRECT_URL = '/usuarios/redireccion/'
 

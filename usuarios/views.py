@@ -22,8 +22,17 @@ def actualizar_usuarios(request, id):
         usuario.save()
         return redirect('inicio_usuarios')
 
-    return render(request, 'usuarios/inicio_usuarios.html', {'usuario': usuario})
+    return render(request, 'usuarios/actualizar_usuarios.html', {'usuario': usuario})
 
 
 def validar_permisos(request):
     return render(request, 'usuarios/validar_permisos.html')
+
+
+# 🔥 ESTA ES LA NUEVA
+@login_required
+def redireccion_post_login(request):
+    if request.user.is_superuser:
+        return redirect('inicio_usuarios')
+    else:
+        return redirect('validar_permisos')
