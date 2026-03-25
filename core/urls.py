@@ -27,7 +27,7 @@ urlpatterns = [
     path('pedidos/', include ('pedidos.urls')), 
     path('pago/', include ('pago.urls')), 
     path('',  inicio, name='inicio'), 
-    path('', include('tu_app.urls')),
+    path('', include('usuarios.urls')),
 ]
 
 
