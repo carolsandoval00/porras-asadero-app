@@ -18,6 +18,7 @@ def consultar_usuario(request):
 
 
 def acceder_sistema(request):
+   
     if not User.objects.filter(username="restaurante").exists():
         User.objects.create_user(username="restaurante", password="porras_123")
 

@@ -5,6 +5,7 @@
     <div class="card shadow p-4" style="max-width: 400px; width: 100%;">
         <h2 class="text-center mb-4">Acceder al Sistema</h2>
 
+       
       
         {% if messages %}
             {% for message in messages %}
@@ -12,6 +13,7 @@
             {% endfor %}
         {% endif %}
 
+        
         <form method="post">
             {% csrf_token %}
             <div class="mb-3">
