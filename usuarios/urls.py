@@ -1,9 +1,5 @@
-from django.contrib import admin
-from django.urls import path 
-
-from usuarios.views import *
 from django.urls import path
-from .views import *
+from .views import inicio_usuarios, actualizar_usuarios
 
 urlpatterns = [
     path('', inicio_usuarios, name='inicio_usuarios'),

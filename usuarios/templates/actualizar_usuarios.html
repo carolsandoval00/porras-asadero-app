@@ -13,6 +13,13 @@
     <label>Teléfono</label>
     <input type="text" name="telefono" value="{{ usuario.telefono }}">
 
+    <label>Rol</label>
+    <select name="rol">
+        <option value="admin" {% if usuario.rol == 'admin' %}selected{% endif %}>Administrador</option>
+        <option value="mesero" {% if usuario.rol == 'mesero' %}selected{% endif %}>Mesero</option>
+        <option value="cajero" {% if usuario.rol == 'cajero' %}selected{% endif %}>Cajero</option>
+    </select>
+
     <button type="submit">Actualizar</button>
 </form>
 {% endblock content %}
