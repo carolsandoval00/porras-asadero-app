@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import inicio_usuarios, actualizar_usuarios, validar_permisos, redireccion_post_login
+rom .views import inicio_usuarios, actualizar_usuarios, validar_permisos, redireccion_post_login
 from django.contrib.auth import views as auth_views
 from . import views
 from django.urls import path
@@ -7,14 +7,15 @@ from .views import DetalleUsuarioView
 from .views import CustomPasswordResetView
 from django.views.generic import TemplateView
 from . import views
+from .views import inicio_usuarios, actualizar_usuarios
+
 
 from .views import acceder_sistema
+from .views import consultar_usuario
 
 urlpatterns = [
-    path('acceder/', acceder_sistema, name='acceder_sistema'),
-
-
-from .views import inicio_usuarios, actualizar_usuarios
+    path('consultar/', consultar_usuario, name='consultar_usuario'),
+]
 
 urlpatterns = [
     path('', inicio_usuarios, name='inicio_usuarios'),

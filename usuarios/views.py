@@ -1,7 +1,21 @@
+from django.shortcuts import render
+from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+
+def consultar_usuario(request):
+    usuario = None
+    username = request.GET.get('username')  
+    if username:
+        try:
+            usuario = User.objects.get(username=username)
+        except User.DoesNotExist:
+            usuario = None
+
+    return render(request, 'usuarios/consultar_usuario.html', {'usuario': usuario})
+
 
 def acceder_sistema(request):
    
