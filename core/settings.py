@@ -58,7 +58,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR,'templates')],
+        'DIRS': [BASE_DIR / 'templates'],  # puedes dejarlo así
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -106,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
 TIME_ZONE = 'UTC'
 
@@ -123,3 +123,14 @@ STATIC_URL = 'static/'
 
 
 SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')], 
+
+LOGIN_URL = '/usuarios/login/'
+LOGIN_REDIRECT_URL = '/usuarios/'
+LOGOUT_REDIRECT_URL = '/usuarios/login/'
+LOGIN_REDIRECT_URL = '/usuarios/redireccion/'
+
+SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+LOGIN_URL = 'login' 
+LOGIN_REDIRECT_URL = 'inicio'  
+SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')], 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
