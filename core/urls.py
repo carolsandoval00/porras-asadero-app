@@ -13,5 +13,3 @@ urlpatterns = [
     path('',  inicio, name='inicio'), 
     path('', include('usuarios.urls')),
 ]
-
-
