@@ -106,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
 TIME_ZONE = 'UTC'
 
@@ -129,3 +129,8 @@ LOGIN_REDIRECT_URL = '/usuarios/'
 LOGOUT_REDIRECT_URL = '/usuarios/login/'
 LOGIN_REDIRECT_URL = '/usuarios/redireccion/'
 
+SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+LOGIN_URL = 'login' 
+LOGIN_REDIRECT_URL = 'inicio'  
+SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')], 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
