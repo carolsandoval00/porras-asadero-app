@@ -2,14 +2,17 @@
 {% block content %}
 <div class="container mt-5">
     <div class="card shadow-sm p-4 mx-auto" style="max-width: 500px;">
-        <h3 class="text-center text-danger mb-4">Eliminar Usuario</h3>
-        <p class="text-center">¿Deseas eliminar al usuario <strong>{{ usuario.username }}</strong>?</p>
-        
+        <h3 class="text-center text-warning mb-4">Inactivar Usuario</h3>
+        <p class="text-center">
+            ¿Deseas inactivar al usuario <strong>{{ usuario.username }}</strong>?
+        </p>
+
         <form method="post" class="d-flex justify-content-center gap-2">
             {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+            <button type="submit" class="btn btn-dark">Sí, inactivar</button>
             <a href="{% url 'inicio' %}" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
 </div>
 {% endblock %}
+  

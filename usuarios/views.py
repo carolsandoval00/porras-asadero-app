@@ -1,13 +1,12 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 
-def eliminar_usuario(request):
-    # Aquí buscamos un usuario específico por ejemplo el primero en la base de datos
-    # O puedes usar un usuario fijo como 'admin' si solo es de prueba
-    usuario = User.objects.first()  # solo como ejemplo
+def inactivar_usuario(request):
+    usuario = User.objects.first()  # puedes cambiar esto según tu lógica
 
     if request.method == 'POST':
-        usuario.delete()
-        return redirect('inicio')  # página a donde redirigir después de eliminar
+        usuario.is_active = False
+        usuario.save()
+        return redirect('inicio')
 
-    return render(request, 'usuarios/eliminar_usuario.html', {'usuario': usuario})
+    return render(request, 'usuarios/inactivar_usuario.html', {'usuario': usuario})
