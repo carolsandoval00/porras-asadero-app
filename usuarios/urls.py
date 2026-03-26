@@ -8,6 +8,8 @@ from .views import CustomPasswordResetView
 from django.views.generic import TemplateView
 from . import views
 
+from .views import inicio_usuarios, actualizar_usuarios
+
 urlpatterns = [
     path('', inicio_usuarios, name='inicio_usuarios'),
     path('actualizar_usuario/<int:id>/', actualizar_usuarios, name='actualizar_usuario'),
@@ -17,6 +19,7 @@ urlpatterns = [
 
     
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('actualizar/<int:id>/', actualizar_usuarios, name='actualizar_usuarios'),
     path('inactivar/', views.inactivar_usuario, name='inactivar_usuario'),
     path('', inicio_usuarios, name='inicio_usuarios'), 
     path('consultar/<int:pk>/', DetalleUsuarioView.as_view(), name='detalle_usuario'),

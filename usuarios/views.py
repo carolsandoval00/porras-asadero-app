@@ -13,6 +13,9 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from .forms import PersonalForm
 from .models import Personal
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import Usuario
 
 def inactivar_usuario(request):
     usuario = User.objects.first()  # puedes cambiar esto según tu lógica
@@ -61,6 +64,33 @@ def redireccion_post_login(request):
         'nombre' : nombre,
         'titulo' : 'Usuarios',
     }
+
+    return render(request, 'actualizar_usuarios.html', context) 
+
+
+
+
+def inicio_usuarios(request):
+    usuarios = Usuario.objects.all()
+    return render(request, 'inicio_usuarios.html', {'usuarios': usuarios})
+
+
+@login_required
+def actualizar_usuarios(request, id):
+
+    usuario = get_object_or_404(Usuario, pk=id)
+
+    if request.method == "POST":
+        usuario.nombre = request.POST.get("nombre")
+        usuario.email = request.POST.get("email")
+        usuario.telefono = request.POST.get("telefono")
+        usuario.rol = request.POST.get("rol")
+        usuario.save()
+
+        return redirect('inicio_usuarios')
+
+    return render(request, 'actualizar_usuarios.html', {'usuario': usuario})
+
     return render(request, 'inicio_usuarios.html', context) 
     return render(request, 'inicio_usuarios.html', context) 
 
