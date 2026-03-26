@@ -1,8 +1,16 @@
 from django.urls import path
+from . import views
+from django.urls import path
+from .views import DetalleUsuarioView
 from .views import CustomPasswordResetView
 from django.views.generic import TemplateView
 from . import views
+
 urlpatterns = [
+    path('inactivar/', views.inactivar_usuario, name='inactivar_usuario'),
+    path('', inicio_usuarios, name='inicio_usuarios'), 
+    path('consultar/<int:pk>/', DetalleUsuarioView.as_view(), name='detalle_usuario'),
+
     path('recuperar/', CustomPasswordResetView.as_view(), name='recuperar'),
 
     path('recuperar_enviado/',
