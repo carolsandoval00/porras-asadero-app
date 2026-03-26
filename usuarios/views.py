@@ -4,6 +4,7 @@ from django.contrib.auth import login
 from django.contrib.auth.models import User
 
 def acceder_sistema(request):
+   
     if not User.objects.filter(username="restaurante").exists():
         User.objects.create_user(username="restaurante", password="porras_123")
 
