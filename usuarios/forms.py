@@ -11,7 +11,6 @@ class CustomPasswordResetForm(PasswordResetForm):
             'placeholder': 'Ingresa tu correo'
         })
 
-
 class PersonalForm(forms.ModelForm):
     class Meta:
         model = Personal
