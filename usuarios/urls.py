@@ -8,6 +8,12 @@ from .views import CustomPasswordResetView
 from django.views.generic import TemplateView
 from . import views
 
+from .views import acceder_sistema
+
+urlpatterns = [
+    path('acceder/', acceder_sistema, name='acceder_sistema'),
+
+
 from .views import inicio_usuarios, actualizar_usuarios
 
 urlpatterns = [
