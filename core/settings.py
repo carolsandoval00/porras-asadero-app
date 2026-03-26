@@ -125,3 +125,5 @@ STATIC_URL = 'static/'
 SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 LOGIN_URL = 'login' 
 LOGIN_REDIRECT_URL = 'inicio'  
+SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')], 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

@@ -1,4 +1,6 @@
 from django.db import models
+from django.db import models
+from django.contrib.auth.models import User
 
 class Usuario(models.Model):
     codigo = models.AutoField(primary_key=True)
@@ -10,11 +12,6 @@ class Usuario(models.Model):
 
     def __str__(self):
         return self.nombre
-<<<<<<< Updated upstream
-=======
-    
-from django.db import models
-from django.contrib.auth.models import User
 
 ROLES_CHOICES = [
     ('ADMIN', 'Administrador'),
@@ -39,4 +36,19 @@ class PerfilUsuario(models.Model):
     class Meta:
         verbose_name = "Perfil de Usuario"
         verbose_name_plural = "Perfiles de Usuarios"
->>>>>>> Stashed changes
+
+class Personal(models.Model):
+    ROLES = [
+        ('admin', 'Administrador'),
+        ('mesero', 'Mesero'),
+        ('cajero', 'Cajero'),
+    ]
+
+    nombre = models.CharField(max_length=100)
+    usuario = models.CharField(max_length=50, unique=True)
+    contraseña = models.CharField(max_length=100)
+    rol = models.CharField(max_length=10, choices=ROLES)
+
+    def __str__(self):
+        return self.nombre
+
