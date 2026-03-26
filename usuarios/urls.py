@@ -1,8 +1,6 @@
-from django.contrib import admin
-from django.urls import path 
-
-from usuarios.views import *
+from django.urls import path
+from .views import acceder_sistema
 
 urlpatterns = [
-    path('', inicio_usuarios, name='inicio_usuarios'), 
+    path('acceder/', acceder_sistema, name='acceder_sistema'),
 ]
