@@ -1,14 +1,3 @@
-<<<<<<< Updated upstream
-from django.shortcuts import render
-
-def inicio_usuarios(request):
-    nombre = 'Fergie'
-    context = { 
-        'nombre' : nombre,
-        'titulo' : 'Usuarios',
-    }
-    return render(request, 'inicio_usuarios.html', context) 
-=======
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -47,7 +36,7 @@ def inactivar_usuario(request):
         messages.success(request, f"Usuario {username} inactivado.")
     return redirect('inicio_usuarios')
 
-# 5. Registro de Personal (NUEVA)
+# 5. Registro de Personal
 @login_required
 def registrar_personal(request):
     if request.method == "POST":
@@ -55,7 +44,7 @@ def registrar_personal(request):
         pass
     return render(request, 'usuarios/registrar_personal.html')
 
-# 6. Lista de Personal (NUEVA)
+# 6. Lista de Personal
 @login_required
 def lista_personal(request):
     personal = User.objects.filter(is_staff=True)
@@ -84,7 +73,7 @@ def acceder_sistema(request):
         messages.error(request, "Credenciales inválidas")
     return render(request, 'usuarios/acceder_sistema.html')
 
-# 9. Actualizar (Corregido el nombre del parámetro 'id')
+# 9. Actualizar Usuarios
 @login_required
 def actualizar_usuarios(request, id):
     usuario = get_object_or_404(User, id=id)
@@ -101,4 +90,3 @@ def validar_permisos(request):
 @login_required
 def redireccion_post_login(request):
     return redirect('inicio_usuarios') if request.user.is_staff else redirect('consultar_usuario')
->>>>>>> Stashed changes

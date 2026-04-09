@@ -1,12 +1,3 @@
-<<<<<<< Updated upstream
-from django.contrib import admin
-from django.urls import path 
-
-from usuarios.views import *
-
-urlpatterns = [
-    path('', inicio_usuarios, name='inicio_usuarios'), 
-=======
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
@@ -36,5 +27,4 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('recuperar/', CustomPasswordResetView.as_view(), name='recuperar'),
     path('recuperar_enviado/', TemplateView.as_view(template_name='usuarios/recuperar_enviado.html'), name='recuperar_enviado'),
->>>>>>> Stashed changes
 ]
