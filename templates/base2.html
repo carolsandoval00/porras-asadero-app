@@ -1,27 +1,58 @@
-{%load static%} 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asadero </title>
-    <link rel="stylesheet" href="{% static "css/styles.css"%}">   
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Crimson+Text:ital@0;1&family=Oswald:wght@300;500&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <title>{% block title %}Dashboard Admin{% endblock %} | Porras Asadero</title>
     
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     
+    <style>
+        body {
+            margin: 0;
+            background-color: #f4f6f9;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+        main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .btn-custom {
+            background-color: #2ecc71;
+            border-color: #2ecc71;
+            color: #fff;
+        }
+        .btn-custom:hover {
+            background-color: #27ae60;
+            border-color: #27ae60;
+            color: #fff;
+        }
+        .text-custom {
+            color: #2ecc71 !important;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Inclusión del Menú Lateral -->
+        {% include 'aside.html' %}
+        
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
-{% include "partials/nav.html" %}
-
-
-<section class="m-4 p-4">
-{% block content %}
-
-{% endblock content %}
-</section>
-
-{% include "partials/footer.html" %}
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-<script src="{% static "js/contacto.js" %}"></script>
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
