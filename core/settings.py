@@ -122,17 +122,16 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
-
-SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')], 
-
-LOGIN_URL = '/usuarios/login/'
-LOGIN_REDIRECT_URL = '/usuarios/'
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'inicio'
 LOGOUT_REDIRECT_URL = '/usuarios/login/'
-LOGIN_REDIRECT_URL = '/usuarios/redireccion/'
 
-SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-LOGIN_URL = 'login' 
-LOGIN_REDIRECT_URL = 'inicio'  
-SRACTIFILES_DIRS = [os.path.join(BASE_DIR, 'static')], 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
