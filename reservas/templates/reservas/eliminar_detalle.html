@@ -1,0 +1,52 @@
+{% extends 'base2.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">Eliminar Detalle de Reserva</h4>
+                </div>
+
+                <div class="card-body">
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-info">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Selecciona el detalle:</label>
+
+                            <select name="detalle" class="form-select">
+                                <option value="">--Selecciona un detalle--</option>
+
+                                {% for detalle in detalles %}
+                                    <option value="{{ detalle.pk }}">
+                                        {{ detalle.codigo }} - {{ detalle.reserva.nombre_usuario }} - {{ detalle.fecha_inicio }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-dark w-100"
+                                onclick="return confirm('¿Estás seguro de que quieres eliminar este detalle de reserva?')">
+                            Eliminar
+                        </button>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

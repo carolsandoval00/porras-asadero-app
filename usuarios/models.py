@@ -1,47 +1,40 @@
 from django.db import models
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser, User
 
-class Usuario(models.Model):
+
+class Usuario(AbstractUser):
     nombre = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     telefono = models.CharField(max_length=15)
 
-    ROL_CHOICES = [
-        ('admin', 'Administrador'),
-        ('mesero', 'Mesero'),
-        ('cajero', 'Cajero'),
-    ]
-
-    rol = models.CharField(max_length=10, choices=ROL_CHOICES, default='mesero')
-
-    def __str__(self):
-        return self.nombre
-        return self.nombre
-
-ROLES_CHOICES = [
+    ROLE_CHOICES = [
     ('ADMIN', 'Administrador'),
     ('MESERO', 'Mesero'),
     ('COCINA', 'Personal de Cocina'),
     ('CAJA', 'Cajero'),
-]
+    ]
 
-class PerfilUsuario(models.Model):
-    # Relacionamos este perfil con el usuario de Django
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
+    TIPO_DOCUMENTO_CHOICES = [
+        ('CC', 'Cédula de Ciudadanía'),
+        ('CE', 'Cédula de Extranjería'),
+        ('TI', 'Tarjeta de Identidad'),
+        ('PP', 'Pasaporte'),
+    ]
+    first_name = models.CharField(max_length=150, blank=False, verbose_name='Nombres')
+    last_name = models.CharField(max_length=150, blank=False, verbose_name='Apellidos')
     
-    # Campos adicionales para Porras Asadero
-    telefono = models.CharField(max_length=15, blank=True, null=True, verbose_name="Teléfono de contacto")
-    rol = models.CharField(max_length=20, choices=ROLES_CHOICES, default='MESERO')
-    direccion = models.TextField(blank=True, null=True, verbose_name="Dirección de residencia")
-    fecha_nacimiento = models.DateField(null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.usuario.username} - {self.get_rol_display()}"
-
+    tipo_documento = models.CharField(max_length=2, choices=TIPO_DOCUMENTO_CHOICES, verbose_name='Tipo de Documento')
+    documento = models.CharField(max_length=20, unique=True, verbose_name='Número de Documento')
+    rol = models.CharField(max_length=20, choices=ROLE_CHOICES, default='MESERO', verbose_name='Rol del Usuario')
     class Meta:
-        verbose_name = "Perfil de Usuario"
-        verbose_name_plural = "Perfiles de Usuarios"
+        verbose_name = 'Usuario'
+        verbose_name_plural = 'Usuarios'
+        
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
+
 
 class Personal(models.Model):
     ROLES = [

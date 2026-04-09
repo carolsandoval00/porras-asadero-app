@@ -1,0 +1,45 @@
+{% extends 'base2.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Lista de Reservas</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if reservas %}
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Número Reserva</th>
+                <th>Usuario</th>
+                <th>Personas</th>
+                <th>Hora</th>
+                <th>Mesa</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reserva in reservas %}
+            <tr>
+                <td>{{ reserva.numero_reserva }}</td>
+                <td>{{ reserva.nombre_usuario }}</td>
+                <td>{{ reserva.numero_personas }}</td>
+                <td>{{ reserva.hora_reserva }}</td>
+                <td>{{ reserva.mesa.numero_mesa }}</td>
+                <td>
+                    <a href="{% url 'eliminar_reserva' reserva.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No hay reservas aún.</p>
+    {% endif %}
+</div>
+{% endblock %}
