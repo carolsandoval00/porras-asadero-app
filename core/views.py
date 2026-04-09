@@ -6,4 +6,12 @@ def inicio(request):
         'nombre' : nombre,
         'titulo' : 'inicio',
     }
-    return render(request, 'index.html', context) 
+    return render(request, 'usuario/index.html', context)
+
+def inicio_admin(request):
+    nombre = 'Fergie'
+    context = { 
+        'nombre' : nombre,
+        'titulo' : 'inicio',
+    }
+    return render(request, 'administrador/index.html', context) 
