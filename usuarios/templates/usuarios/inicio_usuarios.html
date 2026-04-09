@@ -1,0 +1,10 @@
+{% extends 'base 2.html' %}
+
+{% block content %}
+<h2>Lista de usuarios 👥</h2>
+
+{% for u in usuarios %}
+    <p>{{ u.nombre }}</p>
+{% endfor %}
+
+{% endblock %}

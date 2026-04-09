@@ -1,7 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import DetalleReserva
+from .models import DetalleReserva, Mesa
 from django.contrib import messages
 
+# -------------------------
+# ELIMINAR DETALLE RESERVA
+# -------------------------
 def eliminar_detalle(request):
     detalles = DetalleReserva.objects.all()
 
@@ -18,4 +21,25 @@ def eliminar_detalle(request):
 
     return render(request, 'reservas/eliminar_detalle.html', {
         'detalles': detalles
+    })
+
+
+# -------------------------
+# ACTUALIZAR MESA
+# -------------------------
+def actualizar_mesa(request):
+
+    try:
+        mesa = Mesa.objects.all()[0]
+    except IndexError:
+        return render(request, 'reservas/sin_mesas.html')
+
+    if request.method == 'POST':
+        mesa.capacidad = request.POST.get('capacidad')
+        mesa.ubicacion = request.POST.get('ubicacion')
+        mesa.estado = request.POST.get('estado')
+        mesa.save()
+
+    return render(request, 'reservas/actualizar_mesa.html', {
+        'mesa': mesa
     })
