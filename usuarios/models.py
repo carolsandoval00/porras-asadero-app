@@ -2,14 +2,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class Usuario(AbstractUser):
-    """
-    Modelo de usuario personalizado para el Asadero.
-    AbstractUser ya incluye: username, password, is_staff, is_active, date_joined.
-    """
-    # Sobrescribimos email para hacerlo único y obligatorio
-    email = models.EmailField(unique=True, verbose_name='Correo electrónico')
+    # AbstractUser ya trae: username, first_name, last_name, email, password, etc.
     
-    # Campos adicionales específicos
+    email = models.EmailField(unique=True, verbose_name='Correo electrónico')
     telefono = models.CharField(max_length=15, blank=True, null=True, verbose_name='Teléfono')
     
     ROLE_CHOICES = [
@@ -25,19 +20,18 @@ class Usuario(AbstractUser):
         ('TI', 'Tarjeta de Identidad'),
         ('PP', 'Pasaporte'),
     ]
-
-    # Sobrescribimos nombres y apellidos para que aparezcan correctamente en formularios
-    first_name = models.CharField(max_length=150, verbose_name='Nombres')
-    last_name = models.CharField(max_length=150, verbose_name='Apellidos')
     
     tipo_documento = models.CharField(
         max_length=2, 
-        choices=TIPO_DOCUMENTO_CHOICES, 
+        choices=TIPO_DOCUMENTO_CHOICES,
+        default='CC',
         verbose_name='Tipo de Documento'
     )
     documento = models.CharField(
         max_length=20, 
-        unique=True, 
+        unique=True,
+        blank=True, 
+        null=True,
         verbose_name='Número de Documento'
     )
     rol = models.CharField(
@@ -47,27 +41,13 @@ class Usuario(AbstractUser):
         verbose_name='Rol del Usuario'
     )
 
+    # El campo 'email' es obligatorio para el superusuario
+    REQUIRED_FIELDS = ['email']
+
     class Meta:
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
         
     def __str__(self):
+        # Usamos los campos nativos de AbstractUser
         return f"{self.first_name} {self.last_name} ({self.username})"
-
-# Nota: He mantenido la clase Personal por si la usas en otra parte del código,
-# pero lo ideal es usar solo la clase 'Usuario' para todo lo relacionado con el equipo.
-class Personal(models.Model):
-    ROLES = [
-        ('admin', 'Administrador'),
-        ('mesero', 'Mesero'),
-        ('cajero', 'Cajero'),
-    ]
-
-    nombre = models.CharField(max_length=100)
-    usuario = models.CharField(max_length=50, unique=True)
-    # Importante: No guardes contraseñas en texto plano. Django no cifra este campo 'contraseña'.
-    contraseña = models.CharField(max_length=100) 
-    rol = models.CharField(max_length=10, choices=ROLES)
-
-    def __str__(self):
-        return self.nombre
