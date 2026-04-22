@@ -12,23 +12,23 @@
     <hr>
     <ul class="nav nav-pills flex-column mb-auto gap-1">
         <li class="nav-item">
-            <a href="{% url 'inicio_admin' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'inicio_admin' %}active-custom{% endif %}">
+            <a href="{% url 'inicio_usuarios' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'inicio_usuarios' %}active-custom{% endif %}">
                 <i class="bi bi-speedometer2 me-2"></i>
                 Panel de Control
             </a>
         </li>
         <li>
-            <a href="#" class="nav-link text-white">
+            <a href="{% url 'lista_personal' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'lista_personal' %}active-custom{% endif %}">
                 <i class="bi bi-people me-2"></i>
                 Usuarios y Personal
             </a>
         </li>
         <li>
-            <a href="#" class="nav-link text-white">
-                <i class="bi bi-journal-text me-2"></i>
-                Pedidos
-            </a>
-        </li>
+    <a href="/pedidos/" class="nav-link text-white {% if request.resolver_match.namespace == 'pedidos' %}active-custom{% endif %}">
+        <i class="bi bi-journal-text me-2"></i>
+        Pedidos
+    </a>
+</li>
         <li>
             <a href="#" class="nav-link text-white">
                 <i class="bi bi-calendar-check me-2"></i>
@@ -43,10 +43,9 @@
             <strong>{{ user.username|default:"Admin" }}</strong>
         </a>
         <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser">
-            <li><a class="dropdown-item" href="#">Configuración</a></li>
-            <li><a class="dropdown-item" href="#">Mi Perfil</a></li>
+            <li><a class="dropdown-item" href="{% url 'consultar_usuario' %}">Mi Perfil</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'inicio' %}">Salir al sitio</a></li>
+            <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
         </ul>
     </div>
 </aside>

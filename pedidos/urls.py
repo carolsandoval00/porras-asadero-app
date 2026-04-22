@@ -1,8 +1,34 @@
-from django.contrib import admin
-from django.urls import path 
+from django.urls import path
+from . import views
 
-from pedidos.views import *
+app_name = 'pedidos'
 
 urlpatterns = [
-    path('', inicio_pedidos, name='inicio_pedidos'), 
+    # Dashboard
+    path('', views.dashboard, name='dashboard'),
+
+    # ── Pedidos ──────────────────────────────────────────────
+    path('pedidos/',                views.pedido_lista,    name='pedido_lista'),
+    path('pedidos/crear/',          views.pedido_crear,    name='pedido_crear'),
+    path('pedidos/<int:pk>/editar/',views.pedido_editar,   name='pedido_editar'),
+    path('pedidos/<int:pk>/eliminar/', views.pedido_eliminar, name='pedido_eliminar'),
+
+    # ── Órdenes ──────────────────────────────────────────────
+    path('ordenes/',                views.orden_lista,     name='orden_lista'),
+    path('ordenes/crear/',          views.orden_crear,     name='orden_crear'),
+    path('ordenes/<int:pk>/',       views.orden_detalle,   name='orden_detalle'),
+    path('ordenes/<int:pk>/eliminar/', views.orden_eliminar, name='orden_eliminar'),
+
+    # ── Pagos ─────────────────────────────────────────────────
+    path('pagos/',                  views.pago_lista,      name='pago_lista'),
+    path('pagos/crear/',            views.pago_crear,      name='pago_crear'),
+    path('pagos/<int:pk>/',         views.pago_detalle,    name='pago_detalle'),
+    path('pagos/<int:pk>/editar/',  views.pago_editar,     name='pago_editar'),
+
+    # ── Caja ──────────────────────────────────────────────────
+    path('caja/',                   views.caja_lista,      name='caja_lista'),
+    path('caja/abrir/',             views.caja_abrir,      name='caja_abrir'),
+    path('caja/<int:pk>/',          views.caja_detalle,    name='caja_detalle'),
+    path('caja/<int:pk>/actualizar/', views.caja_actualizar, name='caja_actualizar'),
+    path('caja/<int:pk>/cerrar/',   views.caja_cerrar,     name='caja_cerrar'),
 ]

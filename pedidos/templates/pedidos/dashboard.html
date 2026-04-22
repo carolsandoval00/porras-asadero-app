@@ -1,0 +1,615 @@
+{% extends "base 2.html" %}
+{% block content %}
+
+<style>
+  :root {
+    --p-primary:   #C0392B;
+    --p-accent:    #E8651A;
+    --p-success:   #E8651A;
+    --p-danger:    #C0392B;
+    --p-warning:   #D4A017;
+    --p-info:      #A07810;
+    --p-surface:   #EDE3C8;
+    --p-card:      #FDF7EC;
+    --p-border:    #D4C4A0;
+    --p-text:      #1A1008;
+    --p-muted:     #6B5A3E;
+    --p-radius:    10px;
+    --p-shadow:    0 2px 12px rgba(26,16,8,.10);
+    --p-shadow-lg: 0 6px 30px rgba(26,16,8,.15);
+  }
+
+  .pm-wrapper   { font-family: 'Segoe UI', system-ui, sans-serif; color: var(--p-text); }
+  .pm-header    { background: linear-gradient(135deg, #1A1008 0%, #3a1a08 100%);
+                  color:#F5ECD7; border-radius: var(--p-radius); padding:2rem 2.5rem 1.6rem;
+                  margin-bottom:1.8rem; box-shadow: var(--p-shadow-lg); }
+  .pm-header h1 { font-size:1.8rem; font-weight:700; margin:0 0 .25rem; letter-spacing:-.4px; }
+  .pm-header h2 { font-size:1rem; font-weight:400; margin:0; opacity:.8; }
+
+  .pm-nav       { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.8rem; }
+  .pm-nav-group { display:flex; flex-wrap:wrap; gap:.4rem; background:var(--p-card);
+                  border:1px solid var(--p-border); border-radius:50px;
+                  padding:.35rem .5rem; box-shadow: var(--p-shadow); }
+  .pm-nav-group .pm-label { font-size:.7rem; font-weight:700; text-transform:uppercase;
+                             letter-spacing:.8px; color:var(--p-muted); padding:.3rem .6rem;
+                             align-self:center; }
+  .pm-btn  { display:inline-flex; align-items:center; gap:.35rem; font-size:.82rem;
+             font-weight:600; padding:.42rem .95rem; border-radius:50px; border:none;
+             cursor:pointer; text-decoration:none; transition:all .2s; white-space:nowrap; }
+  .pm-btn:hover { filter:brightness(1.12); transform:translateY(-1px); text-decoration:none; }
+  .pm-btn-primary { background:#C0392B; color:#F5ECD7; }
+  .pm-btn-accent  { background:#E8651A; color:#F5ECD7; }
+  .pm-btn-success { background:#E8651A; color:#F5ECD7; }
+  .pm-btn-info    { background:#A07810; color:#F5ECD7; }
+  .pm-btn-danger  { background:#C0392B; color:#F5ECD7; }
+  .pm-btn-warning { background:#D4A017; color:#1A1008; }
+  .pm-btn-light   { background:var(--p-surface); color:var(--p-text);
+                    border:1px solid var(--p-border); }
+  .pm-btn-sm      { font-size:.76rem; padding:.3rem .7rem; }
+
+  .pm-section     { display:none; }
+  .pm-section.active { display:block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  .pm-card        { background:var(--p-card); border:1px solid var(--p-border);
+                    border-radius:var(--p-radius); box-shadow:var(--p-shadow); }
+  .pm-card-header { display:flex; align-items:center; justify-content:space-between;
+                    padding:1rem 1.4rem; border-bottom:1px solid var(--p-border); }
+  .pm-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
+  .pm-card-body   { padding:1.4rem; }
+
+  .pm-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.8rem; }
+  .pm-stat  { background:var(--p-card); border:1px solid var(--p-border);
+              border-radius:var(--p-radius); padding:1.1rem 1.3rem;
+              box-shadow:var(--p-shadow); border-left:4px solid #E8651A; }
+  .pm-stat .val  { font-size:1.8rem; font-weight:800; color:#C0392B; line-height:1; }
+  .pm-stat .lbl  { font-size:.78rem; color:var(--p-muted); margin-top:.3rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+
+  .pm-table-wrap { overflow-x:auto; }
+  .pm-table      { width:100%; border-collapse:collapse; font-size:.87rem; }
+  .pm-table th   { background:var(--p-surface); color:var(--p-muted); font-weight:700;
+                   font-size:.75rem; text-transform:uppercase; letter-spacing:.6px;
+                   padding:.7rem 1rem; text-align:left; border-bottom:2px solid var(--p-border); }
+  .pm-table td   { padding:.75rem 1rem; border-bottom:1px solid var(--p-border); vertical-align:middle; }
+  .pm-table tr:last-child td { border-bottom:none; }
+  .pm-table tr:hover td      { background:var(--p-surface); }
+
+  .pm-badge { display:inline-flex; align-items:center; gap:.3rem; font-size:.73rem;
+              font-weight:700; padding:.25rem .65rem; border-radius:50px; text-transform:uppercase; letter-spacing:.4px; }
+  .pm-badge-pendiente  { background:#FAEEDA; color:#8B4000; }
+  .pm-badge-proceso    { background:#FFF0DC; color:#7A4500; }
+  .pm-badge-completado,.pm-badge-pagada,.pm-badge-aprobado
+                       { background:#FFF0DC; color:#C0502A; }
+  .pm-badge-cancelado,.pm-badge-anulada,.pm-badge-rechazado
+                       { background:#FAE0DC; color:#C0392B; }
+  .pm-badge-abierta    { background:#FFF0DC; color:#A07810; }
+  .pm-badge-cerrada    { background:#EDE3C8; color:#6B5A3E; }
+  .pm-badge-reembolsado{ background:#F5ECD7; color:#8B4000; }
+
+  .pm-form          { max-width:640px; }
+  .pm-form-grid     { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .pm-form .full    { grid-column:1/-1; }
+  .pm-form label    { font-size:.82rem; font-weight:600; color:var(--p-muted);
+                      text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:.35rem; }
+  .pm-form input,
+  .pm-form select,
+  .pm-form textarea { width:100%; padding:.55rem .85rem; border:1px solid var(--p-border);
+                      border-radius:8px; font-size:.9rem; color:var(--p-text);
+                      background:#FDF7EC; transition:border-color .2s, box-shadow .2s; }
+  .pm-form input:focus,
+  .pm-form select:focus,
+  .pm-form textarea:focus { outline:none; border-color:#C0392B;
+                             box-shadow:0 0 0 3px rgba(192,57,43,.12); }
+  .pm-form textarea { resize:vertical; min-height:80px; }
+  .pm-form-actions  { display:flex; gap:.7rem; margin-top:1.5rem; flex-wrap:wrap; }
+
+  .pm-modal-overlay { display:none; position:fixed; inset:0; background:rgba(26,16,8,.5);
+                      z-index:9999; align-items:center; justify-content:center; }
+  .pm-modal-overlay.open { display:flex; }
+  .pm-modal-box     { background:#FDF7EC; border-radius:var(--p-radius); padding:2rem 2.2rem;
+                      max-width:400px; width:90%; box-shadow:var(--p-shadow-lg);
+                      animation:fadeIn .2s ease; }
+  .pm-modal-box h4  { font-size:1.1rem; font-weight:700; margin:0 0 .6rem; color:#C0392B; }
+  .pm-modal-box p   { font-size:.9rem; color:var(--p-muted); margin:0 0 1.4rem; }
+  .pm-modal-actions { display:flex; gap:.7rem; }
+
+  .pm-alert { padding:.85rem 1.2rem; border-radius:8px; font-size:.88rem;
+              font-weight:600; margin-bottom:1rem; display:flex; align-items:center; gap:.5rem; }
+  .pm-alert-success { background:#FFF0DC; color:#C0502A; border-left:4px solid #E8651A; }
+  .pm-alert-danger  { background:#FAE0DC; color:#C0392B; border-left:4px solid #C0392B; }
+
+  .pm-detail-grid  { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  .pm-detail-item  .lbl { font-size:.75rem; font-weight:700; text-transform:uppercase;
+                           letter-spacing:.5px; color:var(--p-muted); margin-bottom:.2rem; }
+  .pm-detail-item  .val { font-size:.95rem; color:var(--p-text); font-weight:500; }
+
+  @media(max-width:600px){
+    .pm-form-grid   { grid-template-columns:1fr; }
+    .pm-detail-grid { grid-template-columns:1fr; }
+    .pm-header      { padding:1.4rem 1.2rem 1.1rem; }
+    .pm-header h1   { font-size:1.4rem; }
+  }
+</style>
+
+<div class="pm-wrapper">
+<div class="pm-header">
+  <h1>📦 {{ titulo }}</h1>
+  <h2>Bienvenido, {{ nombre }}</h2>
+</div>
+
+{% if messages %}
+  {% for msg in messages %}
+  <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="pm-nav">
+  <div class="pm-nav-group">
+    <button class="pm-btn pm-btn-primary" onclick="showSection('dashboard')">🏠 Dashboard</button>
+  </div>
+  <div class="pm-nav-group">
+    <span class="pm-label">📦 Pedidos</span>
+    <button class="pm-btn pm-btn-light" onclick="showSection('pedido-lista')">📋 Consultar</button>
+    <button class="pm-btn pm-btn-accent" onclick="showSection('pedido-crear')">➕ Crear</button>
+  </div>
+  <div class="pm-nav-group">
+    <span class="pm-label">🧾 Órdenes</span>
+    <button class="pm-btn pm-btn-light" onclick="showSection('orden-lista')">📋 Consultar</button>
+    <button class="pm-btn pm-btn-accent" onclick="showSection('orden-crear')">➕ Crear</button>
+  </div>
+  <div class="pm-nav-group">
+    <span class="pm-label">💳 Pagos</span>
+    <button class="pm-btn pm-btn-light" onclick="showSection('pago-lista')">📋 Consultar</button>
+    <button class="pm-btn pm-btn-success" onclick="showSection('pago-crear')">➕ Crear</button>
+  </div>
+  <div class="pm-nav-group">
+    <span class="pm-label">🏦 Caja</span>
+    <button class="pm-btn pm-btn-light" onclick="showSection('caja-lista')">📋 Consultar</button>
+    <button class="pm-btn pm-btn-info" onclick="showSection('caja-abrir')">🔓 Abrir</button>
+  </div>
+</div>
+
+
+<div id="section-dashboard" class="pm-section active">
+  <div class="pm-stats">
+    <div class="pm-stat">
+      <div class="val">{{ total_pedidos|default:"0" }}</div>
+      <div class="lbl">Pedidos totales</div>
+    </div>
+    <div class="pm-stat" style="border-left-color:#D4A017">
+      <div class="val">{{ pedidos_pendientes|default:"0" }}</div>
+      <div class="lbl">Pedidos pendientes</div>
+    </div>
+    <div class="pm-stat" style="border-left-color:#A07810">
+      <div class="val">{{ total_ordenes|default:"0" }}</div>
+      <div class="lbl">Órdenes totales</div>
+    </div>
+    <div class="pm-stat" style="border-left-color:#E8651A">
+      <div class="val">${{ total_pagos|default:"0"|floatformat:0 }}</div>
+      <div class="lbl">Pagos aprobados</div>
+    </div>
+    <div class="pm-stat" style="border-left-color:{% if caja_abierta %}#E8651A{% else %}#C0392B{% endif %}">
+      <div class="val">{% if caja_abierta %}🟢{% else %}🔴{% endif %}</div>
+      <div class="lbl">Caja {% if caja_abierta %}abierta{% else %}cerrada{% endif %}</div>
+    </div>
+  </div>
+
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>📋 Últimos pedidos</h3>
+      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('pedido-crear')">➕ Nuevo pedido</button>
+    </div>
+    <div class="pm-card-body">
+      <div class="pm-table-wrap">
+        <table class="pm-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Cliente</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in ultimos_pedidos %}
+            <tr>
+              <td><strong>#{{ p.pk }}</strong></td>
+              <td>{{ p.cliente }}</td>
+              <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
+              <td>${{ p.total }}</td>
+              <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
+              <td>
+                <button class="pm-btn pm-btn-light pm-btn-sm"
+                        onclick="loadEditForm('pedido',{{ p.pk }})">✏️</button>
+                <button class="pm-btn pm-btn-danger pm-btn-sm"
+                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️</button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos aún.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div id="section-pedido-lista" class="pm-section">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>📦 Pedidos</h3>
+      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('pedido-crear')">➕ Nuevo pedido</button>
+    </div>
+    <div class="pm-card-body">
+      <form method="get" action="{% url 'pedidos:pedido_lista' %}" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <input class="pm-form" style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;"
+               type="text" name="q" value="{{ q }}" placeholder="🔍 Buscar cliente…">
+        <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;">
+          <option value="">Todos los estados</option>
+          {% for val,lbl in estados %}
+          <option value="{{ val }}" {% if estado_sel == val %}selected{% endif %}>{{ lbl }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
+      </form>
+
+      <div class="pm-table-wrap">
+        <table class="pm-table">
+          <thead>
+            <tr><th>#</th><th>Cliente</th><th>Descripción</th><th>Estado</th><th>Total</th><th>Creado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {% for p in pedidos %}
+            <tr>
+              <td><strong>#{{ p.pk }}</strong></td>
+              <td>{{ p.cliente }}</td>
+              <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.descripcion|default:"—" }}</td>
+              <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
+              <td>${{ p.total }}</td>
+              <td>{{ p.fecha_creacion|date:"d/m/Y" }}</td>
+              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
+                <button class="pm-btn pm-btn-danger pm-btn-sm"
+                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️ Eliminar</button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div id="section-pedido-crear" class="pm-section">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>➕ Crear Pedido</h3>
+      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('pedido-lista')">← Volver</button>
+    </div>
+    <div class="pm-card-body">
+      <form method="post" action="{% url 'pedidos:pedido_crear' %}" class="pm-form">
+        {% csrf_token %}
+        <div class="pm-form-grid">
+          <div class="full">
+            <label>Cliente</label>
+            {{ form_pedido.cliente }}
+          </div>
+          <div class="full">
+            <label>Descripción</label>
+            {{ form_pedido.descripcion }}
+          </div>
+          <div>
+            <label>Estado</label>
+            {{ form_pedido.estado }}
+          </div>
+          <div>
+            <label>Total ($)</label>
+            {{ form_pedido.total }}
+          </div>
+        </div>
+        <div class="pm-form-actions">
+          <button type="submit" class="pm-btn pm-btn-accent">💾 Crear Pedido</button>
+          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('pedido-lista')">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div id="section-orden-lista" class="pm-section">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>🧾 Órdenes</h3>
+      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('orden-crear')">➕ Nueva orden</button>
+    </div>
+    <div class="pm-card-body">
+      <div class="pm-table-wrap">
+        <table class="pm-table">
+          <thead>
+            <tr><th>Número</th><th>Pedido</th><th>Estado</th><th>Subtotal</th><th>Impuesto</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {% for o in ordenes %}
+            <tr>
+              <td><strong>{{ o.numero_orden }}</strong></td>
+              <td>{{ o.pedido.cliente }}</td>
+              <td><span class="pm-badge pm-badge-{{ o.estado }}">{{ o.get_estado_display }}</span></td>
+              <td>${{ o.subtotal }}</td>
+              <td>${{ o.impuesto }}</td>
+              <td><strong>${{ o.total }}</strong></td>
+              <td>{{ o.creada_en|date:"d/m/Y" }}</td>
+              <td style="display:flex;gap:.3rem">
+                <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">🔍 Ver</a>
+                <button class="pm-btn pm-btn-danger pm-btn-sm"
+                        onclick="confirmDelete('orden',{{ o.pk }},'{{ o.numero_orden }}')">🗑️</button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" style="text-align:center;color:var(--p-muted);padding:2rem">No hay órdenes.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div id="section-orden-crear" class="pm-section">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>➕ Crear Orden</h3>
+      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('orden-lista')">← Volver</button>
+    </div>
+    <div class="pm-card-body">
+      <form method="post" action="{% url 'pedidos:orden_crear' %}" class="pm-form">
+        {% csrf_token %}
+        <div class="pm-form-grid">
+          <div class="full">
+            <label>Pedido</label>
+            {{ form_orden.pedido }}
+          </div>
+          <div>
+            <label>Estado</label>
+            {{ form_orden.estado }}
+          </div>
+          <div>
+            <label>Subtotal ($)</label>
+            {{ form_orden.subtotal }}
+          </div>
+          <div>
+            <label>Impuesto ($)</label>
+            {{ form_orden.impuesto }}
+          </div>
+          <div class="full">
+            <label>Notas</label>
+            {{ form_orden.notas }}
+          </div>
+        </div>
+        <div class="pm-form-actions">
+          <button type="submit" class="pm-btn pm-btn-accent">💾 Crear Orden</button>
+          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('orden-lista')">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div id="section-pago-lista" class="pm-section">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>💳 Pagos</h3>
+      <button class="pm-btn pm-btn-success pm-btn-sm" onclick="showSection('pago-crear')">➕ Nuevo pago</button>
+    </div>
+    <div class="pm-card-body">
+      <div class="pm-table-wrap">
+        <table class="pm-table">
+          <thead>
+            <tr><th>#</th><th>Orden</th><th>Método</th><th>Monto</th><th>Referencia</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {% for pg in pagos %}
+            <tr>
+              <td><strong>#{{ pg.pk }}</strong></td>
+              <td>{{ pg.orden.numero_orden }}</td>
+              <td>{{ pg.get_metodo_display }}</td>
+              <td><strong>${{ pg.monto }}</strong></td>
+              <td>{{ pg.referencia|default:"—" }}</td>
+              <td><span class="pm-badge pm-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
+              <td>{{ pg.fecha_pago|date:"d/m/Y H:i" }}</td>
+              <td style="display:flex;gap:.3rem">
+                <a href="{% url 'pedidos:pago_detalle' pg.pk %}" class="pm-btn pm-btn-info pm-btn-sm">🔍 Ver</a>
+                <a href="{% url 'pedidos:pago_editar' pg.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" style="text-align:center;color:var(--p-muted);padding:2rem">No hay pagos registrados.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div id="section-pago-crear" class="pm-section">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>💳 Registrar Pago</h3>
+      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('pago-lista')">← Volver</button>
+    </div>
+    <div class="pm-card-body">
+      <form method="post" action="{% url 'pedidos:pago_crear' %}" class="pm-form">
+        {% csrf_token %}
+        <div class="pm-form-grid">
+          <div class="full">
+            <label>Orden</label>
+            {{ form_pago.orden }}
+          </div>
+          <div>
+            <label>Método de pago</label>
+            {{ form_pago.metodo }}
+          </div>
+          <div>
+            <label>Monto ($)</label>
+            {{ form_pago.monto }}
+          </div>
+          <div>
+            <label>Referencia</label>
+            {{ form_pago.referencia }}
+          </div>
+          <div>
+            <label>Estado</label>
+            {{ form_pago.estado }}
+          </div>
+        </div>
+        <div class="pm-form-actions">
+          <button type="submit" class="pm-btn pm-btn-success">💾 Registrar Pago</button>
+          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('pago-lista')">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div id="section-caja-lista" class="pm-section">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>🏦 Cajas Registradas</h3>
+      <button class="pm-btn pm-btn-info pm-btn-sm" onclick="showSection('caja-abrir')">🔓 Abrir caja</button>
+    </div>
+    <div class="pm-card-body">
+      <div class="pm-table-wrap">
+        <table class="pm-table">
+          <thead>
+            <tr><th>#</th><th>Nombre</th><th>Responsable</th><th>Saldo inicial</th><th>Saldo final</th><th>Estado</th><th>Apertura</th><th>Cierre</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {% for c in cajas %}
+            <tr>
+              <td><strong>#{{ c.pk }}</strong></td>
+              <td>{{ c.nombre }}</td>
+              <td>{{ c.responsable.get_full_name|default:c.responsable.username }}</td>
+              <td>${{ c.saldo_inicial }}</td>
+              <td>{% if c.saldo_final %}${{ c.saldo_final }}{% else %}—{% endif %}</td>
+              <td><span class="pm-badge pm-badge-{{ c.estado }}">{{ c.get_estado_display }}</span></td>
+              <td>{{ c.fecha_apertura|date:"d/m/Y H:i" }}</td>
+              <td>{{ c.fecha_cierre|date:"d/m/Y H:i"|default:"—" }}</td>
+              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+                <a href="{% url 'pedidos:caja_detalle' c.pk %}" class="pm-btn pm-btn-info pm-btn-sm">🔍</a>
+                <a href="{% url 'pedidos:caja_actualizar' c.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️</a>
+                {% if c.estado == 'abierta' %}
+                <a href="{% url 'pedidos:caja_cerrar' c.pk %}" class="pm-btn pm-btn-danger pm-btn-sm">🔒 Cerrar</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9" style="text-align:center;color:var(--p-muted);padding:2rem">No hay cajas registradas.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div id="section-caja-abrir" class="pm-section">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>🔓 Abrir Caja</h3>
+      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('caja-lista')">← Volver</button>
+    </div>
+    <div class="pm-card-body">
+      <form method="post" action="{% url 'pedidos:caja_abrir' %}" class="pm-form">
+        {% csrf_token %}
+        <div class="pm-form-grid">
+          <div>
+            <label>Nombre de la caja</label>
+            {{ form_caja.nombre }}
+          </div>
+          <div>
+            <label>Saldo inicial ($)</label>
+            {{ form_caja.saldo_inicial }}
+          </div>
+          <div class="full">
+            <label>Observaciones</label>
+            {{ form_caja.observaciones }}
+          </div>
+        </div>
+        <div class="pm-form-actions">
+          <button type="submit" class="pm-btn pm-btn-info">🔓 Abrir Caja</button>
+          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('caja-lista')">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div id="modal-delete" class="pm-modal-overlay">
+  <div class="pm-modal-box">
+    <h4>⚠️ Confirmar eliminación</h4>
+    <p id="modal-msg">¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.</p>
+    <div class="pm-modal-actions">
+      <form id="modal-form" method="post">
+        {% csrf_token %}
+        <button type="submit" class="pm-btn pm-btn-danger">🗑️ Sí, eliminar</button>
+      </form>
+      <button class="pm-btn pm-btn-light" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<script>
+function showSection(name) {
+  document.querySelectorAll('.pm-section').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('section-' + name);
+  if (target) { target.classList.add('active'); target.scrollIntoView({behavior:'smooth', block:'start'}); }
+}
+
+const deleteUrls = {
+  pedido: "{% url 'pedidos:pedido_eliminar' 9999 %}".replace('9999', ''),
+  orden:  "{% url 'pedidos:orden_eliminar'  9999 %}".replace('9999', ''),
+};
+
+function confirmDelete(tipo, pk, nombre) {
+  const base = tipo === 'pedido'
+    ? "{% url 'pedidos:pedido_eliminar' 9999 %}"
+    : "{% url 'pedidos:orden_eliminar'  9999 %}";
+  document.getElementById('modal-form').action = base.replace('9999', pk);
+  document.getElementById('modal-msg').textContent =
+    `¿Eliminar ${tipo} "${nombre}" (#${pk})? Esta acción no se puede deshacer.`;
+  document.getElementById('modal-delete').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-delete').classList.remove('open');
+}
+
+document.getElementById('modal-delete').addEventListener('click', function(e){
+  if (e.target === this) closeModal();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const hash = window.location.hash.replace('#','');
+  if (hash) showSection(hash);
+
+  document.querySelectorAll('.pm-alert').forEach(a => {
+    setTimeout(() => { a.style.transition='opacity .5s'; a.style.opacity='0';
+      setTimeout(() => a.remove(), 500); }, 4000);
+  });
+});
+</script>
+
+{% endblock %}

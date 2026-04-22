@@ -3,6 +3,14 @@ from .models import DetalleReserva, Mesa
 from django.contrib import messages
 
 # -------------------------
+# VISTA PRINCIPAL (CORREGIDA)
+# -------------------------
+def reserva_view(request):
+    """Renderiza el panel principal de reservas"""
+    # CORRECCIÓN: Se ajustó el nombre al archivo exacto de tu carpeta templates
+    return render(request, 'reserva_inicio.html')
+
+# -------------------------
 # ELIMINAR DETALLE RESERVA
 # -------------------------
 def eliminar_detalle(request):
@@ -19,6 +27,8 @@ def eliminar_detalle(request):
         else:
             messages.error(request, 'Debes seleccionar un detalle para eliminar.')
 
+    # NOTA: Asegúrate de que este archivo también esté en la raíz de templates 
+    # o ajusta la ruta si está dentro de una carpeta.
     return render(request, 'reservas/eliminar_detalle.html', {
         'detalles': detalles
     })
@@ -28,10 +38,11 @@ def eliminar_detalle(request):
 # ACTUALIZAR MESA
 # -------------------------
 def actualizar_mesa(request):
-
-    try:
-        mesa = Mesa.objects.all()[0]
-    except IndexError:
+    # Intentamos obtener la primera mesa disponible
+    mesa = Mesa.objects.first()
+    
+    if not mesa:
+        # Asegúrate de que este archivo exista en la ruta especificada
         return render(request, 'reservas/sin_mesas.html')
 
     if request.method == 'POST':
@@ -39,6 +50,8 @@ def actualizar_mesa(request):
         mesa.ubicacion = request.POST.get('ubicacion')
         mesa.estado = request.POST.get('estado')
         mesa.save()
+        messages.success(request, 'Mesa actualizada correctamente.')
+        return redirect('actualizar_mesa')
 
     return render(request, 'reservas/actualizar_mesa.html', {
         'mesa': mesa

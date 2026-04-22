@@ -1,51 +1,43 @@
 from django.urls import path
-# from .views import inicio_usuarios, actualizar_usuarios, validar_permisos, redireccion_post_login
 from django.contrib.auth import views as auth_views
-from . import views
-from django.urls import path
-# from .views import DetalleUsuarioView
-# from .views import CustomPasswordResetView
-from django.views.generic import TemplateView
-from . import views
-# from .views import inicio_usuarios, actualizar_usuarios
-
-
-from .views import acceder_sistema
-from .views import consultar_usuario
+from . import views 
 
 urlpatterns = [
-    path('consultar/', consultar_usuario, name='consultar_usuario'),
-]
+    # 1. LA RAÍZ PRIMERO: Es el Panel de Control/Dashboard
+    path('', views.inicio_usuarios, name='inicio_usuarios'),
 
-urlpatterns = [
-    # path('', inicio_usuarios, name='inicio_usuarios'),
-    # path('actualizar_usuario/<int:id>/', actualizar_usuarios, name='actualizar_usuario'),
-    # path('validar_permisos/', validar_permisos, name='validar_permisos'),
+    # 2. AUTENTICACIÓN
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'), # Asegúrate de tener esta para poder salir
+    path('acceder/', views.acceder_sistema, name='acceder_sistema'),
+    path('redireccion/', views.redireccion_post_login, name='redireccion'),
     
-    # path('redireccion/', redireccion_post_login, name='redireccion'),
-
+    # 3. GESTIÓN DE PERSONAL
+    path('lista/', views.lista_personal, name='lista_personal'),
+    path('registrar/', views.registrar_personal, name='registrar_personal'),
+    path('consultar/', views.consultar_usuario, name='consultar_usuario'),
+    path('actualizar/<int:id>/', views.actualizar_usuarios, name='actualizar_usuarios'),
+    path('inactivar/', views.inactivar_usuario, name='inactivar_usuario'),
     
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    # path('actualizar/<int:id>/', actualizar_usuarios, name='actualizar_usuarios'),
-    # path('inactivar/', views.inactivar_usuario, name='inactivar_usuario'),
-    # path('', inicio_usuarios, name='inicio_usuarios'), 
-    # path('consultar/<int:pk>/', DetalleUsuarioView.as_view(), name='detalle_usuario'),
+    # 4. RECUPERACIÓN DE CONTRASEÑA
+    path('recuperar/', auth_views.PasswordResetView.as_view(
+        template_name='usuarios/login.html',
+        extra_context={'vista': 'recuperar'}
+    ), name='password_reset'),
+    
+    path('recuperar_enviado/', auth_views.PasswordResetDoneView.as_view(
+        template_name='usuarios/login.html',
+        extra_context={'vista': 'recuperar_enviado'}
+    ), name='password_reset_done'),
 
-    # path('recuperar/', CustomPasswordResetView.as_view(), name='recuperar'),
-
-    path('recuperar_enviado/',
-         TemplateView.as_view(template_name='usuarios/recuperar_enviado.html'),
-         name='recuperar_enviado'),
-    # path('registrar/', views.registrar_personal, name='registrar_personal'),
-    # path('lista/', views.lista_personal, name='lista_personal'),
-
-    # Autenticación
-    path('acceder/', acceder_sistema, name='acceder_sistema'),
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    # path('recuperar/', CustomPasswordResetView.as_view(), name='recuperar'),
-    path(
-        'recuperar_enviado/',
-        TemplateView.as_view(template_name='usuarios/recuperar_enviado.html'),
-        name='recuperar_enviado'
-    ),
+    # Estas son necesarias para que el flujo de Django de recuperar contraseña no de error 404
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='usuarios/login.html',
+        extra_context={'vista': 'recuperar_confirmar'}
+    ), name='password_reset_confirm'),
+    
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
+        template_name='usuarios/login.html',
+        extra_context={'vista': 'recuperar_terminado'}
+    ), name='password_reset_complete'),
 ]

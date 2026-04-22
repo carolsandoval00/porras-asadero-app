@@ -1,0 +1,373 @@
+{% extends 'base 2.html' %}
+
+{% block content %}
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap');
+
+    :root {
+        --verde:     #E8651A;
+        --verde-dk:  #C0502A;
+        --carbon:     #1A1008;
+        --gris-suave:#F5ECD7;
+        --gris-borde:#D4C4A0;
+        --rojo:       #C0392B;
+    }
+
+    .auth-wrap {
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        background:
+            radial-gradient(ellipse at 10% 20%, rgba(232,101,26,.08) 0%, transparent 55%),
+            radial-gradient(ellipse at 90% 80%, rgba(26,16,8,.05) 0%, transparent 55%),
+            var(--gris-suave);
+    }
+
+    .auth-card {
+        background: #FDF7EC;
+        border-radius: 18px;
+        box-shadow: 0 8px 40px rgba(26,16,8,.10);
+        padding: 2.5rem 2.8rem;
+        width: 100%;
+        animation: fadeUp .45s ease both;
+    }
+
+    @keyframes fadeUp {
+        from { opacity:0; transform:translateY(22px); }
+        to   { opacity:1; transform:translateY(0); }
+    }
+
+    .auth-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.9rem;
+        color: var(--carbon);
+        text-align: center;
+        margin-bottom: .35rem;
+    }
+    .auth-title span { color: var(--verde); }
+
+    .auth-sub {
+        text-align: center;
+        color: #888;
+        font-size: .88rem;
+        margin-bottom: 1.8rem;
+        font-family: 'Lato', sans-serif;
+    }
+
+    .auth-card .form-control,
+    .auth-card .form-select {
+        font-family: 'Lato', sans-serif;
+        border-radius: 10px;
+        border: 1.5px solid var(--gris-borde);
+        padding: .65rem 1rem;
+        font-size: .95rem;
+        background: #FDF7EC;
+        color: var(--carbon);
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .auth-card .form-control:focus,
+    .auth-card .form-select:focus {
+        border-color: var(--verde);
+        box-shadow: 0 0 0 3px rgba(232,101,26,.18);
+        outline: none;
+    }
+
+    .auth-card label {
+        font-family: 'Lato', sans-serif;
+        font-size: .82rem;
+        font-weight: 700;
+        letter-spacing: .04em;
+        color: #6B5A3E;
+        margin-bottom: .3rem;
+        display: block;
+    }
+
+    .btn-auth {
+        background: var(--carbon);
+        color: #F5ECD7;
+        border: none;
+        border-radius: 10px;
+        padding: .75rem;
+        font-family: 'Lato', sans-serif;
+        font-weight: 700;
+        letter-spacing: .06em;
+        font-size: .92rem;
+        width: 100%;
+        margin-top: 1.2rem;
+        cursor: pointer;
+        transition: background .2s, transform .15s;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    .btn-auth:hover  { background: var(--verde-dk); transform: translateY(-1px); color: #F5ECD7; }
+    .btn-auth:active { transform: translateY(0); }
+
+    .btn-auth-outline {
+        background: transparent;
+        color: var(--carbon);
+        border: 1.5px solid var(--gris-borde);
+        border-radius: 10px;
+        padding: .7rem;
+        font-family: 'Lato', sans-serif;
+        font-weight: 600;
+        font-size: .88rem;
+        width: 100%;
+        margin-top: .6rem;
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        transition: border-color .2s, color .2s;
+    }
+    .btn-auth-outline:hover { border-color: var(--verde); color: var(--verde-dk); }
+
+    .auth-divider {
+        display: flex; align-items: center; gap: .8rem;
+        margin: 1rem 0;
+        color: #C0AD84; font-size: .8rem; font-family: 'Lato', sans-serif;
+    }
+    .auth-divider::before,
+    .auth-divider::after { content:''; flex:1; height:1px; background:var(--gris-borde); }
+
+    .section-label {
+        font-family: 'Lato', sans-serif;
+        font-size: .74rem;
+        font-weight: 700;
+        letter-spacing: .09em;
+        color: #C0AD84;
+        text-transform: uppercase;
+        margin: 1.2rem 0 .8rem;
+    }
+
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media(max-width:540px){ .form-row-2 { grid-template-columns: 1fr; } }
+
+    .rol-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: .6rem; margin-top: .3rem; }
+    .rol-opt  { display: none; }
+    .rol-label {
+        border: 1.5px solid var(--gris-borde);
+        border-radius: 10px;
+        padding: .55rem .4rem;
+        text-align: center;
+        cursor: pointer;
+        font-family: 'Lato', sans-serif;
+        font-size: .82rem;
+        font-weight: 700;
+        color: #6B5A3E;
+        transition: all .2s;
+        user-select: none;
+        display: block;
+    }
+    .rol-opt:checked + .rol-label {
+        border-color: var(--rojo);
+        background: rgba(192,57,43,.10);
+        color: var(--rojo);
+    }
+
+    /* Estilos para el Dashboard de Inicio */
+    .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
+    .dash-card {
+        background: #FDF7EC; border: 1.5px solid var(--gris-borde); padding: 1.5rem; border-radius: 15px;
+        text-align: center; transition: 0.3s; text-decoration: none; color: inherit;
+    }
+    .dash-card:hover { border-color: var(--verde); transform: translateY(-5px); box-shadow: 0 5px 15px rgba(26,16,8,.08); }
+    .dash-card i { font-size: 2.5rem; color: var(--verde); margin-bottom: 10px; display: block; }
+    .dash-card h3 { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--carbon); }
+
+    .auth-card .alert { border-radius: 10px; font-size: .88rem; }
+</style>
+
+{% if vista == "login" or vista == "acceder" or not vista %}
+<div class="auth-wrap">
+    <div class="auth-card" style="max-width:420px;">
+        <h1 class="auth-title"><i class="bi bi-fire"></i> Porras <span>Asadero</span></h1>
+        <p class="auth-sub">Ingresa tus credenciales para continuar</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+
+            <div class="mb-3">
+                <label>Usuario</label>
+                <input type="text" name="username" class="form-control" placeholder="Ej: jperez" required autocomplete="username">
+            </div>
+            <div class="mb-3">
+                <label>Contraseña</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn-auth">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Ingresar al sistema
+            </button>
+        </form>
+
+        <div class="auth-divider">o</div>
+
+        <a href="?vista=registrar" class="btn-auth-outline">
+            <i class="bi bi-person-plus me-1"></i> Registrar nuevo personal
+        </a>
+    </div>
+</div>
+
+{% elif vista == "inicio" %}
+<div class="auth-wrap" style="align-items: flex-start; padding-top: 3rem;">
+    <div class="auth-card" style="max-width: 900px;">
+        <h1 class="auth-title">Panel de <span>Control</span></h1>
+        <p class="auth-sub">Bienvenido, {{ user.first_name }} {{ user.last_name }}. ¿Qué deseas hacer hoy?</p>
+        
+        <div class="dash-grid">
+            <a href="{% url 'consultar_usuario' %}" class="dash-card">
+                <i class="bi bi-person-badge"></i>
+                <h3>Mi Perfil</h3>
+            </a>
+            
+            {% if user.rol == 'ADMIN' or user.is_superuser %}
+            <a href="{% url 'lista_personal' %}" class="dash-card">
+                <i class="bi bi-people"></i>
+                <h3>Gestionar Personal</h3>
+            </a>
+            <a href="?vista=registrar" class="dash-card">
+                <i class="bi bi-person-plus-fill"></i>
+                <h3>Nuevo Usuario</h3>
+            </a>
+            {% endif %}
+
+            <a href="#" class="dash-card">
+                <i class="bi bi-receipt"></i>
+                <h3>Ver Pedidos</h3>
+            </a>
+        </div>
+
+        <div class="mt-5">
+            <p class="section-label">Resumen del Sistema</p>
+            <div class="alert alert-info border-0 shadow-sm" style="background: var(--gris-suave); color: var(--carbon);">
+                Actualmente hay <strong>{{ usuarios.count }}</strong> usuarios registrados en la plataforma de Porras Asadero.
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif vista == "registrar" or vista == "actualizar" %}
+<div class="auth-wrap" style="align-items:flex-start; padding-top:2rem;">
+    <div class="auth-card" style="max-width:660px;">
+
+        <h1 class="auth-title">
+            {% if vista == "actualizar" %}Editar <span>Personal</span>{% else %}Registrar <span>Personal</span>{% endif %}
+        </h1>
+        <p class="auth-sub">
+            {% if vista == "actualizar" %}Modifica los datos de {{ usuario.username }}{% else %}Completa los datos del nuevo integrante{% endif %}
+        </p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% if vista == 'actualizar' %}{% url 'actualizar_usuarios' usuario.id %}{% else %}{% url 'registrar_personal' %}{% endif %}">
+            {% csrf_token %}
+
+            <p class="section-label">Datos personales</p>
+            <div class="form-row-2 mb-3">
+                <div>
+                    <label>Nombres <span class="text-danger">*</span></label>
+                    <input type="text" name="first_name" class="form-control" required value="{{ usuario.first_name|default:'' }}">
+                </div>
+                <div>
+                    <label>Apellidos <span class="text-danger">*</span></label>
+                    <input type="text" name="last_name" class="form-control" required value="{{ usuario.last_name|default:'' }}">
+                </div>
+            </div>
+
+            <div class="form-row-2 mb-3">
+                <div>
+                    <label>Tipo de Documento <span class="text-danger">*</span></label>
+                    <select name="tipo_documento" class="form-select" required>
+                        <option value="CC" {% if usuario.tipo_documento == 'CC' %}selected{% endif %}>Cédula de Ciudadanía</option>
+                        <option value="CE" {% if usuario.tipo_documento == 'CE' %}selected{% endif %}>Cédula de Extranjería</option>
+                        <option value="TI" {% if usuario.tipo_documento == 'TI' %}selected{% endif %}>Tarjeta de Identidad</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Número de Documento <span class="text-danger">*</span></label>
+                    <input type="text" name="documento" class="form-control" required value="{{ usuario.documento|default:'' }}">
+                </div>
+            </div>
+
+            <div class="form-row-2 mb-3">
+                <div>
+                    <label>Teléfono</label>
+                    <input type="text" name="telefono" class="form-control" value="{{ usuario.telefono|default:'' }}">
+                </div>
+                <div>
+                    <label>Correo electrónico <span class="text-danger">*</span></label>
+                    <input type="email" name="email" class="form-control" required value="{{ usuario.email|default:'' }}">
+                </div>
+            </div>
+
+            {% if vista == "registrar" %}
+            <p class="section-label">Credenciales de acceso</p>
+            <div class="form-row-2 mb-3">
+                <div>
+                    <label>Nombre de usuario <span class="text-danger">*</span></label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div>
+                    <label>Contraseña <span class="text-danger">*</span></label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+            </div>
+            {% endif %}
+
+            <p class="section-label">Rol del usuario</p>
+            <div class="rol-grid mb-3">
+                <div>
+                    <input type="radio" name="rol" id="rol_mesero" value="MESERO" class="rol-opt" {% if usuario.rol == 'MESERO' or not usuario.rol %}checked{% endif %}>
+                    <label for="rol_mesero" class="rol-label">Mesero</label>
+                </div>
+                <div>
+                    <input type="radio" name="rol" id="rol_cocina" value="COCINA" class="rol-opt" {% if usuario.rol == 'COCINA' %}checked{% endif %}>
+                    <label for="rol_cocina" class="rol-label">Cocina</label>
+                </div>
+                <div>
+                    <input type="radio" name="rol" id="rol_caja" value="CAJA" class="rol-opt" {% if usuario.rol == 'CAJA' %}checked{% endif %}>
+                    <label for="rol_caja" class="rol-label">Cajero</label>
+                </div>
+                {% if user.is_superuser %}
+                <div>
+                    <input type="radio" name="rol" id="rol_admin" value="ADMIN" class="rol-opt" {% if usuario.rol == 'ADMIN' %}checked{% endif %}>
+                    <label for="rol_admin" class="rol-label">Admin</label>
+                </div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn-auth">
+                <i class="bi bi-check-circle me-2"></i>{% if vista == 'actualizar' %}Guardar Cambios{% else %}Registrar y Entrar{% endif %}
+            </button>
+            
+            <a href="{% url 'login' %}" class="btn-auth-outline">Cancelar</a>
+        </form>
+    </div>
+</div>
+
+{% elif vista == "sin_permisos" %}
+<div class="auth-wrap">
+    <div class="auth-card" style="max-width:420px; text-align:center;">
+        <i class="bi bi-shield-x" style="font-size:3.8rem; color:var(--rojo); display:block; margin-bottom:1rem;"></i>
+        <h1 class="auth-title">Acceso <span>Restringido</span></h1>
+        <p class="auth-sub">No tienes permisos para ver esta sección.</p>
+        <a href="{% url 'login' %}" class="btn-auth">Volver al Inicio</a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
