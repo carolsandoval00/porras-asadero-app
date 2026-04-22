@@ -687,6 +687,11 @@ function initDemo(){
 }
 
 initDemo(); stats(); renderTabla();
+
+    // Al cargar, revisar si viene ?seccion=crear en la URL
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('seccion') === 'crear') nav('crear');
+
 })();
 </script>
 
