@@ -2,6 +2,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from core.views import inicio, inicio_admin
+from usuarios.views import inicio_usuarios
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -10,6 +11,8 @@ urlpatterns = [
     path('pedidos/', include('pedidos.urls')),
     path('pago/', include('pago.urls')),
     path('',  inicio, name='inicio'), 
-    path('panel/',  inicio_admin, name='inicio_admin'), 
+
+
+    path('panel/', inicio_usuarios, name='inicio_admin'),
 
     ]

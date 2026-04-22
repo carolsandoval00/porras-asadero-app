@@ -4,7 +4,6 @@ from . import views
 
 urlpatterns = [
     # 1. LA RAÍZ PRIMERO: Es el Panel de Control/Dashboard
-    path('', views.inicio_usuarios, name='inicio_usuarios'),
 
     # 2. AUTENTICACIÓN
     path('login/', views.login_view, name='login'),
