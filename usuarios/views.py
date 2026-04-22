@@ -10,13 +10,13 @@ from .models import Usuario
 # Definimos las rutas de los templates según tu estructura de carpetas
 TEMPLATE_LOGIN = 'usuarios/login.html'
 TEMPLATE_LISTA = 'usuarios/lista/lista_personal.html'
+TEMPLATE_PERFIL = 'usuarios/panel_perfil.html'
 
 # --- LOGIN Y FLUJO DE ACCESO ---
 
 def login_view(request):
     vista = request.GET.get('vista', 'login')
 
-    # Si ya está logueado, lo mandamos al panel principal
     if request.user.is_authenticated and vista == 'login':
         return redirect('inicio_usuarios')
 
@@ -41,10 +41,9 @@ def login_view(request):
 
 @login_required
 def redireccion_post_login(request):
-    """Al entrar, los admins van al Panel de Control"""
     if request.user.is_superuser or request.user.rol == 'ADMIN':
         return redirect('inicio_usuarios')
-    return redirect('consultar_usuario')
+    return redirect('panel_perfil')
 
 def logout_view(request):
     logout(request)
@@ -56,17 +55,15 @@ def logout_view(request):
 
 @login_required
 def inicio_usuarios(request):
-    """Carga el Dashboard principal"""
-    return render(request, TEMPLATE_LOGIN, {'vista': 'inicio'})
+    usuarios = Usuario.objects.all()
+    return render(request, TEMPLATE_LOGIN, {'vista': 'inicio', 'usuarios': usuarios})
 
 @login_required
 def lista_personal(request):
-    """Carga la lista desde la subcarpeta correcta"""
     if request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return redirect('validar_permisos')
     
     personal = Usuario.objects.all()
-    # Usamos el template que está dentro de la carpeta 'lista'
     return render(request, TEMPLATE_LISTA, {
         'vista': 'lista', 
         'personal_list': personal
@@ -131,14 +128,13 @@ def inactivar_usuario(request):
     return redirect('lista_personal')
 
 @login_required
-def consultar_usuario(request):
-    return render(request, TEMPLATE_LOGIN, {'vista': 'consultar', 'usuario': request.user})
+def panel_perfil(request):
+    return render(request, TEMPLATE_PERFIL, {'usuario': request.user})
 
 def validar_permisos(request):
     return render(request, TEMPLATE_LOGIN, {'vista': 'sin_permisos'})
 
 def acceder_sistema(request):
-    """Crea el superusuario inicial si no existe"""
     if not Usuario.objects.filter(username="restaurante").exists():
         Usuario.objects.create_superuser(
             username="restaurante", 

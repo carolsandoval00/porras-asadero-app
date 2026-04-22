@@ -1,0 +1,372 @@
+{% extends 'base 2.html' %}
+
+{% block content %}
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap');
+
+    :root {
+        --verde:      #E8651A;
+        --verde-dk:   #C0502A;
+        --carbon:     #1A1008;
+        --gris-suave: #F5ECD7;
+        --gris-borde: #D4C4A0;
+        --rojo:       #C0392B;
+    }
+
+    .perfil-wrap {
+        min-height: 85vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 2.5rem 1rem;
+        background:
+            radial-gradient(ellipse at 10% 20%, rgba(232,101,26,.08) 0%, transparent 55%),
+            radial-gradient(ellipse at 90% 80%, rgba(26,16,8,.05) 0%, transparent 55%),
+            var(--gris-suave);
+    }
+
+    .perfil-card {
+        background: #FDF7EC;
+        border-radius: 18px;
+        box-shadow: 0 8px 40px rgba(26,16,8,.10);
+        width: 100%;
+        max-width: 820px;
+        overflow: hidden;
+        animation: fadeUp .45s ease both;
+    }
+
+    @keyframes fadeUp {
+        from { opacity:0; transform:translateY(22px); }
+        to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* COVER */
+    .perfil-cover {
+        height: 120px;
+        background: linear-gradient(135deg, #8B1A10 0%, #C0392B 50%, #E8773A 100%);
+        position: relative;
+    }
+    .perfil-avatar {
+        position: absolute;
+        bottom: -38px;
+        left: 2rem;
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: #1A1008;
+        border: 3px solid #FDF7EC;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Playfair Display', serif;
+        font-size: 24px;
+        color: #E87A3A;
+    }
+    .perfil-edit-cover {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        background: rgba(255,255,255,.18);
+        border: 0.5px solid rgba(255,255,255,.35);
+        color: white;
+        font-size: 12px;
+        font-family: 'Lato', sans-serif;
+        padding: 5px 14px;
+        border-radius: 20px;
+        text-decoration: none;
+        transition: background .2s;
+    }
+    .perfil-edit-cover:hover { background: rgba(255,255,255,.3); color: white; }
+
+    /* HEADER */
+    .perfil-header {
+        padding: 3.2rem 2.2rem 1.5rem;
+        border-bottom: 1px solid var(--gris-borde);
+    }
+    .perfil-nombre {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.5rem;
+        color: var(--carbon);
+    }
+    .perfil-rol-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #FEF0E6;
+        color: #9A3A10;
+        font-size: 11px;
+        font-family: 'Lato', sans-serif;
+        font-weight: 700;
+        padding: 3px 11px;
+        border-radius: 20px;
+        margin-top: 6px;
+        border: 0.5px solid #F0B080;
+    }
+    .perfil-rol-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--rojo);
+        display: inline-block;
+    }
+    .perfil-meta {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: .9rem;
+        flex-wrap: wrap;
+    }
+    .perfil-meta span {
+        font-size: 12px;
+        font-family: 'Lato', sans-serif;
+        color: #888;
+    }
+
+    /* CONTENT */
+    .perfil-content {
+        padding: 1.75rem 2.2rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+    }
+    @media(max-width: 600px) {
+        .perfil-content { grid-template-columns: 1fr; }
+    }
+
+    .section-label {
+        font-family: 'Lato', sans-serif;
+        font-size: .74rem;
+        font-weight: 700;
+        letter-spacing: .09em;
+        color: #C0AD84;
+        text-transform: uppercase;
+        margin-bottom: .75rem;
+    }
+
+    .info-box {
+        background: var(--gris-suave);
+        border-radius: 10px;
+        padding: 1rem 1.1rem;
+    }
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--gris-borde);
+        font-family: 'Lato', sans-serif;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .lbl { font-size: 12px; color: #888; }
+    .info-row .val { font-size: 13px; font-weight: 700; color: var(--carbon); }
+    .info-row .val.highlight { color: var(--verde); }
+
+    /* PERMISOS */
+    .perms-box {
+        background: var(--gris-suave);
+        border-radius: 10px;
+        padding: 1rem 1.1rem;
+        grid-column: span 2;
+    }
+    @media(max-width: 600px) { .perms-box { grid-column: span 1; } }
+
+    .perms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 8px;
+        margin-top: .6rem;
+    }
+    .perm-item {
+        background: #FDF7EC;
+        border: 0.5px solid var(--gris-borde);
+        border-radius: 8px;
+        padding: 9px 11px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Lato', sans-serif;
+        font-size: 12px;
+        color: var(--carbon);
+    }
+    .perm-check {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: var(--rojo);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .perm-check::after {
+        content: '';
+        width: 7px;
+        height: 5px;
+        border-left: 1.5px solid white;
+        border-bottom: 1.5px solid white;
+        transform: rotate(-45deg) translateY(-1px);
+        display: block;
+    }
+
+    /* BADGES */
+    .badge-ok   { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:700; background:#EAF6EE; color:#2D7A4A; border:0.5px solid #A0D9B4; }
+    .badge-warn { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:700; background:#FFF4E6; color:#9A5A10; border:0.5px solid #F0C080; }
+
+    /* FOOTER */
+    .perfil-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 1rem 2.2rem 1.75rem;
+        border-top: 1px solid var(--gris-borde);
+    }
+    .btn-volver {
+        background: transparent;
+        border: 1.5px solid var(--gris-borde);
+        color: #666;
+        font-family: 'Lato', sans-serif;
+        font-size: 13px;
+        padding: 8px 18px;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: border-color .2s, color .2s;
+    }
+    .btn-volver:hover { border-color: var(--verde); color: var(--verde-dk); }
+    .btn-editar {
+        background: var(--carbon);
+        color: #F5ECD7;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 20px;
+        font-family: 'Lato', sans-serif;
+        font-weight: 700;
+        font-size: 13px;
+        text-decoration: none;
+        transition: background .2s;
+    }
+    .btn-editar:hover { background: var(--verde-dk); color: #F5ECD7; }
+</style>
+
+<div class="perfil-wrap">
+    <div class="perfil-card">
+
+        <!-- COVER -->
+        <div class="perfil-cover">
+            <a href="{% url 'actualizar_usuarios' usuario.id %}" class="perfil-edit-cover">
+                ✎ Editar perfil
+            </a>
+            <div class="perfil-avatar">
+                {{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}
+            </div>
+        </div>
+
+        <!-- HEADER -->
+        <div class="perfil-header">
+            <div class="perfil-nombre">{{ usuario.first_name }} {{ usuario.last_name }}</div>
+            <div class="perfil-rol-badge">
+                <span class="perfil-rol-dot"></span>
+                {{ usuario.rol|default:"Administrador" }}
+            </div>
+            <div class="perfil-meta">
+                <span>✉ {{ usuario.email|default:"Sin correo" }}</span>
+                <span>📋 {{ usuario.tipo_documento|default:"CC" }}: {{ usuario.documento|default:"—" }}</span>
+                <span>📞 {{ usuario.telefono|default:"—" }}</span>
+                <span>👤 {{ usuario.username }}</span>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="perfil-content">
+
+            <!-- Información personal -->
+            <div>
+                <p class="section-label">Información personal</p>
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="lbl">Nombre completo</span>
+                        <span class="val">{{ usuario.first_name }} {{ usuario.last_name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Usuario</span>
+                        <span class="val">{{ usuario.username }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Correo electrónico</span>
+                        <span class="val highlight">{{ usuario.email|default:"—" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Teléfono</span>
+                        <span class="val">{{ usuario.telefono|default:"—" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Documento</span>
+                        <span class="val">{{ usuario.tipo_documento|default:"CC" }} {{ usuario.documento|default:"—" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seguridad -->
+            <div>
+                <p class="section-label">Seguridad</p>
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="lbl">Contraseña</span>
+                        <a href="{% url 'password_reset' %}" style="font-size:12px;color:var(--rojo);font-weight:700;text-decoration:none;">Cambiar</a>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Estado de sesión</span>
+                        <span class="badge-ok">Activa</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Rol asignado</span>
+                        <span class="val">{{ usuario.rol|default:"ADMIN" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Superusuario</span>
+                        {% if usuario.is_superuser %}
+                            <span class="badge-ok">Sí</span>
+                        {% else %}
+                            <span class="badge-warn">No</span>
+                        {% endif %}
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Cuenta activa</span>
+                        {% if usuario.is_active %}
+                            <span class="badge-ok">Activa</span>
+                        {% else %}
+                            <span class="badge-warn">Inactiva</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permisos -->
+            <div class="perms-box">
+                <p class="section-label">Permisos del sistema</p>
+                <div class="perms-grid">
+                    {% if usuario.rol == 'ADMIN' or usuario.is_superuser %}
+                    <div class="perm-item"><div class="perm-check"></div> Gestionar personal</div>
+                    <div class="perm-item"><div class="perm-check"></div> Crear usuarios</div>
+                    <div class="perm-item"><div class="perm-check"></div> Panel de control</div>
+                    <div class="perm-item"><div class="perm-check"></div> Inactivar usuarios</div>
+                    {% endif %}
+                    <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
+                    <div class="perm-item"><div class="perm-check"></div> Reservas y mesas</div>
+                    {% if usuario.rol == 'ADMIN' or usuario.is_superuser %}
+                    <div class="perm-item"><div class="perm-check"></div> Reportes</div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="perfil-footer">
+            <a href="{% url 'login' %}?vista=inicio" class="btn-volver">← Volver</a>
+            <a href="{% url 'actualizar_usuarios' usuario.id %}" class="btn-editar">✎ Editar mis datos</a>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

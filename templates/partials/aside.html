@@ -43,7 +43,7 @@
             <strong>{{ user.username|default:"Admin" }}</strong>
         </a>
         <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser">
-            <li><a class="dropdown-item" href="{% url 'consultar_usuario' %}">Mi Perfil</a></li>
+            <li><a class="dropdown-item" href="{% url 'panel_perfil' %}">Mi Perfil</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
         </ul>
