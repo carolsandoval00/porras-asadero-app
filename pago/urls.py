@@ -1,8 +1,10 @@
-from django.contrib import admin
-from django.urls import path 
+from django.urls import path
+from . import views
 
-from pago.views import *
+app_name = 'pago'
 
 urlpatterns = [
-    path('', inicio_pago, name='inicio_pago'), 
+    path('', views.pago_dashboard, name='dashboard'),
+    path('<int:pk>/editar/', views.pago_editar, name='editar'),
+    path('<int:pk>/eliminar/', views.pago_eliminar, name='eliminar'),
 ]

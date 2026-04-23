@@ -1,6 +1,4 @@
 from django.contrib import admin
-from .models import *
+from .models import Pago
 
-# Register your models here.
-admin.site.register(Caja)
 admin.site.register(Pago)

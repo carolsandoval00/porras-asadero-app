@@ -1,24 +1,32 @@
 from django.db import models
 
 
-class Caja(models.Model):
-    codigo = models.AutoField(primary_key=True)
-    fecha_apertura = models.DateTimeField()
-    fecha_cierre = models.DateTimeField()
-    numero_caja = models.IntegerField()
-    cajero_responsable = models.CharField(max_length=100)
-    saldo_inicial = models.DecimalField(max_digits=10, decimal_places=2)
-    saldo_final = models.DecimalField(max_digits=10, decimal_places=2)
+METODO_CHOICES = [
+    ('efectivo',      'Efectivo'),
+    ('tarjeta',       'Tarjeta'),
+    ('transferencia', 'Transferencia'),
+    ('nequi',         'Nequi'),
+    ('daviplata',     'Daviplata'),
+]
 
-    def __str__(self):
-        return f"Caja {self.numero_caja}"
+ESTADO_CHOICES = [
+    ('pendiente',    'Pendiente'),
+    ('aprobado',     'Aprobado'),
+    ('rechazado',    'Rechazado'),
+    ('reembolsado',  'Reembolsado'),
+]
 
 
 class Pago(models.Model):
-    numero_pago = models.AutoField(primary_key=True)
-    fecha_pago = models.DateField()
-    metodo_pago = models.CharField(max_length=50)
-    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    metodo_pago = models.CharField(max_length=50, choices=METODO_CHOICES, default='efectivo')
+    monto       = models.DecimalField(max_digits=10, decimal_places=2)
+    referencia  = models.CharField(max_length=100, blank=True, default='')
+    estado      = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    fecha_pago  = models.DateTimeField(auto_now_add=True)
+    descripcion = models.TextField(blank=True, default='')
+
+    class Meta:
+        ordering = ['-fecha_pago']
 
     def __str__(self):
-        return f"Pago {self.numero_pago}"
+        return f'Pago #{self.pk} – ${self.monto}'

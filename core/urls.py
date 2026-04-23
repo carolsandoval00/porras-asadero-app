@@ -9,10 +9,9 @@ urlpatterns = [
     path('usuarios/', include('usuarios.urls')),
     path('reservas/', include('reservas.urls')),
     path('pedidos/', include('pedidos.urls')),
-    path('pago/', include('pago.urls')),
-    path('',  inicio, name='inicio'), 
-
-
+    # Cambia esto para que sea una ruta independiente
+    path('pagos/', include('pago.urls')), 
+    
+    path('', inicio, name='inicio'),
     path('panel/', inicio_usuarios, name='inicio_admin'),
-
-    ]
+]

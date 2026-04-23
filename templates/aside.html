@@ -1,50 +1,66 @@
 <style>
+    /* Clase para resaltar el botón de la sección actual */
     .active-custom {
-        background-color: #2ecc71 !important;
-        color: #fff !important;
+        background-color: #C0392B !important;
+        color: #F5ECD7 !important;
+    }
+    /* Efecto hover opcional */
+    .nav-link:hover {
+        background-color: rgba(232, 101, 26, 0.1);
+        color: #E8651A !important;
     }
 </style>
 
-<aside class="bg-dark text-white d-flex flex-column p-3 shadow" style="width: 260px; height: 100vh; position: sticky; top: 0;">
-    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-        <span class="fs-4 fw-bold text-custom"><i class="bi bi-fire me-2"></i>Porras Asadero</span>
+<aside class="d-flex flex-column p-3 shadow" style="background-color: #1A1008; color: #F5ECD7; width: 260px; height: 100vh; position: sticky; top: 0;">
+    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+        <span class="fs-4 fw-bold" style="color: #E8651A;"><i class="bi bi-fire me-2"></i>Porras Asadero</span>
     </a>
-    <hr>
+    
+    <hr style="border-color: #3a2a18;">
+    
     <ul class="nav nav-pills flex-column mb-auto gap-1">
         <li class="nav-item">
-            <a href="{% url 'inicio_usuarios' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'inicio_usuarios' %}active-custom{% endif %}">
+            <a href="{% url 'inicio_admin' %}" class="nav-link {% if request.resolver_match.url_name == 'inicio_admin' %}active-custom{% endif %}" style="color: #F5ECD7;">
                 <i class="bi bi-speedometer2 me-2"></i>
                 Panel de Control
             </a>
         </li>
+
         <li>
-            <a href="{% url 'lista_personal' %}" class="nav-link text-white {% if request.resolver_match.url_name == 'lista_personal' %}active-custom{% endif %}">
+            <a href="{% url 'lista_personal' %}" class="nav-link {% if request.resolver_match.url_name == 'lista_personal' %}active-custom{% endif %}" style="color: #F5ECD7;">
                 <i class="bi bi-people me-2"></i>
                 Usuarios y Personal
             </a>
         </li>
+
         <li>
-    <a href="/pedidos/" class="nav-link text-white {% if request.resolver_match.namespace == 'pedidos' %}active-custom{% endif %}">
-        <i class="bi bi-journal-text me-2"></i>
-        Pedidos
-    </a>
-<li>
-    <a href="{% url 'lista_personal' %}?seccion=crear" class="nav-link text-white {% if request.resolver_match.url_name == 'registrar_personal' %}active-custom{% endif %}">
-        <i class="bi bi-person-plus me-2"></i>
-        Nuevo Usuario
-    </a>
-</li>
-</li>
+            <a href="/pedidos/" class="nav-link {% if request.resolver_match.namespace == 'pedidos' %}active-custom{% endif %}" style="color: #F5ECD7;">
+                <i class="bi bi-journal-text me-2"></i>
+                Pedidos
+            </a>
+        </li>
+
         <li>
-            <a href="#" class="nav-link text-white">
+            <a href="{% url 'pago:dashboard' %}" 
+               class="nav-link {% if request.resolver_match.namespace == 'pago' %}active-custom{% endif %}" 
+               style="color: #F5ECD7;">
+                <i class="bi bi-credit-card me-2"></i>
+                Gestión de Pagos
+            </a>
+        </li>
+
+        <li>
+            <a href="{% url 'reserva_inicio' %}" class="nav-link {% if request.resolver_match.url_name == 'reserva_inicio' %}active-custom{% endif %}" style="color: #F5ECD7;">
                 <i class="bi bi-calendar-check me-2"></i>
                 Reservas y Mesas
             </a>
         </li>
     </ul>
-    <hr>
+
+    <hr style="border-color: #3a2a18;">
+
     <div class="dropdown">
-        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
+        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" style="color: #F5ECD7;" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-person-circle fs-5 me-2"></i>
             <strong>{{ user.username|default:"Admin" }}</strong>
         </a>
