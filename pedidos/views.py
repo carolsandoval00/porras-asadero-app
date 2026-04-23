@@ -8,19 +8,83 @@ import uuid
 
 
 # ─────────────────────────────────────────────────────────────
-#  DASHBOARD
+#  DASHBOARD — maneja todos los formularios del template
 # ─────────────────────────────────────────────────────────────
 def dashboard(request):
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+
+        if action == 'pedido_crear':
+            form = PedidoForm(request.POST)
+            if form.is_valid():
+                pedido = form.save(commit=False)
+                pedido.creado_por = request.user
+                pedido.save()
+                messages.success(request, '✅ Pedido creado correctamente.')
+                return redirect('pedidos:dashboard')
+            else:
+                messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
+
+        elif action == 'orden_crear':
+            form = OrdenForm(request.POST)
+            if form.is_valid():
+                orden = form.save(commit=False)
+                orden.numero_orden = f'ORD-{uuid.uuid4().hex[:8].upper()}'
+                orden.save()
+                messages.success(request, '✅ Orden creada.')
+                return redirect('pedidos:dashboard')
+            else:
+                messages.error(request, '❌ Corrige los errores en el formulario de orden.')
+
+        elif action == 'pago_crear':
+            form = PagoForm(request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, '✅ Pago registrado.')
+                return redirect('pedidos:dashboard')
+            else:
+                messages.error(request, '❌ Corrige los errores en el formulario de pago.')
+
+        elif action == 'caja_abrir':
+            form = CajaForm(request.POST)
+            if form.is_valid():
+                caja = form.save(commit=False)
+                caja.responsable    = request.user
+                caja.fecha_apertura = timezone.now()
+                caja.estado         = 'abierta'
+                caja.save()
+                messages.success(request, '✅ Caja abierta.')
+                return redirect('pedidos:dashboard')
+            else:
+                messages.error(request, '❌ Corrige los errores en el formulario de caja.')
+
     context = {
         'titulo': 'Módulo de Pedidos',
         'nombre': request.user.get_full_name() or request.user.username,
-        'total_pedidos':    Pedido.objects.count(),
+
+        # Stats del dashboard
+        'total_pedidos':      Pedido.objects.count(),
         'pedidos_pendientes': Pedido.objects.filter(estado='pendiente').count(),
-        'total_ordenes':    Orden.objects.count(),
-        'ordenes_abiertas': Orden.objects.filter(estado='abierta').count(),
-        'total_pagos':      Pago.objects.filter(estado='aprobado').aggregate(t=Sum('monto'))['t'] or 0,
-        'caja_abierta':     Caja.objects.filter(estado='abierta').first(),
-        'ultimos_pedidos':  Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')[:5],
+        'total_ordenes':      Orden.objects.count(),
+        'ordenes_abiertas':   Orden.objects.filter(estado='abierta').count(),
+        'total_pagos':        Pago.objects.filter(estado='aprobado').aggregate(t=Sum('monto'))['t'] or 0,
+        'caja_abierta':       Caja.objects.filter(estado='abierta').first(),
+        'ultimos_pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')[:5],
+
+        # Listas completas
+        'pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion'),
+        'ordenes':    Orden.objects.select_related('pedido').all(),
+        'pagos':      Pago.objects.select_related('orden').all(),
+        'cajas':      Caja.objects.select_related('responsable').all(),
+        'estados':    Pedido.ESTADO_CHOICES,
+        'q':          '',
+        'estado_sel': '',
+
+        # Formularios vacíos
+        'form_pedido': PedidoForm(),
+        'form_orden':  OrdenForm(),
+        'form_pago':   PagoForm(),
+        'form_caja':   CajaForm(),
     }
     return render(request, 'pedidos/dashboard.html', context)
 
@@ -75,11 +139,8 @@ def pedido_eliminar(request, pk):
     if request.method == 'POST':
         pedido.delete()
         messages.success(request, '🗑️ Pedido eliminado.')
-        return redirect('pedidos:pedido_lista')
-    return render(request, 'pedidos/confirmar_eliminar.html', {
-        'titulo': 'Eliminar Pedido', 'nombre': request.user.username,
-        'objeto': pedido, 'back_url': 'pedidos:pedido_lista',
-    })
+        return redirect('pedidos:dashboard')
+    return redirect('pedidos:dashboard')
 
 
 # ─────────────────────────────────────────────────────────────
@@ -119,11 +180,8 @@ def orden_eliminar(request, pk):
     if request.method == 'POST':
         orden.delete()
         messages.success(request, '🗑️ Orden eliminada.')
-        return redirect('pedidos:orden_lista')
-    return render(request, 'pedidos/confirmar_eliminar.html', {
-        'titulo': 'Eliminar Orden', 'nombre': request.user.username,
-        'objeto': orden, 'back_url': 'pedidos:orden_lista',
-    })
+        return redirect('pedidos:dashboard')
+    return redirect('pedidos:dashboard')
 
 
 # ─────────────────────────────────────────────────────────────
@@ -182,9 +240,9 @@ def caja_abrir(request):
     form = CajaForm(request.POST or None)
     if form.is_valid():
         caja = form.save(commit=False)
-        caja.responsable   = request.user
+        caja.responsable    = request.user
         caja.fecha_apertura = timezone.now()
-        caja.estado        = 'abierta'
+        caja.estado         = 'abierta'
         caja.save()
         messages.success(request, '✅ Caja abierta.')
         return redirect('pedidos:caja_lista')
