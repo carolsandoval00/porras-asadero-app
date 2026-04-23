@@ -253,7 +253,7 @@
       <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('pedido-crear')">➕ Nuevo pedido</button>
     </div>
     <div class="pm-card-body">
-      <form method="get" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <form method="get" action="#pedido-lista" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
         <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;"
                type="text" name="q" value="{{ q }}" placeholder="🔍 Buscar cliente…">
         <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;">
@@ -822,7 +822,12 @@ function limpiarFormPedido() {
 document.addEventListener('DOMContentLoaded', function() {
   // Navega por hash si existe
   const hash = window.location.hash.replace('#', '');
-  if (hash) showSection(hash);
+  if (hash) {
+    showSection(hash);
+  } else if (window.location.search) {
+    // Si hay parámetros GET (búsqueda), abre pedido-lista automáticamente
+    showSection('pedido-lista');
+  }
 
   // Auto-oculta alertas tras 4 s
   document.querySelectorAll('.pm-alert').forEach(function(a) {

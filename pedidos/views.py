@@ -58,6 +58,18 @@ def dashboard(request):
             else:
                 messages.error(request, '❌ Corrige los errores en el formulario de caja.')
 
+    # ── Filtros de búsqueda (GET) ──────────────────────────────
+    q          = request.GET.get('q', '').strip()
+    estado_sel = request.GET.get('estado', '').strip()
+
+    pedidos_qs = Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')
+    if q:
+        pedidos_qs = pedidos_qs.filter(
+            Q(cliente__icontains=q) | Q(descripcion__icontains=q)
+        )
+    if estado_sel:
+        pedidos_qs = pedidos_qs.filter(estado=estado_sel)
+
     context = {
         'titulo': 'Módulo de Pedidos',
         'nombre': request.user.get_full_name() or request.user.username,
@@ -71,14 +83,14 @@ def dashboard(request):
         'caja_abierta':       Caja.objects.filter(estado='abierta').first(),
         'ultimos_pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')[:5],
 
-        # Listas completas
-        'pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion'),
+        # Lista de pedidos filtrada
+        'pedidos':    pedidos_qs,
         'ordenes':    Orden.objects.select_related('pedido').all(),
         'pagos':      Pago.objects.select_related('orden').all(),
         'cajas':      Caja.objects.select_related('responsable').all(),
         'estados':    Pedido.ESTADO_CHOICES,
-        'q':          '',
-        'estado_sel': '',
+        'q':          q,
+        'estado_sel': estado_sel,
 
         # Formularios vacíos
         'form_pedido': PedidoForm(),
