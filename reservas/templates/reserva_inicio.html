@@ -390,6 +390,39 @@
         <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border)">
           <div class="mc-card-title" style="margin:0;border:none;padding:0">Mesas registradas</div>
         </div>
+        <div class="mc-filter-bar" style="padding:10px 15px;">
+  <input 
+    type="text" 
+    class="mc-input" 
+    id="mc-buscar-mesa" 
+    placeholder="Buscar por número..."
+    oninput="mcRenderTablaMesas()"
+  >
+
+  <select 
+    class="mc-select" 
+    id="mc-filtro-ubicacion" 
+    onchange="mcRenderTablaMesas()"
+  >
+    <option value="">Todas las ubicaciones</option>
+    <option>Salón principal</option>
+    <option>Salón secundario</option>
+    <option>Terraza</option>
+    <option>Privado</option>
+  </select>
+
+  <select 
+    class="mc-select" 
+    id="mc-filtro-capacidad" 
+    onchange="mcRenderTablaMesas()"
+  >
+    <option value="">Todas las capacidades</option>
+    <option value="2">2 personas</option>
+    <option value="4">4 personas</option>
+    <option value="6">6 personas</option>
+    <option value="8">8 personas</option>
+  </select>
+</div>
         <div class="mc-table-wrap">
           <table class="mc-table">
             <thead><tr><th>Mesa</th><th>Capacidad</th><th>Ubicación</th><th>Estado</th><th></th></tr></thead>
@@ -714,18 +747,44 @@
 };
 
   // TABLA MESAS
-  window.mcRenderTablaMesas = function(){
+ window.mcRenderTablaMesas = function(){
+  const buscar = document.getElementById('mc-buscar-mesa')?.value.toLowerCase() || '';
+  const ubicacion = document.getElementById('mc-filtro-ubicacion')?.value || '';
+  const capacidad = document.getElementById('mc-filtro-capacidad')?.value || '';
+
   const tb = document.getElementById('mc-tbody-mesas');
-  if(!mesas.length){
-    tb.innerHTML=`<tr><td colspan="5"><div class="mc-empty"><p>Sin mesas registradas</p></div></td></tr>`;
+
+  let lista = mesas.filter(m => {
+    const matchNumero = String(m.numero).includes(buscar);
+    const matchUbicacion = !ubicacion || m.ubicacion === ubicacion;
+    const matchCapacidad = !capacidad || m.capacidad == capacidad;
+
+    return matchNumero && matchUbicacion && matchCapacidad;
+  });
+
+  if(!lista.length){
+    tb.innerHTML = `
+      <tr>
+        <td colspan="5">
+          <div class="mc-empty">
+            <p>No se encontraron mesas</p>
+          </div>
+        </td>
+      </tr>`;
     return;
   }
 
-  tb.innerHTML = mesas.map(m=>`<tr>
+  tb.innerHTML = lista.map(m=>`<tr>
     <td style="font-weight:500">Mesa ${m.numero}</td>
     <td>${m.capacidad} pers.</td>
     <td style="font-size:12px;color:var(--muted)">${m.ubicacion}</td>
-    <td><span class="mc-badge ${m.estado==='disponible'?'mc-badge-ok':m.estado==='reservada'?'mc-badge-warn':'mc-badge-danger'}">${m.estado}</span></td>
+    <td>
+      <span class="mc-badge ${
+        m.estado==='disponible'?'mc-badge-ok':
+        m.estado==='reservada'?'mc-badge-warn':
+        'mc-badge-danger'
+      }">${m.estado}</span>
+    </td>
     <td>
       <div class="mc-action-btns">
         <button class="mc-icon-btn" onclick="mcVerMesa(${m.id})">Ver</button>
