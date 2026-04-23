@@ -444,6 +444,7 @@
   let reservas = JSON.parse(localStorage.getItem('mc_reservas') || '[]');
   let mesas    = JSON.parse(localStorage.getItem('mc_mesas')    || '[]');
   let editandoId = null;
+  let editandoMesaId = null;
 
   function save(){
     localStorage.setItem('mc_reservas', JSON.stringify(reservas));
@@ -642,38 +643,122 @@
   };
 
   // CREAR MESA
-  window.mcCrearMesa = function(){
-    const num = parseInt(document.getElementById('mc-m-numero').value);
-    const cap = parseInt(document.getElementById('mc-m-capacidad').value);
-    const ubi = document.getElementById('mc-m-ubicacion').value;
-    const est = document.getElementById('mc-m-estado').value;
-    if(!num||!cap){ toast('Ingresa número y capacidad','error'); return; }
-    if(mesas.find(m=>m.numero===num)){ toast('Ya existe una mesa con ese número','error'); return; }
-    const cols=4,size=92,gap=20,offX=28,offY=46;
+ window.mcCrearMesa = function(){
+  const num = parseInt(document.getElementById('mc-m-numero').value);
+  const cap = parseInt(document.getElementById('mc-m-capacidad').value);
+  const ubi = document.getElementById('mc-m-ubicacion').value;
+  const est = document.getElementById('mc-m-estado').value;
+
+  if(!num || !cap){
+    toast('Ingresa número y capacidad','error');
+    return;
+  }
+
+  // 🔴 MODO EDITAR
+  if(editandoMesaId){
+
+    // evitar duplicados (excepto la misma mesa)
+    if(mesas.find(m => m.numero === num && m.id !== editandoMesaId)){
+      toast('Ya existe una mesa con ese número','error');
+      return;
+    }
+
+    mesas = mesas.map(m => 
+      m.id === editandoMesaId
+        ? {...m, numero:num, capacidad:cap, ubicacion:ubi, estado:est}
+        : m
+    );
+
+    toast('Mesa actualizada');
+
+  } 
+  // 🟢 MODO CREAR
+  else {
+
+    if(mesas.find(m=>m.numero===num)){
+      toast('Ya existe una mesa con ese número','error');
+      return;
+    }
+
+    const cols=4, size=92, gap=20, offX=28, offY=46;
     const idx=mesas.length, col=idx%cols, row=Math.floor(idx/cols);
-    mesas.push({id:Date.now(),numero:num,capacidad:cap,ubicacion:ubi,estado:est,
-      x:offX+col*(size+gap), y:offY+row*(size+gap)});
-    save(); mcRenderTablaMesas();
-    document.getElementById('mc-m-numero').value='';
-    document.getElementById('mc-m-capacidad').value='';
+
+    mesas.push({
+      id: Date.now(),
+      numero: num,
+      capacidad: cap,
+      ubicacion: ubi,
+      estado: est,
+      x: offX + col*(size+gap),
+      y: offY + row*(size+gap)
+    });
+
     toast('Mesa '+num+' agregada');
-  };
+  }
+
+  save();
+  mcRenderTablaMesas();
+  mcRenderDiagrama();
+
+  // 🧼 LIMPIAR + RESET UI
+  document.getElementById('mc-m-numero').value='';
+  document.getElementById('mc-m-capacidad').value='';
+  document.getElementById('mc-m-ubicacion').value='Salón principal';
+  document.getElementById('mc-m-estado').value='disponible';
+
+  document.querySelector('.mc-card-title').textContent = 'Agregar mesa';
+  document.querySelector('#mc-crear-mesa .mc-sec-header h2').textContent = 'Gestión de mesas';
+  document.querySelector('#mc-crear-mesa .mc-btn-primary').textContent = 'Agregar mesa';
+
+  editandoMesaId = null;
+};
 
   // TABLA MESAS
   window.mcRenderTablaMesas = function(){
-    const tb = document.getElementById('mc-tbody-mesas');
-    if(!mesas.length){
-      tb.innerHTML=`<tr><td colspan="5"><div class="mc-empty"><p>Sin mesas registradas</p></div></td></tr>`;
-      return;
-    }
-    tb.innerHTML = mesas.map(m=>`<tr>
-      <td style="font-weight:500">Mesa ${m.numero}</td>
-      <td>${m.capacidad} pers.</td>
-      <td style="font-size:12px;color:var(--muted)">${m.ubicacion}</td>
-      <td><span class="mc-badge ${m.estado==='disponible'?'mc-badge-ok':m.estado==='reservada'?'mc-badge-warn':'mc-badge-danger'}">${m.estado}</span></td>
-      <td><button class="mc-icon-btn del" onclick="mcPedirEliminarMesa(${m.id})">×</button></td>
-    </tr>`).join('');
-  };
+  const tb = document.getElementById('mc-tbody-mesas');
+  if(!mesas.length){
+    tb.innerHTML=`<tr><td colspan="5"><div class="mc-empty"><p>Sin mesas registradas</p></div></td></tr>`;
+    return;
+  }
+
+  tb.innerHTML = mesas.map(m=>`<tr>
+    <td style="font-weight:500">Mesa ${m.numero}</td>
+    <td>${m.capacidad} pers.</td>
+    <td style="font-size:12px;color:var(--muted)">${m.ubicacion}</td>
+    <td><span class="mc-badge ${m.estado==='disponible'?'mc-badge-ok':m.estado==='reservada'?'mc-badge-warn':'mc-badge-danger'}">${m.estado}</span></td>
+    <td>
+      <div class="mc-action-btns">
+        <button class="mc-icon-btn" onclick="mcVerMesa(${m.id})">Ver</button>
+        <button class="mc-icon-btn edit" onclick="mcEditarMesa(${m.id})">Editar</button>
+        <button class="mc-icon-btn del" onclick="mcPedirEliminarMesa(${m.id})">Borrar</button>
+      </div>
+    </td>
+  </tr>`).join('');
+};
+window.mcEditarMesa = function(id){
+  const m = mesas.find(x=>x.id===id);
+  if(!m) return;
+
+  editandoMesaId = id;
+
+  mcShow('crear-mesa');
+
+  setTimeout(()=>{
+    document.getElementById('mc-m-numero').value = m.numero;
+    document.getElementById('mc-m-capacidad').value = m.capacidad;
+    document.getElementById('mc-m-ubicacion').value = m.ubicacion;
+    document.getElementById('mc-m-estado').value = m.estado;
+
+    // 🔥 CAMBIOS VISUALES
+    document.querySelector('.mc-card-title').textContent = 'Editar mesa';
+    document.querySelector('#mc-crear-mesa .mc-sec-header h2').textContent = 'Editando mesa ' + m.numero;
+
+    document.querySelector('#mc-crear-mesa .mc-btn-primary').textContent = 'Actualizar mesa';
+
+  },30);
+
+  toast('Editando mesa ' + m.numero);
+};
 
   // DIAGRAMA
   window.mcRenderDiagrama = function(){
