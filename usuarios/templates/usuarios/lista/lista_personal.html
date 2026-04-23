@@ -298,7 +298,7 @@
             </div>
             <div class="fg2">
                 <div><label class="f-label">Correo electrónico *</label><input type="email" class="f-inp" id="u-email" placeholder="correo@porras.com"></div>
-                <div><label class="f-label">Teléfono</label><input type="tel" class="f-inp" id="u-tel" placeholder="3001234567"></div>
+                <div><label class="f-label">Teléfono</label><input type="tel" class="f-inp" id="u-tel" placeholder="3001234567" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
             </div>
             <div><label class="f-label">Dirección</label><input class="f-inp" id="u-dir" placeholder="Ej: Calle 93 # 15-20, Bogotá"></div>
         </div>
@@ -593,13 +593,29 @@ window.editar=function(id){
 };
 
 /* GUARDAR */
+/* GUARDAR */
 window.guardar=function(){
     const nom=document.getElementById('u-nom').value.trim();
     const ape=document.getElementById('u-ape').value.trim();
     const ema=document.getElementById('u-email').value.trim();
     const usr=document.getElementById('u-user').value.trim();
     const rol=document.getElementById('u-rol').value;
+    const tel=document.getElementById('u-tel').value.trim();
+
+    // Validar campos obligatorios
     if(!nom||!ape||!ema||!usr||!rol){toast('Completa los campos obligatorios (*)','err');return;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ema)){toast('El correo electrónico no es válido','err');return;}
+
+    // Validar teléfono: solo números y máximo 10 dígitos
+    if(tel){
+        if(!/^\d+$/.test(tel)){toast('El teléfono solo debe contener números','err');return;}
+        if(tel.length>10){toast('El teléfono no puede tener más de 10 dígitos','err');return;}
+    }
+
+    // Validar correo electrónico
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(!emailRegex.test(ema)){toast('El correo electrónico no es válido','err');return;}
+
     if(!editId){
         const pw=document.getElementById('u-pw').value;
         const pw2=document.getElementById('u-pw2').value;
@@ -618,7 +634,7 @@ window.guardar=function(){
     const obj={
         id:editId||Date.now(),nom,ape,email:ema,user:usr,rol,
         e:document.getElementById('u-est').value,
-        tel:document.getElementById('u-tel').value.trim(),
+        tel:tel,
         doc:document.getElementById('u-doc').value.trim(),
         tdoc:document.getElementById('u-tdoc').value,
         dir:document.getElementById('u-dir').value.trim(),
