@@ -117,15 +117,9 @@ def actualizar_usuarios(request, id):
     return render(request, TEMPLATE_LOGIN, {'vista': 'actualizar', 'usuario': usuario_edit})
 
 @login_required
-def inactivar_usuario(request):
-    if request.user.rol == 'ADMIN' or request.user.is_superuser:
-        username = request.GET.get('username')
-        if username:
-            usuario = get_object_or_404(Usuario, username=username)
-            usuario.is_active = False
-            usuario.save()
-            messages.warning(request, f"Usuario {username} inactivado.")
-    return redirect('lista_personal')
+def inicio_usuarios(request):
+    usuarios = Usuario.objects.all()
+    return render(request, TEMPLATE_LISTA, {'vista': 'inicio', 'usuarios': usuarios})
 
 @login_required
 def panel_perfil(request):
@@ -143,6 +137,22 @@ def acceder_sistema(request):
             rol='ADMIN'
         )
     return redirect('login')
+
+@login_required
+def inicio_usuarios(request):
+    usuarios = Usuario.objects.all()
+    return render(request, TEMPLATE_LOGIN, {'vista': 'inicio', 'usuarios': usuarios})
+
+@login_required
+def inactivar_usuario(request):
+    if request.user.rol == 'ADMIN' or request.user.is_superuser:
+        username = request.GET.get('username')
+        if username:
+            usuario = get_object_or_404(Usuario, username=username)
+            usuario.is_active = False
+            usuario.save()
+            messages.warning(request, f"Usuario {username} inactivado.")
+    return redirect('lista_personal')
 
 class CustomPasswordResetView(PasswordResetView):
     template_name = TEMPLATE_LOGIN
