@@ -124,7 +124,6 @@
                            letter-spacing:.5px; color:var(--p-muted); margin-bottom:.2rem; }
   .pm-detail-item  .val { font-size:.95rem; color:var(--p-text); font-weight:500; }
 
-  /* Botones +/- cantidad en tabla de platos */
   .qty-btn {
     display:inline-flex; align-items:center; justify-content:center;
     width:26px; height:26px; border-radius:50%; border:1px solid var(--p-border);
@@ -229,9 +228,9 @@
               <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
               <td>
                 <button class="pm-btn pm-btn-light pm-btn-sm"
-                        onclick="loadEditForm('pedido',{{ p.pk }})">✏️</button>
+                        onclick="loadEditForm('pedido',{{ p.pk }})">✏️ Eliminar </button>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️</button>
+                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️ Editar</button>
               </td>
             </tr>
             {% empty %}
@@ -349,7 +348,6 @@
           </div>
         </div>
 
-        <!-- TABLA DE PLATOS SELECCIONADOS -->
         <div style="margin-bottom:1.2rem;">
           <label style="font-size:.82rem;font-weight:600;color:var(--p-muted);text-transform:uppercase;letter-spacing:.5px;">Platos del pedido</label>
           <div id="platos-vacio" style="padding:1rem;text-align:center;color:var(--p-muted);font-size:.88rem;background:var(--p-surface);border-radius:8px;margin-top:.4rem;">
@@ -394,6 +392,20 @@
       <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('orden-crear')">➕ Nueva orden</button>
     </div>
     <div class="pm-card-body">
+
+      <!-- BARRA DE BÚSQUEDA -->
+      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;"
+               type="text" name="q_orden" value="{{ q_orden }}" placeholder="🔍 Buscar cliente u orden…">
+        <select name="estado_orden" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;">
+          <option value="">Todos los estados</option>
+          {% for val,lbl in estados_orden %}
+          <option value="{{ val }}" {% if estado_orden_sel == val %}selected{% endif %}>{{ lbl }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
+      </form>
+
       <div class="pm-table-wrap">
         <table class="pm-table">
           <thead>
@@ -409,10 +421,10 @@
               <td>${{ o.impuesto }}</td>
               <td><strong>${{ o.total }}</strong></td>
               <td>{{ o.creada_en|date:"d/m/Y" }}</td>
-              <td style="display:flex;gap:.3rem">
-                <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">🔍 Ver</a>
+              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+                <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('orden',{{ o.pk }},'{{ o.numero_orden }}')">🗑️</button>
+                        onclick="confirmDelete('orden',{{ o.pk }},'{{ o.numero_orden }}')">🗑️ Eliminar</button>
               </td>
             </tr>
             {% empty %}
@@ -648,9 +660,6 @@
 
 
 <script>
-// ═══════════════════════════════════════════
-// NAVEGACIÓN DE SECCIONES
-// ═══════════════════════════════════════════
 function showSection(name) {
   document.querySelectorAll('.pm-section').forEach(s => s.classList.remove('active'));
   const target = document.getElementById('section-' + name);
@@ -660,9 +669,6 @@ function showSection(name) {
   }
 }
 
-// ═══════════════════════════════════════════
-// MODAL ELIMINAR
-// ═══════════════════════════════════════════
 function confirmDelete(tipo, pk, nombre) {
   const base = tipo === 'pedido'
     ? "{% url 'pedidos:pedido_eliminar' 9999 %}"
@@ -690,27 +696,20 @@ document.getElementById('modal-delete').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 
-// ═══════════════════════════════════════════
-// GESTIÓN DE PLATOS EN PEDIDO
-// ═══════════════════════════════════════════
-// Estructura: { "Nombre plato": { precio: Number, cantidad: Number } }
 let platosEnPedido = {};
 
 function agregarPlato(select) {
   const val = select.value;
   if (!val) return;
-
   const partes  = val.split('|');
   const nombre  = partes[0];
   const precio  = parseInt(partes[1], 10);
-
   if (platosEnPedido[nombre]) {
     platosEnPedido[nombre].cantidad += 1;
   } else {
     platosEnPedido[nombre] = { precio: precio, cantidad: 1 };
   }
-
-  select.value = ''; // Resetea el select tras agregar
+  select.value = '';
   renderTablaPlatos();
 }
 
@@ -737,30 +736,22 @@ function renderTablaPlatos() {
   const tabla        = document.getElementById('tabla-platos');
   const vacio        = document.getElementById('platos-vacio');
   const totalDisplay = document.getElementById('total-display');
-
   const nombres = Object.keys(platosEnPedido);
-
   if (nombres.length === 0) {
     tabla.style.display = 'none';
     vacio.style.display = 'block';
     totalDisplay.textContent = '$0';
     return;
   }
-
   tabla.style.display = 'table';
   vacio.style.display = 'none';
-
   let total = 0;
   tbody.innerHTML = '';
-
   nombres.forEach(function(nombre) {
     const item     = platosEnPedido[nombre];
     const subtotal = item.precio * item.cantidad;
     total += subtotal;
-
-    // Escapamos comillas simples en el nombre para usarlo en onclick
     const nombreEsc = nombre.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-
     const tr = document.createElement('tr');
     tr.innerHTML =
       '<td>' + nombre + '</td>' +
@@ -780,56 +771,46 @@ function renderTablaPlatos() {
       '</td>';
     tbody.appendChild(tr);
   });
-
   totalDisplay.textContent = formatCOP(total);
 }
 
 function prepararPedido() {
   const nombres = Object.keys(platosEnPedido);
-
   if (nombres.length === 0) {
     alert('Debes agregar al menos un plato al pedido.');
     return false;
   }
-
-  // Descripción: "2x 1 Carne, 1x Sopa, 3x Cerveza"
   const descripcion = nombres
     .map(function(n) { return platosEnPedido[n].cantidad + 'x ' + n; })
     .join(', ');
-
-  // Total numérico
   const total = nombres.reduce(function(sum, n) {
     return sum + (platosEnPedido[n].precio * platosEnPedido[n].cantidad);
   }, 0);
-
   document.getElementById('input-descripcion').value = descripcion;
   document.getElementById('input-total').value       = total;
-
-  return true; // Permite el envío del form
+  return true;
 }
 
 function limpiarFormPedido() {
   platosEnPedido = {};
   renderTablaPlatos();
-  // Limpia también el campo cliente si existe
   const clienteInput = document.querySelector('#form-crear-pedido input[name="cliente"]');
   if (clienteInput) clienteInput.value = '';
 }
 
-// ═══════════════════════════════════════════
-// INICIALIZACIÓN
-// ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
-  // Navega por hash si existe
   const hash = window.location.hash.replace('#', '');
   if (hash) {
     showSection(hash);
   } else if (window.location.search) {
-    // Si hay parámetros GET (búsqueda), abre pedido-lista automáticamente
-    showSection('pedido-lista');
+    // Si hay q_orden en la URL, abre la sección de órdenes
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('q_orden') || params.has('estado_orden')) {
+      showSection('orden-lista');
+    } else {
+      showSection('pedido-lista');
+    }
   }
-
-  // Auto-oculta alertas tras 4 s
   document.querySelectorAll('.pm-alert').forEach(function(a) {
     setTimeout(function() {
       a.style.transition = 'opacity .5s';
@@ -838,8 +819,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 4000);
   });
 });
-
 </script>
-
 
 {% endblock %}

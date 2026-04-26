@@ -69,6 +69,17 @@ def dashboard(request):
         )
     if estado_sel:
         pedidos_qs = pedidos_qs.filter(estado=estado_sel)
+        
+    q_orden          = request.GET.get('q_orden', '').strip()
+    estado_orden_sel = request.GET.get('estado_orden', '').strip()
+
+    ordenes_qs = Orden.objects.select_related('pedido').order_by('-creada_en')
+    if q_orden:
+        ordenes_qs = ordenes_qs.filter(
+            Q(pedido__cliente__icontains=q_orden) | Q(numero_orden__icontains=q_orden)
+        )
+    if estado_orden_sel:
+        ordenes_qs = ordenes_qs.filter(estado=estado_orden_sel)
 
     context = {
         'titulo': 'Módulo de Pedidos',
@@ -85,7 +96,10 @@ def dashboard(request):
 
         # Lista de pedidos filtrada
         'pedidos':    pedidos_qs,
-        'ordenes':    Orden.objects.select_related('pedido').all(),
+        'ordenes':           ordenes_qs,
+        'q_orden':           q_orden,
+        'estado_orden_sel':  estado_orden_sel,
+        'estados_orden':     Orden.ESTADO_CHOICES,
         'pagos':      Pago.objects.select_related('orden').all(),
         'cajas':      Caja.objects.select_related('responsable').all(),
         'estados':    Pedido.ESTADO_CHOICES,
@@ -184,6 +198,21 @@ def orden_detalle(request, pk):
     return render(request, 'pedidos/orden_detalle.html', {
         'titulo': f'Orden {orden.numero_orden}', 'nombre': request.user.username,
         'orden': orden,
+    })
+    
+def orden_editar(request, pk):
+    orden = get_object_or_404(Orden, pk=pk)
+    form  = OrdenForm(request.POST or None, instance=orden)
+    if form.is_valid():
+        form.save()
+        messages.success(request, f'✅ Orden {orden.numero_orden} actualizada.')
+        return redirect('pedidos:dashboard')
+    return render(request, 'pedidos/orden_form.html', {
+        'titulo': f'Editar Orden {orden.numero_orden}',
+        'nombre': request.user.get_full_name() or request.user.username,
+        'form':   form,
+        'accion': 'Actualizar',
+        'orden':  orden,
     })
 
 
