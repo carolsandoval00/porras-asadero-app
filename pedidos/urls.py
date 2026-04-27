@@ -14,10 +14,11 @@ urlpatterns = [
     path('pedidos/<int:pk>/eliminar/', views.pedido_eliminar, name='pedido_eliminar'),
 
     # ── Órdenes ──────────────────────────────────────────────
-    path('ordenes/',                views.orden_lista,     name='orden_lista'),
-    path('ordenes/crear/',          views.orden_crear,     name='orden_crear'),
-    path('ordenes/<int:pk>/',       views.orden_detalle,   name='orden_detalle'),
-    path('ordenes/<int:pk>/eliminar/', views.orden_eliminar, name='orden_eliminar'),
+    path('ordenes/',                    views.orden_lista,     name='orden_lista'),
+    path('ordenes/crear/',              views.orden_crear,     name='orden_crear'),
+    path('ordenes/<int:pk>/',           views.orden_detalle,   name='orden_detalle'),
+    path('ordenes/<int:pk>/editar/',    views.orden_editar,    name='orden_editar'),  
+    path('ordenes/<int:pk>/eliminar/',  views.orden_eliminar,  name='orden_eliminar'),
 
     # ── Pagos ─────────────────────────────────────────────────
     path('pagos/',                  views.pago_lista,      name='pago_lista'),
