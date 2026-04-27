@@ -224,14 +224,14 @@
             <tr>
               <td><strong>#{{ p.pk }}</strong></td>
               <td>{{ p.cliente }}</td>
-              <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
+              <td><span class="pm-badge pm-badge-{{ p.estado }}" data-estado="{{ p.estado }}">{{ p.get_estado_display }}</span></td>
               <td>${{ p.total }}</td>
               <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
               <td>
                 <button class="pm-btn pm-btn-light pm-btn-sm"
-                        onclick="loadEditForm('pedido',{{ p.pk }})">✏️</button>
+                        onclick="editarPedido(this, {{ p.pk }}, '{{ p.descripcion|escapejs }}')">Editar</button>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️</button>
+                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">Eliminar</button>
               </td>
             </tr>
             {% empty %}
@@ -280,7 +280,6 @@
               <td>${{ p.total }}</td>
               <td>{{ p.fecha_creacion|date:"d/m/Y" }}</td>
               <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
                         onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️ Eliminar</button>
               </td>
@@ -296,17 +295,19 @@
 </div>
 
 
-<!-- ═══════════════════ PEDIDO CREAR ═══════════════════ -->
+<!-- ═══════════════════ PEDIDO CREAR / EDITAR ═══════════════════ -->
 <div id="section-pedido-crear" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>➕ Crear Pedido</h3>
-      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('pedido-lista')">← Volver</button>
+      <h3 id="titulo-pedido">➕ Crear Pedido</h3>
+      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="resetFormPedido();showSection('pedido-lista')">← Volver</button>
     </div>
     <div class="pm-card-body">
-      <form method="post" action="{% url 'pedidos:dashboard' %}" class="pm-form" id="form-crear-pedido" style="max-width:100%">
+      <form method="post" id="form-crear-pedido" class="pm-form" style="max-width:100%">
         {% csrf_token %}
-        <input type="hidden" name="action"      value="pedido_crear">
+        <input type="hidden" name="id"     id="pedido-id">
+        <input type="hidden" name="modo"   id="modo"   value="crear">
+        <input type="hidden" name="action" id="action" value="pedido_crear">
         <input type="hidden" name="descripcion" id="input-descripcion">
         <input type="hidden" name="total"       id="input-total">
 
@@ -377,8 +378,8 @@
         </div>
 
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-accent" onclick="return prepararPedido()">💾 Crear Pedido</button>
-          <button type="button" class="pm-btn pm-btn-light" onclick="limpiarFormPedido();showSection('pedido-lista')">Cancelar</button>
+          <button type="submit" id="btn-guardar" class="pm-btn pm-btn-accent" onclick="return prepararPedido()">💾 Crear Pedido</button>
+          <button type="button" class="pm-btn pm-btn-light" onclick="resetFormPedido();showSection('pedido-lista')">Cancelar</button>
         </div>
       </form>
     </div>
@@ -644,7 +645,7 @@
   </div>
 </div>
 
-</div>
+</div><!-- /pm-wrapper -->
 
 
 <script>
@@ -677,15 +678,6 @@ function closeModal() {
   document.getElementById('modal-delete').classList.remove('open');
 }
 
-function loadEditForm(tipo, pk) {
-  const urls = {
-    pedido: "{% url 'pedidos:pedido_editar' 9999 %}"
-  };
-  if (urls[tipo]) {
-    window.location.href = urls[tipo].replace('9999', pk);
-  }
-}
-
 document.getElementById('modal-delete').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
@@ -693,16 +685,15 @@ document.getElementById('modal-delete').addEventListener('click', function(e) {
 // ═══════════════════════════════════════════
 // GESTIÓN DE PLATOS EN PEDIDO
 // ═══════════════════════════════════════════
-// Estructura: { "Nombre plato": { precio: Number, cantidad: Number } }
 let platosEnPedido = {};
 
 function agregarPlato(select) {
   const val = select.value;
   if (!val) return;
 
-  const partes  = val.split('|');
-  const nombre  = partes[0];
-  const precio  = parseInt(partes[1], 10);
+  const partes = val.split('|');
+  const nombre = partes[0];
+  const precio = parseInt(partes[1], 10);
 
   if (platosEnPedido[nombre]) {
     platosEnPedido[nombre].cantidad += 1;
@@ -710,7 +701,7 @@ function agregarPlato(select) {
     platosEnPedido[nombre] = { precio: precio, cantidad: 1 };
   }
 
-  select.value = ''; // Resetea el select tras agregar
+  select.value = '';
   renderTablaPlatos();
 }
 
@@ -758,7 +749,6 @@ function renderTablaPlatos() {
     const subtotal = item.precio * item.cantidad;
     total += subtotal;
 
-    // Escapamos comillas simples en el nombre para usarlo en onclick
     const nombreEsc = nombre.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
     const tr = document.createElement('tr');
@@ -792,12 +782,10 @@ function prepararPedido() {
     return false;
   }
 
-  // Descripción: "2x 1 Carne, 1x Sopa, 3x Cerveza"
   const descripcion = nombres
     .map(function(n) { return platosEnPedido[n].cantidad + 'x ' + n; })
     .join(', ');
 
-  // Total numérico
   const total = nombres.reduce(function(sum, n) {
     return sum + (platosEnPedido[n].precio * platosEnPedido[n].cantidad);
   }, 0);
@@ -805,27 +793,104 @@ function prepararPedido() {
   document.getElementById('input-descripcion').value = descripcion;
   document.getElementById('input-total').value       = total;
 
-  return true; // Permite el envío del form
+  return true;
 }
 
-function limpiarFormPedido() {
+// ═══════════════════════════════════════════
+// RESET FORM — limpia todo al cancelar/volver
+// ═══════════════════════════════════════════
+function resetFormPedido() {
   platosEnPedido = {};
   renderTablaPlatos();
-  // Limpia también el campo cliente si existe
-  const clienteInput = document.querySelector('#form-crear-pedido input[name="cliente"]');
+
+  // Restaura modo "crear"
+  document.getElementById('pedido-id').value  = '';
+  document.getElementById('modo').value       = 'crear';
+  document.getElementById('action').value     = 'pedido_crear';
+  document.getElementById('titulo-pedido').innerText = '➕ Crear Pedido';
+  document.getElementById('btn-guardar').innerText   = '💾 Crear Pedido';
+
+  // Restaura el action original del formulario (POST al dashboard)
+  document.getElementById('form-crear-pedido').action = "{% url 'pedidos:dashboard' %}";
+
+  // Limpia campos visibles
+  const clienteInput = document.querySelector('#form-crear-pedido [name="cliente"]');
+  const estadoSelect = document.querySelector('#form-crear-pedido [name="estado"]');
   if (clienteInput) clienteInput.value = '';
+  if (estadoSelect) estadoSelect.selectedIndex = 0;
+}
+
+// ═══════════════════════════════════════════
+// EDITAR PEDIDO — CORRECCIÓN PRINCIPAL
+// ═══════════════════════════════════════════
+function editarPedido(btn, id, descripcion) {
+  // 1. Guarda el ID
+  document.getElementById('pedido-id').value = id;
+
+  // 2. Cambia títulos y modo
+  document.getElementById('titulo-pedido').innerText       = '✏️ Editar Pedido';
+  document.getElementById('btn-guardar').innerText         = '💾 Actualizar Pedido';
+  document.getElementById('action').value                  = 'pedido_editar';
+  document.getElementById('modo').value                    = 'editar';
+
+  // 3. ✅ FIX PRINCIPAL: usa 9999 como placeholder para evitar reemplazar
+  //    dígitos equivocados dentro de la URL (ej: el "0" del namespace)
+  const urlBase = "{% url 'pedidos:pedido_editar' 9999 %}";
+  document.getElementById('form-crear-pedido').action = urlBase.replace('9999', id);
+
+  // 4. Lee datos de la fila de la tabla
+  const fila    = btn.closest('tr');
+  const cliente = fila.children[1].innerText.trim();
+  const estado  = fila.children[2].querySelector('span').dataset.estado;
+
+  // 5. ✅ FIX REGEX: parsea descripción con regex robusta
+  //    Formato guardado: "2x Pechuga, 3x Gaseosa 350ml"
+  platosEnPedido = {};
+
+  if (descripcion) {
+    descripcion.split(',').forEach(function(item) {
+      // Captura: grupo1=cantidad, grupo2=nombre (puede tener espacios y letras)
+      const match = item.trim().match(/^(\d+)x (.+)$/);
+      if (match) {
+        const cantidad = parseInt(match[1], 10);
+        const nombre   = match[2].trim();
+        let precio     = 0;
+
+        // Busca el precio en el select del menú
+        document.querySelectorAll('#menu-select option').forEach(function(op) {
+          if (op.value) {
+            const partes   = op.value.split('|');
+            const nombreOp = partes[0];
+            const precioOp = parseInt(partes[1], 10);
+            if (nombreOp === nombre) precio = precioOp;
+          }
+        });
+
+        platosEnPedido[nombre] = { precio: precio, cantidad: cantidad };
+      }
+    });
+  }
+
+  // 6. Muestra la sección y carga los datos tras el render
+  showSection('pedido-crear');
+
+  setTimeout(function() {
+    const clienteInput = document.querySelector('#form-crear-pedido [name="cliente"]');
+    const estadoSelect = document.querySelector('#form-crear-pedido [name="estado"]');
+    if (clienteInput) clienteInput.value = cliente;
+    if (estadoSelect) estadoSelect.value = estado;
+    renderTablaPlatos();
+  }, 100);
 }
 
 // ═══════════════════════════════════════════
 // INICIALIZACIÓN
 // ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function() {
-  // Navega por hash si existe
   const hash = window.location.hash.replace('#', '');
   if (hash) {
     showSection(hash);
   } else if (window.location.search) {
-    // Si hay parámetros GET (búsqueda), abre pedido-lista automáticamente
     showSection('pedido-lista');
   }
 
@@ -838,8 +903,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 4000);
   });
 });
-
 </script>
-
 
 {% endblock %}
