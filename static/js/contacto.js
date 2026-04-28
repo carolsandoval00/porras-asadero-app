@@ -248,3 +248,28 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.head.appendChild(style);
 });
+// ═══════════════════════════════════════════
+// MODAL EDITAR ORDEN
+// ═══════════════════════════════════════════
+function abrirEditarOrden(pk, numero, pedidoPk, estado, subtotal, impuesto, notas) {
+  document.getElementById('modal-orden-numero').textContent = numero;
+  document.getElementById('modal-orden-pedido').value   = pedidoPk;
+  document.getElementById('modal-orden-estado').value   = estado;
+  document.getElementById('modal-orden-subtotal').value = subtotal;
+  document.getElementById('modal-orden-impuesto').value = impuesto;
+  document.getElementById('modal-orden-notas').value    = notas;
+
+  // Apunta el form a la URL correcta de edición
+  const base = "{% url 'pedidos:orden_editar' 9999 %}";
+  document.getElementById('form-editar-orden').action = base.replace('9999', pk);
+
+  document.getElementById('modal-editar-orden').classList.add('open');
+}
+
+function closeModalOrden() {
+  document.getElementById('modal-editar-orden').classList.remove('open');
+}
+
+document.getElementById('modal-editar-orden').addEventListener('click', function(e) {
+  if (e.target === this) closeModalOrden();
+});

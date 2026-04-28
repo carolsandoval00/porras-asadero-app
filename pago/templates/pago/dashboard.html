@@ -183,9 +183,9 @@
                 </td>
                 <td>{{ pg.fecha_pago|date:"d/m/Y H:i" }}</td>
                 <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                  <a href="{% url 'pago:editar' pg.pk %}"  class="pg-btn pg-btn-light pg-btn-sm">✏️</a>
+                  <a href="{% url 'pago:editar' pg.pk %}"  class="pg-btn pg-btn-light pg-btn-sm">✏️ Editar </a>
                   <button class="pg-btn pg-btn-danger pg-btn-sm"
-                          onclick="confirmarEliminar({{ pg.pk }})">🗑️</button>
+                          onclick="confirmarEliminar({{ pg.pk }})">🗑️ Eliminar</button>
                 </td>
               </tr>
               {% empty %}

@@ -203,17 +203,15 @@ def orden_detalle(request, pk):
 def orden_editar(request, pk):
     orden = get_object_or_404(Orden, pk=pk)
     form  = OrdenForm(request.POST or None, instance=orden)
-    if form.is_valid():
-        form.save()
-        messages.success(request, f'✅ Orden {orden.numero_orden} actualizada.')
-        return redirect('pedidos:dashboard')
-    return render(request, 'pedidos/orden_form.html', {
-        'titulo': f'Editar Orden {orden.numero_orden}',
-        'nombre': request.user.get_full_name() or request.user.username,
-        'form':   form,
-        'accion': 'Actualizar',
-        'orden':  orden,
-    })
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'✅ Orden {orden.numero_orden} actualizada.')
+        else:
+            messages.error(request, '❌ Corrige los errores.')
+    return redirect('pedidos:dashboard'
+    )
+    
 
 
 def orden_eliminar(request, pk):
