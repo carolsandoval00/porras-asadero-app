@@ -19,6 +19,13 @@ urlpatterns = [
     path('ordenes/<int:pk>/',             views.orden_detalle,      name='orden_detalle'),
     path('ordenes/<int:pk>/eliminar/',    views.orden_eliminar,     name='orden_eliminar'),
 
+    path('ordenes/',                    views.orden_lista,     name='orden_lista'),
+    path('ordenes/crear/',              views.orden_crear,     name='orden_crear'),
+    path('ordenes/<int:pk>/',           views.orden_detalle,   name='orden_detalle'),
+    path('ordenes/<int:pk>/editar/',    views.orden_editar,    name='orden_editar'),  
+    path('ordenes/<int:pk>/eliminar/',  views.orden_eliminar,  name='orden_eliminar'),
+
+
     # ── Productos ─────────────────────────────────────────────
     path('productos/',                    views.producto_lista,     name='producto_lista'),
     path('productos/crear/',              views.producto_crear,     name='producto_crear'),
