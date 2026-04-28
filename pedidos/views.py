@@ -15,6 +15,8 @@ def _dashboard_context(request, extra=None):
     estado_sel = request.GET.get('estado', '').strip()
     q_prod     = request.GET.get('q_prod', '').strip()
     cat_sel    = request.GET.get('categoria', '').strip()
+    q_orden          = request.GET.get('q_orden', '').strip()
+    estado_orden_sel = request.GET.get('estado_orden', '').strip()
 
     pedidos_qs = Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')
     if q:
@@ -27,6 +29,14 @@ def _dashboard_context(request, extra=None):
         productos_qs = productos_qs.filter(nombre__icontains=q_prod)
     if cat_sel:
         productos_qs = productos_qs.filter(categoria=cat_sel)
+
+    ordenes_qs = Orden.objects.select_related('pedido').order_by('-creada_en')
+    if q_orden:
+        ordenes_qs = ordenes_qs.filter(
+            Q(pedido__cliente__icontains=q_orden) | Q(numero_orden__icontains=q_orden)
+        )
+    if estado_orden_sel:
+        ordenes_qs = ordenes_qs.filter(estado=estado_orden_sel)
 
     ctx = {
         'titulo': 'Módulo de Pedidos',
@@ -43,22 +53,24 @@ def _dashboard_context(request, extra=None):
 
         # Listas
         'pedidos':   pedidos_qs,
-        'ordenes':   Orden.objects.select_related('pedido').all(),
+        'ordenes':   ordenes_qs,
         'productos': productos_qs,
         'cajas':     Caja.objects.select_related('responsable').all(),
 
-        # Productos disponibles para el selector al crear pedidos
         'productos_disponibles': Producto.objects.filter(
             disponible=True
         ).order_by('categoria', 'nombre'),
 
         # Filtros
-        'estados':    Pedido.ESTADO_CHOICES,
-        'categorias': Producto.CATEGORIA_CHOICES,
-        'q':          q,
-        'estado_sel': estado_sel,
-        'q_prod':     q_prod,
-        'cat_sel':    cat_sel,
+        'estados':         Pedido.ESTADO_CHOICES,
+        'estados_orden':   Orden.ESTADO_CHOICES,
+        'categorias':      Producto.CATEGORIA_CHOICES,
+        'q':               q,
+        'estado_sel':      estado_sel,
+        'q_orden':         q_orden,
+        'estado_orden_sel': estado_orden_sel,
+        'q_prod':          q_prod,
+        'cat_sel':         cat_sel,
 
         # Formularios vacíos
         'form_pedido':   PedidoForm(),
@@ -216,10 +228,12 @@ def orden_detalle(request, pk):
         Orden.objects.select_related('pedido').prefetch_related('pagos'), pk=pk
     )
     return render(request, 'pedidos/orden_detalle.html', {
-        'titulo': f'Orden {orden.numero_orden}', 'nombre': request.user.username,
-        'orden': orden,
+        'titulo': f'Orden {orden.numero_orden}',
+        'nombre': request.user.username,
+        'orden':  orden,
     })
-    
+
+
 def orden_editar(request, pk):
     orden = get_object_or_404(Orden, pk=pk)
     form  = OrdenForm(request.POST or None, instance=orden)
@@ -229,13 +243,7 @@ def orden_editar(request, pk):
             messages.success(request, f'✅ Orden {orden.numero_orden} actualizada.')
         else:
             messages.error(request, '❌ Corrige los errores.')
-    return redirect('pedidos:dashboard'
-    )
-    
-        'titulo': f'Orden {orden.numero_orden}',
-        'nombre': request.user.username,
-        'orden':  orden,
-    })
+    return redirect('pedidos:dashboard')
 
 
 def orden_eliminar(request, pk):
