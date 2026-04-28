@@ -1,14 +1,83 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Sum, Count, Q
-from .models import Pedido, Orden, Pago, Caja
-from .forms import PedidoForm, OrdenForm, PagoForm, CajaForm, CajaCierreForm
+from django.db.models import Q
+from .models import Pedido, Orden, Producto, Caja
+from .forms import PedidoForm, OrdenForm, ProductoForm, CajaForm, CajaCierreForm
 import uuid
 
 
 # ─────────────────────────────────────────────────────────────
-#  DASHBOARD — maneja todos los formularios del template
+#  HELPER — contexto completo para el dashboard
+#  Se usa tanto en dashboard() como en pedido_editar()
+# ─────────────────────────────────────────────────────────────
+def _dashboard_context(request, extra=None):
+    q          = request.GET.get('q', '').strip()
+    estado_sel = request.GET.get('estado', '').strip()
+    q_prod     = request.GET.get('q_prod', '').strip()
+    cat_sel    = request.GET.get('categoria', '').strip()
+
+    pedidos_qs = Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')
+    if q:
+        pedidos_qs = pedidos_qs.filter(Q(cliente__icontains=q) | Q(descripcion__icontains=q))
+    if estado_sel:
+        pedidos_qs = pedidos_qs.filter(estado=estado_sel)
+
+    productos_qs = Producto.objects.all()
+    if q_prod:
+        productos_qs = productos_qs.filter(nombre__icontains=q_prod)
+    if cat_sel:
+        productos_qs = productos_qs.filter(categoria=cat_sel)
+
+    ctx = {
+        'titulo': 'Módulo de Pedidos',
+        'nombre': request.user.get_full_name() or request.user.username,
+
+        # Stats
+        'total_pedidos':      Pedido.objects.count(),
+        'pedidos_pendientes': Pedido.objects.filter(estado='pendiente').count(),
+        'total_ordenes':      Orden.objects.count(),
+        'total_productos':    Producto.objects.count(),
+        'productos_activos':  Producto.objects.filter(disponible=True).count(),
+        'caja_abierta':       Caja.objects.filter(estado='abierta').first(),
+        'ultimos_pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')[:5],
+
+        # Listas
+        'pedidos':   pedidos_qs,
+        'ordenes':   Orden.objects.select_related('pedido').all(),
+        'productos': productos_qs,
+        'cajas':     Caja.objects.select_related('responsable').all(),
+
+        # ── NUEVO: productos disponibles para el selector de pedidos ──
+        # Cada vez que se cree o edite un producto con disponible=True,
+        # aparecerá automáticamente en el menú al crear un pedido.
+        'productos_disponibles': Producto.objects.filter(
+            disponible=True
+        ).order_by('categoria', 'nombre'),
+
+        # Filtros
+        'estados':    Pedido.ESTADO_CHOICES,
+        'categorias': Producto.CATEGORIA_CHOICES,
+        'q':          q,
+        'estado_sel': estado_sel,
+        'q_prod':     q_prod,
+        'cat_sel':    cat_sel,
+
+        # Formularios vacíos (se pueden sobreescribir con extra)
+        'form_pedido':   PedidoForm(),
+        'form_orden':    OrdenForm(),
+        'form_producto': ProductoForm(),
+        'form_caja':     CajaForm(),
+    }
+
+    if extra:
+        ctx.update(extra)
+
+    return ctx
+
+
+# ─────────────────────────────────────────────────────────────
+#  DASHBOARD
 # ─────────────────────────────────────────────────────────────
 def dashboard(request):
     if request.method == 'POST':
@@ -36,14 +105,14 @@ def dashboard(request):
             else:
                 messages.error(request, '❌ Corrige los errores en el formulario de orden.')
 
-        elif action == 'pago_crear':
-            form = PagoForm(request.POST)
+        elif action == 'producto_crear':
+            form = ProductoForm(request.POST)
             if form.is_valid():
                 form.save()
-                messages.success(request, '✅ Pago registrado.')
+                messages.success(request, '✅ Producto creado correctamente.')
                 return redirect('pedidos:dashboard')
             else:
-                messages.error(request, '❌ Corrige los errores en el formulario de pago.')
+                messages.error(request, '❌ Corrige los errores en el formulario de producto.')
 
         elif action == 'caja_abrir':
             form = CajaForm(request.POST)
@@ -58,47 +127,7 @@ def dashboard(request):
             else:
                 messages.error(request, '❌ Corrige los errores en el formulario de caja.')
 
-    # ── Filtros de búsqueda (GET) ──────────────────────────────
-    q          = request.GET.get('q', '').strip()
-    estado_sel = request.GET.get('estado', '').strip()
-
-    pedidos_qs = Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')
-    if q:
-        pedidos_qs = pedidos_qs.filter(
-            Q(cliente__icontains=q) | Q(descripcion__icontains=q)
-        )
-    if estado_sel:
-        pedidos_qs = pedidos_qs.filter(estado=estado_sel)
-
-    context = {
-        'titulo': 'Módulo de Pedidos',
-        'nombre': request.user.get_full_name() or request.user.username,
-
-        # Stats del dashboard
-        'total_pedidos':      Pedido.objects.count(),
-        'pedidos_pendientes': Pedido.objects.filter(estado='pendiente').count(),
-        'total_ordenes':      Orden.objects.count(),
-        'ordenes_abiertas':   Orden.objects.filter(estado='abierta').count(),
-        'total_pagos':        Pago.objects.filter(estado='aprobado').aggregate(t=Sum('monto'))['t'] or 0,
-        'caja_abierta':       Caja.objects.filter(estado='abierta').first(),
-        'ultimos_pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')[:5],
-
-        # Lista de pedidos filtrada
-        'pedidos':    pedidos_qs,
-        'ordenes':    Orden.objects.select_related('pedido').all(),
-        'pagos':      Pago.objects.select_related('orden').all(),
-        'cajas':      Caja.objects.select_related('responsable').all(),
-        'estados':    Pedido.ESTADO_CHOICES,
-        'q':          q,
-        'estado_sel': estado_sel,
-
-        # Formularios vacíos
-        'form_pedido': PedidoForm(),
-        'form_orden':  OrdenForm(),
-        'form_pago':   PagoForm(),
-        'form_caja':   CajaForm(),
-    }
-    return render(request, 'pedidos/dashboard.html', context)
+    return render(request, 'pedidos/dashboard.html', _dashboard_context(request))
 
 
 # ─────────────────────────────────────────────────────────────
@@ -126,7 +155,7 @@ def pedido_crear(request):
         pedido.creado_por = request.user
         pedido.save()
         messages.success(request, '✅ Pedido creado correctamente.')
-        return redirect('pedidos:pedido_lista')
+        return redirect('pedidos:dashboard')
     return render(request, 'pedidos/pedido_form.html', {
         'titulo': 'Crear Pedido', 'nombre': request.user.username,
         'form': form, 'accion': 'Crear',
@@ -135,15 +164,27 @@ def pedido_crear(request):
 
 def pedido_editar(request, pk):
     pedido = get_object_or_404(Pedido, pk=pk)
-    form   = PedidoForm(request.POST or None, instance=pedido)
-    if form.is_valid():
-        form.save()
-        messages.success(request, '✅ Pedido actualizado.')
-        return redirect('pedidos:pedido_lista')
-    return render(request, 'pedidos/pedido_form.html', {
-        'titulo': f'Editar Pedido #{pk}', 'nombre': request.user.username,
-        'form': form, 'accion': 'Actualizar', 'pedido': pedido,
+
+    if request.method == 'POST':
+        form = PedidoForm(request.POST, instance=pedido)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '✅ Pedido actualizado correctamente.')
+            return redirect('pedidos:dashboard')
+        ctx = _dashboard_context(request, {
+            'form_pedido':      form,
+            'pedido_editando':  pedido,
+            'seccion_activa':   'pedido-editar',
+        })
+        return render(request, 'pedidos/dashboard.html', ctx)
+
+    form = PedidoForm(instance=pedido)
+    ctx  = _dashboard_context(request, {
+        'form_pedido':     form,
+        'pedido_editando': pedido,
+        'seccion_activa':  'pedido-editar',
     })
+    return render(request, 'pedidos/dashboard.html', ctx)
 
 
 def pedido_eliminar(request, pk):
@@ -151,7 +192,6 @@ def pedido_eliminar(request, pk):
     if request.method == 'POST':
         pedido.delete()
         messages.success(request, '🗑️ Pedido eliminado.')
-        return redirect('pedidos:dashboard')
     return redirect('pedidos:dashboard')
 
 
@@ -172,7 +212,7 @@ def orden_crear(request):
         orden.numero_orden = f'ORD-{uuid.uuid4().hex[:8].upper()}'
         orden.save()
         messages.success(request, '✅ Orden creada.')
-        return redirect('pedidos:orden_lista')
+        return redirect('pedidos:dashboard')
     return render(request, 'pedidos/orden_form.html', {
         'titulo': 'Crear Orden', 'nombre': request.user.username,
         'form': form, 'accion': 'Crear',
@@ -180,7 +220,9 @@ def orden_crear(request):
 
 
 def orden_detalle(request, pk):
-    orden = get_object_or_404(Orden.objects.select_related('pedido').prefetch_related('pagos'), pk=pk)
+    orden = get_object_or_404(
+        Orden.objects.select_related('pedido').prefetch_related('pagos'), pk=pk
+    )
     return render(request, 'pedidos/orden_detalle.html', {
         'titulo': f'Orden {orden.numero_orden}', 'nombre': request.user.username,
         'orden': orden,
@@ -192,50 +234,70 @@ def orden_eliminar(request, pk):
     if request.method == 'POST':
         orden.delete()
         messages.success(request, '🗑️ Orden eliminada.')
-        return redirect('pedidos:dashboard')
     return redirect('pedidos:dashboard')
 
 
 # ─────────────────────────────────────────────────────────────
-#  PAGOS
+#  PRODUCTOS
 # ─────────────────────────────────────────────────────────────
-def pago_lista(request):
-    qs = Pago.objects.select_related('orden').all()
-    return render(request, 'pedidos/pago_lista.html', {
-        'titulo': 'Pagos', 'nombre': request.user.username, 'pagos': qs,
+def producto_lista(request):
+    q         = request.GET.get('q', '')
+    categoria = request.GET.get('categoria', '')
+    qs        = Producto.objects.all()
+    if q:
+        qs = qs.filter(nombre__icontains=q)
+    if categoria:
+        qs = qs.filter(categoria=categoria)
+    return render(request, 'pedidos/producto_lista.html', {
+        'titulo': 'Productos', 'nombre': request.user.username,
+        'productos': qs, 'q': q, 'cat_sel': categoria,
+        'categorias': Producto.CATEGORIA_CHOICES,
     })
 
 
-def pago_crear(request):
-    form = PagoForm(request.POST or None)
+def producto_crear(request):
+    form = ProductoForm(request.POST or None)
     if form.is_valid():
         form.save()
-        messages.success(request, '✅ Pago registrado.')
-        return redirect('pedidos:pago_lista')
-    return render(request, 'pedidos/pago_form.html', {
-        'titulo': 'Crear Pago', 'nombre': request.user.username,
-        'form': form, 'accion': 'Registrar',
+        messages.success(request, '✅ Producto creado correctamente.')
+        return redirect('pedidos:dashboard')
+    return render(request, 'pedidos/producto_form.html', {
+        'titulo': 'Crear Producto', 'nombre': request.user.username,
+        'form': form, 'accion': 'Crear',
     })
 
 
-def pago_detalle(request, pk):
-    pago = get_object_or_404(Pago.objects.select_related('orden'), pk=pk)
-    return render(request, 'pedidos/pago_detalle.html', {
-        'titulo': f'Pago #{pk}', 'nombre': request.user.username, 'pago': pago,
+def producto_editar(request, pk):
+    producto = get_object_or_404(Producto, pk=pk)
+
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, instance=producto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '✅ Producto actualizado correctamente.')
+            return redirect('pedidos:dashboard')
+        ctx = _dashboard_context(request, {
+            'form_producto':      form,
+            'producto_editando':  producto,
+            'seccion_activa':     'producto-editar',
+        })
+        return render(request, 'pedidos/dashboard.html', ctx)
+
+    form = ProductoForm(instance=producto)
+    ctx  = _dashboard_context(request, {
+        'form_producto':     form,
+        'producto_editando': producto,
+        'seccion_activa':    'producto-editar',
     })
+    return render(request, 'pedidos/dashboard.html', ctx)
 
 
-def pago_editar(request, pk):
-    pago = get_object_or_404(Pago, pk=pk)
-    form = PagoForm(request.POST or None, instance=pago)
-    if form.is_valid():
-        form.save()
-        messages.success(request, '✅ Pago actualizado.')
-        return redirect('pedidos:pago_lista')
-    return render(request, 'pedidos/pago_form.html', {
-        'titulo': f'Editar Pago #{pk}', 'nombre': request.user.username,
-        'form': form, 'accion': 'Actualizar', 'pago': pago,
-    })
+def producto_eliminar(request, pk):
+    producto = get_object_or_404(Producto, pk=pk)
+    if request.method == 'POST':
+        producto.delete()
+        messages.success(request, '🗑️ Producto eliminado.')
+    return redirect('pedidos:dashboard')
 
 
 # ─────────────────────────────────────────────────────────────

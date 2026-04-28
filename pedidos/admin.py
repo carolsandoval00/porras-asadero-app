@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Pedido, Orden, Pago, Caja
+from .models import Pedido, Orden, Producto, Caja
+
 
 @admin.register(Pedido)
 class PedidoAdmin(admin.ModelAdmin):
@@ -7,15 +8,20 @@ class PedidoAdmin(admin.ModelAdmin):
     list_filter   = ['estado']
     search_fields = ['cliente']
 
+
 @admin.register(Orden)
 class OrdenAdmin(admin.ModelAdmin):
     list_display = ['numero_orden', 'pedido', 'estado', 'total', 'creada_en']
     list_filter  = ['estado']
 
-@admin.register(Pago)
-class PagoAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'orden', 'metodo', 'monto', 'estado', 'fecha_pago']
-    list_filter  = ['estado', 'metodo']
+
+@admin.register(Producto)
+class ProductoAdmin(admin.ModelAdmin):
+    list_display  = ['nombre', 'categoria', 'precio', 'disponible', 'creado_en']
+    list_filter   = ['categoria', 'disponible']
+    search_fields = ['nombre']
+    list_editable = ['precio', 'disponible']
+
 
 @admin.register(Caja)
 class CajaAdmin(admin.ModelAdmin):
