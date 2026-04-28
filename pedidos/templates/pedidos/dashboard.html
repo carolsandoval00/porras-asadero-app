@@ -31,8 +31,8 @@
                   border:1px solid var(--p-border); border-radius:50px;
                   padding:.35rem .5rem; box-shadow: var(--p-shadow); }
   .pm-nav-group .pm-label { font-size:.7rem; font-weight:700; text-transform:uppercase;
-                             letter-spacing:.8px; color:var(--p-muted); padding:.3rem .6rem;
-                             align-self:center; }
+                               letter-spacing:.8px; color:var(--p-muted); padding:.3rem .6rem;
+                               align-self:center; }
   .pm-btn  { display:inline-flex; align-items:center; gap:.35rem; font-size:.82rem;
              font-weight:600; padding:.42rem .95rem; border-radius:50px; border:none;
              cursor:pointer; text-decoration:none; transition:all .2s; white-space:nowrap; }
@@ -51,8 +51,8 @@
   .pm-section.active { display:block; animation: fadeIn .25s ease; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 
-  .pm-card        { background:var(--p-card); border:1px solid var(--p-border);
-                    border-radius:var(--p-radius); box-shadow:var(--p-shadow); }
+  .pm-card         { background:var(--p-card); border:1px solid var(--p-border);
+                     border-radius:var(--p-radius); box-shadow:var(--p-shadow); }
   .pm-card-header { display:flex; align-items:center; justify-content:space-between;
                     padding:1rem 1.4rem; border-bottom:1px solid var(--p-border); }
   .pm-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
@@ -85,6 +85,8 @@
   .pm-badge-abierta    { background:#FFF0DC; color:#A07810; }
   .pm-badge-cerrada    { background:#EDE3C8; color:#6B5A3E; }
   .pm-badge-reembolsado{ background:#F5ECD7; color:#8B4000; }
+  .pm-badge-disponible { background:#FFF0DC; color:#C0502A; }
+  .pm-badge-nodisponible { background:#FAE0DC; color:#C0392B; }
 
   .pm-form          { max-width:640px; }
   .pm-form-grid     { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
@@ -95,13 +97,14 @@
   .pm-form select,
   .pm-form textarea { width:100%; padding:.55rem .85rem; border:1px solid var(--p-border);
                       border-radius:8px; font-size:.9rem; color:var(--p-text);
-                      background:#FDF7EC; transition:border-color .2s, box-shadow .2s; }
+                      background:#FDF7EC; transition:border-color .2s, box-shadow .2s; box-sizing:border-box; }
   .pm-form input:focus,
   .pm-form select:focus,
   .pm-form textarea:focus { outline:none; border-color:#C0392B;
-                             box-shadow:0 0 0 3px rgba(192,57,43,.12); }
+                               box-shadow:0 0 0 3px rgba(192,57,43,.12); }
   .pm-form textarea { resize:vertical; min-height:80px; }
   .pm-form-actions  { display:flex; gap:.7rem; margin-top:1.5rem; flex-wrap:wrap; }
+  .pm-form input[type="checkbox"] { width:auto; }
 
   .pm-modal-overlay { display:none; position:fixed; inset:0; background:rgba(26,16,8,.5);
                       z-index:9999; align-items:center; justify-content:center; }
@@ -121,7 +124,7 @@
 
   .pm-detail-grid  { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
   .pm-detail-item  .lbl { font-size:.75rem; font-weight:700; text-transform:uppercase;
-                           letter-spacing:.5px; color:var(--p-muted); margin-bottom:.2rem; }
+                             letter-spacing:.5px; color:var(--p-muted); margin-bottom:.2rem; }
   .pm-detail-item  .val { font-size:.95rem; color:var(--p-text); font-weight:500; }
 
   .qty-btn {
@@ -140,12 +143,15 @@
               border-radius:8px; font-size:.9rem; color:var(--p-text); background:#FDF7EC;
               box-sizing:border-box; transition:border-color .2s,box-shadow .2s; }
   .mf-input:focus { outline:none; border-color:#C0392B; box-shadow:0 0 0 3px rgba(192,57,43,.12); }
+  .pm-check-row { display:flex; align-items:center; gap:.6rem; grid-column:1/-1; }
+  .pm-check-row label { margin:0; text-transform:none; letter-spacing:0; font-size:.9rem; font-weight:600; color:var(--p-text); }
+  .pm-check-row input[type="checkbox"] { width:18px; height:18px; accent-color:#C0392B; cursor:pointer; }
 
   @media(max-width:600px){
     .pm-form-grid   { grid-template-columns:1fr; }
     .pm-detail-grid { grid-template-columns:1fr; }
-    .pm-header      { padding:1.4rem 1.2rem 1.1rem; }
-    .pm-header h1   { font-size:1.4rem; }
+    .pm-header       { padding:1.4rem 1.2rem 1.1rem; }
+    .pm-header h1    { font-size:1.4rem; }
   }
 </style>
 
@@ -176,9 +182,9 @@
     <button class="pm-btn pm-btn-accent" onclick="showSection('orden-crear')">➕ Crear</button>
   </div>
   <div class="pm-nav-group">
-    <span class="pm-label">💳 Pagos</span>
-    <button class="pm-btn pm-btn-light" onclick="showSection('pago-lista')">📋 Consultar</button>
-    <button class="pm-btn pm-btn-success" onclick="showSection('pago-crear')">➕ Crear</button>
+    <span class="pm-label">🛍️ Productos</span>
+    <button class="pm-btn pm-btn-light" onclick="showSection('producto-lista')">📋 Consultar</button>
+    <button class="pm-btn pm-btn-accent" onclick="showSection('producto-crear')">➕ Crear</button>
   </div>
   <div class="pm-nav-group">
     <span class="pm-label">🏦 Caja</span>
@@ -188,8 +194,8 @@
 </div>
 
 
-<!-- ═══════════════════ DASHBOARD ═══════════════════ -->
-<div id="section-dashboard" class="pm-section active">
+<!-- ══════════════════ DASHBOARD ══════════════════ -->
+<div id="section-dashboard" class="pm-section {% if not seccion_activa or seccion_activa == 'dashboard' %}active{% endif %}">
   <div class="pm-stats">
     <div class="pm-stat">
       <div class="val">{{ total_pedidos|default:"0" }}</div>
@@ -203,9 +209,13 @@
       <div class="val">{{ total_ordenes|default:"0" }}</div>
       <div class="lbl">Órdenes totales</div>
     </div>
+    <div class="pm-stat" style="border-left-color:#C0392B">
+      <div class="val">{{ total_productos|default:"0" }}</div>
+      <div class="lbl">Productos totales</div>
+    </div>
     <div class="pm-stat" style="border-left-color:#E8651A">
-      <div class="val">${{ total_pagos|default:"0"|floatformat:0 }}</div>
-      <div class="lbl">Pagos aprobados</div>
+      <div class="val">{{ productos_activos|default:"0" }}</div>
+      <div class="lbl">Productos disponibles</div>
     </div>
     <div class="pm-stat" style="border-left-color:{% if caja_abierta %}#E8651A{% else %}#C0392B{% endif %}">
       <div class="val">{% if caja_abierta %}🟢{% else %}🔴{% endif %}</div>
@@ -237,6 +247,9 @@
                         onclick="loadEditForm('pedido',{{ p.pk }})">✏️ Editar</button>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
                         onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️ Eliminar</button>
+                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️</a>
+                <button class="pm-btn pm-btn-danger pm-btn-sm"
+                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️</button>
               </td>
             </tr>
             {% empty %}
@@ -250,7 +263,7 @@
 </div>
 
 
-<!-- ═══════════════════ PEDIDO LISTA ═══════════════════ -->
+<!-- ══════════════════ PEDIDO LISTA ══════════════════ -->
 <div id="section-pedido-lista" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
@@ -300,7 +313,7 @@
 </div>
 
 
-<!-- ═══════════════════ PEDIDO CREAR ═══════════════════ -->
+<!-- ══════════════════ PEDIDO CREAR ══════════════════ -->
 <div id="section-pedido-crear" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
@@ -324,30 +337,26 @@
           </div>
           <div>
             <label>Agregar plato al pedido</label>
+            <!-- ══════════════════════════════════════════════════════════
+                 SELECTOR DINÁMICO — lee los productos desde la base de datos.
+                 Cada vez que crees un nuevo producto con disponible=True,
+                 aparecerá automáticamente aquí sin tocar este archivo.
+                 ══════════════════════════════════════════════════════════ -->
             <select id="menu-select" onchange="agregarPlato(this)"
                     style="width:100%;padding:.55rem .85rem;border:1px solid var(--p-border);border-radius:8px;font-size:.9rem;color:var(--p-text);background:#FDF7EC;">
               <option value="">— Selecciona un plato —</option>
-              <optgroup label="🥩 Carnes al Carbón">
-                <option value="1 Carne|42000">1 Carne — $42.000</option>
-                <option value="½ Carne|32000">½ Carne — $32.000</option>
-              </optgroup>
-              <optgroup label="🍲 Sopas">
-                <option value="1 Sopa|10000">1 Sopa — $10.000</option>
-                <option value="½ Sopa|5000">½ Sopa — $5.000</option>
-              </optgroup>
-              <optgroup label="🍽️ Platos a la Carta">
-                <option value="Pechuga|35000">Pechuga — $35.000</option>
-                <option value="Trucha|35000">Trucha — $35.000</option>
-                <option value="Mojarra|35000">Mojarra — $35.000</option>
-                <option value="Gallina|45000">Gallina — $45.000</option>
-              </optgroup>
-              <optgroup label="🥤 Bebidas">
-                <option value="Limonada Natural|4000">Limonada Natural — $4.000</option>
-                <option value="Gaseosa 350ml|3000">Gaseosa 350ml — $3.000</option>
-                <option value="Gaseosa 1.5L|8000">Gaseosa 1.5L — $8.000</option>
-                <option value="Gaseosa 3L|10000">Gaseosa 3L — $10.000</option>
-                <option value="Cerveza|4000">Cerveza — $4.000</option>
-              </optgroup>
+              {% regroup productos_disponibles by get_categoria_display as categorias_menu %}
+              {% for grupo in categorias_menu %}
+                <optgroup label="{{ grupo.grouper }}">
+                  {% for prod in grupo.list %}
+                    <option value="{{ prod.nombre }}|{{ prod.precio|floatformat:0 }}">
+                      {{ prod.nombre }} — ${{ prod.precio|floatformat:0 }}
+                    </option>
+                  {% endfor %}
+                </optgroup>
+              {% empty %}
+                <option disabled>No hay productos disponibles. Crea uno en 🛍️ Productos.</option>
+              {% endfor %}
             </select>
           </div>
         </div>
@@ -386,7 +395,7 @@
 </div>
 
 
-<!-- ═══════════════════ ORDEN LISTA ═══════════════════ -->
+<!-- ══════════════════ ORDEN LISTA ══════════════════ -->
 <div id="section-orden-lista" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
@@ -432,8 +441,10 @@
                           '{{ o.impuesto }}',
                           '{{ o.notas|default:""|escapejs }}'
                         )">✏️ Editar</button>
+              <td style="display:flex;gap:.3rem">
+                <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">🔍 Ver</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('orden',{{ o.pk }},'{{ o.numero_orden }}')">🗑️ Eliminar</button>
+                        onclick="confirmDelete('orden',{{ o.pk }},'{{ o.numero_orden }}')">🗑️</button>
               </td>
             </tr>
             {% empty %}
@@ -447,7 +458,7 @@
 </div>
 
 
-<!-- ═══════════════════ ORDEN CREAR ═══════════════════ -->
+<!-- ══════════════════ ORDEN CREAR ══════════════════ -->
 <div id="section-orden-crear" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
@@ -490,36 +501,64 @@
 </div>
 
 
-<!-- ═══════════════════ PAGO LISTA ═══════════════════ -->
-<div id="section-pago-lista" class="pm-section">
+<!-- ══════════════════ PRODUCTO LISTA ══════════════════ -->
+<div id="section-producto-lista" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>💳 Pagos</h3>
-      <button class="pm-btn pm-btn-success pm-btn-sm" onclick="showSection('pago-crear')">➕ Nuevo pago</button>
+      <h3>🛍️ Productos</h3>
+      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('producto-crear')">➕ Nuevo producto</button>
     </div>
     <div class="pm-card-body">
+      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;"
+               type="text" name="q_prod" value="{{ q_prod }}" placeholder="🔍 Buscar producto…">
+        <select name="categoria" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;">
+          <option value="">Todas las categorías</option>
+          {% for val,lbl in categorias %}
+          <option value="{{ val }}" {% if cat_sel == val %}selected{% endif %}>{{ lbl }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
+      </form>
+
       <div class="pm-table-wrap">
         <table class="pm-table">
           <thead>
-            <tr><th>#</th><th>Orden</th><th>Método</th><th>Monto</th><th>Referencia</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Precio</th>
+              <th>Descripción</th>
+              <th>Disponible</th>
+              <th>Acciones</th>
+            </tr>
           </thead>
           <tbody>
-            {% for pg in pagos %}
+            {% for prod in productos %}
             <tr>
-              <td><strong>#{{ pg.pk }}</strong></td>
-              <td>{{ pg.orden.numero_orden }}</td>
-              <td>{{ pg.get_metodo_display }}</td>
-              <td><strong>${{ pg.monto }}</strong></td>
-              <td>{{ pg.referencia|default:"—" }}</td>
-              <td><span class="pm-badge pm-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
-              <td>{{ pg.fecha_pago|date:"d/m/Y H:i" }}</td>
-              <td style="display:flex;gap:.3rem">
-                <a href="{% url 'pedidos:pago_detalle' pg.pk %}" class="pm-btn pm-btn-info pm-btn-sm">🔍 Ver</a>
-                <a href="{% url 'pedidos:pago_editar' pg.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️</a>
+              <td><strong>#{{ prod.pk }}</strong></td>
+              <td><strong>{{ prod.nombre }}</strong></td>
+              <td>{{ prod.get_categoria_display }}</td>
+              <td>${{ prod.precio }}</td>
+              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+                {{ prod.descripcion|default:"—" }}
+              </td>
+              <td>
+                {% if prod.disponible %}
+                  <span class="pm-badge pm-badge-completado">✅ Sí</span>
+                {% else %}
+                  <span class="pm-badge pm-badge-cancelado">❌ No</span>
+                {% endif %}
+              </td>
+              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+                <a href="{% url 'pedidos:producto_editar' prod.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
+                <button class="pm-btn pm-btn-danger pm-btn-sm"
+                        onclick="confirmDeleteProducto({{ prod.pk }},'{{ prod.nombre }}')">🗑️ Eliminar</button>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="8" style="text-align:center;color:var(--p-muted);padding:2rem">No hay pagos registrados.</td></tr>
+            <tr><td colspan="7" style="text-align:center;color:var(--p-muted);padding:2rem">No hay productos registrados.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -529,42 +568,42 @@
 </div>
 
 
-<!-- ═══════════════════ PAGO CREAR ═══════════════════ -->
-<div id="section-pago-crear" class="pm-section">
+<!-- ══════════════════ PRODUCTO CREAR ══════════════════ -->
+<div id="section-producto-crear" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>💳 Registrar Pago</h3>
-      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('pago-lista')">← Volver</button>
+      <h3>➕ Crear Producto</h3>
+      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('producto-lista')">← Volver</button>
     </div>
     <div class="pm-card-body">
       <form method="post" action="{% url 'pedidos:dashboard' %}" class="pm-form">
         {% csrf_token %}
-        <input type="hidden" name="action" value="pago_crear">
+        <input type="hidden" name="action" value="producto_crear">
         <div class="pm-form-grid">
           <div class="full">
-            <label>Orden</label>
-            {{ form_pago.orden }}
+            <label>Nombre del producto</label>
+            {{ form_producto.nombre }}
           </div>
           <div>
-            <label>Método de pago</label>
-            {{ form_pago.metodo }}
+            <label>Categoría</label>
+            {{ form_producto.categoria }}
           </div>
           <div>
-            <label>Monto ($)</label>
-            {{ form_pago.monto }}
+            <label>Precio ($)</label>
+            {{ form_producto.precio }}
           </div>
-          <div>
-            <label>Referencia</label>
-            {{ form_pago.referencia }}
+          <div class="full">
+            <label>Descripción</label>
+            {{ form_producto.descripcion }}
           </div>
-          <div>
-            <label>Estado</label>
-            {{ form_pago.estado }}
+          <div class="pm-check-row">
+            {{ form_producto.disponible }}
+            <label>Disponible para venta</label>
           </div>
         </div>
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-success">💾 Registrar Pago</button>
-          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('pago-lista')">Cancelar</button>
+          <button type="submit" class="pm-btn pm-btn-accent">💾 Crear Producto</button>
+          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('producto-lista')">Cancelar</button>
         </div>
       </form>
     </div>
@@ -572,7 +611,7 @@
 </div>
 
 
-<!-- ═══════════════════ CAJA LISTA ═══════════════════ -->
+<!-- ══════════════════ CAJA LISTA ══════════════════ -->
 <div id="section-caja-lista" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
@@ -615,7 +654,7 @@
 </div>
 
 
-<!-- ═══════════════════ CAJA ABRIR ═══════════════════ -->
+<!-- ══════════════════ CAJA ABRIR ══════════════════ -->
 <div id="section-caja-abrir" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
@@ -705,6 +744,87 @@
 
 
 <!-- ═══════════════════ MODAL ELIMINAR ═══════════════════ -->
+<!-- ══════════════════ PRODUCTO EDITAR ══════════════════ -->
+<section id="producto-editar" class="pm-section {% if seccion_activa == 'producto-editar' %}active{% endif %}">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>✏️ Editar Producto: {{ producto_editando.nombre }}</h3>
+      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
+    </div>
+    <div class="pm-card-body">
+      <form method="post" action="{% if producto_editando %}{% url 'pedidos:producto_editar' producto_editando.pk %}{% endif %}" class="pm-form">
+        {% csrf_token %}
+        <div class="pm-form-grid">
+          <div class="full">
+            <label>Nombre del Producto</label>
+            {{ form_producto.nombre }}
+          </div>
+          <div>
+            <label>Categoría</label>
+            {{ form_producto.categoria }}
+          </div>
+          <div>
+            <label>Precio</label>
+            {{ form_producto.precio }}
+          </div>
+          <div class="full">
+            <label>Descripción</label>
+            {{ form_producto.descripcion }}
+          </div>
+          <div class="pm-check-row">
+            {{ form_producto.disponible }}
+            <label>Disponible para venta</label>
+          </div>
+        </div>
+        <div class="pm-form-actions">
+          <button type="submit" class="pm-btn pm-btn-primary">Actualizar Producto</button>
+          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('producto-lista')">Volver</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════ PEDIDO EDITAR ══════════════════ -->
+<section id="pedido-editar" class="pm-section {% if seccion_activa == 'pedido-editar' %}active{% endif %}">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>✏️ Editar Pedido #{{ pedido_editando.pk }}</h3>
+      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
+    </div>
+    <div class="pm-card-body">
+      <form method="post" action="{% if pedido_editando %}{% url 'pedidos:pedido_editar' pedido_editando.pk %}{% endif %}" class="pm-form">
+        {% csrf_token %}
+        <div class="pm-form-grid">
+          <div class="full">
+            <label>Cliente</label>
+            {{ form_pedido.cliente }}
+          </div>
+          <div class="full">
+            <label>Descripción</label>
+            {{ form_pedido.descripcion }}
+          </div>
+          <div>
+            <label>Estado</label>
+            {{ form_pedido.estado }}
+          </div>
+          <div>
+            <label>Total ($)</label>
+            {{ form_pedido.total }}
+          </div>
+        </div>
+        <div class="pm-form-actions">
+          <button type="submit" class="pm-btn pm-btn-primary">Guardar Cambios</button>
+          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('pedido-lista')">Volver</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════ MODAL ELIMINAR ══════════════════ -->
 <div id="modal-delete" class="pm-modal-overlay">
   <div class="pm-modal-box">
     <h4>⚠️ Confirmar eliminación</h4>
@@ -721,16 +841,18 @@
 
 </div><!-- /pm-wrapper -->
 
-
 <script>
 // ═══ NAVEGACIÓN ═══
+// ═══════════════════════════════════════════
+// NAVEGACIÓN DE SECCIONES
+// ═══════════════════════════════════════════
 function showSection(name) {
-  document.querySelectorAll('.pm-section').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById('section-' + name);
-  if (target) {
-    target.classList.add('active');
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  document.querySelectorAll('.pm-section').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  var target = document.getElementById('section-' + name) || document.getElementById(name);
+  if (target) target.classList.add('active');
+  window.location.hash = name;
 }
 
 // ═══ MODAL ELIMINAR ═══
@@ -742,6 +864,130 @@ function confirmDelete(tipo, pk, nombre) {
   document.getElementById('modal-msg').textContent =
     `¿Eliminar ${tipo} "${nombre}" (#${pk})? Esta acción no se puede deshacer.`;
   document.getElementById('modal-delete').classList.add('open');
+window.addEventListener('load', function() {
+  var hash = window.location.hash.replace('#', '');
+  var activaDeDjango = "{{ seccion_activa }}";
+  if (activaDeDjango && activaDeDjango !== "None") {
+    showSection(activaDeDjango);
+  } else if (hash) {
+    showSection(hash);
+  }
+});
+
+// ═══════════════════════════════════════════
+// LÓGICA DE PEDIDOS (PLATOS)
+// ═══════════════════════════════════════════
+let platosSeleccionados = [];
+
+function agregarPlato(select) {
+  if (!select.value) return;
+  const [nombre, precio] = select.value.split('|');
+  const precioNum = parseInt(precio);
+
+  const existe = platosSeleccionados.find(p => p.nombre === nombre);
+  if (existe) {
+    existe.cantidad++;
+  } else {
+    platosSeleccionados.push({ nombre, precio: precioNum, cantidad: 1 });
+  }
+
+  select.value = "";
+  renderPlatos();
+}
+
+function cambiarCantidad(idx, delta) {
+  platosSeleccionados[idx].cantidad += delta;
+  if (platosSeleccionados[idx].cantidad <= 0) {
+    platosSeleccionados.splice(idx, 1);
+  }
+  renderPlatos();
+}
+
+function eliminarPlato(idx) {
+  platosSeleccionados.splice(idx, 1);
+  renderPlatos();
+}
+
+function renderPlatos() {
+  const tbody        = document.getElementById('tbody-platos');
+  const tabla        = document.getElementById('tabla-platos');
+  const vacio        = document.getElementById('platos-vacio');
+  const displayTotal = document.getElementById('total-display');
+
+  if (platosSeleccionados.length === 0) {
+    tabla.style.display = 'none';
+    vacio.style.display = 'block';
+    displayTotal.innerText = "$0";
+    return;
+  }
+
+  tabla.style.display = 'table';
+  vacio.style.display = 'none';
+  tbody.innerHTML = '';
+
+  let total = 0;
+  platosSeleccionados.forEach((p, i) => {
+    const subtotal = p.precio * p.cantidad;
+    total += subtotal;
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${p.nombre}</strong></td>
+        <td style="text-align:center;">
+          <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;">
+            <button type="button" class="qty-btn" onclick="cambiarCantidad(${i}, -1)">-</button>
+            <span style="font-weight:700;min-width:20px;">${p.cantidad}</span>
+            <button type="button" class="qty-btn" onclick="cambiarCantidad(${i}, 1)">+</button>
+          </div>
+        </td>
+        <td style="text-align:right;">$${p.precio.toLocaleString('es-CO')}</td>
+        <td style="text-align:right;"><strong>$${subtotal.toLocaleString('es-CO')}</strong></td>
+        <td><button type="button" class="pm-btn pm-btn-danger pm-btn-sm" onclick="eliminarPlato(${i})">×</button></td>
+      </tr>
+    `;
+  });
+  displayTotal.innerText = "$" + total.toLocaleString('es-CO');
+}
+
+function prepararPedido() {
+  if (platosSeleccionados.length === 0) {
+    alert("Agrega al menos un plato al pedido.");
+    return false;
+  }
+  let desc  = platosSeleccionados.map(p => `${p.cantidad}x ${p.nombre}`).join(', ');
+  let total = platosSeleccionados.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
+
+  document.getElementById('input-descripcion').value = desc;
+  document.getElementById('input-total').value = total;
+  return true;
+}
+
+function limpiarFormPedido() {
+  platosSeleccionados = [];
+  renderPlatos();
+  document.getElementById('form-crear-pedido').reset();
+}
+
+// ═══════════════════════════════════════════
+// MODALES Y ELIMINACIÓN
+// ═══════════════════════════════════════════
+function confirmDelete(tipo, id, nombre) {
+  const modal = document.getElementById('modal-delete');
+  const msg   = document.getElementById('modal-msg');
+  const form  = document.getElementById('modal-form');
+
+  msg.innerText  = `¿Estás seguro de eliminar el ${tipo} "${nombre}"?`;
+  form.action    = `/pedidos/${tipo}/${id}/eliminar/`;
+  modal.classList.add('open');
+}
+
+function confirmDeleteProducto(id, nombre) {
+  const modal = document.getElementById('modal-delete');
+  const msg   = document.getElementById('modal-msg');
+  const form  = document.getElementById('modal-form');
+
+  msg.innerText  = `¿Estás seguro de eliminar el producto "${nombre}"?`;
+  form.action    = `/pedidos/productos/${id}/eliminar/`;
+  modal.classList.add('open');
 }
 function closeModal() {
   document.getElementById('modal-delete').classList.remove('open');
