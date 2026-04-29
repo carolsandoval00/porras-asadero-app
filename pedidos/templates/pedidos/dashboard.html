@@ -169,10 +169,10 @@
     <button class="pm-btn pm-btn-light" onclick="showSection('pedido-lista')">📋 Consultar</button>
     <button class="pm-btn pm-btn-accent" onclick="showSection('pedido-crear')">➕ Crear</button>
   </div>
+  <!-- ✅ CAMBIO: quitado el botón ➕ Crear de Órdenes -->
   <div class="pm-nav-group">
     <span class="pm-label">🧾 Órdenes</span>
     <button class="pm-btn pm-btn-light" onclick="showSection('orden-lista')">📋 Consultar</button>
-    <button class="pm-btn pm-btn-accent" onclick="showSection('orden-crear')">➕ Crear</button>
   </div>
   <div class="pm-nav-group">
     <span class="pm-label">🛍️ Productos</span>
@@ -255,14 +255,15 @@
 
 
 <!-- ══════════════════ PEDIDO LISTA ══════════════════ -->
-<div id="section-pedido-lista" class="pm-section">
+<div id="section-pedido-lista" class="pm-section {% if seccion_activa == 'pedido-lista' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>📦 Pedidos</h3>
       <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('pedido-crear')">➕ Nuevo pedido</button>
     </div>
     <div class="pm-card-body">
-      <form method="get" action="#pedido-lista" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <input type="hidden" name="seccion" value="pedido-lista">
         <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;"
                type="text" name="q" value="{{ q }}" placeholder="🔍 Buscar cliente…">
         <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;">
@@ -386,7 +387,6 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>🧾 Órdenes</h3>
-      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('orden-crear')">➕ Nueva orden</button>
     </div>
     <div class="pm-card-body">
       <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
@@ -428,34 +428,6 @@
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ══════════════════ ORDEN CREAR ══════════════════ -->
-<div id="section-orden-crear" class="pm-section">
-  <div class="pm-card">
-    <div class="pm-card-header">
-      <h3>➕ Crear Orden</h3>
-      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('orden-lista')">← Volver</button>
-    </div>
-    <div class="pm-card-body">
-      <form method="post" action="{% url 'pedidos:dashboard' %}" class="pm-form">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="orden_crear">
-        <div class="pm-form-grid">
-          <div class="full"><label>Pedido</label>{{ form_orden.pedido }}</div>
-          <div><label>Estado</label>{{ form_orden.estado }}</div>
-          <div><label>Subtotal ($)</label>{{ form_orden.subtotal }}</div>
-          <div><label>Impuesto ($)</label>{{ form_orden.impuesto }}</div>
-          <div class="full"><label>Notas</label>{{ form_orden.notas }}</div>
-        </div>
-        <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-accent">💾 Crear Orden</button>
-          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('orden-lista')">Cancelar</button>
-        </div>
-      </form>
     </div>
   </div>
 </div>
@@ -691,7 +663,7 @@
           <div class="full"><label>Notas</label>{{ form_orden.notas }}</div>
         </div>
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-primary">💾 Actualizar orden </button>
+          <button type="submit" class="pm-btn pm-btn-primary">💾 Actualizar Orden</button>
           <button type="button" class="pm-btn pm-btn-light" onclick="showSection('orden-lista')">Volver</button>
         </div>
       </form>
