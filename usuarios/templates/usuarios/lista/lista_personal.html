@@ -293,11 +293,11 @@
                         <option>Tarjeta de Identidad</option><option>Pasaporte</option>
                     </select>
                 </div>
-                <div><label class="f-label">Número de documento</label><input class="f-inp" id="u-doc" placeholder="Ej: 1234567890"></div>
+                <div><label class="f-label">Número de documento</label><input class="f-inp" id="u-doc" placeholder="Ej: 1234567890" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
             </div>
             <div class="fg2">
                 <div><label class="f-label">Correo electrónico *</label><input type="email" class="f-inp" id="u-email" placeholder="correo@porras.com"></div>
-                <div><label class="f-label">Teléfono</label><input type="tel" class="f-inp" id="u-tel" placeholder="3001234567" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                <div><label class="f-label">Teléfono</label><input type="tel" class="f-inp" id="u-tel" placeholder="3001234567" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
             </div>
             <div><label class="f-label">Dirección</label><input class="f-inp" id="u-dir" placeholder="Ej: Calle 93 # 15-20, Bogotá"></div>
         </div>
@@ -607,9 +607,14 @@ window.guardar=function(){
 
     // Validar teléfono: solo números y máximo 10 dígitos
     if(tel){
-        if(!/^\d+$/.test(tel)){toast('El teléfono solo debe contener números','err');return;}
-        if(tel.length>10){toast('El teléfono no puede tener más de 10 dígitos','err');return;}
-    }
+    if(!/^\d+$/.test(tel)){toast('El teléfono solo debe contener números','err');return;}
+    if(tel.length>10){toast('El teléfono no puede tener más de 10 dígitos','err');return;}
+}
+const doc=document.getElementById('u-doc').value.trim();
+if(doc){
+    if(!/^\d+$/.test(doc)){toast('El documento solo debe contener números','err');return;}
+    if(doc.length<6||doc.length>10){toast('El documento debe tener entre 6 y 10 dígitos','err');return;}
+}
 
     // Validar correo electrónico
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
