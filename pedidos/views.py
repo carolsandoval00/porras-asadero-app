@@ -17,6 +17,8 @@ def _dashboard_context(request, extra=None):
     cat_sel    = request.GET.get('categoria', '').strip()
     q_orden          = request.GET.get('q_orden', '').strip()
     estado_orden_sel = request.GET.get('estado_orden', '').strip()
+    # ✅ NUEVO: detecta sección activa desde GET para que el filtro vuelva a la sección correcta
+    seccion_get = request.GET.get('seccion', '').strip()
 
     pedidos_qs = Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')
     if q:
@@ -41,8 +43,6 @@ def _dashboard_context(request, extra=None):
     ctx = {
         'titulo': 'Módulo de Pedidos',
         'nombre': request.user.get_full_name() or request.user.username,
-
-        # Stats
         'total_pedidos':      Pedido.objects.count(),
         'pedidos_pendientes': Pedido.objects.filter(estado='pendiente').count(),
         'total_ordenes':      Orden.objects.count(),
@@ -50,18 +50,11 @@ def _dashboard_context(request, extra=None):
         'productos_activos':  Producto.objects.filter(disponible=True).count(),
         'caja_abierta':       Caja.objects.filter(estado='abierta').first(),
         'ultimos_pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')[:5],
-
-        # Listas
         'pedidos':   pedidos_qs,
         'ordenes':   ordenes_qs,
         'productos': productos_qs,
         'cajas':     Caja.objects.select_related('responsable').all(),
-
-        'productos_disponibles': Producto.objects.filter(
-            disponible=True
-        ).order_by('categoria', 'nombre'),
-
-        # Filtros
+        'productos_disponibles': Producto.objects.filter(disponible=True).order_by('categoria', 'nombre'),
         'estados':         Pedido.ESTADO_CHOICES,
         'estados_orden':   Orden.ESTADO_CHOICES,
         'categorias':      Producto.CATEGORIA_CHOICES,
@@ -71,12 +64,12 @@ def _dashboard_context(request, extra=None):
         'estado_orden_sel': estado_orden_sel,
         'q_prod':          q_prod,
         'cat_sel':         cat_sel,
-
-        # Formularios vacíos
         'form_pedido':   PedidoForm(),
         'form_orden':    OrdenForm(),
         'form_producto': ProductoForm(),
         'form_caja':     CajaForm(),
+        # ✅ NUEVO: si viene de un filtro GET usa esa sección, si viene de editar usa la del extra
+        'seccion_activa': (extra.get('seccion_activa') if extra and 'seccion_activa' in extra else None) or seccion_get or None,
     }
 
     if extra:
@@ -236,14 +229,27 @@ def orden_detalle(request, pk):
 
 def orden_editar(request, pk):
     orden = get_object_or_404(Orden, pk=pk)
-    form  = OrdenForm(request.POST or None, instance=orden)
+
     if request.method == 'POST':
+        form = OrdenForm(request.POST, instance=orden)
         if form.is_valid():
             form.save()
             messages.success(request, f'✅ Orden {orden.numero_orden} actualizada.')
-        else:
-            messages.error(request, '❌ Corrige los errores.')
-    return redirect('pedidos:dashboard')
+            return redirect('pedidos:dashboard')
+        ctx = _dashboard_context(request, {
+            'form_orden':     form,
+            'orden_editando': orden,
+            'seccion_activa': 'orden-editar',
+        })
+        return render(request, 'pedidos/dashboard.html', ctx)
+
+    form = OrdenForm(instance=orden)
+    ctx  = _dashboard_context(request, {
+        'form_orden':     form,
+        'orden_editando': orden,
+        'seccion_activa': 'orden-editar',
+    })
+    return render(request, 'pedidos/dashboard.html', ctx)
 
 
 def orden_eliminar(request, pk):

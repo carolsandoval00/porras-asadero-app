@@ -131,18 +131,11 @@
     display:inline-flex; align-items:center; justify-content:center;
     width:26px; height:26px; border-radius:50%; border:1px solid var(--p-border);
     background:var(--p-surface); color:var(--p-text); font-size:1rem;
-    font-weight:700; cursor:pointer; line-height:1; transition:all .15s; padding:0;
+    font-weight:700; cursor:pointer; line-height:1; transition:all .15s;
+    padding:0;
   }
   .qty-btn:hover { background:#C0392B; color:#F5ECD7; border-color:#C0392B; }
 
-  /* Estilos extra para modal editar orden */
-  #modal-editar-orden .pm-modal-box { max-width:540px; width:95%; }
-  .mf-label { font-size:.78rem; font-weight:700; text-transform:uppercase;
-              letter-spacing:.5px; color:var(--p-muted); display:block; margin-bottom:.3rem; }
-  .mf-input { width:100%; padding:.55rem .85rem; border:1px solid var(--p-border);
-              border-radius:8px; font-size:.9rem; color:var(--p-text); background:#FDF7EC;
-              box-sizing:border-box; transition:border-color .2s,box-shadow .2s; }
-  .mf-input:focus { outline:none; border-color:#C0392B; box-shadow:0 0 0 3px rgba(192,57,43,.12); }
   .pm-check-row { display:flex; align-items:center; gap:.6rem; grid-column:1/-1; }
   .pm-check-row label { margin:0; text-transform:none; letter-spacing:0; font-size:.9rem; font-weight:600; color:var(--p-text); }
   .pm-check-row input[type="checkbox"] { width:18px; height:18px; accent-color:#C0392B; cursor:pointer; }
@@ -232,7 +225,9 @@
       <div class="pm-table-wrap">
         <table class="pm-table">
           <thead>
-            <tr><th>#</th><th>Cliente</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr>
+            <tr>
+              <th>#</th><th>Cliente</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th>
+            </tr>
           </thead>
           <tbody>
             {% for p in ultimos_pedidos %}
@@ -243,13 +238,9 @@
               <td>${{ p.total }}</td>
               <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
               <td>
-                <button class="pm-btn pm-btn-light pm-btn-sm"
-                        onclick="loadEditForm('pedido',{{ p.pk }})">✏️ Editar</button>
+                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
                         onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️ Eliminar</button>
-                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️</a>
-                <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️</button>
               </td>
             </tr>
             {% empty %}
@@ -337,11 +328,6 @@
           </div>
           <div>
             <label>Agregar plato al pedido</label>
-            <!-- ══════════════════════════════════════════════════════════
-                 SELECTOR DINÁMICO — lee los productos desde la base de datos.
-                 Cada vez que crees un nuevo producto con disponible=True,
-                 aparecerá automáticamente aquí sin tocar este archivo.
-                 ══════════════════════════════════════════════════════════ -->
             <select id="menu-select" onchange="agregarPlato(this)"
                     style="width:100%;padding:.55rem .85rem;border:1px solid var(--p-border);border-radius:8px;font-size:.9rem;color:var(--p-text);background:#FDF7EC;">
               <option value="">— Selecciona un plato —</option>
@@ -396,7 +382,7 @@
 
 
 <!-- ══════════════════ ORDEN LISTA ══════════════════ -->
-<div id="section-orden-lista" class="pm-section">
+<div id="section-orden-lista" class="pm-section {% if seccion_activa == 'orden-lista' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>🧾 Órdenes</h3>
@@ -404,8 +390,9 @@
     </div>
     <div class="pm-card-body">
       <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <input type="hidden" name="seccion" value="orden-lista">
         <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;"
-               type="text" name="q_orden" value="{{ q_orden }}" placeholder="🔍 Buscar cliente u orden…">
+               type="text" name="q_orden" value="{{ q_orden }}" placeholder="🔍 Buscar orden o cliente…">
         <select name="estado_orden" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;">
           <option value="">Todos los estados</option>
           {% for val,lbl in estados_orden %}
@@ -430,21 +417,9 @@
               <td><strong>${{ o.total }}</strong></td>
               <td>{{ o.creada_en|date:"d/m/Y" }}</td>
               <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                {# ── BOTÓN EDITAR abre modal, NO redirige ── #}
-                <button class="pm-btn pm-btn-light pm-btn-sm"
-                        onclick="abrirEditarOrden(
-                          {{ o.pk }},
-                          '{{ o.numero_orden }}',
-                          {{ o.pedido.pk }},
-                          '{{ o.estado }}',
-                          '{{ o.subtotal }}',
-                          '{{ o.impuesto }}',
-                          '{{ o.notas|default:""|escapejs }}'
-                        )">✏️ Editar</button>
-              <td style="display:flex;gap:.3rem">
-                <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">🔍 Ver</a>
+                <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('orden',{{ o.pk }},'{{ o.numero_orden }}')">🗑️</button>
+                        onclick="confirmDeleteOrden({{ o.pk }},'{{ o.numero_orden }}')">🗑️ Eliminar</button>
               </td>
             </tr>
             {% empty %}
@@ -470,26 +445,11 @@
         {% csrf_token %}
         <input type="hidden" name="action" value="orden_crear">
         <div class="pm-form-grid">
-          <div class="full">
-            <label>Pedido</label>
-            {{ form_orden.pedido }}
-          </div>
-          <div>
-            <label>Estado</label>
-            {{ form_orden.estado }}
-          </div>
-          <div>
-            <label>Subtotal ($)</label>
-            {{ form_orden.subtotal }}
-          </div>
-          <div>
-            <label>Impuesto ($)</label>
-            {{ form_orden.impuesto }}
-          </div>
-          <div class="full">
-            <label>Notas</label>
-            {{ form_orden.notas }}
-          </div>
+          <div class="full"><label>Pedido</label>{{ form_orden.pedido }}</div>
+          <div><label>Estado</label>{{ form_orden.estado }}</div>
+          <div><label>Subtotal ($)</label>{{ form_orden.subtotal }}</div>
+          <div><label>Impuesto ($)</label>{{ form_orden.impuesto }}</div>
+          <div class="full"><label>Notas</label>{{ form_orden.notas }}</div>
         </div>
         <div class="pm-form-actions">
           <button type="submit" class="pm-btn pm-btn-accent">💾 Crear Orden</button>
@@ -520,19 +480,10 @@
         </select>
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
       </form>
-
       <div class="pm-table-wrap">
         <table class="pm-table">
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Precio</th>
-              <th>Descripción</th>
-              <th>Disponible</th>
-              <th>Acciones</th>
-            </tr>
+            <tr><th>#</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Descripción</th><th>Disponible</th><th>Acciones</th></tr>
           </thead>
           <tbody>
             {% for prod in productos %}
@@ -541,9 +492,7 @@
               <td><strong>{{ prod.nombre }}</strong></td>
               <td>{{ prod.get_categoria_display }}</td>
               <td>${{ prod.precio }}</td>
-              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
-                {{ prod.descripcion|default:"—" }}
-              </td>
+              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">{{ prod.descripcion|default:"—" }}</td>
               <td>
                 {% if prod.disponible %}
                   <span class="pm-badge pm-badge-completado">✅ Sí</span>
@@ -580,22 +529,10 @@
         {% csrf_token %}
         <input type="hidden" name="action" value="producto_crear">
         <div class="pm-form-grid">
-          <div class="full">
-            <label>Nombre del producto</label>
-            {{ form_producto.nombre }}
-          </div>
-          <div>
-            <label>Categoría</label>
-            {{ form_producto.categoria }}
-          </div>
-          <div>
-            <label>Precio ($)</label>
-            {{ form_producto.precio }}
-          </div>
-          <div class="full">
-            <label>Descripción</label>
-            {{ form_producto.descripcion }}
-          </div>
+          <div class="full"><label>Nombre del producto</label>{{ form_producto.nombre }}</div>
+          <div><label>Categoría</label>{{ form_producto.categoria }}</div>
+          <div><label>Precio ($)</label>{{ form_producto.precio }}</div>
+          <div class="full"><label>Descripción</label>{{ form_producto.descripcion }}</div>
           <div class="pm-check-row">
             {{ form_producto.disponible }}
             <label>Disponible para venta</label>
@@ -666,18 +603,9 @@
         {% csrf_token %}
         <input type="hidden" name="action" value="caja_abrir">
         <div class="pm-form-grid">
-          <div>
-            <label>Nombre de la caja</label>
-            {{ form_caja.nombre }}
-          </div>
-          <div>
-            <label>Saldo inicial ($)</label>
-            {{ form_caja.saldo_inicial }}
-          </div>
-          <div class="full">
-            <label>Observaciones</label>
-            {{ form_caja.observaciones }}
-          </div>
+          <div><label>Nombre de la caja</label>{{ form_caja.nombre }}</div>
+          <div><label>Saldo inicial ($)</label>{{ form_caja.saldo_inicial }}</div>
+          <div class="full"><label>Observaciones</label>{{ form_caja.observaciones }}</div>
         </div>
         <div class="pm-form-actions">
           <button type="submit" class="pm-btn pm-btn-info">🔓 Abrir Caja</button>
@@ -689,61 +617,6 @@
 </div>
 
 
-<!-- ═══════════════════ MODAL EDITAR ORDEN ═══════════════════ -->
-<div id="modal-editar-orden" class="pm-modal-overlay">
-  <div class="pm-modal-box" style="max-width:540px;width:95%;">
-    <h4>✏️ Editar Orden <span id="modal-orden-numero" style="color:var(--p-muted);font-weight:500;font-size:.9rem;"></span></h4>
-    <form id="form-editar-orden" method="post" action="">
-      {% csrf_token %}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.1rem;">
-
-        <div style="grid-column:1/-1;">
-          <label class="mf-label">Pedido</label>
-          <select name="pedido" id="modal-orden-pedido" class="mf-input">
-            {% for p in pedidos %}
-            <option value="{{ p.pk }}">{{ p.cliente }} (#{{ p.pk }})</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div>
-          <label class="mf-label">Estado</label>
-          <select name="estado" id="modal-orden-estado" class="mf-input">
-            {% for val,lbl in estados_orden %}
-            <option value="{{ val }}">{{ lbl }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div>
-          <label class="mf-label">Subtotal ($)</label>
-          <input type="number" name="subtotal" id="modal-orden-subtotal"
-                 step="0.01" min="0" class="mf-input">
-        </div>
-
-        <div>
-          <label class="mf-label">Impuesto ($)</label>
-          <input type="number" name="impuesto" id="modal-orden-impuesto"
-                 step="0.01" min="0" class="mf-input">
-        </div>
-
-        <div style="grid-column:1/-1;">
-          <label class="mf-label">Notas</label>
-          <textarea name="notas" id="modal-orden-notas" rows="3"
-                    class="mf-input" style="resize:vertical;min-height:70px;"></textarea>
-        </div>
-
-      </div>
-      <div class="pm-modal-actions" style="margin-top:1.4rem;">
-        <button type="submit" class="pm-btn pm-btn-accent">💾 Actualizar orden</button>
-        <button type="button" class="pm-btn pm-btn-light" onclick="closeModalOrden()">Cancelar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-
-<!-- ═══════════════════ MODAL ELIMINAR ═══════════════════ -->
 <!-- ══════════════════ PRODUCTO EDITAR ══════════════════ -->
 <section id="producto-editar" class="pm-section {% if seccion_activa == 'producto-editar' %}active{% endif %}">
   <div class="pm-card">
@@ -755,22 +628,10 @@
       <form method="post" action="{% if producto_editando %}{% url 'pedidos:producto_editar' producto_editando.pk %}{% endif %}" class="pm-form">
         {% csrf_token %}
         <div class="pm-form-grid">
-          <div class="full">
-            <label>Nombre del Producto</label>
-            {{ form_producto.nombre }}
-          </div>
-          <div>
-            <label>Categoría</label>
-            {{ form_producto.categoria }}
-          </div>
-          <div>
-            <label>Precio</label>
-            {{ form_producto.precio }}
-          </div>
-          <div class="full">
-            <label>Descripción</label>
-            {{ form_producto.descripcion }}
-          </div>
+          <div class="full"><label>Nombre del Producto</label>{{ form_producto.nombre }}</div>
+          <div><label>Categoría</label>{{ form_producto.categoria }}</div>
+          <div><label>Precio</label>{{ form_producto.precio }}</div>
+          <div class="full"><label>Descripción</label>{{ form_producto.descripcion }}</div>
           <div class="pm-check-row">
             {{ form_producto.disponible }}
             <label>Disponible para venta</label>
@@ -797,26 +658,41 @@
       <form method="post" action="{% if pedido_editando %}{% url 'pedidos:pedido_editar' pedido_editando.pk %}{% endif %}" class="pm-form">
         {% csrf_token %}
         <div class="pm-form-grid">
-          <div class="full">
-            <label>Cliente</label>
-            {{ form_pedido.cliente }}
-          </div>
-          <div class="full">
-            <label>Descripción</label>
-            {{ form_pedido.descripcion }}
-          </div>
-          <div>
-            <label>Estado</label>
-            {{ form_pedido.estado }}
-          </div>
-          <div>
-            <label>Total ($)</label>
-            {{ form_pedido.total }}
-          </div>
+          <div class="full"><label>Cliente</label>{{ form_pedido.cliente }}</div>
+          <div class="full"><label>Descripción</label>{{ form_pedido.descripcion }}</div>
+          <div><label>Estado</label>{{ form_pedido.estado }}</div>
+          <div><label>Total ($)</label>{{ form_pedido.total }}</div>
         </div>
         <div class="pm-form-actions">
           <button type="submit" class="pm-btn pm-btn-primary">Guardar Cambios</button>
           <button type="button" class="pm-btn pm-btn-light" onclick="showSection('pedido-lista')">Volver</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════ ORDEN EDITAR ══════════════════ -->
+<section id="orden-editar" class="pm-section {% if seccion_activa == 'orden-editar' %}active{% endif %}">
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>✏️ Editar Orden: {{ orden_editando.numero_orden }}</h3>
+      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
+    </div>
+    <div class="pm-card-body">
+      <form method="post" action="{% if orden_editando %}{% url 'pedidos:orden_editar' orden_editando.pk %}{% endif %}" class="pm-form">
+        {% csrf_token %}
+        <div class="pm-form-grid">
+          <div class="full"><label>Pedido</label>{{ form_orden.pedido }}</div>
+          <div><label>Estado</label>{{ form_orden.estado }}</div>
+          <div><label>Subtotal ($)</label>{{ form_orden.subtotal }}</div>
+          <div><label>Impuesto ($)</label>{{ form_orden.impuesto }}</div>
+          <div class="full"><label>Notas</label>{{ form_orden.notas }}</div>
+        </div>
+        <div class="pm-form-actions">
+          <button type="submit" class="pm-btn pm-btn-primary">💾 Actualizar orden </button>
+          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('orden-lista')">Volver</button>
         </div>
       </form>
     </div>
@@ -839,13 +715,9 @@
   </div>
 </div>
 
-</div><!-- /pm-wrapper -->
+</div>
 
 <script>
-// ═══ NAVEGACIÓN ═══
-// ═══════════════════════════════════════════
-// NAVEGACIÓN DE SECCIONES
-// ═══════════════════════════════════════════
 function showSection(name) {
   document.querySelectorAll('.pm-section').forEach(function(s) {
     s.classList.remove('active');
@@ -855,15 +727,6 @@ function showSection(name) {
   window.location.hash = name;
 }
 
-// ═══ MODAL ELIMINAR ═══
-function confirmDelete(tipo, pk, nombre) {
-  const base = tipo === 'pedido'
-    ? "{% url 'pedidos:pedido_eliminar' 9999 %}"
-    : "{% url 'pedidos:orden_eliminar'  9999 %}";
-  document.getElementById('modal-form').action = base.replace('9999', pk);
-  document.getElementById('modal-msg').textContent =
-    `¿Eliminar ${tipo} "${nombre}" (#${pk})? Esta acción no se puede deshacer.`;
-  document.getElementById('modal-delete').classList.add('open');
 window.addEventListener('load', function() {
   var hash = window.location.hash.replace('#', '');
   var activaDeDjango = "{{ seccion_activa }}";
@@ -874,32 +737,22 @@ window.addEventListener('load', function() {
   }
 });
 
-// ═══════════════════════════════════════════
-// LÓGICA DE PEDIDOS (PLATOS)
-// ═══════════════════════════════════════════
 let platosSeleccionados = [];
 
 function agregarPlato(select) {
   if (!select.value) return;
   const [nombre, precio] = select.value.split('|');
   const precioNum = parseInt(precio);
-
   const existe = platosSeleccionados.find(p => p.nombre === nombre);
-  if (existe) {
-    existe.cantidad++;
-  } else {
-    platosSeleccionados.push({ nombre, precio: precioNum, cantidad: 1 });
-  }
-
+  if (existe) { existe.cantidad++; }
+  else { platosSeleccionados.push({ nombre, precio: precioNum, cantidad: 1 }); }
   select.value = "";
   renderPlatos();
 }
 
 function cambiarCantidad(idx, delta) {
   platosSeleccionados[idx].cantidad += delta;
-  if (platosSeleccionados[idx].cantidad <= 0) {
-    platosSeleccionados.splice(idx, 1);
-  }
+  if (platosSeleccionados[idx].cantidad <= 0) { platosSeleccionados.splice(idx, 1); }
   renderPlatos();
 }
 
@@ -909,22 +762,16 @@ function eliminarPlato(idx) {
 }
 
 function renderPlatos() {
-  const tbody        = document.getElementById('tbody-platos');
-  const tabla        = document.getElementById('tabla-platos');
-  const vacio        = document.getElementById('platos-vacio');
+  const tbody = document.getElementById('tbody-platos');
+  const tabla = document.getElementById('tabla-platos');
+  const vacio = document.getElementById('platos-vacio');
   const displayTotal = document.getElementById('total-display');
-
   if (platosSeleccionados.length === 0) {
-    tabla.style.display = 'none';
-    vacio.style.display = 'block';
-    displayTotal.innerText = "$0";
-    return;
+    tabla.style.display = 'none'; vacio.style.display = 'block';
+    displayTotal.innerText = "$0"; return;
   }
-
-  tabla.style.display = 'table';
-  vacio.style.display = 'none';
+  tabla.style.display = 'table'; vacio.style.display = 'none';
   tbody.innerHTML = '';
-
   let total = 0;
   platosSeleccionados.forEach((p, i) => {
     const subtotal = p.precio * p.cantidad;
@@ -942,41 +789,38 @@ function renderPlatos() {
         <td style="text-align:right;">$${p.precio.toLocaleString('es-CO')}</td>
         <td style="text-align:right;"><strong>$${subtotal.toLocaleString('es-CO')}</strong></td>
         <td><button type="button" class="pm-btn pm-btn-danger pm-btn-sm" onclick="eliminarPlato(${i})">×</button></td>
-      </tr>
-    `;
+      </tr>`;
   });
   displayTotal.innerText = "$" + total.toLocaleString('es-CO');
 }
 
 function prepararPedido() {
-  if (platosSeleccionados.length === 0) {
-    alert("Agrega al menos un plato al pedido.");
-    return false;
-  }
-  let desc  = platosSeleccionados.map(p => `${p.cantidad}x ${p.nombre}`).join(', ');
-  let total = platosSeleccionados.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
-
-  document.getElementById('input-descripcion').value = desc;
-  document.getElementById('input-total').value = total;
+  if (platosSeleccionados.length === 0) { alert("Agrega al menos un plato al pedido."); return false; }
+  document.getElementById('input-descripcion').value = platosSeleccionados.map(p => `${p.cantidad}x ${p.nombre}`).join(', ');
+  document.getElementById('input-total').value = platosSeleccionados.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
   return true;
 }
 
 function limpiarFormPedido() {
-  platosSeleccionados = [];
-  renderPlatos();
+  platosSeleccionados = []; renderPlatos();
   document.getElementById('form-crear-pedido').reset();
 }
 
-// ═══════════════════════════════════════════
-// MODALES Y ELIMINACIÓN
-// ═══════════════════════════════════════════
 function confirmDelete(tipo, id, nombre) {
   const modal = document.getElementById('modal-delete');
   const msg   = document.getElementById('modal-msg');
   const form  = document.getElementById('modal-form');
+  msg.innerText = `¿Estás seguro de eliminar el ${tipo} "${nombre}"?`;
+  form.action   = `/pedidos/${tipo}s/${id}/eliminar/`;
+  modal.classList.add('open');
+}
 
-  msg.innerText  = `¿Estás seguro de eliminar el ${tipo} "${nombre}"?`;
-  form.action    = `/pedidos/${tipo}/${id}/eliminar/`;
+function confirmDeleteOrden(id, numero) {
+  const modal = document.getElementById('modal-delete');
+  const msg   = document.getElementById('modal-msg');
+  const form  = document.getElementById('modal-form');
+  msg.innerText = `¿Estás seguro de eliminar la orden "${numero}"?`;
+  form.action   = `/pedidos/ordenes/${id}/eliminar/`;
   modal.classList.add('open');
 }
 
@@ -984,153 +828,14 @@ function confirmDeleteProducto(id, nombre) {
   const modal = document.getElementById('modal-delete');
   const msg   = document.getElementById('modal-msg');
   const form  = document.getElementById('modal-form');
-
-  msg.innerText  = `¿Estás seguro de eliminar el producto "${nombre}"?`;
-  form.action    = `/pedidos/productos/${id}/eliminar/`;
+  msg.innerText = `¿Estás seguro de eliminar el producto "${nombre}"?`;
+  form.action   = `/pedidos/productos/${id}/eliminar/`;
   modal.classList.add('open');
 }
+
 function closeModal() {
   document.getElementById('modal-delete').classList.remove('open');
 }
-document.getElementById('modal-delete').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-// ═══ MODAL EDITAR ORDEN ═══
-function abrirEditarOrden(pk, numero, pedidoPk, estado, subtotal, impuesto, notas) {
-  document.getElementById('modal-orden-numero').textContent = numero;
-  document.getElementById('modal-orden-pedido').value   = pedidoPk;
-  document.getElementById('modal-orden-estado').value   = estado;
-  document.getElementById('modal-orden-subtotal').value = subtotal;
-  document.getElementById('modal-orden-impuesto').value = impuesto;
-  document.getElementById('modal-orden-notas').value    = notas || '';
-  // Apunta el form a la URL de edición correcta
-  const base = "{% url 'pedidos:orden_editar' 9999 %}";
-  document.getElementById('form-editar-orden').action = base.replace('9999', pk);
-  document.getElementById('modal-editar-orden').classList.add('open');
-}
-function closeModalOrden() {
-  document.getElementById('modal-editar-orden').classList.remove('open');
-}
-document.getElementById('modal-editar-orden').addEventListener('click', function(e) {
-  if (e.target === this) closeModalOrden();
-});
-
-// ═══ EDITAR PEDIDO (navega a página separada) ═══
-function loadEditForm(tipo, pk) {
-  const urls = { pedido: "{% url 'pedidos:pedido_editar' 9999 %}" };
-  if (urls[tipo]) window.location.href = urls[tipo].replace('9999', pk);
-}
-
-// ═══ GESTIÓN DE PLATOS ═══
-let platosEnPedido = {};
-
-function agregarPlato(select) {
-  const val = select.value;
-  if (!val) return;
-  const partes = val.split('|');
-  const nombre = partes[0];
-  const precio = parseInt(partes[1], 10);
-  if (platosEnPedido[nombre]) {
-    platosEnPedido[nombre].cantidad += 1;
-  } else {
-    platosEnPedido[nombre] = { precio, cantidad: 1 };
-  }
-  select.value = '';
-  renderTablaPlatos();
-}
-
-function cambiarCantidad(nombre, delta) {
-  if (!platosEnPedido[nombre]) return;
-  platosEnPedido[nombre].cantidad += delta;
-  if (platosEnPedido[nombre].cantidad <= 0) delete platosEnPedido[nombre];
-  renderTablaPlatos();
-}
-
-function eliminarPlato(nombre) {
-  delete platosEnPedido[nombre];
-  renderTablaPlatos();
-}
-
-function formatCOP(valor) {
-  return '$' + valor.toLocaleString('es-CO');
-}
-
-function renderTablaPlatos() {
-  const tbody        = document.getElementById('tbody-platos');
-  const tabla        = document.getElementById('tabla-platos');
-  const vacio        = document.getElementById('platos-vacio');
-  const totalDisplay = document.getElementById('total-display');
-  const nombres = Object.keys(platosEnPedido);
-  if (nombres.length === 0) {
-    tabla.style.display = 'none';
-    vacio.style.display = 'block';
-    totalDisplay.textContent = '$0';
-    return;
-  }
-  tabla.style.display = 'table';
-  vacio.style.display = 'none';
-  let total = 0;
-  tbody.innerHTML = '';
-  nombres.forEach(function(nombre) {
-    const item     = platosEnPedido[nombre];
-    const subtotal = item.precio * item.cantidad;
-    total += subtotal;
-    const ne = nombre.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    const tr = document.createElement('tr');
-    tr.innerHTML =
-      '<td>' + nombre + '</td>' +
-      '<td style="text-align:center;"><div style="display:flex;align-items:center;justify-content:center;gap:.5rem;">' +
-        '<button type="button" class="qty-btn" onclick="cambiarCantidad(\'' + ne + '\',-1)">−</button>' +
-        '<strong style="min-width:20px;text-align:center;">' + item.cantidad + '</strong>' +
-        '<button type="button" class="qty-btn" onclick="cambiarCantidad(\'' + ne + '\',1)">+</button>' +
-      '</div></td>' +
-      '<td style="text-align:right;">' + formatCOP(item.precio) + '</td>' +
-      '<td style="text-align:right;font-weight:700;">' + formatCOP(subtotal) + '</td>' +
-      '<td style="text-align:center;"><button type="button" class="pm-btn pm-btn-danger pm-btn-sm" onclick="eliminarPlato(\'' + ne + '\')" style="padding:.25rem .6rem;">✕</button></td>';
-    tbody.appendChild(tr);
-  });
-  totalDisplay.textContent = formatCOP(total);
-}
-
-function prepararPedido() {
-  const nombres = Object.keys(platosEnPedido);
-  if (nombres.length === 0) { alert('Debes agregar al menos un plato al pedido.'); return false; }
-  const descripcion = nombres.map(n => platosEnPedido[n].cantidad + 'x ' + n).join(', ');
-  const total = nombres.reduce((sum, n) => sum + (platosEnPedido[n].precio * platosEnPedido[n].cantidad), 0);
-  document.getElementById('input-descripcion').value = descripcion;
-  document.getElementById('input-total').value = total;
-  return true;
-}
-
-function limpiarFormPedido() {
-  platosEnPedido = {};
-  renderTablaPlatos();
-  const ci = document.querySelector('#form-crear-pedido input[name="cliente"]');
-  if (ci) ci.value = '';
-}
-
-// ═══ INICIALIZACIÓN ═══
-document.addEventListener('DOMContentLoaded', function() {
-  const hash = window.location.hash.replace('#', '');
-  if (hash) {
-    showSection(hash);
-  } else if (window.location.search) {
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('q_orden') || params.has('estado_orden')) {
-      showSection('orden-lista');
-    } else {
-      showSection('pedido-lista');
-    }
-  }
-  document.querySelectorAll('.pm-alert').forEach(function(a) {
-    setTimeout(function() {
-      a.style.transition = 'opacity .5s';
-      a.style.opacity = '0';
-      setTimeout(() => a.remove(), 500);
-    }, 4000);
-  });
-});
 </script>
 
 {% endblock %}
