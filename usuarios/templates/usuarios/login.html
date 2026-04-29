@@ -245,16 +245,15 @@
                <i class="bi bi-receipt"></i>
                <h3>Ver Pedidos</h3>
                </a>
-            <a href="#" class="dash-card">
-    <i class="bi bi-credit-card"></i>
-    <h3>Gestión de Pagos</h3>
-</a>
+            <a href="{% url 'pago:dashboard' %}" class="dash-card">
+               <i class="bi bi-credit-card"></i>
+               <h3>Gestión de Pagos</h3>
+               </a>
 
-<a href="#" class="dash-card">
-    <i class="bi bi-credit-card"></i>
-    <h3>Reservas y Mesas </h3>
-</a>
-               
+            <a href="{% url 'reserva_inicio' %}" class="dash-card">
+               <i class="bi bi-calendar-check"></i>
+               <h3>Reservas y Mesas</h3>
+               </a>      
         </div>
 
         <div class="mt-5">
