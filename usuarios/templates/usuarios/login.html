@@ -299,14 +299,14 @@
                 </div>
                 <div>
                     <label>Número de Documento <span class="text-danger">*</span></label>
-                    <input type="text" name="documento" class="form-control" required value="{{ usuario.documento|default:'' }}">
+                  <input type="text" name="documento" class="form-control" required value="{{ usuario.documento|default:'' }}" maxlength="10" pattern="[0-9]{6,10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                 </div>
             </div>
 
             <div class="form-row-2 mb-3">
                 <div>
                     <label>Teléfono</label>
-                    <input type="text" name="telefono" class="form-control" value="{{ usuario.telefono|default:'' }}">
+                   <input type="text" name="telefono" class="form-control" value="{{ usuario.telefono|default:'' }}" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                 </div>
                 <div>
                     <label>Correo electrónico <span class="text-danger">*</span></label>
