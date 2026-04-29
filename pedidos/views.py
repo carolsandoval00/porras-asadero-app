@@ -17,7 +17,6 @@ def _dashboard_context(request, extra=None):
     cat_sel    = request.GET.get('categoria', '').strip()
     q_orden          = request.GET.get('q_orden', '').strip()
     estado_orden_sel = request.GET.get('estado_orden', '').strip()
-    # ✅ NUEVO: detecta sección activa desde GET para que el filtro vuelva a la sección correcta
     seccion_get = request.GET.get('seccion', '').strip()
 
     pedidos_qs = Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')
@@ -68,7 +67,6 @@ def _dashboard_context(request, extra=None):
         'form_orden':    OrdenForm(),
         'form_producto': ProductoForm(),
         'form_caja':     CajaForm(),
-        # ✅ NUEVO: si viene de un filtro GET usa esa sección, si viene de editar usa la del extra
         'seccion_activa': (extra.get('seccion_activa') if extra and 'seccion_activa' in extra else None) or seccion_get or None,
     }
 
@@ -91,21 +89,22 @@ def dashboard(request):
                 pedido = form.save(commit=False)
                 pedido.creado_por = request.user
                 pedido.save()
-                messages.success(request, '✅ Pedido creado correctamente.')
+
+                # ✅ Orden creada automáticamente al guardar el pedido
+                Orden.objects.create(
+                    pedido       = pedido,
+                    numero_orden = f'ORD-{uuid.uuid4().hex[:8].upper()}',
+                    estado       = 'abierta',
+                    subtotal     = pedido.total,
+                    impuesto     = 0,
+                    total        = pedido.total,
+                    notas        = pedido.descripcion or '',
+                )
+
+                messages.success(request, '✅ Pedido y orden creados correctamente.')
                 return redirect('pedidos:dashboard')
             else:
                 messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
-
-        elif action == 'orden_crear':
-            form = OrdenForm(request.POST)
-            if form.is_valid():
-                orden = form.save(commit=False)
-                orden.numero_orden = f'ORD-{uuid.uuid4().hex[:8].upper()}'
-                orden.save()
-                messages.success(request, '✅ Orden creada.')
-                return redirect('pedidos:dashboard')
-            else:
-                messages.error(request, '❌ Corrige los errores en el formulario de orden.')
 
         elif action == 'producto_crear':
             form = ProductoForm(request.POST)
