@@ -112,7 +112,11 @@ def actualizar_usuarios(request, id):
             
         usuario_edit.save()
         messages.success(request, 'Datos actualizados correctamente.')
-        return redirect('lista_personal')
+        # Admin editando a otro usuario → vuelve a la lista
+        # Cualquiera editando su propio perfil → vuelve al perfil
+        if (request.user.rol == 'ADMIN' or request.user.is_superuser) and request.user.id != id:
+            return redirect('lista_personal')
+        return redirect('panel_perfil')
 
     return render(request, TEMPLATE_LOGIN, {'vista': 'actualizar', 'usuario': usuario_edit})
 

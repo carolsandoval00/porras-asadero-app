@@ -41,7 +41,6 @@
         to   { opacity:1; transform:translateY(0); }
     }
 
-    /* COVER */
     .perfil-cover {
         height: 120px;
         background: linear-gradient(135deg, #8B1A10 0%, #C0392B 50%, #E8773A 100%);
@@ -79,7 +78,6 @@
     }
     .perfil-edit-cover:hover { background: rgba(255,255,255,.3); color: white; }
 
-    /* HEADER */
     .perfil-header {
         padding: 3.2rem 2.2rem 1.5rem;
         border-bottom: 1px solid var(--gris-borde);
@@ -122,9 +120,14 @@
         color: #888;
     }
 
-    /* CONTENT */
+    /* CONTENT — ahora es flex column para que el footer siempre quede pegado */
+    .perfil-body {
+        display: flex;
+        flex-direction: column;
+    }
+
     .perfil-content {
-        padding: 1.75rem 2.2rem;
+        padding: 1.75rem 2.2rem 1rem;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 1.25rem;
@@ -161,14 +164,16 @@
     .info-row .val { font-size: 13px; font-weight: 700; color: var(--carbon); }
     .info-row .val.highlight { color: var(--verde); }
 
-    /* PERMISOS */
+    /* PERMISOS — fuera del grid, en su propia fila */
+    .perms-section {
+        padding: 0 2.2rem 1.5rem;
+    }
+
     .perms-box {
         background: var(--gris-suave);
         border-radius: 10px;
         padding: 1rem 1.1rem;
-        grid-column: span 2;
     }
-    @media(max-width: 600px) { .perms-box { grid-column: span 1; } }
 
     .perms-grid {
         display: grid;
@@ -208,17 +213,16 @@
         display: block;
     }
 
-    /* BADGES */
     .badge-ok   { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:700; background:#EAF6EE; color:#2D7A4A; border:0.5px solid #A0D9B4; }
     .badge-warn { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:700; background:#FFF4E6; color:#9A5A10; border:0.5px solid #F0C080; }
 
-    /* FOOTER */
     .perfil-footer {
         display: flex;
         justify-content: flex-end;
         gap: 8px;
         padding: 1rem 2.2rem 1.75rem;
         border-top: 1px solid var(--gris-borde);
+        margin-top: auto;
     }
     .btn-volver {
         background: transparent;
@@ -252,119 +256,146 @@
 
         <!-- COVER -->
         <div class="perfil-cover">
-            <a href="{% url 'actualizar_usuarios' usuario.id %}" class="perfil-edit-cover">
-                ✎ Editar perfil
-            </a>
+            
             <div class="perfil-avatar">
                 {{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}
             </div>
         </div>
 
-        <!-- HEADER -->
-        <div class="perfil-header">
-            <div class="perfil-nombre">{{ usuario.first_name }} {{ usuario.last_name }}</div>
-            <div class="perfil-rol-badge">
-                <span class="perfil-rol-dot"></span>
-                {{ usuario.rol|default:"Administrador" }}
-            </div>
-            <div class="perfil-meta">
-                <span>✉ {{ usuario.email|default:"Sin correo" }}</span>
-                <span>📋 {{ usuario.tipo_documento|default:"CC" }}: {{ usuario.documento|default:"—" }}</span>
-                <span>📞 {{ usuario.telefono|default:"—" }}</span>
-                <span>👤 {{ usuario.username }}</span>
-            </div>
-        </div>
+        <div class="perfil-body">
 
-        <!-- CONTENT -->
-        <div class="perfil-content">
-
-            <!-- Información personal -->
-            <div>
-                <p class="section-label">Información personal</p>
-                <div class="info-box">
-                    <div class="info-row">
-                        <span class="lbl">Nombre completo</span>
-                        <span class="val">{{ usuario.first_name }} {{ usuario.last_name }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="lbl">Usuario</span>
-                        <span class="val">{{ usuario.username }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="lbl">Correo electrónico</span>
-                        <span class="val highlight">{{ usuario.email|default:"—" }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="lbl">Teléfono</span>
-                        <span class="val">{{ usuario.telefono|default:"—" }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="lbl">Documento</span>
-                        <span class="val">{{ usuario.tipo_documento|default:"CC" }} {{ usuario.documento|default:"—" }}</span>
-                    </div>
+            <!-- HEADER -->
+            <div class="perfil-header">
+                <div class="perfil-nombre">{{ usuario.first_name }} {{ usuario.last_name }}</div>
+                <div class="perfil-rol-badge">
+                    <span class="perfil-rol-dot"></span>
+                    {{ usuario.rol|default:"Administrador" }}
+                </div>
+                <div class="perfil-meta">
+                    <span>✉ {{ usuario.email|default:"Sin correo" }}</span>
+                    <span>{{ usuario.tipo_documento|default:"CC" }}: {{ usuario.documento|default:"—" }}</span>
+                    <span>{{ usuario.telefono|default:"—" }}</span>
                 </div>
             </div>
 
-            <!-- Seguridad -->
-            <div>
-                <p class="section-label">Seguridad</p>
-                <div class="info-box">
-                    <div class="info-row">
-                        <span class="lbl">Contraseña</span>
-                        <a href="{% url 'password_reset' %}" style="font-size:12px;color:var(--rojo);font-weight:700;text-decoration:none;">Cambiar</a>
+            <!-- INFO + SEGURIDAD -->
+            <div class="perfil-content">
+
+                <!-- Información personal -->
+                <div>
+                    <p class="section-label">Información personal</p>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="lbl">Nombre completo</span>
+                            <span class="val">{{ usuario.first_name }} {{ usuario.last_name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="lbl">Usuario</span>
+                            <span class="val">{{ usuario.username }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="lbl">Correo electrónico</span>
+                            <span class="val highlight">{{ usuario.email|default:"—" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="lbl">Teléfono</span>
+                            <span class="val">{{ usuario.telefono|default:"—" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="lbl">Documento</span>
+                            <span class="val">{{ usuario.tipo_documento|default:"CC" }} {{ usuario.documento|default:"—" }}</span>
+                        </div>
                     </div>
-                    <div class="info-row">
-                        <span class="lbl">Estado de sesión</span>
-                        <span class="badge-ok">Activa</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="lbl">Rol asignado</span>
-                        <span class="val">{{ usuario.rol|default:"ADMIN" }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="lbl">Superusuario</span>
-                        {% if usuario.is_superuser %}
-                            <span class="badge-ok">Sí</span>
-                        {% else %}
-                            <span class="badge-warn">No</span>
-                        {% endif %}
-                    </div>
-                    <div class="info-row">
-                        <span class="lbl">Cuenta activa</span>
-                        {% if usuario.is_active %}
+                </div>
+
+                <!-- Seguridad -->
+                <div>
+                    <p class="section-label">Seguridad</p>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="lbl">Estado de sesión</span>
                             <span class="badge-ok">Activa</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="lbl">Rol asignado</span>
+                            <span class="val">{{ usuario.rol|default:"ADMIN" }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="lbl">Superusuario</span>
+                            {% if usuario.is_superuser %}
+                                <span class="badge-ok">Sí</span>
+                            {% else %}
+                                <span class="badge-warn">No</span>
+                            {% endif %}
+                        </div>
+                        <div class="info-row">
+                            <span class="lbl">Cuenta activa</span>
+                            {% if usuario.is_active %}
+                                <span class="badge-ok">Activa</span>
+                            {% else %}
+                                <span class="badge-warn">Inactiva</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- PERMISOS — fuera del grid de 2 columnas -->
+            <div class="perms-section">
+                <p class="section-label">Permisos del sistema</p>
+                <div class="perms-box">
+                    <div class="perms-grid">
+
+                        {% if usuario.rol == 'ADMIN' %}
+                            <div class="perm-item"><div class="perm-check"></div> Gestionar personal</div>
+                            <div class="perm-item"><div class="perm-check"></div> Crear usuarios</div>
+                            <div class="perm-item"><div class="perm-check"></div> Panel de control</div>
+                            <div class="perm-item"><div class="perm-check"></div> Inactivar usuarios</div>
+                            <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
+                            <div class="perm-item"><div class="perm-check"></div> Reservas y mesas</div>
+                            <div class="perm-item"><div class="perm-check"></div> Reportes</div>
+                            <div class="perm-item"><div class="perm-check"></div> Gestionar menú</div>
+
+                        {% elif usuario.rol == 'MESERO' %}
+                            <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
+                            <div class="perm-item"><div class="perm-check"></div> Crear pedidos</div>
+                            <div class="perm-item"><div class="perm-check"></div> Reservas y mesas</div>
+
+                        {% elif usuario.rol == 'COCINA' %}
+                            <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
+                            <div class="perm-item"><div class="perm-check"></div> Actualizar estado pedido</div>
+
+                        {% elif usuario.rol == 'CAJA' or usuario.rol == 'CAJERO' %}
+                            <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
+                            <div class="perm-item"><div class="perm-check"></div> Gestionar pagos</div>
+                            <div class="perm-item"><div class="perm-check"></div> Reportes de caja</div>
+
+                        {% elif usuario.is_superuser %}
+                            <div class="perm-item"><div class="perm-check"></div> Gestionar personal</div>
+                            <div class="perm-item"><div class="perm-check"></div> Crear usuarios</div>
+                            <div class="perm-item"><div class="perm-check"></div> Panel de control</div>
+                            <div class="perm-item"><div class="perm-check"></div> Inactivar usuarios</div>
+                            <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
+                            <div class="perm-item"><div class="perm-check"></div> Reservas y mesas</div>
+                            <div class="perm-item"><div class="perm-check"></div> Reportes</div>
+                            <div class="perm-item"><div class="perm-check"></div> Gestionar menú</div>
+
                         {% else %}
-                            <span class="badge-warn">Inactiva</span>
+                            <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
                         {% endif %}
+
                     </div>
                 </div>
             </div>
 
-            <!-- Permisos -->
-            <div class="perms-box">
-                <p class="section-label">Permisos del sistema</p>
-                <div class="perms-grid">
-                    {% if usuario.rol == 'ADMIN' or usuario.is_superuser %}
-                    <div class="perm-item"><div class="perm-check"></div> Gestionar personal</div>
-                    <div class="perm-item"><div class="perm-check"></div> Crear usuarios</div>
-                    <div class="perm-item"><div class="perm-check"></div> Panel de control</div>
-                    <div class="perm-item"><div class="perm-check"></div> Inactivar usuarios</div>
-                    {% endif %}
-                    <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
-                    <div class="perm-item"><div class="perm-check"></div> Reservas y mesas</div>
-                    {% if usuario.rol == 'ADMIN' or usuario.is_superuser %}
-                    <div class="perm-item"><div class="perm-check"></div> Reportes</div>
-                    {% endif %}
-                </div>
+            <!-- FOOTER -->
+            <div class="perfil-footer">
+                <a href="{% url 'login' %}?vista=inicio" class="btn-volver">← Volver</a>
+                <a href="{% url 'actualizar_usuarios' usuario.id %}" class="btn-editar">✎ Editar mis datos</a>
             </div>
 
-        </div>
-
-        <!-- FOOTER -->
-        <div class="perfil-footer">
-            <a href="{% url 'login' %}?vista=inicio" class="btn-volver">← Volver</a>
-            <a href="{% url 'actualizar_usuarios' usuario.id %}" class="btn-editar">✎ Editar mis datos</a>
-        </div>
+        </div><!-- /perfil-body -->
 
     </div>
 </div>
