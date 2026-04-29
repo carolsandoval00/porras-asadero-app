@@ -90,7 +90,7 @@
         .form-control-brasa::placeholder { color: rgba(245,236,215,.3); }
 
        
-        .hero-divider {
+        .hero-divider { 
             width: 80px; height: 2px;
             background: linear-gradient(90deg, transparent, var(--naranja), transparent);
         }
@@ -98,3 +98,14 @@
         .contacto-card { transition: background .3s; }
         .contacto-card:hover { background: #221406 !important; }
     
+       /* 🔧 AJUSTE SOLO PARA QUE LA NAVBAR NO TAPE CONTENIDO */
+body {
+    padding-top: 220px; /* ajusta según el tamaño real del logo */
+}
+
+/* 🔧 controla el logo sin dañar lo demás */
+.navbar-brand img {
+    height: 200px;
+    width: auto;
+    display: block;
+}

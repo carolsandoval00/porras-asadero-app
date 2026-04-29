@@ -1,3 +1,4 @@
+{% load static %}
 <style>
     /* Clase para resaltar el botón de la sección actual */
     .active-custom {
@@ -13,7 +14,7 @@
 
 <aside class="d-flex flex-column p-3 shadow" style="background-color: #1A1008; color: #F5ECD7; width: 260px; height: 100vh; position: sticky; top: 0;">
     <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
-        <span class="fs-4 fw-bold" style="color: #E8651A;"><i class="bi bi-fire me-2"></i>Porras Asadero</span>
+       <img src="{% static 'img/logo.png' %}" alt="Porras Asadero" style="height: 150px;">
     </a>
     
     <hr style="border-color: #3a2a18;">
