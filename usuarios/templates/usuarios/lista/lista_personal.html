@@ -89,7 +89,6 @@
     .b-activo   { background:var(--verde-lt);       color:var(--verde-dk); }
     .b-inactivo { background:var(--rojo-lt);        color:var(--rojo); }
     .b-admin    { background:rgba(26,16,8,.08);     color:var(--carbon); }
-    .b-gerente  { background:var(--azul-lt);        color:var(--azul); }
     .b-mesero   { background:var(--verde-lt);       color:var(--verde-dk); }
     .b-cajero   { background:var(--amarillo-lt);    color:var(--amarillo); }
     .b-cocina   { background:var(--rojo-lt);        color:var(--rojo); }
@@ -235,7 +234,7 @@
             <input id="f-buscar" type="text" placeholder="🔍  Buscar nombre, usuario o correo…" oninput="renderTabla()">
             <select id="f-rol" onchange="renderTabla()">
                 <option value="">Todos los roles</option>
-                <option>Administrador</option><option>Gerente</option>
+                <option>Administrador</option>
                 <option>Mesero</option><option>Cajero</option><option>Cocina</option>
             </select>
             <select id="f-est" onchange="renderTabla()">
@@ -311,7 +310,7 @@
                     <label class="f-label">Rol *</label>
                     <select class="f-sel" id="u-rol">
                         <option value="">— Seleccionar —</option>
-                        <option>Administrador</option><option>Gerente</option>
+                        <option>Administrador</option>
                         <option>Mesero</option><option>Cajero</option><option>Cocina</option>
                     </select>
                 </div>
@@ -419,7 +418,7 @@ const save=()=>localStorage.setItem('poa_u',JSON.stringify(uList));
 const col=(i)=>COLS[i%COLS.length];
 const ini=(n,a)=>((n||'?')[0]+(a||'?')[0]).toUpperCase();
 const bRol=(r)=>{
-    const m={Administrador:'b-admin',Gerente:'b-gerente',Mesero:'b-mesero',Cajero:'b-cajero',Cocina:'b-cocina'};
+    const m={Administrador:'b-admin',Mesero:'b-mesero',Cajero:'b-cajero',Cocina:'b-cocina'};
     return `<span class="bdg ${m[r]||'b-admin'}">${r}</span>`;
 };
 const bEst=(e)=>`<span class="bdg ${e==='activo'?'b-activo':'b-inactivo'}">${e}</span>`;
@@ -694,7 +693,6 @@ function initDemo(){
     if(uList.length)return;
     uList=[
         {id:1,nom:'Admin',ape:'Sistema',email:'admin@porras.com',user:'admin',rol:'Administrador',e:'activo',tel:'3001111111',doc:'1000001',tdoc:'Cédula de Ciudadanía',dir:'Calle 1 #1-1',notas:'Cuenta principal.',perms:PERMS,acc:'Hoy 09:15',cr:new Date().toISOString()},
-        {id:2,nom:'Laura',ape:'Jiménez',email:'laura@porras.com',user:'ljimenez',rol:'Gerente',e:'activo',tel:'3107654321',doc:'2000002',tdoc:'Cédula de Ciudadanía',dir:'Carrera 7 #45-12',notas:'',perms:['Ver reservas','Crear reservas','Editar reservas','Ver mesas','Ver reportes'],acc:'Hoy 08:40',cr:new Date().toISOString()},
         {id:3,nom:'Carlos',ape:'Mendoza',email:'carlos@porras.com',user:'cmendoza',rol:'Mesero',e:'activo',tel:'3204567890',doc:'3000003',tdoc:'Cédula de Ciudadanía',dir:'Av. 68 #23-4',notas:'Turno diurno.',perms:['Ver reservas','Crear reservas'],acc:'Ayer 20:10',cr:new Date().toISOString()},
         {id:4,nom:'Sofía',ape:'Torres',email:'sofia@porras.com',user:'storres',rol:'Cajero',e:'activo',tel:'3156789012',doc:'4000004',tdoc:'Cédula de Ciudadanía',dir:'Calle 93 #15-20',notas:'',perms:['Gestionar pagos','Ver reportes'],acc:'Ayer 21:00',cr:new Date().toISOString()},
         {id:5,nom:'Miguel',ape:'Vargas',email:'miguel@porras.com',user:'mvargas',rol:'Cocina',e:'inactivo',tel:'3009876543',doc:'5000005',tdoc:'Cédula de Ciudadanía',dir:'Transversal 20 #8-3',notas:'En vacaciones.',perms:[],acc:'15/03/2026',cr:new Date().toISOString()},
