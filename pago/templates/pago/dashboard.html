@@ -115,7 +115,7 @@
 <div class="pg-wrapper">
 
   <div class="pg-header">
-    <h1>💳 Módulo de Pagos</h1>
+    <h1>Módulo de Pagos</h1>
     <p>Bienvenido, {{ nombre }}</p>
   </div>
 
@@ -126,8 +126,8 @@
   {% endif %}
 
   <div class="pg-tabs">
-    <button class="pg-tab active" onclick="showTab('lista')">📋 Consultar Pagos</button>
-    <button class="pg-tab"        onclick="showTab('crear')">➕ Registrar Pago</button>
+    <button class="pg-tab active" onclick="showTab('lista')">Consultar Pagos</button>
+    <button class="pg-tab"        onclick="showTab('crear')">Registrar Pago</button>
   </div>
 
   <!-- LISTA -->
@@ -153,8 +153,8 @@
 
     <div class="pg-card">
       <div class="pg-card-header">
-        <h3>💳 Pagos registrados</h3>
-        <button class="pg-btn pg-btn-accent pg-btn-sm" onclick="showTab('crear')">➕ Nuevo pago</button>
+        <h3>Pagos registrados</h3>
+        <button class="pg-btn pg-btn-accent pg-btn-sm" onclick="showTab('crear')">Nuevo pago</button>
       </div>
       <div class="pg-card-body">
         <div class="pg-table-wrap">
@@ -184,9 +184,9 @@
                 </td>
                 <td>{{ pg.fecha_pago|date:"d/m/Y H:i" }}</td>
                 <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                  <a href="{% url 'pago:editar' pg.pk %}" class="pg-btn pg-btn-light pg-btn-sm">✏️ Editar</a>
+                  <a href="{% url 'pago:editar' pg.pk %}" class="pg-btn pg-btn-light pg-btn-sm">Editar</a>
                   <button class="pg-btn pg-btn-danger pg-btn-sm"
-                          onclick="confirmarEliminar({{ pg.pk }})">🗑️ Eliminar</button>
+                          onclick="confirmarEliminar({{ pg.pk }})">Eliminar</button>
                 </td>
               </tr>
               {% empty %}
@@ -207,7 +207,7 @@
   <div id="tab-crear" class="pg-section">
     <div class="pg-card">
       <div class="pg-card-header">
-        <h3>➕ Registrar Pago</h3>
+        <h3>Registrar Pago</h3>
         <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('lista')">← Volver</button>
       </div>
       <div class="pg-card-body">
@@ -241,7 +241,7 @@
           </div>
           {% endif %}
           <div class="pg-form-actions">
-            <button type="submit" class="pg-btn pg-btn-accent">💾 Registrar Pago</button>
+            <button type="submit" class="pg-btn pg-btn-accent">Registrar Pago</button>
             <button type="button" class="pg-btn pg-btn-light" onclick="showTab('lista')">Cancelar</button>
           </div>
         </form>
@@ -254,12 +254,12 @@
 <!-- Modal eliminar -->
 <div id="modal-eliminar" class="pg-modal-overlay">
   <div class="pg-modal-box">
-    <h4>⚠️ Confirmar eliminación</h4>
+    <h4>Confirmar eliminación</h4>
     <p id="modal-msg">¿Estás seguro de eliminar este pago? Esta acción no se puede deshacer.</p>
     <div class="pg-modal-actions">
       <form id="modal-form" method="post">
         {% csrf_token %}
-        <button type="submit" class="pg-btn pg-btn-danger">🗑️ Sí, eliminar</button>
+        <button type="submit" class="pg-btn pg-btn-danger">Sí, eliminar</button>
       </form>
       <button class="pg-btn pg-btn-light" onclick="cerrarModal()">Cancelar</button>
     </div>
