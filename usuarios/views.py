@@ -1,18 +1,20 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
-from django.views.generic import DetailView
 from django.contrib.auth.views import PasswordResetView
+from django.http import JsonResponse
 from django.urls import reverse_lazy
+from django.views.decorators.http import require_POST
 from .models import Usuario
 
-# Definimos las rutas de los templates según tu estructura de carpetas
 TEMPLATE_LOGIN = 'usuarios/login.html'
 TEMPLATE_LISTA = 'usuarios/lista/lista_personal.html'
 TEMPLATE_PERFIL = 'usuarios/panel_perfil.html'
 
-# --- LOGIN Y FLUJO DE ACCESO ---
+
+# ─── LOGIN Y FLUJO DE ACCESO ──────────────────────────────────────────────────
 
 def login_view(request):
     vista = request.GET.get('vista', 'login')
@@ -22,11 +24,9 @@ def login_view(request):
 
     if request.method == 'POST':
         if vista in ['login', 'acceder', None]:
-            usuario_input = request.POST.get('username')
+            usuario_input  = request.POST.get('username')
             password_input = request.POST.get('password')
-            
             user = authenticate(request, username=usuario_input, password=password_input)
-            
             if user is not None:
                 login(request, user)
                 next_url = request.POST.get('next') or request.GET.get('next')
@@ -39,113 +39,180 @@ def login_view(request):
 
     return render(request, TEMPLATE_LOGIN, {'vista': vista})
 
+
 @login_required
 def redireccion_post_login(request):
     if request.user.is_superuser or request.user.rol == 'ADMIN':
         return redirect('inicio_usuarios')
     return redirect('panel_perfil')
 
+
 def logout_view(request):
     logout(request)
-    messages.info(request, "Sesión cerrada correctamente.")
+    messages.info(request, 'Sesión cerrada correctamente.')
     return redirect('login')
 
 
-# --- GESTIÓN DE PERSONAL (CRUD) ---
+# ─── PANEL DE CONTROL ────────────────────────────────────────────────────────
 
 @login_required
 def inicio_usuarios(request):
     usuarios = Usuario.objects.all()
-    return render(request, TEMPLATE_LOGIN, {'vista': 'inicio', 'usuarios': usuarios})
+    return render(request, TEMPLATE_LOGIN, {
+        'vista': 'inicio',
+        'usuarios': usuarios,
+    })
+
+
+# ─── GESTIÓN DE PERSONAL ─────────────────────────────────────────────────────
 
 @login_required
 def lista_personal(request):
     if request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return redirect('validar_permisos')
-    
+
     personal = Usuario.objects.all()
+
+    personal_json = json.dumps([
+        {
+            'id':    u.id,
+            'nom':   u.first_name,
+            'ape':   u.last_name,
+            'email': u.email,
+            'user':  u.username,
+            'rol':   u.rol,
+            'e':     'activo' if u.is_active else 'inactivo',
+            'tel':   getattr(u, 'telefono', '') or '',
+            'doc':   getattr(u, 'documento', '') or '',
+            'tdoc':  getattr(u, 'tipo_documento', '') or '',
+            'dir':   getattr(u, 'direccion', '') or '',
+            'notas': '',
+            'perms': [],
+            'acc':   '-',
+            'cr':    u.date_joined.isoformat() if hasattr(u, 'date_joined') else '',
+        }
+        for u in personal
+    ])
+
     return render(request, TEMPLATE_LISTA, {
-        'vista': 'lista', 
-        'personal_list': personal
+        'vista': 'lista',
+        'personal_list': personal,
+        'personal_list_json': personal_json,
     })
 
-@login_required
-def registrar_personal(request):
-    if request.method == "POST":
-        data = request.POST
-        if Usuario.objects.filter(username=data.get('username')).exists():
-            messages.error(request, 'El nombre de usuario ya existe.')
-        else:
-            nuevo_usuario = Usuario.objects.create_user(
-                username=data.get('username'),
-                password=data.get('password'),
-                first_name=data.get('first_name'),
-                last_name=data.get('last_name'),
-                email=data.get('email'),
-                telefono=data.get('telefono'),
-                tipo_documento=data.get('tipo_documento'),
-                documento=data.get('documento'),
-                rol=data.get('rol', 'MESERO'),
-            )
-            messages.success(request, f'Usuario {nuevo_usuario.username} creado con éxito.')
-            return redirect('lista_personal')
-
-    return render(request, TEMPLATE_LOGIN, {'vista': 'registrar'})
 
 @login_required
-def actualizar_usuarios(request, id):
-    if request.user.rol != 'ADMIN' and not request.user.is_superuser and request.user.id != id:
-        return redirect('validar_permisos')
+@require_POST
+def crear_usuario(request):
+    """Endpoint JSON — crea un usuario desde el formulario del frontend."""
+    if request.user.rol != 'ADMIN' and not request.user.is_superuser:
+        return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
 
-    usuario_edit = get_object_or_404(Usuario, id=id)
-    if request.method == "POST":
-        data = request.POST
-        usuario_edit.first_name = data.get('first_name')
-        usuario_edit.last_name = data.get('last_name')
-        usuario_edit.email = data.get('email')
-        usuario_edit.telefono = data.get('telefono')
-        usuario_edit.tipo_documento = data.get('tipo_documento')
-        usuario_edit.documento = data.get('documento')
-        
-        if request.user.rol == 'ADMIN' or request.user.is_superuser:
-            usuario_edit.rol = data.get('rol')
-            
-        usuario_edit.save()
-        messages.success(request, 'Datos actualizados correctamente.')
-        # Admin editando a otro usuario → vuelve a la lista
-        # Cualquiera editando su propio perfil → vuelve al perfil
-        if (request.user.rol == 'ADMIN' or request.user.is_superuser) and request.user.id != id:
-            return redirect('lista_personal')
-        return redirect('panel_perfil')
+    try:
+        data = json.loads(request.body)
 
-    return render(request, TEMPLATE_LOGIN, {'vista': 'actualizar', 'usuario': usuario_edit})
+        if not data.get('nom') or not data.get('ape') or not data.get('email') \
+                or not data.get('user') or not data.get('rol'):
+            return JsonResponse({'ok': False, 'error': 'Faltan campos obligatorios'}, status=400)
 
-@login_required
-def inicio_usuarios(request):
-    usuarios = Usuario.objects.all()
-    return render(request, TEMPLATE_LISTA, {'vista': 'inicio', 'usuarios': usuarios})
+        if Usuario.objects.filter(username=data['user']).exists():
+            return JsonResponse({'ok': False, 'error': 'Ese nombre de usuario ya existe'}, status=400)
 
-@login_required
-def panel_perfil(request):
-    return render(request, TEMPLATE_PERFIL, {'usuario': request.user})
+        ROL_MAP = {
+            'Administrador': 'ADMIN',
+            'Mesero':        'MESERO',
+            'Cajero':        'CAJERO',
+            'Cocina':        'COCINA',
+        }
 
-def validar_permisos(request):
-    return render(request, TEMPLATE_LOGIN, {'vista': 'sin_permisos'})
-
-def acceder_sistema(request):
-    if not Usuario.objects.filter(username="restaurante").exists():
-        Usuario.objects.create_superuser(
-            username="restaurante", 
-            password="porras_123", 
-            first_name="Administrador",
-            rol='ADMIN'
+        nuevo = Usuario.objects.create_user(
+            username       = data['user'],
+            password       = data.get('pw', 'cambiar123'),
+            first_name     = data['nom'],
+            last_name      = data['ape'],
+            email          = data['email'],
+            telefono       = data.get('tel', ''),
+            tipo_documento = data.get('tdoc', ''),
+            documento      = data.get('doc', ''),
+            rol            = ROL_MAP.get(data['rol'], 'MESERO'),
+            is_active      = data.get('e', 'activo') == 'activo',
         )
-    return redirect('login')
+
+        if hasattr(nuevo, 'direccion'):
+            nuevo.direccion = data.get('dir', '')
+            nuevo.save()
+
+        return JsonResponse({'ok': True, 'id': nuevo.pk})
+
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
+
 
 @login_required
-def inicio_usuarios(request):
-    usuarios = Usuario.objects.all()
-    return render(request, TEMPLATE_LOGIN, {'vista': 'inicio', 'usuarios': usuarios})
+@require_POST
+def editar_usuario_json(request, id):
+    """Endpoint JSON — edita un usuario desde el formulario del frontend."""
+    if request.user.rol != 'ADMIN' and not request.user.is_superuser and request.user.id != id:
+        return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
+
+    try:
+        data    = json.loads(request.body)
+        usuario = get_object_or_404(Usuario, pk=id)
+
+        ROL_MAP = {
+            'Administrador': 'ADMIN',
+            'Mesero':        'MESERO',
+            'Cajero':        'CAJERO',
+            'Cocina':        'COCINA',
+        }
+
+        usuario.first_name     = data.get('nom', usuario.first_name)
+        usuario.last_name      = data.get('ape', usuario.last_name)
+        usuario.email          = data.get('email', usuario.email)
+        usuario.telefono       = data.get('tel', '')
+        usuario.tipo_documento = data.get('tdoc', '')
+        usuario.documento      = data.get('doc', '')
+        usuario.is_active      = data.get('e', 'activo') == 'activo'
+
+        if request.user.rol == 'ADMIN' or request.user.is_superuser:
+            usuario.rol = ROL_MAP.get(data.get('rol', ''), usuario.rol)
+
+        if hasattr(usuario, 'direccion'):
+            usuario.direccion = data.get('dir', '')
+
+        usuario.save()
+        return JsonResponse({'ok': True})
+
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
+
+
+@login_required
+def eliminar_usuario(request, id):
+    if request.user.rol != 'ADMIN' and not request.user.is_superuser:
+        return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403) \
+            if request.headers.get('Content-Type') == 'application/json' \
+            else redirect('validar_permisos')
+
+    usuario = get_object_or_404(Usuario, id=id)
+
+    if request.method == 'POST':
+        if usuario.id == request.user.id:
+            if request.headers.get('Content-Type') == 'application/json':
+                return JsonResponse({'ok': False, 'error': 'No puedes eliminar tu propia cuenta'}, status=400)
+            messages.error(request, 'No puedes eliminar tu propia cuenta.')
+            return redirect('lista_personal')
+
+        nombre = f'{usuario.first_name} {usuario.last_name}'
+        usuario.delete()
+
+        if request.headers.get('Content-Type') == 'application/json':
+            return JsonResponse({'ok': True})
+        messages.success(request, f'Usuario {nombre} eliminado correctamente.')
+        return redirect('lista_personal')
+
+    return redirect('lista_personal')
+
 
 @login_required
 def inactivar_usuario(request):
@@ -155,10 +222,33 @@ def inactivar_usuario(request):
             usuario = get_object_or_404(Usuario, username=username)
             usuario.is_active = False
             usuario.save()
-            messages.warning(request, f"Usuario {username} inactivado.")
+            messages.warning(request, f'Usuario {username} inactivado.')
     return redirect('lista_personal')
+
+
+@login_required
+def panel_perfil(request):
+    return render(request, TEMPLATE_PERFIL, {'usuario': request.user})
+
+
+def validar_permisos(request):
+    return render(request, TEMPLATE_LOGIN, {'vista': 'sin_permisos'})
+
+
+def acceder_sistema(request):
+    if not Usuario.objects.filter(username='restaurante').exists():
+        Usuario.objects.create_superuser(
+            username='restaurante',
+            password='porras_123',
+            first_name='Administrador',
+            rol='ADMIN',
+        )
+    return redirect('login')
+
+
+# ─── RECUPERACIÓN DE CONTRASEÑA ──────────────────────────────────────────────
 
 class CustomPasswordResetView(PasswordResetView):
     template_name = TEMPLATE_LOGIN
-    success_url = reverse_lazy('password_reset_done')
+    success_url   = reverse_lazy('password_reset_done')
     extra_context = {'vista': 'recuperar'}
