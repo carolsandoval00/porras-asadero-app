@@ -1,27 +1,30 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from . import views 
+from . import views
 
 urlpatterns = [
-    # 1. AUTENTICACIÓN
-    path('login/', views.login_view, name='login'),
-    path('logout/', views.logout_view, name='logout'),
-    path('acceder/', views.acceder_sistema, name='acceder_sistema'),
+    # AUTENTICACIÓN
+    path('login/',       views.login_view,          name='login'),
+    path('logout/',      views.logout_view,          name='logout'),
+    path('acceder/',     views.acceder_sistema,      name='acceder_sistema'),
     path('redireccion/', views.redireccion_post_login, name='redireccion'),
-    
-    # 2. GESTIÓN DE PERSONAL
-    path('lista/', views.lista_personal, name='lista_personal'),
-    path('registrar/', views.registrar_personal, name='registrar_personal'),
-    path('perfil/', views.panel_perfil, name='panel_perfil'),           # <-- antes: consultar/
-    path('actualizar/<int:id>/', views.actualizar_usuarios, name='actualizar_usuarios'),
-    path('inactivar/', views.inactivar_usuario, name='inactivar_usuario'),
-    
-    # 3. RECUPERACIÓN DE CONTRASEÑA
+
+    # GESTIÓN DE PERSONAL
+    path('lista/',                    views.lista_personal,      name='lista_personal'),
+    path('perfil/',                   views.panel_perfil,        name='panel_perfil'),
+    path('inactivar/',                views.inactivar_usuario,   name='inactivar_usuario'),
+    path('eliminar/<int:id>/',        views.eliminar_usuario,    name='eliminar_usuario'),
+
+    # ENDPOINTS JSON (usados por el frontend)
+    path('crear/',                    views.crear_usuario,       name='crear_usuario'),
+    path('editar/<int:id>/',          views.editar_usuario_json, name='editar_usuario_json'),
+
+    # RECUPERACIÓN DE CONTRASEÑA
     path('recuperar/', auth_views.PasswordResetView.as_view(
         template_name='usuarios/login.html',
         extra_context={'vista': 'recuperar'}
     ), name='password_reset'),
-    
+
     path('recuperar_enviado/', auth_views.PasswordResetDoneView.as_view(
         template_name='usuarios/login.html',
         extra_context={'vista': 'recuperar_enviado'}
@@ -31,7 +34,7 @@ urlpatterns = [
         template_name='usuarios/login.html',
         extra_context={'vista': 'recuperar_confirmar'}
     ), name='password_reset_confirm'),
-    
+
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
         template_name='usuarios/login.html',
         extra_context={'vista': 'recuperar_terminado'}
