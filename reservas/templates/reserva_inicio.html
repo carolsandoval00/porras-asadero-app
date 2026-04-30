@@ -251,13 +251,13 @@
         </div>
         <div class="mc-form-group">
           <label class="mc-label">Teléfono *</label>
-          <input type="tel" class="mc-input" id="mc-c-telefono" placeholder="+57 300 000 0000">
+          <input type="tel" class="mc-input" id="mc-c-telefono" placeholder="+57 300 000 0000" maxlength="10" pattern="[0-9]*" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
         </div>
       </div>
       <div class="mc-form-row">
         <div class="mc-form-group">
           <label class="mc-label">Correo electrónico</label>
-          <input type="email" class="mc-input" id="mc-c-email" placeholder="correo@ejemplo.com">
+         <input type="email" class="mc-input" id="mc-c-email" placeholder="correo@ejemplo.com" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}">
         </div>
         <div class="mc-form-group">
           <label class="mc-label">N.° de personas *</label>
@@ -547,6 +547,8 @@
     const hor = document.getElementById('mc-c-hora').value;
     const mes = document.getElementById('mc-c-mesa').value;
     if(!nom||!tel||!per||!fec||!hor||!mes){ toast('Completa todos los campos obligatorios (*)','error'); return; }
+    const emailVal = document.getElementById('mc-c-email').value.trim();
+    if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){ toast('El correo electrónico no es válido','error'); return; }
     const obj = {
       id:      editandoId || Date.now(),
       nombre:  nom, telefono: tel,
