@@ -15,7 +15,8 @@
     --p-shadow-lg:0 6px 30px rgba(26,16,8,.15);
   }
 
-  .pg-wrapper   { font-family:'Segoe UI',system-ui,sans-serif; color:var(--p-text); }
+  .pg-wrapper   { font-family:'Segoe UI',system-ui,sans-serif; color:var(--p-text);
+                  background:#EDE3C8; min-height:100vh; padding:1.5rem; }
   .pg-header    { background:linear-gradient(135deg,#1A1008 0%,#3a1a08 100%);
                   color:#F5ECD7; border-radius:var(--p-radius); padding:2rem 2.5rem 1.6rem;
                   margin-bottom:1.8rem; box-shadow:var(--p-shadow-lg); }
@@ -81,7 +82,7 @@
   .pg-form input,
   .pg-form select,
   .pg-form textarea { width:100%; padding:.55rem .85rem; border:1px solid var(--p-border);
-                      border-radius:8px; font-size:.9rem; color:var(--p-text); background:#FDF7EC;
+                      border-radius:8px; font-size:.9rem; color:var(--p-text); background:var(--p-surface);
                       transition:border-color .2s,box-shadow .2s; }
   .pg-form input:focus,
   .pg-form select:focus,
@@ -114,7 +115,7 @@
 <div class="pg-wrapper">
 
   <div class="pg-header">
-    <h1>💳 Módulo de Pagos</h1>
+    <h1>Módulo de Pagos</h1>
     <p>Bienvenido, {{ nombre }}</p>
   </div>
 
@@ -125,8 +126,8 @@
   {% endif %}
 
   <div class="pg-tabs">
-    <button class="pg-tab active" onclick="showTab('lista')">📋 Consultar Pagos</button>
-    <button class="pg-tab"        onclick="showTab('crear')">➕ Registrar Pago</button>
+    <button class="pg-tab active" onclick="showTab('lista')">Consultar Pagos</button>
+    <button class="pg-tab"        onclick="showTab('crear')">Registrar Pago</button>
   </div>
 
   <!-- LISTA -->
@@ -152,8 +153,8 @@
 
     <div class="pg-card">
       <div class="pg-card-header">
-        <h3>💳 Pagos registrados</h3>
-        <button class="pg-btn pg-btn-accent pg-btn-sm" onclick="showTab('crear')">➕ Nuevo pago</button>
+        <h3>Pagos registrados</h3>
+        <button class="pg-btn pg-btn-accent pg-btn-sm" onclick="showTab('crear')">Nuevo pago</button>
       </div>
       <div class="pg-card-body">
         <div class="pg-table-wrap">
@@ -183,9 +184,9 @@
                 </td>
                 <td>{{ pg.fecha_pago|date:"d/m/Y H:i" }}</td>
                 <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                  <a href="{% url 'pago:editar' pg.pk %}"  class="pg-btn pg-btn-light pg-btn-sm">✏️ Editar </a>
+                  <a href="{% url 'pago:editar' pg.pk %}" class="pg-btn pg-btn-light pg-btn-sm">Editar</a>
                   <button class="pg-btn pg-btn-danger pg-btn-sm"
-                          onclick="confirmarEliminar({{ pg.pk }})">🗑️ Eliminar</button>
+                          onclick="confirmarEliminar({{ pg.pk }})">Eliminar</button>
                 </td>
               </tr>
               {% empty %}
@@ -206,7 +207,7 @@
   <div id="tab-crear" class="pg-section">
     <div class="pg-card">
       <div class="pg-card-header">
-        <h3>➕ Registrar Pago</h3>
+        <h3>Registrar Pago</h3>
         <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('lista')">← Volver</button>
       </div>
       <div class="pg-card-body">
@@ -240,7 +241,7 @@
           </div>
           {% endif %}
           <div class="pg-form-actions">
-            <button type="submit" class="pg-btn pg-btn-accent">💾 Registrar Pago</button>
+            <button type="submit" class="pg-btn pg-btn-accent">Registrar Pago</button>
             <button type="button" class="pg-btn pg-btn-light" onclick="showTab('lista')">Cancelar</button>
           </div>
         </form>
@@ -253,12 +254,12 @@
 <!-- Modal eliminar -->
 <div id="modal-eliminar" class="pg-modal-overlay">
   <div class="pg-modal-box">
-    <h4>⚠️ Confirmar eliminación</h4>
+    <h4>Confirmar eliminación</h4>
     <p id="modal-msg">¿Estás seguro de eliminar este pago? Esta acción no se puede deshacer.</p>
     <div class="pg-modal-actions">
       <form id="modal-form" method="post">
         {% csrf_token %}
-        <button type="submit" class="pg-btn pg-btn-danger">🗑️ Sí, eliminar</button>
+        <button type="submit" class="pg-btn pg-btn-danger">Sí, eliminar</button>
       </form>
       <button class="pg-btn pg-btn-light" onclick="cerrarModal()">Cancelar</button>
     </div>

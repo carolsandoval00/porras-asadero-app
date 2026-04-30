@@ -19,7 +19,7 @@
     --p-shadow-lg: 0 6px 30px rgba(26,16,8,.15);
   }
 
-  .pm-wrapper   { font-family: 'Segoe UI', system-ui, sans-serif; color: var(--p-text); }
+  .pm-wrapper   { font-family: 'Segoe UI', system-ui, sans-serif; color: var(--p-text); background: #EDE3C8; min-height: 100vh; padding: 1.5rem; }
   .pm-header    { background: linear-gradient(135deg, #1A1008 0%, #3a1a08 100%);
                   color:#F5ECD7; border-radius: var(--p-radius); padding:2rem 2.5rem 1.6rem;
                   margin-bottom:1.8rem; box-shadow: var(--p-shadow-lg); }
@@ -29,7 +29,7 @@
   .pm-nav       { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.8rem; }
   .pm-nav-group { display:flex; flex-wrap:wrap; gap:.4rem; background:var(--p-card);
                   border:1px solid var(--p-border); border-radius:50px;
-                  padding:.35rem .5rem; box-shadow: var(--p-shadow); }
+                  padding:.35rem .5rem; }
   .pm-nav-group .pm-label { font-size:.7rem; font-weight:700; text-transform:uppercase;
                                letter-spacing:.8px; color:var(--p-muted); padding:.3rem .6rem;
                                align-self:center; }
@@ -51,17 +51,17 @@
   .pm-section.active { display:block; animation: fadeIn .25s ease; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 
-  .pm-card         { background:var(--p-card); border:1px solid var(--p-border);
-                     border-radius:var(--p-radius); box-shadow:var(--p-shadow); }
+  .pm-card         { background: var(--p-card); border:1px solid var(--p-border); box-shadow: var(--p-shadow);
+                     border-radius:var(--p-radius); }
   .pm-card-header { display:flex; align-items:center; justify-content:space-between;
                     padding:1rem 1.4rem; border-bottom:1px solid var(--p-border); }
   .pm-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
   .pm-card-body   { padding:1.4rem; }
 
   .pm-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.8rem; }
-  .pm-stat  { background:var(--p-card); border:1px solid var(--p-border);
+  .pm-stat  { background: var(--p-card); border:1px solid var(--p-border); box-shadow: var(--p-shadow);
               border-radius:var(--p-radius); padding:1.1rem 1.3rem;
-              box-shadow:var(--p-shadow); border-left:4px solid #E8651A; }
+              border-left:4px solid #E8651A; }
   .pm-stat .val  { font-size:1.8rem; font-weight:800; color:#C0392B; line-height:1; }
   .pm-stat .lbl  { font-size:.78rem; color:var(--p-muted); margin-top:.3rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
 
@@ -97,7 +97,7 @@
   .pm-form select,
   .pm-form textarea { width:100%; padding:.55rem .85rem; border:1px solid var(--p-border);
                       border-radius:8px; font-size:.9rem; color:var(--p-text);
-                      background:#FDF7EC; transition:border-color .2s, box-shadow .2s; box-sizing:border-box; }
+                      background:var(--p-surface); transition:border-color .2s, box-shadow .2s; box-sizing:border-box; }
   .pm-form input:focus,
   .pm-form select:focus,
   .pm-form textarea:focus { outline:none; border-color:#C0392B;
@@ -150,7 +150,7 @@
 
 <div class="pm-wrapper">
 <div class="pm-header">
-  <h1>📦 {{ titulo }}</h1>
+<h1> {{ titulo }}</h1>
   <h2>Bienvenido, {{ nombre }}</h2>
 </div>
 
@@ -162,27 +162,26 @@
 
 <div class="pm-nav">
   <div class="pm-nav-group">
-    <button class="pm-btn pm-btn-primary" onclick="showSection('dashboard')">🏠 Dashboard</button>
+    <button class="pm-btn pm-btn-primary" onclick="showSection('dashboard')">Dashboard</button>
   </div>
   <div class="pm-nav-group">
-    <span class="pm-label">📦 Pedidos</span>
-    <button class="pm-btn pm-btn-light" onclick="showSection('pedido-lista')">📋 Consultar</button>
-    <button class="pm-btn pm-btn-accent" onclick="showSection('pedido-crear')">➕ Crear</button>
-  </div>
-  <!-- ✅ CAMBIO: quitado el botón ➕ Crear de Órdenes -->
-  <div class="pm-nav-group">
-    <span class="pm-label">🧾 Órdenes</span>
-    <button class="pm-btn pm-btn-light" onclick="showSection('orden-lista')">📋 Consultar</button>
+    <span class="pm-label">Pedidos</span>
+    <button class="pm-btn pm-btn-light" onclick="showSection('pedido-lista')">Consultar</button>
+    <button class="pm-btn pm-btn-accent" onclick="showSection('pedido-crear')">Crear</button>
   </div>
   <div class="pm-nav-group">
-    <span class="pm-label">🛍️ Productos</span>
-    <button class="pm-btn pm-btn-light" onclick="showSection('producto-lista')">📋 Consultar</button>
-    <button class="pm-btn pm-btn-accent" onclick="showSection('producto-crear')">➕ Crear</button>
+    <span class="pm-label">Órdenes</span>
+    <button class="pm-btn pm-btn-light" onclick="showSection('orden-lista')">Consultar</button>
   </div>
   <div class="pm-nav-group">
-    <span class="pm-label">🏦 Caja</span>
-    <button class="pm-btn pm-btn-light" onclick="showSection('caja-lista')">📋 Consultar</button>
-    <button class="pm-btn pm-btn-info" onclick="showSection('caja-abrir')">🔓 Abrir</button>
+    <span class="pm-label">Productos</span>
+    <button class="pm-btn pm-btn-light" onclick="showSection('producto-lista')">Consultar</button>
+    <button class="pm-btn pm-btn-accent" onclick="showSection('producto-crear')">Crear</button>
+  </div>
+  <div class="pm-nav-group">
+    <span class="pm-label">Caja</span>
+    <button class="pm-btn pm-btn-light" onclick="showSection('caja-lista')">Consultar</button>
+    <button class="pm-btn pm-btn-info" onclick="showSection('caja-abrir')">Abrir</button>
   </div>
 </div>
 
@@ -218,8 +217,8 @@
 
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>📋 Últimos pedidos</h3>
-      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('pedido-crear')">➕ Nuevo pedido</button>
+      <h3>Últimos pedidos</h3>
+      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('pedido-crear')">Nuevo pedido</button>
     </div>
     <div class="pm-card-body">
       <div class="pm-table-wrap">
@@ -238,9 +237,9 @@
               <td>${{ p.total }}</td>
               <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
               <td>
-                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
+                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️ Eliminar</button>
+                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">Eliminar</button>
               </td>
             </tr>
             {% empty %}
@@ -258,15 +257,15 @@
 <div id="section-pedido-lista" class="pm-section {% if seccion_activa == 'pedido-lista' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>📦 Pedidos</h3>
-      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('pedido-crear')">➕ Nuevo pedido</button>
+      <h3>Pedidos</h3>
+      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('pedido-crear')">Nuevo pedido</button>
     </div>
     <div class="pm-card-body">
       <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
         <input type="hidden" name="seccion" value="pedido-lista">
-        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;"
+        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
                type="text" name="q" value="{{ q }}" placeholder="🔍 Buscar cliente…">
-        <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;">
+        <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
           <option value="">Todos los estados</option>
           {% for val,lbl in estados %}
           <option value="{{ val }}" {% if estado_sel == val %}selected{% endif %}>{{ lbl }}</option>
@@ -289,9 +288,9 @@
               <td>${{ p.total }}</td>
               <td>{{ p.fecha_creacion|date:"d/m/Y" }}</td>
               <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
+                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">🗑️ Eliminar</button>
+                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">Eliminar</button>
               </td>
             </tr>
             {% empty %}
@@ -309,7 +308,7 @@
 <div id="section-pedido-crear" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>➕ Crear Pedido</h3>
+      <h3>Crear Pedido</h3>
       <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('pedido-lista')">← Volver</button>
     </div>
     <div class="pm-card-body">
@@ -330,7 +329,7 @@
           <div>
             <label>Agregar plato al pedido</label>
             <select id="menu-select" onchange="agregarPlato(this)"
-                    style="width:100%;padding:.55rem .85rem;border:1px solid var(--p-border);border-radius:8px;font-size:.9rem;color:var(--p-text);background:#FDF7EC;">
+                    style="width:100%;padding:.55rem .85rem;border:1px solid var(--p-border);border-radius:8px;font-size:.9rem;color:var(--p-text);background:var(--p-surface);">
               <option value="">— Selecciona un plato —</option>
               {% regroup productos_disponibles by get_categoria_display as categorias_menu %}
               {% for grupo in categorias_menu %}
@@ -342,7 +341,7 @@
                   {% endfor %}
                 </optgroup>
               {% empty %}
-                <option disabled>No hay productos disponibles. Crea uno en 🛍️ Productos.</option>
+                <option disabled>No hay productos disponibles. Crea uno en Productos.</option>
               {% endfor %}
             </select>
           </div>
@@ -373,7 +372,7 @@
           </table>
         </div>
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-accent" onclick="return prepararPedido()">💾 Crear Pedido</button>
+          <button type="submit" class="pm-btn pm-btn-accent" onclick="return prepararPedido()">Crear Pedido</button>
           <button type="button" class="pm-btn pm-btn-light" onclick="limpiarFormPedido();showSection('pedido-lista')">Cancelar</button>
         </div>
       </form>
@@ -386,14 +385,14 @@
 <div id="section-orden-lista" class="pm-section {% if seccion_activa == 'orden-lista' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>🧾 Órdenes</h3>
+      <h3>Órdenes</h3>
     </div>
     <div class="pm-card-body">
       <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
         <input type="hidden" name="seccion" value="orden-lista">
-        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;"
-               type="text" name="q_orden" value="{{ q_orden }}" placeholder="🔍 Buscar orden o cliente…">
-        <select name="estado_orden" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;">
+        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
+               type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o cliente…">
+        <select name="estado_orden" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
           <option value="">Todos los estados</option>
           {% for val,lbl in estados_orden %}
           <option value="{{ val }}" {% if estado_orden_sel == val %}selected{% endif %}>{{ lbl }}</option>
@@ -417,9 +416,9 @@
               <td><strong>${{ o.total }}</strong></td>
               <td>{{ o.creada_en|date:"d/m/Y" }}</td>
               <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
+                <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDeleteOrden({{ o.pk }},'{{ o.numero_orden }}')">🗑️ Eliminar</button>
+                        onclick="confirmDeleteOrden({{ o.pk }},'{{ o.numero_orden }}')">Eliminar</button>
               </td>
             </tr>
             {% empty %}
@@ -437,14 +436,14 @@
 <div id="section-producto-lista" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>🛍️ Productos</h3>
-      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('producto-crear')">➕ Nuevo producto</button>
+      <h3>Productos</h3>
+      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('producto-crear')">Nuevo producto</button>
     </div>
     <div class="pm-card-body">
       <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
-        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;"
-               type="text" name="q_prod" value="{{ q_prod }}" placeholder="🔍 Buscar producto…">
-        <select name="categoria" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:#FDF7EC;color:#1A1008;">
+        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
+               type="text" name="q_prod" value="{{ q_prod }}" placeholder="Buscar producto…">
+        <select name="categoria" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
           <option value="">Todas las categorías</option>
           {% for val,lbl in categorias %}
           <option value="{{ val }}" {% if cat_sel == val %}selected{% endif %}>{{ lbl }}</option>
@@ -467,15 +466,15 @@
               <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">{{ prod.descripcion|default:"—" }}</td>
               <td>
                 {% if prod.disponible %}
-                  <span class="pm-badge pm-badge-completado">✅ Sí</span>
+                  <span class="pm-badge pm-badge-completado">Sí</span>
                 {% else %}
-                  <span class="pm-badge pm-badge-cancelado">❌ No</span>
+                  <span class="pm-badge pm-badge-cancelado">No</span>
                 {% endif %}
               </td>
               <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                <a href="{% url 'pedidos:producto_editar' prod.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️ Editar</a>
+                <a href="{% url 'pedidos:producto_editar' prod.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDeleteProducto({{ prod.pk }},'{{ prod.nombre }}')">🗑️ Eliminar</button>
+                        onclick="confirmDeleteProducto({{ prod.pk }},'{{ prod.nombre }}')"> Eliminar</button>
               </td>
             </tr>
             {% empty %}
@@ -493,7 +492,7 @@
 <div id="section-producto-crear" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>➕ Crear Producto</h3>
+      <h3>Crear Producto</h3>
       <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('producto-lista')">← Volver</button>
     </div>
     <div class="pm-card-body">
@@ -511,7 +510,7 @@
           </div>
         </div>
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-accent">💾 Crear Producto</button>
+          <button type="submit" class="pm-btn pm-btn-accent">Crear Producto</button>
           <button type="button" class="pm-btn pm-btn-light" onclick="showSection('producto-lista')">Cancelar</button>
         </div>
       </form>
@@ -524,8 +523,8 @@
 <div id="section-caja-lista" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>🏦 Cajas Registradas</h3>
-      <button class="pm-btn pm-btn-info pm-btn-sm" onclick="showSection('caja-abrir')">🔓 Abrir caja</button>
+      <h3>Cajas Registradas</h3>
+      <button class="pm-btn pm-btn-info pm-btn-sm" onclick="showSection('caja-abrir')">Abrir caja</button>
     </div>
     <div class="pm-card-body">
       <div class="pm-table-wrap">
@@ -548,7 +547,7 @@
                 <a href="{% url 'pedidos:caja_detalle' c.pk %}" class="pm-btn pm-btn-info pm-btn-sm">🔍</a>
                 <a href="{% url 'pedidos:caja_actualizar' c.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️</a>
                 {% if c.estado == 'abierta' %}
-                <a href="{% url 'pedidos:caja_cerrar' c.pk %}" class="pm-btn pm-btn-danger pm-btn-sm">🔒 Cerrar</a>
+                <a href="{% url 'pedidos:caja_cerrar' c.pk %}" class="pm-btn pm-btn-danger pm-btn-sm">Cerrar</a>
                 {% endif %}
               </td>
             </tr>
@@ -567,7 +566,7 @@
 <div id="section-caja-abrir" class="pm-section">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>🔓 Abrir Caja</h3>
+      <h3>Abrir Caja</h3>
       <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('caja-lista')">← Volver</button>
     </div>
     <div class="pm-card-body">
@@ -580,7 +579,7 @@
           <div class="full"><label>Observaciones</label>{{ form_caja.observaciones }}</div>
         </div>
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-info">🔓 Abrir Caja</button>
+          <button type="submit" class="pm-btn pm-btn-info">Abrir Caja</button>
           <button type="button" class="pm-btn pm-btn-light" onclick="showSection('caja-lista')">Cancelar</button>
         </div>
       </form>
@@ -593,7 +592,7 @@
 <section id="producto-editar" class="pm-section {% if seccion_activa == 'producto-editar' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>✏️ Editar Producto: {{ producto_editando.nombre }}</h3>
+      <h3>Editar Producto: {{ producto_editando.nombre }}</h3>
       <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
     </div>
     <div class="pm-card-body">
@@ -623,7 +622,7 @@
 <section id="pedido-editar" class="pm-section {% if seccion_activa == 'pedido-editar' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>✏️ Editar Pedido #{{ pedido_editando.pk }}</h3>
+      <h3>Editar Pedido #{{ pedido_editando.pk }}</h3>
       <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
     </div>
     <div class="pm-card-body">
@@ -649,7 +648,7 @@
 <section id="orden-editar" class="pm-section {% if seccion_activa == 'orden-editar' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>✏️ Editar Orden: {{ orden_editando.numero_orden }}</h3>
+      <h3> Editar Orden: {{ orden_editando.numero_orden }}</h3>
       <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
     </div>
     <div class="pm-card-body">
@@ -663,7 +662,7 @@
           <div class="full"><label>Notas</label>{{ form_orden.notas }}</div>
         </div>
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-primary">💾 Actualizar Orden</button>
+          <button type="submit" class="pm-btn pm-btn-primary">Actualizar Orden</button>
           <button type="button" class="pm-btn pm-btn-light" onclick="showSection('orden-lista')">Volver</button>
         </div>
       </form>
@@ -675,12 +674,12 @@
 <!-- ══════════════════ MODAL ELIMINAR ══════════════════ -->
 <div id="modal-delete" class="pm-modal-overlay">
   <div class="pm-modal-box">
-    <h4>⚠️ Confirmar eliminación</h4>
+    <h4>Confirmar eliminación</h4>
     <p id="modal-msg">¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.</p>
     <div class="pm-modal-actions">
       <form id="modal-form" method="post">
         {% csrf_token %}
-        <button type="submit" class="pm-btn pm-btn-danger">🗑️ Sí, eliminar</button>
+        <button type="submit" class="pm-btn pm-btn-danger">Sí, eliminar</button>
       </form>
       <button class="pm-btn pm-btn-light" onclick="closeModal()">Cancelar</button>
     </div>
