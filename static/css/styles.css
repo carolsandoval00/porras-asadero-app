@@ -98,12 +98,10 @@
         .contacto-card { transition: background .3s; }
         .contacto-card:hover { background: #221406 !important; }
     
-       /* 🔧 AJUSTE SOLO PARA QUE LA NAVBAR NO TAPE CONTENIDO */
-body {
-    padding-top: 220px; /* ajusta según el tamaño real del logo */
-}
+       /* AJUSTE SOLO PARA QUE LA NAVBAR NO TAPE CONTENIDO */
 
-/* 🔧 controla el logo sin dañar lo demás */
+
+/* controla el logo sin dañar lo demás */
 .navbar-brand img {
     height: 200px;
     width: auto;
