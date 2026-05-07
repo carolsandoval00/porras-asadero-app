@@ -449,6 +449,21 @@
     localStorage.setItem('mc_mesas',    JSON.stringify(mesas));
   }
 
+  // Retorna la fecha de hoy en formato YYYY-MM-DD (zona local)
+  function hoy(){
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm   = String(d.getMonth() + 1).padStart(2, '0');
+    const dd   = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // Aplica la fecha mínima (hoy) al campo de fecha del formulario
+  function setFechaMin(){
+    const campo = document.getElementById('mc-c-fecha');
+    if(campo) campo.min = hoy();
+  }
+
   // NAV
   window.mcShow = function(id){
     document.querySelectorAll('.mc-section').forEach(s => s.classList.remove('active'));
@@ -488,7 +503,6 @@
   // HELPERS
   function getMesa(id)      { return mesas.find(m => m.id === id); }
   function getMesaLabel(id) { const m = getMesa(id); return m ? 'Mesa '+m.numero : '—'; }
-  function hoy()            { return new Date().toISOString().slice(0,10); }
   function badgeClass(estado){
     return estado==='confirmada'?'mc-badge-ok':estado==='pendiente'?'mc-badge-warn':'mc-badge-danger';
   }
@@ -513,6 +527,10 @@
     const hor = document.getElementById('mc-c-hora').value;
     const mes = document.getElementById('mc-c-mesa').value;
     if(!nom||!tel||!per||!fec||!hor||!mes){ toast('Completa todos los campos obligatorios (*)','error'); return; }
+
+    // FIX: validar que la fecha no sea pasada
+    if(fec < hoy()){ toast('No se pueden crear reservas en fechas pasadas','error'); return; }
+
     const emailVal = document.getElementById('mc-c-email').value.trim();
     if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){ toast('El correo electrónico no es válido','error'); return; }
     const obj = {
@@ -542,6 +560,8 @@
     document.getElementById('mc-crear-titulo').textContent = 'Nueva reserva';
     document.getElementById('mc-crear-sub').textContent   = 'Completa los datos para registrar la reserva';
     document.getElementById('mc-btn-guardar').textContent  = 'Guardar reserva';
+    // FIX: establecer fecha mínima al limpiar el formulario
+    setFechaMin();
     mcPoblarMesas();
   };
 
@@ -623,7 +643,10 @@
       document.getElementById('mc-c-telefono').value = r.telefono;
       document.getElementById('mc-c-email').value    = r.email||'';
       document.getElementById('mc-c-personas').value = r.personas;
-      document.getElementById('mc-c-fecha').value    = r.fecha;
+      // FIX: al editar, el mínimo es hoy pero permitir la fecha existente aunque sea pasada
+      const campofecha = document.getElementById('mc-c-fecha');
+      campofecha.min   = hoy();
+      campofecha.value = r.fecha;
       document.getElementById('mc-c-hora').value     = r.hora;
       document.getElementById('mc-c-mesa').value     = r.mesaId||'';
       document.getElementById('mc-c-ocasion').value  = r.ocasion||'';
@@ -831,7 +854,7 @@
       ];
     }
     if(!reservas.length){
-      const h=new Date().toISOString().slice(0,10);
+      const h=hoy();
       reservas=[
         {id:101,nombre:'Carlos Mendoza',  telefono:'3001234567',email:'carlos@mail.com',personas:2,fecha:h,            hora:'12:30',mesaId:1,ocasion:'',           estado:'confirmada',notas:'',                           creada:new Date().toISOString()},
         {id:102,nombre:'Laura Jiménez',   telefono:'3107654321',email:'laura@mail.com', personas:4,fecha:h,            hora:'13:00',mesaId:2,ocasion:'Aniversario', estado:'confirmada',notas:'Decoración especial por favor',creada:new Date().toISOString()},
@@ -846,6 +869,8 @@
   initDemo();
   mcPoblarMesas();
   mcRenderTabla();
+  // FIX: aplicar fecha mínima al cargar la página
+  setFechaMin();
 })();
 </script>
 
