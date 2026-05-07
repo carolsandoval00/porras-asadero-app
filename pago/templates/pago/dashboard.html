@@ -14,7 +14,6 @@
     --p-shadow:   0 2px 12px rgba(26,16,8,.10);
     --p-shadow-lg:0 6px 30px rgba(26,16,8,.15);
   }
-
   .pg-wrapper   { font-family:'Segoe UI',system-ui,sans-serif; color:var(--p-text);
                   background:#EDE3C8; min-height:100vh; padding:1.5rem; }
   .pg-header    { background:linear-gradient(135deg,#1A1008 0%,#3a1a08 100%);
@@ -26,8 +25,13 @@
   .pg-tabs  { display:flex; gap:.5rem; margin-bottom:1.5rem; flex-wrap:wrap; }
   .pg-tab   { padding:.5rem 1.2rem; border-radius:50px; border:1.5px solid var(--p-border);
               background:var(--p-card); color:var(--p-muted); font-size:.85rem; font-weight:600;
-              cursor:pointer; transition:all .2s; }
+              cursor:pointer; transition:all .2s; position:relative; }
   .pg-tab:hover, .pg-tab.active { background:var(--p-primary); color:#F5ECD7; border-color:var(--p-primary); }
+  .pg-tab .badge-count { position:absolute; top:-6px; right:-6px; background:#C0392B; color:#fff;
+                         font-size:.65rem; font-weight:800; min-width:18px; height:18px;
+                         border-radius:50px; display:flex; align-items:center; justify-content:center;
+                         padding:0 4px; border:2px solid #EDE3C8; }
+  .pg-tab.active .badge-count { border-color:#C0392B; background:#fff; color:#C0392B; }
 
   .pg-section        { display:none; animation:fadeIn .25s ease; }
   .pg-section.active { display:block; }
@@ -36,18 +40,29 @@
   .pg-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:1.8rem; }
   .pg-stat  { background:var(--p-card); border:1px solid var(--p-border); border-radius:var(--p-radius);
               padding:1.1rem 1.3rem; box-shadow:var(--p-shadow); border-left:4px solid var(--p-accent); }
-  .pg-stat.red  { border-left-color:var(--p-primary); }
-  .pg-stat.gold { border-left-color:#D4A017; }
-  .pg-stat .val { font-size:1.8rem; font-weight:800; color:var(--p-primary); line-height:1; }
-  .pg-stat .lbl { font-size:.75rem; color:var(--p-muted); margin-top:.3rem; font-weight:600;
-                  text-transform:uppercase; letter-spacing:.5px; }
+  .pg-stat.red   { border-left-color:var(--p-primary); }
+  .pg-stat.gold  { border-left-color:#D4A017; }
+  .pg-stat.green { border-left-color:#27AE60; }
+  .pg-stat .val  { font-size:1.8rem; font-weight:800; color:var(--p-primary); line-height:1; }
+  .pg-stat .lbl  { font-size:.75rem; color:var(--p-muted); margin-top:.3rem; font-weight:600;
+                   text-transform:uppercase; letter-spacing:.5px; }
 
   .pg-card        { background:var(--p-card); border:1px solid var(--p-border);
-                    border-radius:var(--p-radius); box-shadow:var(--p-shadow); }
+                    border-radius:var(--p-radius); box-shadow:var(--p-shadow); margin-bottom:1.2rem; }
   .pg-card-header { display:flex; align-items:center; justify-content:space-between;
                     padding:1rem 1.4rem; border-bottom:1px solid var(--p-border); }
   .pg-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
   .pg-card-body   { padding:1.4rem; }
+
+  /* Separador de fecha */
+  .fecha-grupo        { margin-bottom:1.5rem; }
+  .fecha-header       { display:flex; align-items:center; gap:1rem; margin-bottom:.7rem; }
+  .fecha-label        { background:var(--p-primary); color:#F5ECD7; font-size:.78rem;
+                        font-weight:800; padding:.3rem .9rem; border-radius:50px;
+                        text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
+  .fecha-line         { flex:1; height:1px; background:var(--p-border); }
+  .fecha-subtotal     { font-size:.78rem; font-weight:700; color:var(--p-muted);
+                        white-space:nowrap; }
 
   .pg-table-wrap { overflow-x:auto; }
   .pg-table      { width:100%; border-collapse:collapse; font-size:.87rem; }
@@ -57,11 +72,13 @@
   .pg-table td   { padding:.75rem 1rem; border-bottom:1px solid var(--p-border); vertical-align:middle; }
   .pg-table tr:last-child td { border-bottom:none; }
   .pg-table tr:hover td      { background:var(--p-surface); }
+  .pg-table tr.fila-pendiente td       { background:#FFFBEB; }
+  .pg-table tr.fila-pendiente:hover td { background:#FEF3C7; }
 
   .pg-badge { display:inline-flex; font-size:.73rem; font-weight:700;
               padding:.25rem .65rem; border-radius:50px; text-transform:uppercase; letter-spacing:.4px; }
   .pg-badge-pendiente   { background:#FAEEDA; color:#8B4000; }
-  .pg-badge-aprobado    { background:#FFF0DC; color:#C0502A; }
+  .pg-badge-aprobado    { background:#d4edda; color:#155724; }
   .pg-badge-rechazado   { background:#FAE0DC; color:#C0392B; }
   .pg-badge-reembolsado { background:#EDE3C8; color:#6B5A3E; }
 
@@ -72,6 +89,7 @@
   .pg-btn-accent { background:var(--p-accent); color:#F5ECD7; }
   .pg-btn-light  { background:var(--p-surface); color:var(--p-text); border:1px solid var(--p-border); }
   .pg-btn-danger { background:var(--p-primary); color:#F5ECD7; }
+  .pg-btn-pago   { background:#27AE60; color:#fff; }
   .pg-btn-sm     { font-size:.76rem; padding:.3rem .7rem; }
 
   .pg-form       { max-width:620px; }
@@ -83,12 +101,22 @@
   .pg-form select,
   .pg-form textarea { width:100%; padding:.55rem .85rem; border:1px solid var(--p-border);
                       border-radius:8px; font-size:.9rem; color:var(--p-text); background:var(--p-surface);
-                      transition:border-color .2s,box-shadow .2s; }
+                      transition:border-color .2s,box-shadow .2s; box-sizing:border-box; }
   .pg-form input:focus,
   .pg-form select:focus,
   .pg-form textarea:focus { outline:none; border-color:var(--p-primary);
                              box-shadow:0 0 0 3px rgba(192,57,43,.12); }
   .pg-form-actions { display:flex; gap:.7rem; margin-top:1.5rem; flex-wrap:wrap; }
+
+  .orden-banner { display:none; background:linear-gradient(135deg,#FFFBEB 0%,#FEF3C7 100%);
+                  border:1.5px solid #F59E0B; border-radius:10px; padding:1rem 1.4rem;
+                  margin-bottom:1.4rem; align-items:flex-start; gap:.8rem; }
+  .orden-banner.visible { display:flex; }
+  .orden-banner-icon  { font-size:1.4rem; line-height:1; }
+  .orden-banner-body  { flex:1; }
+  .orden-banner-title { font-size:.9rem; font-weight:700; color:#78350F; margin:0 0 .25rem; }
+  .orden-banner-detail{ font-size:.83rem; color:#92400E; margin:0; }
+  .orden-banner-detail strong { font-weight:700; }
 
   .pg-alert { padding:.85rem 1.2rem; border-radius:8px; font-size:.88rem; font-weight:600;
               margin-bottom:1rem; display:flex; align-items:center; gap:.5rem; }
@@ -126,73 +154,84 @@
   {% endif %}
 
   <div class="pg-tabs">
-    <button class="pg-tab active" onclick="showTab('lista')">Consultar Pagos</button>
-    <button class="pg-tab"        onclick="showTab('crear')">Registrar Pago</button>
+    <button class="pg-tab active" id="tab-btn-pendientes" onclick="showTab('pendientes')">
+      Órdenes por pagar
+      {% if ordenes_sin_pago %}
+        <span class="badge-count">{{ ordenes_sin_pago|length }}</span>
+      {% endif %}
+    </button>
+    <button class="pg-tab" id="tab-btn-lista" onclick="showTab('lista')">Pagos registrados</button>
   </div>
 
-  <!-- LISTA -->
-  <div id="tab-lista" class="pg-section active">
+
+  <!-- ══════════ ÓRDENES POR PAGAR ══════════ -->
+  <div id="tab-pendientes" class="pg-section active">
     <div class="pg-stats">
-      <div class="pg-stat">
-        <div class="val">{{ total_pagos }}</div>
-        <div class="lbl">Total pagos</div>
+      <div class="pg-stat red">
+        <div class="val">{{ ordenes_sin_pago|length|default:"0" }}</div>
+        <div class="lbl">Por pagar</div>
       </div>
       <div class="pg-stat">
+        <div class="val">{{ total_pagos }}</div>
+        <div class="lbl">Pagos registrados</div>
+      </div>
+      <div class="pg-stat green">
         <div class="val">{{ pagos_aprobados }}</div>
         <div class="lbl">Aprobados</div>
       </div>
-      <div class="pg-stat red">
-        <div class="val">{{ pagos_pendientes }}</div>
-        <div class="lbl">Pendientes</div>
-      </div>
       <div class="pg-stat gold">
         <div class="val">${{ monto_total|floatformat:0 }}</div>
-        <div class="lbl">Monto aprobado</div>
+        <div class="lbl">Monto cobrado</div>
       </div>
     </div>
 
     <div class="pg-card">
       <div class="pg-card-header">
-        <h3>Pagos registrados</h3>
-        <button class="pg-btn pg-btn-accent pg-btn-sm" onclick="showTab('crear')">Nuevo pago</button>
+        <h3>Órdenes pendientes de pago</h3>
       </div>
       <div class="pg-card-body">
         <div class="pg-table-wrap">
           <table class="pg-table">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Método</th>
-                <th>Monto</th>
-                <th>Referencia</th>
-                <th>Estado</th>
+                <th>Orden</th>
+                <th>Cliente / Pedido</th>
                 <th>Descripción</th>
-                <th>Fecha</th>
-                <th>Acciones</th>
+                <th>Total a cobrar</th>
+                <th>Fecha orden</th>
+                <th>Acción</th>
               </tr>
             </thead>
             <tbody>
-              {% for pg in pagos %}
-              <tr>
-                <td><strong>#{{ pg.pk }}</strong></td>
-                <td>{{ pg.get_metodo_pago_display }}</td>
-                <td><strong>${{ pg.monto }}</strong></td>
-                <td>{{ pg.referencia|default:"—" }}</td>
-                <td><span class="pg-badge pg-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
-                <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                  {{ pg.descripcion|default:"—" }}
+              {% for o in ordenes_sin_pago %}
+              <tr class="fila-pendiente">
+                <td><strong>{{ o.numero_orden }}</strong></td>
+                <td>
+                  <strong>{{ o.pedido.cliente }}</strong><br>
+                  <small style="color:var(--p-muted)">Pedido #{{ o.pedido.pk }}</small>
                 </td>
-                <td>{{ pg.fecha_pago|date:"d/m/Y H:i" }}</td>
-                <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                  <a href="{% url 'pago:editar' pg.pk %}" class="pg-btn pg-btn-light pg-btn-sm">Editar</a>
-                  <button class="pg-btn pg-btn-danger pg-btn-sm"
-                          onclick="confirmarEliminar({{ pg.pk }})">Eliminar</button>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+                  {{ o.pedido.descripcion|default:"—" }}
+                </td>
+                <td><strong style="font-size:1rem;color:#C0392B">${{ o.total }}</strong></td>
+                <td>{{ o.creada_en|date:"d/m/Y H:i" }}</td>
+                <td>
+                  <button class="pg-btn pg-btn-pago pg-btn-sm"
+                          onclick="registrarPago(
+                            '{{ o.numero_orden }}',
+                            {{ o.pk }},
+                            {{ o.pedido.pk }},
+                            '{{ o.pedido.cliente|escapejs }}',
+                            {{ o.total }}
+                          )">
+                     Registrar pago
+                  </button>
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="8" style="text-align:center;color:var(--p-muted);padding:2rem">
-                  No hay pagos registrados aún.
+                <td colspan="6" style="text-align:center;color:var(--p-muted);padding:2.5rem">
+                   No hay órdenes pendientes de pago.
                 </td>
               </tr>
               {% endfor %}
@@ -203,24 +242,111 @@
     </div>
   </div>
 
-  <!-- CREAR -->
+
+  <!-- ══════════ PAGOS REGISTRADOS ══════════ -->
+  <div id="tab-lista" class="pg-section">
+    <div class="pg-card">
+      <div class="pg-card-header">
+        <h3>Pagos registrados</h3>
+      </div>
+      <div class="pg-card-body">
+
+        {% if pagos_por_fecha %}
+          {% for grupo in pagos_por_fecha %}
+
+          <!-- Separador de fecha -->
+          <div class="fecha-grupo">
+            <div class="fecha-header">
+              <span class="fecha-label"> {{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
+              <div class="fecha-line"></div>
+              <span class="fecha-subtotal">{{ grupo.count }} pago{{ grupo.count|pluralize }} · ${{ grupo.total|floatformat:0 }}</span>
+            </div>
+
+            <div class="pg-table-wrap">
+              <table class="pg-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Orden</th>
+                    <th>Cliente</th>
+                    <th>Método</th>
+                    <th>Monto</th>
+                    <th>Referencia</th>
+                    <th>Estado</th>
+                    <th>Hora</th>
+                   
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for pg in grupo.pagos %}
+                  <tr>
+                    <td><strong>#{{ pg.pk }}</strong></td>
+                    <td>
+                      {% if pg.orden %}
+                        <strong>{{ pg.orden.numero_orden }}</strong>
+                      {% else %}
+                        <span style="color:var(--p-muted)">Manual</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if pg.orden %}{{ pg.orden.pedido.cliente }}{% else %}—{% endif %}
+                    </td>
+                    <td>{{ pg.get_metodo_pago_display }}</td>
+                    <td><strong style="color:#C0392B">${{ pg.monto }}</strong></td>
+                    <td>{{ pg.referencia|default:"—" }}</td>
+                    <td><span class="pg-badge pg-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
+                    <td>{{ pg.fecha_pago|date:"H:i" }}</td>
+                   
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {% endfor %}
+        {% else %}
+          <p style="text-align:center;color:var(--p-muted);padding:2rem">
+            No hay pagos registrados aún.
+          </p>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════ REGISTRAR PAGO ══════════ -->
   <div id="tab-crear" class="pg-section">
     <div class="pg-card">
       <div class="pg-card-header">
-        <h3>Registrar Pago</h3>
-        <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('lista')">← Volver</button>
+        <h3 id="form-titulo">Registrar Pago</h3>
+        <button class="pg-btn pg-btn-light pg-btn-sm" onclick="cancelarPago()">← Volver</button>
       </div>
       <div class="pg-card-body">
+
+        <div class="orden-banner" id="orden-banner">
+          <div class="orden-banner-icon"></div>
+          <div class="orden-banner-body">
+            <p class="orden-banner-title">Registrando pago para: <span id="banner-orden-num"></span></p>
+            <p class="orden-banner-detail">
+              Cliente: <strong id="banner-cliente"></strong> &nbsp;·&nbsp;
+              Pedido: <strong id="banner-pedido-id"></strong> &nbsp;·&nbsp;
+              Total: <strong id="banner-total"></strong>
+            </p>
+          </div>
+        </div>
+
         <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form">
           {% csrf_token %}
           <div class="pg-form-grid">
+            <div class="full">
+              <label>Orden vinculada</label>
+              {{ form.orden }}
+            </div>
             <div>
               <label>Método de pago</label>
               {{ form.metodo_pago }}
-            </div>
-            <div>
-              <label>Monto ($)</label>
-              {{ form.monto }}
             </div>
             <div>
               <label>Referencia</label>
@@ -235,16 +361,19 @@
               {{ form.descripcion }}
             </div>
           </div>
+
           {% if form.errors %}
           <div class="pg-alert pg-alert-danger" style="margin-top:1rem">
             ⚠️ Revisa los campos e intenta de nuevo.
           </div>
           {% endif %}
+
           <div class="pg-form-actions">
             <button type="submit" class="pg-btn pg-btn-accent">Registrar Pago</button>
-            <button type="button" class="pg-btn pg-btn-light" onclick="showTab('lista')">Cancelar</button>
+            <button type="button" class="pg-btn pg-btn-light" onclick="cancelarPago()">Cancelar</button>
           </div>
         </form>
+
       </div>
     </div>
   </div>
@@ -255,7 +384,7 @@
 <div id="modal-eliminar" class="pg-modal-overlay">
   <div class="pg-modal-box">
     <h4>Confirmar eliminación</h4>
-    <p id="modal-msg">¿Estás seguro de eliminar este pago? Esta acción no se puede deshacer.</p>
+    <p id="modal-msg">¿Estás seguro de eliminar este pago?</p>
     <div class="pg-modal-actions">
       <form id="modal-form" method="post">
         {% csrf_token %}
@@ -271,11 +400,33 @@ function showTab(name) {
   document.querySelectorAll('.pg-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.pg-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
-  document.querySelectorAll('.pg-tab')[name === 'lista' ? 0 : 1].classList.add('active');
+  document.getElementById('tab-btn-' + name).classList.add('active');
+}
+
+function registrarPago(numeroOrden, ordenId, pedidoId, cliente, total) {
+  const ordenSelect = document.querySelector('[name="orden"]');
+  if (ordenSelect) ordenSelect.value = ordenId;
+
+  document.getElementById('orden-banner').classList.add('visible');
+  document.getElementById('banner-orden-num').textContent = numeroOrden;
+  document.getElementById('banner-cliente').textContent   = cliente;
+  document.getElementById('banner-pedido-id').textContent = 'Pedido #' + pedidoId;
+  document.getElementById('banner-total').textContent     = '$' + Number(total).toLocaleString('es-CO');
+  document.getElementById('form-titulo').textContent      = 'Pago — ' + numeroOrden;
+
+  showTab('crear');
+}
+
+function cancelarPago() {
+  const ordenSelect = document.querySelector('[name="orden"]');
+  if (ordenSelect) ordenSelect.value = '';
+  document.getElementById('orden-banner').classList.remove('visible');
+  document.getElementById('form-titulo').textContent = 'Registrar Pago';
+  showTab('pendientes');
 }
 
 function confirmarEliminar(pk) {
-  document.getElementById('modal-form').action = `/pago/${pk}/eliminar/`;
+  document.getElementById('modal-form').action = `/pagos/${pk}/eliminar/`;
   document.getElementById('modal-msg').textContent =
     `¿Eliminar el pago #${pk}? Esta acción no se puede deshacer.`;
   document.getElementById('modal-eliminar').classList.add('open');
@@ -291,7 +442,6 @@ document.getElementById('modal-eliminar').addEventListener('click', function(e){
 
 document.addEventListener('DOMContentLoaded', () => {
   {% if form.errors %}showTab('crear');{% endif %}
-
   document.querySelectorAll('.pg-alert').forEach(a => {
     setTimeout(() => {
       a.style.transition = 'opacity .5s';
