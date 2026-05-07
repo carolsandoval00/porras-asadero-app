@@ -222,6 +222,7 @@
     </div>
   </div>
 
+  <!-- ===== CREAR / EDITAR RESERVA ===== -->
   <div id="mc-crear" class="mc-section">
     <div class="mc-sec-header">
       <h2 id="mc-crear-titulo">Nueva reserva</h2>
@@ -449,21 +450,6 @@
     localStorage.setItem('mc_mesas',    JSON.stringify(mesas));
   }
 
-  // Retorna la fecha de hoy en formato YYYY-MM-DD (zona local)
-  function hoy(){
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm   = String(d.getMonth() + 1).padStart(2, '0');
-    const dd   = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  // Aplica la fecha mínima (hoy) al campo de fecha del formulario
-  function setFechaMin(){
-    const campo = document.getElementById('mc-c-fecha');
-    if(campo) campo.min = hoy();
-  }
-
   // NAV
   window.mcShow = function(id){
     document.querySelectorAll('.mc-section').forEach(s => s.classList.remove('active'));
@@ -503,6 +489,7 @@
   // HELPERS
   function getMesa(id)      { return mesas.find(m => m.id === id); }
   function getMesaLabel(id) { const m = getMesa(id); return m ? 'Mesa '+m.numero : '—'; }
+  function hoy()            { return new Date().toISOString().slice(0,10); }
   function badgeClass(estado){
     return estado==='confirmada'?'mc-badge-ok':estado==='pendiente'?'mc-badge-warn':'mc-badge-danger';
   }
@@ -527,14 +514,10 @@
     const hor = document.getElementById('mc-c-hora').value;
     const mes = document.getElementById('mc-c-mesa').value;
     if(!nom||!tel||!per||!fec||!hor||!mes){ toast('Completa todos los campos obligatorios (*)','error'); return; }
-
-    // FIX: validar que la fecha no sea pasada
-    if(fec < hoy()){ toast('No se pueden crear reservas en fechas pasadas','error'); return; }
-
     const emailVal = document.getElementById('mc-c-email').value.trim();
     if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){ toast('El correo electrónico no es válido','error'); return; }
     const obj = {
-      id: editandoId || (reservas.length ? Math.max(...reservas.map(r => r.id)) + 1 : 1),
+      id:      editandoId || Date.now(),
       nombre:  nom, telefono: tel,
       email:   document.getElementById('mc-c-email').value.trim(),
       personas:parseInt(per), fecha:fec, hora:hor, mesaId:parseInt(mes),
@@ -560,8 +543,6 @@
     document.getElementById('mc-crear-titulo').textContent = 'Nueva reserva';
     document.getElementById('mc-crear-sub').textContent   = 'Completa los datos para registrar la reserva';
     document.getElementById('mc-btn-guardar').textContent  = 'Guardar reserva';
-    // FIX: establecer fecha mínima al limpiar el formulario
-    setFechaMin();
     mcPoblarMesas();
   };
 
@@ -589,7 +570,7 @@
       return;
     }
     tb.innerHTML = lista.map(r=>`<tr>
-      <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${r.id}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).slice(-5)}</td>
       <td><div style="font-weight:500">${r.nombre}</div><div style="font-size:12px;color:var(--muted)">${r.telefono}</div></td>
       <td>${getMesaLabel(r.mesaId)}</td>
       <td>${r.fecha}</td><td>${r.hora}</td>
@@ -643,10 +624,7 @@
       document.getElementById('mc-c-telefono').value = r.telefono;
       document.getElementById('mc-c-email').value    = r.email||'';
       document.getElementById('mc-c-personas').value = r.personas;
-      // FIX: al editar, el mínimo es hoy pero permitir la fecha existente aunque sea pasada
-      const campofecha = document.getElementById('mc-c-fecha');
-      campofecha.min   = hoy();
-      campofecha.value = r.fecha;
+      document.getElementById('mc-c-fecha').value    = r.fecha;
       document.getElementById('mc-c-hora').value     = r.hora;
       document.getElementById('mc-c-mesa').value     = r.mesaId||'';
       document.getElementById('mc-c-ocasion').value  = r.ocasion||'';
@@ -839,13 +817,37 @@
         save(); mcRenderTablaMesas(); mcRenderDiagrama(); toast('Mesa eliminada'); });
   };
 
+  // INIT DEMO
+  function initDemo(){
+    if(!mesas.length){
+      mesas=[
+        {id:1,numero:1,capacidad:2,ubicacion:'Barra',           estado:'disponible',x:28, y:46},
+        {id:2,numero:2,capacidad:4,ubicacion:'Salón principal', estado:'reservada', x:138,y:46},
+        {id:3,numero:3,capacidad:4,ubicacion:'Salón principal', estado:'disponible',x:248,y:46},
+        {id:4,numero:4,capacidad:6,ubicacion:'Salón principal', estado:'ocupada',   x:358,y:46},
+        {id:5,numero:5,capacidad:2,ubicacion:'Terraza',         estado:'disponible',x:28, y:164},
+        {id:6,numero:6,capacidad:8,ubicacion:'Privado',         estado:'disponible',x:138,y:164},
+        {id:7,numero:7,capacidad:4,ubicacion:'Salón principal', estado:'reservada', x:248,y:164},
+        {id:8,numero:8,capacidad:4,ubicacion:'Terraza',         estado:'disponible',x:358,y:164},
+      ];
+    }
+    if(!reservas.length){
+      const h=new Date().toISOString().slice(0,10);
+      reservas=[
+        {id:101,nombre:'Carlos Mendoza',  telefono:'3001234567',email:'carlos@mail.com',personas:2,fecha:h,            hora:'12:30',mesaId:1,ocasion:'',           estado:'confirmada',notas:'',                           creada:new Date().toISOString()},
+        {id:102,nombre:'Laura Jiménez',   telefono:'3107654321',email:'laura@mail.com', personas:4,fecha:h,            hora:'13:00',mesaId:2,ocasion:'Aniversario', estado:'confirmada',notas:'Decoración especial por favor',creada:new Date().toISOString()},
+        {id:103,nombre:'Pedro Ramírez',   telefono:'3204567890',email:'',               personas:6,fecha:h,            hora:'19:30',mesaId:4,ocasion:'Cumpleaños',  estado:'pendiente', notas:'Torta de cumpleaños',         creada:new Date().toISOString()},
+        {id:104,nombre:'Ana Sofía Torres',telefono:'3156789012',email:'ana@mail.com',   personas:3,fecha:'2026-04-20', hora:'20:00',mesaId:7,ocasion:'Cena romántica',estado:'confirmada',notas:'',                          creada:new Date().toISOString()},
+      ];
+    }
+    save();
+  }
 
   // BOOT
+  initDemo();
   mcPoblarMesas();
   mcRenderTabla();
-  // FIX: aplicar fecha mínima al cargar la página
-  setFechaMin();
-}();
+})();
 </script>
 
 {% endblock %}
