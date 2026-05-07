@@ -516,7 +516,7 @@
     const emailVal = document.getElementById('mc-c-email').value.trim();
     if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){ toast('El correo electrónico no es válido','error'); return; }
     const obj = {
-      id:      editandoId || Date.now(),
+      id: editandoId || (reservas.length ? Math.max(...reservas.map(r => r.id)) + 1 : 1),
       nombre:  nom, telefono: tel,
       email:   document.getElementById('mc-c-email').value.trim(),
       personas:parseInt(per), fecha:fec, hora:hor, mesaId:parseInt(mes),
@@ -569,7 +569,7 @@
       return;
     }
     tb.innerHTML = lista.map(r=>`<tr>
-      <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).slice(-5)}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${r.id}</td>
       <td><div style="font-weight:500">${r.nombre}</div><div style="font-size:12px;color:var(--muted)">${r.telefono}</div></td>
       <td>${getMesaLabel(r.mesaId)}</td>
       <td>${r.fecha}</td><td>${r.hora}</td>
