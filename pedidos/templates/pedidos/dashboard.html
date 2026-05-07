@@ -150,7 +150,7 @@
 
 <div class="pm-wrapper">
 <div class="pm-header">
-<h1> {{ titulo }}</h1>
+  <h1>{{ titulo }}</h1>
   <h2>Bienvenido, {{ nombre }}</h2>
 </div>
 
@@ -162,7 +162,7 @@
 
 <div class="pm-nav">
   <div class="pm-nav-group">
-    <button class="pm-btn pm-btn-primary" onclick="showSection('dashboard')">Dashboard</button>
+    <button class="pm-btn pm-btn-primary" onclick="showSection('dashboard')">Inicio</button>
   </div>
   <div class="pm-nav-group">
     <span class="pm-label">Pedidos</span>
@@ -231,7 +231,7 @@
           <tbody>
             {% for p in ultimos_pedidos %}
             <tr>
-              <td><strong>#{{ p.pk }}</strong></td>
+              <td><strong>#{{ forloop.counter }}</strong></td>
               <td>{{ p.cliente }}</td>
               <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
               <td>${{ p.total }}</td>
@@ -276,14 +276,36 @@
       <div class="pm-table-wrap">
         <table class="pm-table">
           <thead>
-            <tr><th>#</th><th>Cliente</th><th>Descripción</th><th>Estado</th><th>Total</th><th>Creado</th><th>Acciones</th></tr>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Productos</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th>Total</th>
+              <th>Creado</th>
+              <th>Acciones</th>
+            </tr>
           </thead>
           <tbody>
             {% for p in pedidos %}
             <tr>
-              <td><strong>#{{ p.pk }}</strong></td>
+              <td><strong>#{{ forloop.counter }}</strong></td>
               <td>{{ p.cliente }}</td>
-              <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.descripcion|default:"—" }}</td>
+              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+                {% for item in p.items.all %}
+                  {{ item.cantidad }}x {{ item.producto.nombre }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                  —
+                {% endfor %}
+              </td>
+
+              <!-- ✅ CORREGIDO: muestra la descripción del pedido, no la del producto -->
+              <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)"
+                  title="{{ p.descripcion }}">
+                {{ p.descripcion|default:"—" }}
+              </td>
+
               <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
               <td>${{ p.total }}</td>
               <td>{{ p.fecha_creacion|date:"d/m/Y" }}</td>
@@ -294,7 +316,7 @@
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos.</td></tr>
+            <tr><td colspan="8" style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos.</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -305,7 +327,7 @@
 
 
 <!-- ══════════════════ PEDIDO CREAR ══════════════════ -->
-<div id="section-pedido-crear" class="pm-section">
+<div id="section-pedido-crear" class="pm-section {% if seccion_activa == 'pedido-crear' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Crear Pedido</h3>
@@ -314,10 +336,10 @@
     <div class="pm-card-body">
       <form method="post" action="{% url 'pedidos:dashboard' %}" class="pm-form" id="form-crear-pedido" style="max-width:100%">
         {% csrf_token %}
-        <input type="hidden" name="action"      value="pedido_crear">
-        <input type="hidden" name="descripcion" id="input-descripcion">
-        <input type="hidden" name="total"       id="input-total">
-        <div class="pm-form-grid" style="grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem;">
+        <input type="hidden" name="action" value="pedido_crear">
+        <div id="items-hidden-container"></div>
+
+        <div class="pm-form-grid" style="margin-bottom:1.2rem;">
           <div class="full">
             <label>Cliente</label>
             {{ form_pedido.cliente }}
@@ -326,53 +348,68 @@
             <label>Estado</label>
             {{ form_pedido.estado }}
           </div>
-          <div>
-            <label>Agregar plato al pedido</label>
-            <select id="menu-select" onchange="agregarPlato(this)"
-                    style="width:100%;padding:.55rem .85rem;border:1px solid var(--p-border);border-radius:8px;font-size:.9rem;color:var(--p-text);background:var(--p-surface);">
-              <option value="">— Selecciona un plato —</option>
-              {% regroup productos_disponibles by get_categoria_display as categorias_menu %}
-              {% for grupo in categorias_menu %}
-                <optgroup label="{{ grupo.grouper }}">
-                  {% for prod in grupo.list %}
-                    <option value="{{ prod.nombre }}|{{ prod.precio|floatformat:0 }}">
-                      {{ prod.nombre }} — ${{ prod.precio|floatformat:0 }}
-                    </option>
-                  {% endfor %}
-                </optgroup>
-              {% empty %}
-                <option disabled>No hay productos disponibles. Crea uno en Productos.</option>
-              {% endfor %}
-            </select>
+
+          <div class="full">
+            <label>Descripción / Nota adicional</label>
+            {{ form_pedido.descripcion }}
+          </div>
+
+          <div class="full">
+            <label>Agregar producto al pedido</label>
+            <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+              <select id="menu-select"
+                      style="flex:1;min-width:200px;padding:.55rem .85rem;border:1px solid var(--p-border);border-radius:8px;font-size:.9rem;color:var(--p-text);background:var(--p-surface);">
+                <option value="">— Selecciona un producto —</option>
+                {% regroup productos_disponibles by get_categoria_display as categorias_menu %}
+                {% for grupo in categorias_menu %}
+                  <optgroup label="{{ grupo.grouper }}">
+                    {% for prod in grupo.list %}
+                      <option value="{{ prod.id }}"
+                              data-nombre="{{ prod.nombre }}"
+                              data-precio="{{ prod.precio|floatformat:0 }}">
+                        {{ prod.nombre }} — ${{ prod.precio|floatformat:0 }}
+                      </option>
+                    {% endfor %}
+                  </optgroup>
+                {% empty %}
+                  <option disabled>No hay productos disponibles.</option>
+                {% endfor %}
+              </select>
+              <button type="button" class="pm-btn pm-btn-accent" onclick="agregarProducto('crear')">+ Agregar</button>
+            </div>
           </div>
         </div>
-        <div style="margin-bottom:1.2rem;">
-          <label style="font-size:.82rem;font-weight:600;color:var(--p-muted);text-transform:uppercase;letter-spacing:.5px;">Platos del pedido</label>
-          <div id="platos-vacio" style="padding:1rem;text-align:center;color:var(--p-muted);font-size:.88rem;background:var(--p-surface);border-radius:8px;margin-top:.4rem;">
-            Aún no has agregado platos. Selecciona del menú arriba.
+
+        <div style="margin-bottom:1.4rem;">
+          <label style="font-size:.82rem;font-weight:600;color:var(--p-muted);text-transform:uppercase;letter-spacing:.5px;">
+            Productos del pedido
+          </label>
+          <div id="platos-vacio-crear" style="padding:1rem;text-align:center;color:var(--p-muted);font-size:.88rem;background:var(--p-surface);border-radius:8px;margin-top:.4rem;">
+            Aún no has agregado productos.
           </div>
-          <table id="tabla-platos" class="pm-table" style="display:none;margin-top:.4rem;">
+          <table id="tabla-platos-crear" class="pm-table" style="display:none;margin-top:.4rem;">
             <thead>
               <tr>
-                <th>Plato</th>
-                <th style="width:120px;text-align:center;">Cantidad</th>
-                <th style="width:110px;text-align:right;">Precio unit.</th>
-                <th style="width:110px;text-align:right;">Subtotal</th>
+                <th>Producto</th>
+                <th style="width:130px;text-align:center;">Cantidad</th>
+                <th style="width:120px;text-align:right;">Precio unit.</th>
+                <th style="width:120px;text-align:right;">Subtotal</th>
                 <th style="width:50px;"></th>
               </tr>
             </thead>
-            <tbody id="tbody-platos"></tbody>
+            <tbody id="tbody-platos-crear"></tbody>
             <tfoot>
               <tr style="background:var(--p-surface);">
                 <td colspan="3" style="text-align:right;font-weight:700;padding:.75rem 1rem;">TOTAL</td>
-                <td style="text-align:right;font-weight:800;font-size:1.1rem;color:#C0392B;padding:.75rem 1rem;" id="total-display">$0</td>
+                <td style="text-align:right;font-weight:800;font-size:1.1rem;color:#C0392B;padding:.75rem 1rem;" id="total-display-crear">$0</td>
                 <td></td>
               </tr>
             </tfoot>
           </table>
         </div>
+
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-accent" onclick="return prepararPedido()">Crear Pedido</button>
+          <button type="submit" class="pm-btn pm-btn-accent" onclick="return prepararPedido('crear')">Crear Pedido</button>
           <button type="button" class="pm-btn pm-btn-light" onclick="limpiarFormPedido();showSection('pedido-lista')">Cancelar</button>
         </div>
       </form>
@@ -459,7 +496,7 @@
           <tbody>
             {% for prod in productos %}
             <tr>
-              <td><strong>#{{ prod.pk }}</strong></td>
+              <td><strong>#{{ forloop.counter }}</strong></td>
               <td><strong>{{ prod.nombre }}</strong></td>
               <td>{{ prod.get_categoria_display }}</td>
               <td>${{ prod.precio }}</td>
@@ -474,7 +511,7 @@
               <td style="display:flex;gap:.3rem;flex-wrap:wrap">
                 <a href="{% url 'pedidos:producto_editar' prod.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDeleteProducto({{ prod.pk }},'{{ prod.nombre }}')"> Eliminar</button>
+                        onclick="confirmDeleteProducto({{ prod.pk }},'{{ prod.nombre }}')">Eliminar</button>
               </td>
             </tr>
             {% empty %}
@@ -489,7 +526,7 @@
 
 
 <!-- ══════════════════ PRODUCTO CREAR ══════════════════ -->
-<div id="section-producto-crear" class="pm-section">
+<div id="section-producto-crear" class="pm-section {% if seccion_activa == 'producto-crear' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Crear Producto</h3>
@@ -620,23 +657,101 @@
 
 <!-- ══════════════════ PEDIDO EDITAR ══════════════════ -->
 <section id="pedido-editar" class="pm-section {% if seccion_activa == 'pedido-editar' %}active{% endif %}">
+  {% if pedido_items_json %}
+  <script>
+    window._pedidoItemsIniciales = {{ pedido_items_json|safe }};
+  </script>
+  {% endif %}
+
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Editar Pedido #{{ pedido_editando.pk }}</h3>
       <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
     </div>
     <div class="pm-card-body">
-      <form method="post" action="{% if pedido_editando %}{% url 'pedidos:pedido_editar' pedido_editando.pk %}{% endif %}" class="pm-form">
+      <form method="post"
+            action="{% if pedido_editando %}{% url 'pedidos:pedido_editar' pedido_editando.pk %}{% endif %}"
+            class="pm-form"
+            id="form-editar-pedido"
+            style="max-width:100%">
         {% csrf_token %}
-        <div class="pm-form-grid">
-          <div class="full"><label>Cliente</label>{{ form_pedido.cliente }}</div>
-          <div class="full"><label>Descripción</label>{{ form_pedido.descripcion }}</div>
-          <div><label>Estado</label>{{ form_pedido.estado }}</div>
-          <div><label>Total ($)</label>{{ form_pedido.total }}</div>
+        <div id="items-hidden-container-editar"></div>
+
+        <div class="pm-form-grid" style="margin-bottom:1.2rem;">
+          <div class="full">
+            <label>Cliente</label>
+            {{ form_pedido.cliente }}
+          </div>
+          <div>
+            <label>Estado</label>
+            {{ form_pedido.estado }}
+          </div>
+
+          <div class="full">
+            <label>Descripción / Nota adicional</label>
+            {{ form_pedido.descripcion }}
+          </div>
+
+          <div class="full">
+            <label>Agregar producto al pedido</label>
+            <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+              <select id="menu-select-editar"
+                      style="flex:1;min-width:200px;padding:.55rem .85rem;border:1px solid var(--p-border);border-radius:8px;font-size:.9rem;color:var(--p-text);background:var(--p-surface);">
+                <option value="">— Selecciona un producto —</option>
+                {% regroup productos_disponibles by get_categoria_display as categorias_menu_editar %}
+                {% for grupo in categorias_menu_editar %}
+                  <optgroup label="{{ grupo.grouper }}">
+                    {% for prod in grupo.list %}
+                      <option value="{{ prod.id }}"
+                              data-nombre="{{ prod.nombre }}"
+                              data-precio="{{ prod.precio|floatformat:0 }}">
+                        {{ prod.nombre }} — ${{ prod.precio|floatformat:0 }}
+                      </option>
+                    {% endfor %}
+                  </optgroup>
+                {% empty %}
+                  <option disabled>No hay productos disponibles.</option>
+                {% endfor %}
+              </select>
+              <button type="button" class="pm-btn pm-btn-accent" onclick="agregarProducto('editar')">+ Agregar</button>
+            </div>
+          </div>
         </div>
+
+        <div style="margin-bottom:1.4rem;">
+          <label style="font-size:.82rem;font-weight:600;color:var(--p-muted);text-transform:uppercase;letter-spacing:.5px;">
+            Productos del pedido
+          </label>
+          <div id="platos-vacio-editar" style="padding:1rem;text-align:center;color:var(--p-muted);font-size:.88rem;background:var(--p-surface);border-radius:8px;margin-top:.4rem;">
+            Sin productos. Agrega uno del menú.
+          </div>
+          <table id="tabla-platos-editar" class="pm-table" style="display:none;margin-top:.4rem;">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th style="width:130px;text-align:center;">Cantidad</th>
+                <th style="width:120px;text-align:right;">Precio unit.</th>
+                <th style="width:120px;text-align:right;">Subtotal</th>
+                <th style="width:50px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tbody-platos-editar"></tbody>
+            <tfoot>
+              <tr style="background:var(--p-surface);">
+                <td colspan="3" style="text-align:right;font-weight:700;padding:.75rem 1rem;">TOTAL</td>
+                <td style="text-align:right;font-weight:800;font-size:1.1rem;color:#C0392B;padding:.75rem 1rem;"
+                    id="total-display-editar">$0</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-primary">Guardar Cambios</button>
-          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('pedido-lista')">Volver</button>
+          <button type="submit" class="pm-btn pm-btn-primary"
+                  onclick="return prepararPedido('editar')">Guardar Cambios</button>
+          <button type="button" class="pm-btn pm-btn-light"
+                  onclick="showSection('pedido-lista')">Volver</button>
         </div>
       </form>
     </div>
@@ -648,7 +763,7 @@
 <section id="orden-editar" class="pm-section {% if seccion_activa == 'orden-editar' %}active{% endif %}">
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3> Editar Orden: {{ orden_editando.numero_orden }}</h3>
+      <h3>Editar Orden: {{ orden_editando.numero_orden }}</h3>
       <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
     </div>
     <div class="pm-card-body">
@@ -675,7 +790,7 @@
 <div id="modal-delete" class="pm-modal-overlay">
   <div class="pm-modal-box">
     <h4>Confirmar eliminación</h4>
-    <p id="modal-msg">¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.</p>
+    <p id="modal-msg">¿Estás seguro de que deseas eliminar este registro?</p>
     <div class="pm-modal-actions">
       <form id="modal-form" method="post">
         {% csrf_token %}
@@ -686,9 +801,10 @@
   </div>
 </div>
 
-</div>
+</div><!-- fin pm-wrapper -->
 
 <script>
+// ── Navegación de secciones ──────────────────────────────────
 function showSection(name) {
   document.querySelectorAll('.pm-section').forEach(function(s) {
     s.classList.remove('active');
@@ -706,101 +822,160 @@ window.addEventListener('load', function() {
   } else if (hash) {
     showSection(hash);
   }
+
+  if (window._pedidoItemsIniciales && window._pedidoItemsIniciales.length > 0) {
+    platosEditar = window._pedidoItemsIniciales.map(function(it) {
+      return { id: it.id, nombre: it.nombre, precio: it.precio, cantidad: it.cantidad };
+    });
+    renderPlatos('editar');
+  }
 });
 
-let platosSeleccionados = [];
 
-function agregarPlato(select) {
-  if (!select.value) return;
-  const [nombre, precio] = select.value.split('|');
-  const precioNum = parseInt(precio);
-  const existe = platosSeleccionados.find(p => p.nombre === nombre);
-  if (existe) { existe.cantidad++; }
-  else { platosSeleccionados.push({ nombre, precio: precioNum, cantidad: 1 }); }
-  select.value = "";
-  renderPlatos();
+// ── Lógica de PedidoItems ────────────────────────────────────
+let platosCrear  = [];
+let platosEditar = [];
+
+function getPlatosList(modo) {
+  return modo === 'crear' ? platosCrear : platosEditar;
+}
+function setPlatosList(modo, lista) {
+  if (modo === 'crear') platosCrear = lista;
+  else platosEditar = lista;
 }
 
-function cambiarCantidad(idx, delta) {
-  platosSeleccionados[idx].cantidad += delta;
-  if (platosSeleccionados[idx].cantidad <= 0) { platosSeleccionados.splice(idx, 1); }
-  renderPlatos();
-}
+function agregarProducto(modo) {
+  var selectId = modo === 'crear' ? 'menu-select' : 'menu-select-editar';
+  var select   = document.getElementById(selectId);
+  if (!select || !select.value) return;
 
-function eliminarPlato(idx) {
-  platosSeleccionados.splice(idx, 1);
-  renderPlatos();
-}
+  var opt    = select.options[select.selectedIndex];
+  var id     = select.value;
+  var nombre = opt.dataset.nombre;
+  var precio = parseInt(opt.dataset.precio);
 
-function renderPlatos() {
-  const tbody = document.getElementById('tbody-platos');
-  const tabla = document.getElementById('tabla-platos');
-  const vacio = document.getElementById('platos-vacio');
-  const displayTotal = document.getElementById('total-display');
-  if (platosSeleccionados.length === 0) {
-    tabla.style.display = 'none'; vacio.style.display = 'block';
-    displayTotal.innerText = "$0"; return;
+  var lista  = getPlatosList(modo);
+  var existe = lista.find(function(p) { return p.id === id; });
+  if (existe) {
+    existe.cantidad++;
+  } else {
+    lista.push({ id: id, nombre: nombre, precio: precio, cantidad: 1 });
   }
-  tabla.style.display = 'table'; vacio.style.display = 'none';
-  tbody.innerHTML = '';
-  let total = 0;
-  platosSeleccionados.forEach((p, i) => {
-    const subtotal = p.precio * p.cantidad;
-    total += subtotal;
-    tbody.innerHTML += `
-      <tr>
-        <td><strong>${p.nombre}</strong></td>
-        <td style="text-align:center;">
-          <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;">
-            <button type="button" class="qty-btn" onclick="cambiarCantidad(${i}, -1)">-</button>
-            <span style="font-weight:700;min-width:20px;">${p.cantidad}</span>
-            <button type="button" class="qty-btn" onclick="cambiarCantidad(${i}, 1)">+</button>
-          </div>
-        </td>
-        <td style="text-align:right;">$${p.precio.toLocaleString('es-CO')}</td>
-        <td style="text-align:right;"><strong>$${subtotal.toLocaleString('es-CO')}</strong></td>
-        <td><button type="button" class="pm-btn pm-btn-danger pm-btn-sm" onclick="eliminarPlato(${i})">×</button></td>
-      </tr>`;
-  });
-  displayTotal.innerText = "$" + total.toLocaleString('es-CO');
+  select.value = '';
+  renderPlatos(modo);
 }
 
-function prepararPedido() {
-  if (platosSeleccionados.length === 0) { alert("Agrega al menos un plato al pedido."); return false; }
-  document.getElementById('input-descripcion').value = platosSeleccionados.map(p => `${p.cantidad}x ${p.nombre}`).join(', ');
-  document.getElementById('input-total').value = platosSeleccionados.reduce((sum, p) => sum + (p.precio * p.cantidad), 0);
+function cambiarCantidad(modo, idx, delta) {
+  var lista = getPlatosList(modo);
+  lista[idx].cantidad += delta;
+  if (lista[idx].cantidad <= 0) lista.splice(idx, 1);
+  renderPlatos(modo);
+}
+
+function eliminarPlato(modo, idx) {
+  var lista = getPlatosList(modo);
+  lista.splice(idx, 1);
+  renderPlatos(modo);
+}
+
+function renderPlatos(modo) {
+  var suffix  = modo === 'crear' ? '-crear' : '-editar';
+  var tbody   = document.getElementById('tbody-platos'   + suffix);
+  var tabla   = document.getElementById('tabla-platos'   + suffix);
+  var vacio   = document.getElementById('platos-vacio'   + suffix);
+  var display = document.getElementById('total-display'  + suffix);
+  if (!tbody) return;
+
+  var lista = getPlatosList(modo);
+
+  if (lista.length === 0) {
+    tabla.style.display = 'none';
+    vacio.style.display = 'block';
+    if (display) display.innerText = '$0';
+    return;
+  }
+
+  tabla.style.display = 'table';
+  vacio.style.display = 'none';
+  tbody.innerHTML = '';
+  var total = 0;
+
+  lista.forEach(function(p, i) {
+    var sub = p.precio * p.cantidad;
+    total += sub;
+    tbody.innerHTML += '<tr>' +
+      '<td><strong>' + p.nombre + '</strong></td>' +
+      '<td style="text-align:center;">' +
+        '<div style="display:flex;align-items:center;justify-content:center;gap:.5rem;">' +
+          '<button type="button" class="qty-btn" onclick="cambiarCantidad(\'' + modo + '\',' + i + ',-1)">-</button>' +
+          '<span style="font-weight:700;min-width:20px;">' + p.cantidad + '</span>' +
+          '<button type="button" class="qty-btn" onclick="cambiarCantidad(\'' + modo + '\',' + i + ',1)">+</button>' +
+        '</div>' +
+      '</td>' +
+      '<td style="text-align:right;">$' + p.precio.toLocaleString('es-CO') + '</td>' +
+      '<td style="text-align:right;"><strong>$' + sub.toLocaleString('es-CO') + '</strong></td>' +
+      '<td>' +
+        '<button type="button" class="pm-btn pm-btn-danger pm-btn-sm" ' +
+                'onclick="eliminarPlato(\'' + modo + '\',' + i + ')">×</button>' +
+      '</td>' +
+    '</tr>';
+  });
+
+  if (display) display.innerText = '$' + total.toLocaleString('es-CO');
+}
+
+function prepararPedido(modo) {
+  var lista = getPlatosList(modo);
+  if (lista.length === 0) {
+    alert('Agrega al menos un producto al pedido.');
+    return false;
+  }
+  var containerId = modo === 'crear' ? 'items-hidden-container' : 'items-hidden-container-editar';
+  var container   = document.getElementById(containerId);
+  container.innerHTML = '';
+  lista.forEach(function(p, i) {
+    container.innerHTML +=
+      '<input type="hidden" name="items[' + i + '][nombre]"   value="' + p.nombre + '">' +
+      '<input type="hidden" name="items[' + i + '][cantidad]" value="' + p.cantidad + '">';
+  });
   return true;
 }
 
 function limpiarFormPedido() {
-  platosSeleccionados = []; renderPlatos();
-  document.getElementById('form-crear-pedido').reset();
+  platosCrear = [];
+  renderPlatos('crear');
+  var form = document.getElementById('form-crear-pedido');
+  if (form) form.reset();
+  var container = document.getElementById('items-hidden-container');
+  if (container) container.innerHTML = '';
 }
 
+
+// ── Modales de eliminación ───────────────────────────────────
 function confirmDelete(tipo, id, nombre) {
-  const modal = document.getElementById('modal-delete');
-  const msg   = document.getElementById('modal-msg');
-  const form  = document.getElementById('modal-form');
-  msg.innerText = `¿Estás seguro de eliminar el ${tipo} "${nombre}"?`;
-  form.action   = `/pedidos/${tipo}s/${id}/eliminar/`;
+  var modal = document.getElementById('modal-delete');
+  document.getElementById('modal-msg').innerText =
+    '¿Estás seguro de eliminar el ' + tipo + ' "' + nombre + '"?';
+  document.getElementById('modal-form').action =
+    '/pedidos/' + tipo + 's/' + id + '/eliminar/';
   modal.classList.add('open');
 }
 
 function confirmDeleteOrden(id, numero) {
-  const modal = document.getElementById('modal-delete');
-  const msg   = document.getElementById('modal-msg');
-  const form  = document.getElementById('modal-form');
-  msg.innerText = `¿Estás seguro de eliminar la orden "${numero}"?`;
-  form.action   = `/pedidos/ordenes/${id}/eliminar/`;
+  var modal = document.getElementById('modal-delete');
+  document.getElementById('modal-msg').innerText =
+    '¿Estás seguro de eliminar la orden "' + numero + '"?';
+  document.getElementById('modal-form').action =
+    '/pedidos/ordenes/' + id + '/eliminar/';
   modal.classList.add('open');
 }
 
 function confirmDeleteProducto(id, nombre) {
-  const modal = document.getElementById('modal-delete');
-  const msg   = document.getElementById('modal-msg');
-  const form  = document.getElementById('modal-form');
-  msg.innerText = `¿Estás seguro de eliminar el producto "${nombre}"?`;
-  form.action   = `/pedidos/productos/${id}/eliminar/`;
+  var modal = document.getElementById('modal-delete');
+  document.getElementById('modal-msg').innerText =
+    '¿Estás seguro de eliminar el producto "' + nombre + '"?';
+  document.getElementById('modal-form').action =
+    '/pedidos/productos/' + id + '/eliminar/';
   modal.classList.add('open');
 }
 

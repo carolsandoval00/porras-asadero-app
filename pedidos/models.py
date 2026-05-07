@@ -4,65 +4,6 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-# --- MODELOS EXISTENTES ---
-
-class Pedido(models.Model):
-    ESTADO_CHOICES = [
-        ('pendiente',   'Pendiente'),
-        ('en_proceso',  'En Proceso'),
-        ('completado',  'Completado'),
-        ('cancelado',   'Cancelado'),
-    ]
-    cliente             = models.CharField(max_length=200)
-    # --- CAMBIO AQUÍ: Agregamos el producto al Pedido para que aparezca en el formulario ---
-    producto            = models.ForeignKey('Producto', on_delete=models.SET_NULL, null=True, blank=True, related_name='pedidos_producto')
-    descripcion         = models.TextField(blank=True)
-    estado              = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
-    total               = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    creado_por          = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='pedidos')
-    fecha_creacion      = models.DateTimeField(auto_now_add=True)
-    fecha_actualizacion = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = 'mod_pedido'
-        ordering = ['-fecha_creacion']
-        verbose_name = 'Pedido'
-        verbose_name_plural = 'Pedidos'
-
-    def __str__(self):
-        return f'Pedido #{self.pk} - {self.cliente}'
-
-
-class Orden(models.Model):
-    ESTADO_CHOICES = [
-        ('abierta',    'Abierta'),
-        ('procesando', 'Procesando'),
-        ('pagada',     'Pagada'),
-        ('anulada',    'Anulada'),
-    ]
-    pedido       = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='ordenes')
-    producto     = models.ForeignKey('Producto', on_delete=models.SET_NULL, null=True, related_name='ordenes_producto')
-    numero_orden = models.CharField(max_length=50, unique=True)
-    estado       = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='abierta')
-    subtotal     = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    impuesto     = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    total        = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    notas        = models.TextField(blank=True)
-    creada_en    = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'mod_orden'
-        ordering = ['-creada_en']
-        verbose_name = 'Orden'
-        verbose_name_plural = 'Órdenes'
-
-    def __str__(self):
-        return f'Orden {self.numero_orden}'
-
-    def save(self, *args, **kwargs):
-        self.total = self.subtotal + self.impuesto
-        super().save(*args, **kwargs)
-
 
 class Producto(models.Model):
     CATEGORIA_CHOICES = [
@@ -89,6 +30,80 @@ class Producto(models.Model):
         return f'{self.nombre} (${self.precio})'
 
 
+class Pedido(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente',   'Pendiente'),
+        ('en_proceso',  'En Proceso'),
+        ('completado',  'Completado'),
+        ('cancelado',   'Cancelado'),
+    ]
+    cliente             = models.CharField(max_length=200)
+    descripcion         = models.TextField(blank=True)
+    estado              = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    total               = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    creado_por          = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='pedidos')
+    fecha_creacion      = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'mod_pedido'
+        ordering = ['-fecha_creacion']
+        verbose_name = 'Pedido'
+        verbose_name_plural = 'Pedidos'
+
+    def __str__(self):
+        return f'Pedido #{self.pk} - {self.cliente}'
+
+
+class PedidoItem(models.Model):
+    pedido          = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='items')
+    producto        = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='items')
+    cantidad        = models.PositiveIntegerField(default=1)
+    precio_unitario = models.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        db_table = 'mod_pedido_item'
+        verbose_name = 'Item de Pedido'
+        verbose_name_plural = 'Items de Pedido'
+
+    def __str__(self):
+        return f'{self.cantidad}x {self.producto.nombre}'
+
+    @property
+    def subtotal(self):
+        return self.precio_unitario * self.cantidad
+
+
+class Orden(models.Model):
+    ESTADO_CHOICES = [
+        ('abierta',    'Abierta'),
+        ('procesando', 'Procesando'),
+        ('pagada',     'Pagada'),
+        ('anulada',    'Anulada'),
+    ]
+    pedido       = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='ordenes')
+    numero_orden = models.CharField(max_length=50, unique=True)
+    estado       = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='abierta')
+    subtotal     = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    impuesto     = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total        = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    notas        = models.TextField(blank=True)
+    creada_en    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'mod_orden'
+        ordering = ['-creada_en']
+        verbose_name = 'Orden'
+        verbose_name_plural = 'Órdenes'
+
+    def __str__(self):
+        return f'Orden {self.numero_orden}'
+
+    def save(self, *args, **kwargs):
+        self.total = self.subtotal + self.impuesto
+        super().save(*args, **kwargs)
+
+
 class Caja(models.Model):
     ESTADO_CHOICES = [
         ('abierta', 'Abierta'),
@@ -112,16 +127,32 @@ class Caja(models.Model):
     def __str__(self):
         return f'Caja {self.nombre} - {self.get_estado_display()}'
 
-# --- LÓGICA DE IMPORTACIÓN ACTUALIZADA ---
 
 @receiver(post_save, sender=Producto)
-def actualizar_pedidos_y_ordenes(sender, instance, **kwargs):
+def actualizar_ordenes_al_cambiar_producto(sender, instance, **kwargs):
     """
-    Actualiza tanto Pedidos como Ordenes cuando el producto cambia.
+    Cuando un producto cambia de precio, actualiza las órdenes abiertas
+    que tengan items relacionados con ese producto.
     """
-    # 1. Actualizar Ordenes abiertas
-    Orden.objects.filter(producto=instance, estado='abierta').update(subtotal=instance.precio)
-    
-    # 2. Actualizar Pedidos pendientes (si el total del pedido depende del precio directo)
-    # Nota: Aquí puedes agregar lógica para recalcular el total del Pedido si es necesario.
-    Pedido.objects.filter(producto=instance, estado='pendiente').update(total=instance.precio)
+    from django.db.models import Sum, F
+    # Obtener pedidos que tienen este producto como item
+    pedidos_con_producto = Pedido.objects.filter(
+        items__producto=instance,
+        estado='pendiente'
+    ).distinct()
+
+    for pedido in pedidos_con_producto:
+        # Actualizar precio_unitario en los items de ese producto
+        pedido.items.filter(producto=instance).update(precio_unitario=instance.precio)
+        # Recalcular total del pedido
+        nuevo_total = sum(
+            item.precio_unitario * item.cantidad
+            for item in pedido.items.all()
+        )
+        Pedido.objects.filter(pk=pedido.pk).update(total=nuevo_total)
+
+    # Actualizar órdenes abiertas relacionadas
+    Orden.objects.filter(
+        pedido__items__producto=instance,
+        estado='abierta'
+    ).distinct().update(subtotal=instance.precio)
