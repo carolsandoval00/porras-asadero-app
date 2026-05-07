@@ -839,39 +839,13 @@
         save(); mcRenderTablaMesas(); mcRenderDiagrama(); toast('Mesa eliminada'); });
   };
 
-  // INIT DEMO
-  function initDemo(){
-    if(!mesas.length){
-      mesas=[
-        {id:1,numero:1,capacidad:2,ubicacion:'Barra',           estado:'disponible',x:28, y:46},
-        {id:2,numero:2,capacidad:4,ubicacion:'Salón principal', estado:'reservada', x:138,y:46},
-        {id:3,numero:3,capacidad:4,ubicacion:'Salón principal', estado:'disponible',x:248,y:46},
-        {id:4,numero:4,capacidad:6,ubicacion:'Salón principal', estado:'ocupada',   x:358,y:46},
-        {id:5,numero:5,capacidad:2,ubicacion:'Terraza',         estado:'disponible',x:28, y:164},
-        {id:6,numero:6,capacidad:8,ubicacion:'Privado',         estado:'disponible',x:138,y:164},
-        {id:7,numero:7,capacidad:4,ubicacion:'Salón principal', estado:'reservada', x:248,y:164},
-        {id:8,numero:8,capacidad:4,ubicacion:'Terraza',         estado:'disponible',x:358,y:164},
-      ];
-    }
-    if(!reservas.length){
-      const h=hoy();
-      reservas=[
-        {id:101,nombre:'Carlos Mendoza',  telefono:'3001234567',email:'carlos@mail.com',personas:2,fecha:h,            hora:'12:30',mesaId:1,ocasion:'',           estado:'confirmada',notas:'',                           creada:new Date().toISOString()},
-        {id:102,nombre:'Laura Jiménez',   telefono:'3107654321',email:'laura@mail.com', personas:4,fecha:h,            hora:'13:00',mesaId:2,ocasion:'Aniversario', estado:'confirmada',notas:'Decoración especial por favor',creada:new Date().toISOString()},
-        {id:103,nombre:'Pedro Ramírez',   telefono:'3204567890',email:'',               personas:6,fecha:h,            hora:'19:30',mesaId:4,ocasion:'Cumpleaños',  estado:'pendiente', notas:'Torta de cumpleaños',         creada:new Date().toISOString()},
-        {id:104,nombre:'Ana Sofía Torres',telefono:'3156789012',email:'ana@mail.com',   personas:3,fecha:'2026-04-20', hora:'20:00',mesaId:7,ocasion:'Cena romántica',estado:'confirmada',notas:'',                          creada:new Date().toISOString()},
-      ];
-    }
-    save();
-  }
 
   // BOOT
-  initDemo();
   mcPoblarMesas();
   mcRenderTabla();
   // FIX: aplicar fecha mínima al cargar la página
   setFechaMin();
-})();
+}();
 </script>
 
 {% endblock %}
