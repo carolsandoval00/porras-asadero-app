@@ -160,6 +160,7 @@
   {% endfor %}
 {% endif %}
 
+<!-- ── NAV (sin Caja) ── -->
 <div class="pm-nav">
   <div class="pm-nav-group">
     <button class="pm-btn pm-btn-primary" onclick="showSection('dashboard')">Inicio</button>
@@ -177,11 +178,6 @@
     <span class="pm-label">Productos</span>
     <button class="pm-btn pm-btn-light" onclick="showSection('producto-lista')">Consultar</button>
     <button class="pm-btn pm-btn-accent" onclick="showSection('producto-crear')">Crear</button>
-  </div>
-  <div class="pm-nav-group">
-    <span class="pm-label">Caja</span>
-    <button class="pm-btn pm-btn-light" onclick="showSection('caja-lista')">Consultar</button>
-    <button class="pm-btn pm-btn-info" onclick="showSection('caja-abrir')">Abrir</button>
   </div>
 </div>
 
@@ -208,10 +204,6 @@
     <div class="pm-stat" style="border-left-color:#E8651A">
       <div class="val">{{ productos_activos|default:"0" }}</div>
       <div class="lbl">Productos disponibles</div>
-    </div>
-    <div class="pm-stat" style="border-left-color:{% if caja_abierta %}#E8651A{% else %}#C0392B{% endif %}">
-      <div class="val">{% if caja_abierta %}🟢{% else %}🔴{% endif %}</div>
-      <div class="lbl">Caja {% if caja_abierta %}abierta{% else %}cerrada{% endif %}</div>
     </div>
   </div>
 
@@ -299,13 +291,10 @@
                   —
                 {% endfor %}
               </td>
-
-              <!-- ✅ CORREGIDO: muestra la descripción del pedido, no la del producto -->
               <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)"
                   title="{{ p.descripcion }}">
                 {{ p.descripcion|default:"—" }}
               </td>
-
               <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
               <td>${{ p.total }}</td>
               <td>{{ p.fecha_creacion|date:"d/m/Y" }}</td>
@@ -348,12 +337,10 @@
             <label>Estado</label>
             {{ form_pedido.estado }}
           </div>
-
           <div class="full">
             <label>Descripción / Nota adicional</label>
             {{ form_pedido.descripcion }}
           </div>
-
           <div class="full">
             <label>Agregar producto al pedido</label>
             <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
@@ -556,75 +543,6 @@
 </div>
 
 
-<!-- ══════════════════ CAJA LISTA ══════════════════ -->
-<div id="section-caja-lista" class="pm-section">
-  <div class="pm-card">
-    <div class="pm-card-header">
-      <h3>Cajas Registradas</h3>
-      <button class="pm-btn pm-btn-info pm-btn-sm" onclick="showSection('caja-abrir')">Abrir caja</button>
-    </div>
-    <div class="pm-card-body">
-      <div class="pm-table-wrap">
-        <table class="pm-table">
-          <thead>
-            <tr><th>#</th><th>Nombre</th><th>Responsable</th><th>Saldo inicial</th><th>Saldo final</th><th>Estado</th><th>Apertura</th><th>Cierre</th><th>Acciones</th></tr>
-          </thead>
-          <tbody>
-            {% for c in cajas %}
-            <tr>
-              <td><strong>#{{ c.pk }}</strong></td>
-              <td>{{ c.nombre }}</td>
-              <td>{{ c.responsable.get_full_name|default:c.responsable.username }}</td>
-              <td>${{ c.saldo_inicial }}</td>
-              <td>{% if c.saldo_final %}${{ c.saldo_final }}{% else %}—{% endif %}</td>
-              <td><span class="pm-badge pm-badge-{{ c.estado }}">{{ c.get_estado_display }}</span></td>
-              <td>{{ c.fecha_apertura|date:"d/m/Y H:i" }}</td>
-              <td>{{ c.fecha_cierre|date:"d/m/Y H:i"|default:"—" }}</td>
-              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                <a href="{% url 'pedidos:caja_detalle' c.pk %}" class="pm-btn pm-btn-info pm-btn-sm">🔍</a>
-                <a href="{% url 'pedidos:caja_actualizar' c.pk %}" class="pm-btn pm-btn-light pm-btn-sm">✏️</a>
-                {% if c.estado == 'abierta' %}
-                <a href="{% url 'pedidos:caja_cerrar' c.pk %}" class="pm-btn pm-btn-danger pm-btn-sm">Cerrar</a>
-                {% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="9" style="text-align:center;color:var(--p-muted);padding:2rem">No hay cajas registradas.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ══════════════════ CAJA ABRIR ══════════════════ -->
-<div id="section-caja-abrir" class="pm-section">
-  <div class="pm-card">
-    <div class="pm-card-header">
-      <h3>Abrir Caja</h3>
-      <button class="pm-btn pm-btn-light pm-btn-sm" onclick="showSection('caja-lista')">← Volver</button>
-    </div>
-    <div class="pm-card-body">
-      <form method="post" action="{% url 'pedidos:dashboard' %}" class="pm-form">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="caja_abrir">
-        <div class="pm-form-grid">
-          <div><label>Nombre de la caja</label>{{ form_caja.nombre }}</div>
-          <div><label>Saldo inicial ($)</label>{{ form_caja.saldo_inicial }}</div>
-          <div class="full"><label>Observaciones</label>{{ form_caja.observaciones }}</div>
-        </div>
-        <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-info">Abrir Caja</button>
-          <button type="button" class="pm-btn pm-btn-light" onclick="showSection('caja-lista')">Cancelar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-
 <!-- ══════════════════ PRODUCTO EDITAR ══════════════════ -->
 <section id="producto-editar" class="pm-section {% if seccion_activa == 'producto-editar' %}active{% endif %}">
   <div class="pm-card">
@@ -686,12 +604,10 @@
             <label>Estado</label>
             {{ form_pedido.estado }}
           </div>
-
           <div class="full">
             <label>Descripción / Nota adicional</label>
             {{ form_pedido.descripcion }}
           </div>
-
           <div class="full">
             <label>Agregar producto al pedido</label>
             <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
@@ -804,7 +720,6 @@
 </div><!-- fin pm-wrapper -->
 
 <script>
-// ── Navegación de secciones ──────────────────────────────────
 function showSection(name) {
   document.querySelectorAll('.pm-section').forEach(function(s) {
     s.classList.remove('active');
@@ -822,7 +737,6 @@ window.addEventListener('load', function() {
   } else if (hash) {
     showSection(hash);
   }
-
   if (window._pedidoItemsIniciales && window._pedidoItemsIniciales.length > 0) {
     platosEditar = window._pedidoItemsIniciales.map(function(it) {
       return { id: it.id, nombre: it.nombre, precio: it.precio, cantidad: it.cantidad };
@@ -831,36 +745,24 @@ window.addEventListener('load', function() {
   }
 });
 
-
-// ── Lógica de PedidoItems ────────────────────────────────────
 let platosCrear  = [];
 let platosEditar = [];
 
-function getPlatosList(modo) {
-  return modo === 'crear' ? platosCrear : platosEditar;
-}
-function setPlatosList(modo, lista) {
-  if (modo === 'crear') platosCrear = lista;
-  else platosEditar = lista;
-}
+function getPlatosList(modo) { return modo === 'crear' ? platosCrear : platosEditar; }
+function setPlatosList(modo, lista) { if (modo === 'crear') platosCrear = lista; else platosEditar = lista; }
 
 function agregarProducto(modo) {
   var selectId = modo === 'crear' ? 'menu-select' : 'menu-select-editar';
   var select   = document.getElementById(selectId);
   if (!select || !select.value) return;
-
   var opt    = select.options[select.selectedIndex];
   var id     = select.value;
   var nombre = opt.dataset.nombre;
   var precio = parseInt(opt.dataset.precio);
-
   var lista  = getPlatosList(modo);
   var existe = lista.find(function(p) { return p.id === id; });
-  if (existe) {
-    existe.cantidad++;
-  } else {
-    lista.push({ id: id, nombre: nombre, precio: precio, cantidad: 1 });
-  }
+  if (existe) { existe.cantidad++; }
+  else { lista.push({ id: id, nombre: nombre, precio: precio, cantidad: 1 }); }
   select.value = '';
   renderPlatos(modo);
 }
@@ -880,56 +782,39 @@ function eliminarPlato(modo, idx) {
 
 function renderPlatos(modo) {
   var suffix  = modo === 'crear' ? '-crear' : '-editar';
-  var tbody   = document.getElementById('tbody-platos'   + suffix);
-  var tabla   = document.getElementById('tabla-platos'   + suffix);
-  var vacio   = document.getElementById('platos-vacio'   + suffix);
-  var display = document.getElementById('total-display'  + suffix);
+  var tbody   = document.getElementById('tbody-platos'  + suffix);
+  var tabla   = document.getElementById('tabla-platos'  + suffix);
+  var vacio   = document.getElementById('platos-vacio'  + suffix);
+  var display = document.getElementById('total-display' + suffix);
   if (!tbody) return;
-
   var lista = getPlatosList(modo);
-
   if (lista.length === 0) {
-    tabla.style.display = 'none';
-    vacio.style.display = 'block';
-    if (display) display.innerText = '$0';
-    return;
+    tabla.style.display = 'none'; vacio.style.display = 'block';
+    if (display) display.innerText = '$0'; return;
   }
-
-  tabla.style.display = 'table';
-  vacio.style.display = 'none';
+  tabla.style.display = 'table'; vacio.style.display = 'none';
   tbody.innerHTML = '';
   var total = 0;
-
   lista.forEach(function(p, i) {
-    var sub = p.precio * p.cantidad;
-    total += sub;
+    var sub = p.precio * p.cantidad; total += sub;
     tbody.innerHTML += '<tr>' +
       '<td><strong>' + p.nombre + '</strong></td>' +
-      '<td style="text-align:center;">' +
-        '<div style="display:flex;align-items:center;justify-content:center;gap:.5rem;">' +
-          '<button type="button" class="qty-btn" onclick="cambiarCantidad(\'' + modo + '\',' + i + ',-1)">-</button>' +
-          '<span style="font-weight:700;min-width:20px;">' + p.cantidad + '</span>' +
-          '<button type="button" class="qty-btn" onclick="cambiarCantidad(\'' + modo + '\',' + i + ',1)">+</button>' +
-        '</div>' +
-      '</td>' +
+      '<td style="text-align:center;"><div style="display:flex;align-items:center;justify-content:center;gap:.5rem;">' +
+        '<button type="button" class="qty-btn" onclick="cambiarCantidad(\'' + modo + '\',' + i + ',-1)">-</button>' +
+        '<span style="font-weight:700;min-width:20px;">' + p.cantidad + '</span>' +
+        '<button type="button" class="qty-btn" onclick="cambiarCantidad(\'' + modo + '\',' + i + ',1)">+</button>' +
+      '</div></td>' +
       '<td style="text-align:right;">$' + p.precio.toLocaleString('es-CO') + '</td>' +
       '<td style="text-align:right;"><strong>$' + sub.toLocaleString('es-CO') + '</strong></td>' +
-      '<td>' +
-        '<button type="button" class="pm-btn pm-btn-danger pm-btn-sm" ' +
-                'onclick="eliminarPlato(\'' + modo + '\',' + i + ')">×</button>' +
-      '</td>' +
+      '<td><button type="button" class="pm-btn pm-btn-danger pm-btn-sm" onclick="eliminarPlato(\'' + modo + '\',' + i + ')">×</button></td>' +
     '</tr>';
   });
-
   if (display) display.innerText = '$' + total.toLocaleString('es-CO');
 }
 
 function prepararPedido(modo) {
   var lista = getPlatosList(modo);
-  if (lista.length === 0) {
-    alert('Agrega al menos un producto al pedido.');
-    return false;
-  }
+  if (lista.length === 0) { alert('Agrega al menos un producto al pedido.'); return false; }
   var containerId = modo === 'crear' ? 'items-hidden-container' : 'items-hidden-container-editar';
   var container   = document.getElementById(containerId);
   container.innerHTML = '';
@@ -942,46 +827,32 @@ function prepararPedido(modo) {
 }
 
 function limpiarFormPedido() {
-  platosCrear = [];
-  renderPlatos('crear');
+  platosCrear = []; renderPlatos('crear');
   var form = document.getElementById('form-crear-pedido');
   if (form) form.reset();
   var container = document.getElementById('items-hidden-container');
   if (container) container.innerHTML = '';
 }
 
-
-// ── Modales de eliminación ───────────────────────────────────
 function confirmDelete(tipo, id, nombre) {
   var modal = document.getElementById('modal-delete');
-  document.getElementById('modal-msg').innerText =
-    '¿Estás seguro de eliminar el ' + tipo + ' "' + nombre + '"?';
-  document.getElementById('modal-form').action =
-    '/pedidos/' + tipo + 's/' + id + '/eliminar/';
+  document.getElementById('modal-msg').innerText = '¿Estás seguro de eliminar el ' + tipo + ' "' + nombre + '"?';
+  document.getElementById('modal-form').action = '/pedidos/' + tipo + 's/' + id + '/eliminar/';
   modal.classList.add('open');
 }
-
 function confirmDeleteOrden(id, numero) {
   var modal = document.getElementById('modal-delete');
-  document.getElementById('modal-msg').innerText =
-    '¿Estás seguro de eliminar la orden "' + numero + '"?';
-  document.getElementById('modal-form').action =
-    '/pedidos/ordenes/' + id + '/eliminar/';
+  document.getElementById('modal-msg').innerText = '¿Estás seguro de eliminar la orden "' + numero + '"?';
+  document.getElementById('modal-form').action = '/pedidos/ordenes/' + id + '/eliminar/';
   modal.classList.add('open');
 }
-
 function confirmDeleteProducto(id, nombre) {
   var modal = document.getElementById('modal-delete');
-  document.getElementById('modal-msg').innerText =
-    '¿Estás seguro de eliminar el producto "' + nombre + '"?';
-  document.getElementById('modal-form').action =
-    '/pedidos/productos/' + id + '/eliminar/';
+  document.getElementById('modal-msg').innerText = '¿Estás seguro de eliminar el producto "' + nombre + '"?';
+  document.getElementById('modal-form').action = '/pedidos/productos/' + id + '/eliminar/';
   modal.classList.add('open');
 }
-
-function closeModal() {
-  document.getElementById('modal-delete').classList.remove('open');
-}
+function closeModal() { document.getElementById('modal-delete').classList.remove('open'); }
 </script>
 
 {% endblock %}
