@@ -514,6 +514,7 @@
     const hor = document.getElementById('mc-c-hora').value;
     const mes = document.getElementById('mc-c-mesa').value;
     if(!nom||!tel||!per||!fec||!hor||!mes){ toast('Completa todos los campos obligatorios (*)','error'); return; }
+    if(fec < hoy()){ toast('No se pueden crear reservas en fechas pasadas','error'); return; }
     const emailVal = document.getElementById('mc-c-email').value.trim();
     if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){ toast('El correo electrónico no es válido','error'); return; }
     const obj = {
@@ -544,6 +545,7 @@
     document.getElementById('mc-crear-sub').textContent   = 'Completa los datos para registrar la reserva';
     document.getElementById('mc-btn-guardar').textContent  = 'Guardar reserva';
     mcPoblarMesas();
+    fijarFechaMin();
   };
 
   // TABLA RESERVAS
@@ -817,8 +819,15 @@
         save(); mcRenderTablaMesas(); mcRenderDiagrama(); toast('Mesa eliminada'); });
   };
 
+  // RESTRINGIR FECHAS PASADAS
+  function fijarFechaMin(){
+    const input = document.getElementById('mc-c-fecha');
+    if(input) input.min = hoy();
+  }
+
   // BOOT — sin datos demo
   save();
+  fijarFechaMin();
   mcPoblarMesas();
   mcRenderTabla();
 })();
