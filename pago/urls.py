@@ -7,4 +7,5 @@ urlpatterns = [
     path('', views.pago_dashboard, name='dashboard'),
     path('<int:pk>/editar/', views.pago_editar, name='editar'),
     path('<int:pk>/eliminar/', views.pago_eliminar, name='eliminar'),
+    path('caja/<int:pk>/', views.caja_detalle, name='caja_detalle'),
 ]
