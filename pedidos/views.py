@@ -2,9 +2,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q
-from .models import Pedido, Orden, Producto, Caja, PedidoItem
+from itertools import groupby
+from .models import Pedido, Orden, Producto, Caja, PedidoItem, Contador
 from .forms import PedidoForm, OrdenForm, ProductoForm, CajaForm, CajaCierreForm
-import uuid
+import json
 
 
 # ─────────────────────────────────────────────────────────────
@@ -19,7 +20,7 @@ def _dashboard_context(request, extra=None):
     estado_orden_sel = request.GET.get('estado_orden', '').strip()
     seccion_get = request.GET.get('seccion', '').strip()
 
-    pedidos_qs = Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')
+    pedidos_qs = Pedido.objects.select_related('creado_por').prefetch_related('items__producto', 'ordenes').order_by('-fecha_creacion')
     if q:
         pedidos_qs = pedidos_qs.filter(Q(cliente__icontains=q) | Q(descripcion__icontains=q))
     if estado_sel:
@@ -39,6 +40,30 @@ def _dashboard_context(request, extra=None):
     if estado_orden_sel:
         ordenes_qs = ordenes_qs.filter(estado=estado_orden_sel)
 
+    # Agrupar pedidos por fecha
+    pedidos_lista = list(pedidos_qs)
+    pedidos_por_fecha = []
+    for fecha, grupo in groupby(pedidos_lista, key=lambda p: p.fecha_creacion.date()):
+        items = list(grupo)
+        pedidos_por_fecha.append({
+            'fecha':   fecha,
+            'pedidos': items,
+            'total':   sum(p.total for p in items),
+            'count':   len(items),
+        })
+
+    # Agrupar órdenes por fecha
+    ordenes_lista = list(ordenes_qs)
+    ordenes_por_fecha = []
+    for fecha, grupo in groupby(ordenes_lista, key=lambda o: o.creada_en.date()):
+        items = list(grupo)
+        ordenes_por_fecha.append({
+            'fecha':   fecha,
+            'ordenes': items,
+            'total':   sum(o.total for o in items),
+            'count':   len(items),
+        })
+
     ctx = {
         'titulo': 'Módulo de Pedidos',
         'nombre': request.user.get_full_name() or request.user.username,
@@ -49,25 +74,27 @@ def _dashboard_context(request, extra=None):
         'productos_activos':  Producto.objects.filter(disponible=True).count(),
         'caja_abierta':       Caja.objects.filter(estado='abierta').first(),
         'ultimos_pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')[:5],
-        'pedidos':   pedidos_qs,
-        'ordenes':   ordenes_qs,
-        'productos': productos_qs,
-        'cajas':     Caja.objects.select_related('responsable').all(),
+        'pedidos':            pedidos_qs,
+        'pedidos_por_fecha':  pedidos_por_fecha,
+        'ordenes':            ordenes_qs,
+        'ordenes_por_fecha':  ordenes_por_fecha,
+        'productos':          productos_qs,
+        'cajas':              Caja.objects.select_related('responsable').all(),
         'productos_disponibles': Producto.objects.filter(disponible=True).order_by('categoria', 'nombre'),
-        'estados':         Pedido.ESTADO_CHOICES,
-        'estados_orden':   Orden.ESTADO_CHOICES,
-        'categorias':      Producto.CATEGORIA_CHOICES,
-        'q':               q,
-        'estado_sel':      estado_sel,
-        'q_orden':         q_orden,
-        'estado_orden_sel': estado_orden_sel,
-        'q_prod':          q_prod,
-        'cat_sel':         cat_sel,
-        'form_pedido':   PedidoForm(),
-        'form_orden':    OrdenForm(),
-        'form_producto': ProductoForm(),
-        'form_caja':     CajaForm(),
-        'seccion_activa': (extra.get('seccion_activa') if extra and 'seccion_activa' in extra else None) or seccion_get or None,
+        'estados':            Pedido.ESTADO_CHOICES,
+        'estados_orden':      Orden.ESTADO_CHOICES,
+        'categorias':         Producto.CATEGORIA_CHOICES,
+        'q':                  q,
+        'estado_sel':         estado_sel,
+        'q_orden':            q_orden,
+        'estado_orden_sel':   estado_orden_sel,
+        'q_prod':             q_prod,
+        'cat_sel':            cat_sel,
+        'form_pedido':        PedidoForm(),
+        'form_orden':         OrdenForm(),
+        'form_producto':      ProductoForm(),
+        'form_caja':          CajaForm(),
+        'seccion_activa':     (extra.get('seccion_activa') if extra and 'seccion_activa' in extra else None) or seccion_get or None,
     }
 
     if extra:
@@ -90,7 +117,6 @@ def dashboard(request):
                 pedido = form.save(commit=False)
                 pedido.creado_por = request.user
 
-                # Leer items enviados desde el formulario JS
                 items_data = []
                 i = 0
                 while True:
@@ -114,13 +140,10 @@ def dashboard(request):
                     })
                     return render(request, 'pedidos/dashboard.html', ctx)
 
-                # Calcular total — NO sobreescribir descripcion (viene del form)
                 total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
                 pedido.total = total
-                # descripcion ya fue asignada por form.save(commit=False)
                 pedido.save()
 
-                # Guardar PedidoItems
                 for it in items_data:
                     PedidoItem.objects.create(
                         pedido=pedido,
@@ -129,15 +152,17 @@ def dashboard(request):
                         precio_unitario=it['producto'].precio,
                     )
 
-                # Resumen de productos para la Orden (separado de la descripcion del pedido)
                 resumen_productos = ', '.join(
                     f"{it['cantidad']}x {it['producto'].nombre}" for it in items_data
                 )
 
-                # Crear Orden automática
+                # Número secuencial compartido
+                numero = Contador.siguiente()
+                numero_str = f'{numero:04d}'
+
                 Orden.objects.create(
                     pedido=pedido,
-                    numero_orden=f'ORD-{uuid.uuid4().hex[:8].upper()}',
+                    numero_orden=numero_str,
                     estado='abierta',
                     subtotal=total,
                     impuesto=0,
@@ -145,7 +170,7 @@ def dashboard(request):
                     notas=resumen_productos,
                 )
 
-                messages.success(request, '✅ Pedido creado con sus productos correctamente.')
+                messages.success(request, f'✅ Pedido #{numero_str} creado correctamente.')
                 return redirect('pedidos:dashboard')
             else:
                 messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
@@ -219,7 +244,6 @@ def pedido_editar(request, pk):
     pedido = get_object_or_404(Pedido, pk=pk)
 
     if request.method == 'POST':
-        # Leer items enviados desde el formulario JS
         items_data = []
         i = 0
         while True:
@@ -240,13 +264,10 @@ def pedido_editar(request, pk):
             p = form.save(commit=False)
 
             if items_data:
-                # Recalcular total — NO sobreescribir descripcion (viene del form)
                 total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
                 p.total = total
-                # descripcion ya fue asignada por form.save(commit=False)
                 p.save()
 
-                # Reemplazar todos los PedidoItems
                 pedido.items.all().delete()
                 for it in items_data:
                     PedidoItem.objects.create(
@@ -256,12 +277,10 @@ def pedido_editar(request, pk):
                         precio_unitario=it['producto'].precio,
                     )
 
-                # Resumen de productos para la Orden (separado de la descripcion del pedido)
                 resumen_productos = ', '.join(
                     f"{it['cantidad']}x {it['producto'].nombre}" for it in items_data
                 )
 
-                # Actualizar la orden asociada si existe
                 orden = pedido.ordenes.filter(estado='abierta').first()
                 if orden:
                     orden.subtotal = total
@@ -274,16 +293,14 @@ def pedido_editar(request, pk):
             messages.success(request, '✅ Pedido actualizado correctamente.')
             return redirect('pedidos:dashboard')
 
-        # Formulario inválido — volver con errores
         ctx = _dashboard_context(request, {
-            'form_pedido':          form,
-            'pedido_editando':      pedido,
-            'pedido_items_json':    _items_as_json(pedido),
-            'seccion_activa':       'pedido-editar',
+            'form_pedido':       form,
+            'pedido_editando':   pedido,
+            'pedido_items_json': _items_as_json(pedido),
+            'seccion_activa':    'pedido-editar',
         })
         return render(request, 'pedidos/dashboard.html', ctx)
 
-    # GET — cargar pedido existente
     form = PedidoForm(instance=pedido)
     ctx  = _dashboard_context(request, {
         'form_pedido':       form,
@@ -295,8 +312,6 @@ def pedido_editar(request, pk):
 
 
 def _items_as_json(pedido):
-    """Devuelve los PedidoItems del pedido como lista JSON para precargar el JS."""
-    import json
     items = [
         {
             'id':       str(item.producto.pk),
@@ -333,7 +348,8 @@ def orden_crear(request):
     form = OrdenForm(request.POST or None)
     if form.is_valid():
         orden = form.save(commit=False)
-        orden.numero_orden = f'ORD-{uuid.uuid4().hex[:8].upper()}'
+        numero = Contador.siguiente()
+        orden.numero_orden = f'{numero:04d}'
         orden.save()
         messages.success(request, '✅ Orden creada.')
         return redirect('pedidos:dashboard')

@@ -54,7 +54,6 @@
   .pg-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
   .pg-card-body   { padding:1.4rem; }
 
-  /* Separador de fecha */
   .fecha-grupo        { margin-bottom:1.5rem; }
   .fecha-header       { display:flex; align-items:center; gap:1rem; margin-bottom:.7rem; }
   .fecha-label        { background:var(--p-primary); color:#F5ECD7; font-size:.78rem;
@@ -63,6 +62,13 @@
   .fecha-line         { flex:1; height:1px; background:var(--p-border); }
   .fecha-subtotal     { font-size:.78rem; font-weight:700; color:var(--p-muted);
                         white-space:nowrap; }
+
+  .pg-search-bar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.2rem; }
+  .pg-search-bar input,
+  .pg-search-bar select { padding:.45rem .8rem; border:1px solid var(--p-border);
+                           border-radius:8px; font-size:.88rem; background:var(--p-surface);
+                           color:var(--p-text); }
+  .pg-search-bar input  { flex:1; min-width:180px; }
 
   .pg-table-wrap { overflow-x:auto; }
   .pg-table      { width:100%; border-collapse:collapse; font-size:.87rem; }
@@ -74,6 +80,7 @@
   .pg-table tr:hover td      { background:var(--p-surface); }
   .pg-table tr.fila-pendiente td       { background:#FFFBEB; }
   .pg-table tr.fila-pendiente:hover td { background:#FEF3C7; }
+  .pg-table tr.fila-oculta { display:none; }
 
   .pg-badge { display:inline-flex; font-size:.73rem; font-weight:700;
               padding:.25rem .65rem; border-radius:50px; text-transform:uppercase; letter-spacing:.4px; }
@@ -132,6 +139,9 @@
   .pg-modal-box h4 { font-size:1.1rem; font-weight:700; margin:0 0 .5rem; color:var(--p-primary); }
   .pg-modal-box p  { font-size:.9rem; color:var(--p-muted); margin:0 0 1.4rem; }
   .pg-modal-actions{ display:flex; gap:.7rem; }
+
+  #sin-resultados { display:none; text-align:center; color:var(--p-muted);
+                    padding:2rem; font-size:.9rem; }
 
   @media(max-width:600px){
     .pg-form-grid { grid-template-columns:1fr; }
@@ -195,7 +205,7 @@
             <thead>
               <tr>
                 <th>Orden</th>
-                <th>Cliente / Pedido</th>
+                <th>Cliente</th>
                 <th>Descripción</th>
                 <th>Total a cobrar</th>
                 <th>Fecha orden</th>
@@ -206,10 +216,7 @@
               {% for o in ordenes_sin_pago %}
               <tr class="fila-pendiente">
                 <td><strong>{{ o.numero_orden }}</strong></td>
-                <td>
-                  <strong>{{ o.pedido.cliente }}</strong><br>
-                  <small style="color:var(--p-muted)">Pedido #{{ o.pedido.pk }}</small>
-                </td>
+                <td><strong>{{ o.pedido.cliente }}</strong></td>
                 <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
                   {{ o.pedido.descripcion|default:"—" }}
                 </td>
@@ -220,7 +227,6 @@
                           onclick="registrarPago(
                             '{{ o.numero_orden }}',
                             {{ o.pk }},
-                            {{ o.pedido.pk }},
                             '{{ o.pedido.cliente|escapejs }}',
                             {{ o.total }}
                           )">
@@ -251,13 +257,28 @@
       </div>
       <div class="pg-card-body">
 
+        <!-- ✅ NUEVO: buscador de pagos -->
+        <div class="pg-search-bar">
+          <input type="text" id="buscador-pagos"
+                 placeholder="Buscar por orden, cliente o referencia…"
+                 oninput="filtrarPagos()">
+          <select id="filtro-metodo" onchange="filtrarPagos()">
+            <option value="">Todos los métodos</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+          <select id="filtro-estado" onchange="filtrarPagos()">
+            <option value="">Todos los estados</option>
+            <option value="aprobado">pagada</option>
+            <option value="pendiente">Pendiente</option>
+          </select>
+        </div>
+
         {% if pagos_por_fecha %}
           {% for grupo in pagos_por_fecha %}
-
-          <!-- Separador de fecha -->
-          <div class="fecha-grupo">
+          <div class="fecha-grupo" data-fecha-grupo>
             <div class="fecha-header">
-              <span class="fecha-label"> {{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
+              <span class="fecha-label">{{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
               <div class="fecha-line"></div>
               <span class="fecha-subtotal">{{ grupo.count }} pago{{ grupo.count|pluralize }} · ${{ grupo.total|floatformat:0 }}</span>
             </div>
@@ -266,7 +287,6 @@
               <table class="pg-table">
                 <thead>
                   <tr>
-                    <th>#</th>
                     <th>Orden</th>
                     <th>Cliente</th>
                     <th>Método</th>
@@ -274,13 +294,19 @@
                     <th>Referencia</th>
                     <th>Estado</th>
                     <th>Hora</th>
-                   
+                    <!-- ✅ NUEVO: columna acciones -->
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for pg in grupo.pagos %}
-                  <tr>
-                    <td><strong>#{{ pg.pk }}</strong></td>
+                  <!-- data-* para búsqueda client-side -->
+                  <tr class="fila-pago"
+                      data-orden="{% if pg.orden %}{{ pg.orden.numero_orden|lower }}{% endif %}"
+                      data-cliente="{% if pg.orden %}{{ pg.orden.pedido.cliente|lower }}{% endif %}"
+                      data-referencia="{{ pg.referencia|lower }}"
+                      data-metodo="{{ pg.metodo_pago }}"
+                      data-estado="{{ pg.estado }}">
                     <td>
                       {% if pg.orden %}
                         <strong>{{ pg.orden.numero_orden }}</strong>
@@ -288,23 +314,30 @@
                         <span style="color:var(--p-muted)">Manual</span>
                       {% endif %}
                     </td>
-                    <td>
-                      {% if pg.orden %}{{ pg.orden.pedido.cliente }}{% else %}—{% endif %}
-                    </td>
+                    <td>{% if pg.orden %}{{ pg.orden.pedido.cliente }}{% else %}—{% endif %}</td>
                     <td>{{ pg.get_metodo_pago_display }}</td>
                     <td><strong style="color:#C0392B">${{ pg.monto }}</strong></td>
                     <td>{{ pg.referencia|default:"—" }}</td>
                     <td><span class="pg-badge pg-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
                     <td>{{ pg.fecha_pago|date:"H:i" }}</td>
-                   
+                    <!-- ✅ NUEVO: botón eliminar -->
+                    <td>
+                      <button class="pg-btn pg-btn-danger pg-btn-sm"
+                              onclick="confirmarEliminar({{ pg.pk }}, '{% if pg.orden %}{{ pg.orden.numero_orden }}{% else %}Manual{% endif %}')">
+                        Eliminar
+                      </button>
+                    </td>
                   </tr>
                   {% endfor %}
                 </tbody>
               </table>
             </div>
           </div>
-
           {% endfor %}
+
+          <!-- Mensaje cuando el buscador no encuentra resultados -->
+          <p id="sin-resultados">No se encontraron pagos con ese criterio.</p>
+
         {% else %}
           <p style="text-align:center;color:var(--p-muted);padding:2rem">
             No hay pagos registrados aún.
@@ -326,12 +359,11 @@
       <div class="pg-card-body">
 
         <div class="orden-banner" id="orden-banner">
-          <div class="orden-banner-icon"></div>
+          <div class="orden-banner-icon">🧾</div>
           <div class="orden-banner-body">
             <p class="orden-banner-title">Registrando pago para: <span id="banner-orden-num"></span></p>
             <p class="orden-banner-detail">
               Cliente: <strong id="banner-cliente"></strong> &nbsp;·&nbsp;
-              Pedido: <strong id="banner-pedido-id"></strong> &nbsp;·&nbsp;
               Total: <strong id="banner-total"></strong>
             </p>
           </div>
@@ -380,7 +412,7 @@
 
 </div>
 
-<!-- Modal eliminar -->
+<!-- ✅ NUEVO: Modal confirmar eliminación con form POST -->
 <div id="modal-eliminar" class="pg-modal-overlay">
   <div class="pg-modal-box">
     <h4>Confirmar eliminación</h4>
@@ -396,6 +428,7 @@
 </div>
 
 <script>
+// ── Tabs ────────────────────────────────────────────────────
 function showTab(name) {
   document.querySelectorAll('.pg-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.pg-tab').forEach(t => t.classList.remove('active'));
@@ -403,14 +436,14 @@ function showTab(name) {
   document.getElementById('tab-btn-' + name).classList.add('active');
 }
 
-function registrarPago(numeroOrden, ordenId, pedidoId, cliente, total) {
+// ── Registrar pago ──────────────────────────────────────────
+function registrarPago(numeroOrden, ordenId, cliente, total) {
   const ordenSelect = document.querySelector('[name="orden"]');
   if (ordenSelect) ordenSelect.value = ordenId;
 
   document.getElementById('orden-banner').classList.add('visible');
   document.getElementById('banner-orden-num').textContent = numeroOrden;
   document.getElementById('banner-cliente').textContent   = cliente;
-  document.getElementById('banner-pedido-id').textContent = 'Pedido #' + pedidoId;
   document.getElementById('banner-total').textContent     = '$' + Number(total).toLocaleString('es-CO');
   document.getElementById('form-titulo').textContent      = 'Pago — ' + numeroOrden;
 
@@ -425,10 +458,11 @@ function cancelarPago() {
   showTab('pendientes');
 }
 
-function confirmarEliminar(pk) {
+// ── Eliminar pago ───────────────────────────────────────────
+function confirmarEliminar(pk, referencia) {
   document.getElementById('modal-form').action = `/pagos/${pk}/eliminar/`;
   document.getElementById('modal-msg').textContent =
-    `¿Eliminar el pago #${pk}? Esta acción no se puede deshacer.`;
+    `¿Eliminar el pago de la orden "${referencia}"? Esta acción no se puede deshacer.`;
   document.getElementById('modal-eliminar').classList.add('open');
 }
 
@@ -436,10 +470,50 @@ function cerrarModal() {
   document.getElementById('modal-eliminar').classList.remove('open');
 }
 
-document.getElementById('modal-eliminar').addEventListener('click', function(e){
+document.getElementById('modal-eliminar').addEventListener('click', function(e) {
   if (e.target === this) cerrarModal();
 });
 
+// ── Buscador de pagos (client-side) ─────────────────────────
+function filtrarPagos() {
+  const texto   = document.getElementById('buscador-pagos').value.toLowerCase().trim();
+  const metodo  = document.getElementById('filtro-metodo').value;
+  const estado  = document.getElementById('filtro-estado').value;
+  const filas   = document.querySelectorAll('.fila-pago');
+  const grupos  = document.querySelectorAll('[data-fecha-grupo]');
+  let   hayAlgo = false;
+
+  filas.forEach(function(fila) {
+    const orden      = fila.dataset.orden      || '';
+    const cliente    = fila.dataset.cliente    || '';
+    const referencia = fila.dataset.referencia || '';
+    const mFila      = fila.dataset.metodo     || '';
+    const eFila      = fila.dataset.estado     || '';
+
+    const coincideTexto  = !texto  || orden.includes(texto) || cliente.includes(texto) || referencia.includes(texto);
+    const coincideMetodo = !metodo || mFila === metodo;
+    const coincideEstado = !estado || eFila === estado;
+
+    if (coincideTexto && coincideMetodo && coincideEstado) {
+      fila.classList.remove('fila-oculta');
+      hayAlgo = true;
+    } else {
+      fila.classList.add('fila-oculta');
+    }
+  });
+
+  // Ocultar grupos de fecha que quedaron sin filas visibles
+  grupos.forEach(function(grupo) {
+    const visibles = grupo.querySelectorAll('.fila-pago:not(.fila-oculta)');
+    grupo.style.display = visibles.length > 0 ? '' : 'none';
+  });
+
+  // Mostrar mensaje "sin resultados"
+  const sinRes = document.getElementById('sin-resultados');
+  if (sinRes) sinRes.style.display = hayAlgo ? 'none' : 'block';
+}
+
+// ── Init ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   {% if form.errors %}showTab('crear');{% endif %}
   document.querySelectorAll('.pg-alert').forEach(a => {
