@@ -212,7 +212,7 @@
             <thead>
               <tr>
                 <th>Orden</th>
-                <th>Cliente</th>
+                <th>mesa</th>
                 <th>Descripción</th>
                 <th>Total a cobrar</th>
                 <th>Fecha orden</th>
@@ -262,22 +262,17 @@
       <div class="pg-card-header"><h3>Pagos registrados</h3></div>
       <div class="pg-card-body">
 
-        <!-- ✅ NUEVO: buscador de pagos -->
         <div class="pg-search-bar">
-          <input type="text" id="buscador-pagos"
-                 placeholder="Buscar por orden, cliente o referencia…"
-                 oninput="filtrarPagos()">
-          <select id="filtro-metodo" onchange="filtrarPagos()">
-            <option value="">Todos los métodos</option>
-            <option value="efectivo">Efectivo</option>
-            <option value="transferencia">Transferencia</option>
-          </select>
-          <select id="filtro-estado" onchange="filtrarPagos()">
-            <option value="">Todos los estados</option>
-            <option value="aprobado">pagada</option>
-            <option value="pendiente">Pendiente</option>
-          </select>
-        </div>
+  <input type="text" id="buscador-pagos"
+       placeholder="Buscar por orden, cliente o referencia…"
+       oninput="filtrarPagos()">
+  <select id="filtro-metodo">
+    <option value="">Todos los métodos</option>
+    <option value="efectivo">Efectivo</option>
+    <option value="transferencia">Transferencia</option>
+  </select>
+  <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()">Filtrar</button>
+</div>
 
         {% if pagos_por_fecha %}
           {% for grupo in pagos_por_fecha %}
@@ -299,7 +294,7 @@
                     <th>Estado</th>
                     <th>Hora</th>
                     <!-- ✅ NUEVO: columna acciones -->
-                    <th>Acciones</th>
+                 
                   </tr>
                 </thead>
                 <tbody>
@@ -324,13 +319,7 @@
                     <td>{{ pg.referencia|default:"—" }}</td>
                     <td><span class="pg-badge pg-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
                     <td>{{ pg.fecha_pago|date:"H:i" }}</td>
-                    <!-- ✅ NUEVO: botón eliminar -->
-                    <td>
-                      <button class="pg-btn pg-btn-danger pg-btn-sm"
-                              onclick="confirmarEliminar({{ pg.pk }}, '{% if pg.orden %}{{ pg.orden.numero_orden }}{% else %}Manual{% endif %}')">
-                        Eliminar
-                      </button>
-                    </td>
+                 
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -404,7 +393,7 @@
               <tr>
                 <th>#</th><th>Cajero</th><th>Saldo inicial</th>
                 <th>Estado</th><th>Apertura</th><th>Cierre</th>
-                <th>Observaciones</th><th>Acciones</th>
+                <th>Observaciones</th>
               </tr>
             </thead>
             <tbody>
@@ -656,7 +645,7 @@ document.getElementById('modal-eliminar').addEventListener('click', function(e) 
 function filtrarPagos() {
   const texto   = document.getElementById('buscador-pagos').value.toLowerCase().trim();
   const metodo  = document.getElementById('filtro-metodo').value;
-  const estado  = document.getElementById('filtro-estado').value;
+  const estado  = '';
   const filas   = document.querySelectorAll('.fila-pago');
   const grupos  = document.querySelectorAll('[data-fecha-grupo]');
   let   hayAlgo = false;
@@ -670,9 +659,7 @@ function filtrarPagos() {
 
     const coincideTexto  = !texto  || orden.includes(texto) || cliente.includes(texto) || referencia.includes(texto);
     const coincideMetodo = !metodo || mFila === metodo;
-    const coincideEstado = !estado || eFila === estado;
-
-    if (coincideTexto && coincideMetodo && coincideEstado) {
+    if (coincideTexto && coincideMetodo)  {
       fila.classList.remove('fila-oculta');
       hayAlgo = true;
     } else {

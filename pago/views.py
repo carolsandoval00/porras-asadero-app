@@ -75,7 +75,7 @@ def pago_editar(request, pk):
     form = PagoForm(request.POST or None, instance=pago)
     if form.is_valid():
         form.save()
-        messages.success(request, '✅ Pago actualizado.')
+        messages.success(request, ' Pago actualizado.')
         return redirect('pago:dashboard')
     return render(request, 'pago/form.html', {
         'form':   form,

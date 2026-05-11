@@ -49,9 +49,8 @@ class Producto(models.Model):
 
 class Pedido(models.Model):
     ESTADO_CHOICES = [
-        ('pendiente',   'Pendiente'),
+  
         ('en_proceso',  'En Proceso'),
-        ('completado',  'Completado'),
         ('cancelado',   'Cancelado'),
     ]
     cliente             = models.CharField(max_length=200)

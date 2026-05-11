@@ -5,6 +5,8 @@ from django.db.models import Q
 from itertools import groupby
 from .models import Pedido, Orden, Producto, Caja, PedidoItem, Contador
 from .forms import PedidoForm, OrdenForm, ProductoForm, CajaForm, CajaCierreForm
+from reservas.models import Mesa
+
 import json
 
 
@@ -64,6 +66,9 @@ def _dashboard_context(request, extra=None):
             'count':   len(items),
         })
 
+    # ── CAMBIO 3: mesas desde la BD ordenadas por número ──────────────────────
+    mesas_bd = Mesa.objects.all().order_by('numero_mesa')
+
     ctx = {
         'titulo': 'Módulo de Pedidos',
         'nombre': request.user.get_full_name() or request.user.username,
@@ -94,6 +99,8 @@ def _dashboard_context(request, extra=None):
         'form_orden':         OrdenForm(),
         'form_producto':      ProductoForm(),
         'form_caja':          CajaForm(),
+        # ── CAMBIO 3: mesas disponibles para el selector ──────────────────────
+        'mesas_bd':           mesas_bd,
         'seccion_activa':     (extra.get('seccion_activa') if extra and 'seccion_activa' in extra else None) or seccion_get or None,
     }
 
@@ -116,6 +123,9 @@ def dashboard(request):
             if form.is_valid():
                 pedido = form.save(commit=False)
                 pedido.creado_por = request.user
+
+                # ── CAMBIO 2: fecha y hora del servidor ───────
+                pedido.fecha_creacion = timezone.now()
 
                 items_data = []
                 i = 0
@@ -156,9 +166,9 @@ def dashboard(request):
                     f"{it['cantidad']}x {it['producto'].nombre}" for it in items_data
                 )
 
-                # Número secuencial compartido
+                # ── CAMBIO 1: numeración desde 01 ─────────────
                 numero = Contador.siguiente()
-                numero_str = f'{numero:04d}'
+                numero_str = f'{numero:02d}'
 
                 Orden.objects.create(
                     pedido=pedido,
@@ -229,6 +239,8 @@ def pedido_crear(request):
     if form.is_valid():
         pedido = form.save(commit=False)
         pedido.creado_por = request.user
+        # ── CAMBIO 2 ──
+        pedido.fecha_creacion = timezone.now()
         pedido.save()
         messages.success(request, '✅ Pedido creado correctamente.')
         return redirect('pedidos:dashboard')
@@ -348,8 +360,9 @@ def orden_crear(request):
     form = OrdenForm(request.POST or None)
     if form.is_valid():
         orden = form.save(commit=False)
+        # ── CAMBIO 1 ──
         numero = Contador.siguiente()
-        orden.numero_orden = f'{numero:04d}'
+        orden.numero_orden = f'{numero:02d}'
         orden.save()
         messages.success(request, '✅ Orden creada.')
         return redirect('pedidos:dashboard')

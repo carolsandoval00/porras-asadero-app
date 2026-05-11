@@ -74,7 +74,6 @@
   .pm-table tr:last-child td { border-bottom:none; }
   .pm-table tr:hover td      { background:var(--p-surface); }
 
-  /* Grupos de fecha — igual que en pagos */
   .fecha-grupo    { margin-bottom:1.5rem; }
   .fecha-header   { display:flex; align-items:center; gap:1rem; margin-bottom:.7rem; }
   .fecha-label    { background:var(--p-primary); color:#F5ECD7; font-size:.78rem;
@@ -224,7 +223,7 @@
       <div class="pm-table-wrap">
         <table class="pm-table">
           <thead>
-            <tr><th>#</th><th>Cliente</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr>
+            <tr><th>#</th><th>Mesa</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr>
           </thead>
           <tbody>
             {% for p in ultimos_pedidos %}
@@ -262,7 +261,7 @@
       <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem;">
         <input type="hidden" name="seccion" value="pedido-lista">
         <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
-               type="text" name="q" value="{{ q }}" placeholder="🔍 Buscar cliente…">
+               type="text" name="q" value="{{ q }}" placeholder=" Buscar mesa…">
         <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
           <option value="">Todos los estados</option>
           {% for val,lbl in estados %}
@@ -278,13 +277,13 @@
           <div class="fecha-header">
             <span class="fecha-label">{{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
             <div class="fecha-line"></div>
-            <span class="fecha-subtotal">{{ grupo.count }} pedido{{ grupo.count|pluralize }} · ${{ grupo.total|floatformat:0 }}</span>
+            <span class="fecha-subtotal">{{ grupo.count }} pedido{{ grupo.count|pluralize }}</span>
           </div>
           <div class="pm-table-wrap">
             <table class="pm-table">
               <thead>
                 <tr>
-                  <th>#</th><th>Cliente</th><th>Productos</th>
+                  <th>#</th><th>Mesa</th><th>Productos</th>
                   <th>Descripción</th><th>Estado</th><th>Total</th><th>Hora</th><th>Acciones</th>
                 </tr>
               </thead>
@@ -340,8 +339,17 @@
 
         <div class="pm-form-grid" style="margin-bottom:1.2rem;">
           <div class="full">
-            <label>Cliente</label>
-            {{ form_pedido.cliente }}
+            <label>Mesa</label>
+            <select name="cliente"
+        style="width:100%;padding:.55rem .85rem;border:1px solid var(--p-border);
+               border-radius:8px;font-size:.9rem;color:var(--p-text);background:var(--p-surface);">
+  <option value="">— Selecciona una mesa —</option>
+  {% for mesa in mesas_bd %}
+    <option value="Mesa {{ mesa.numero_mesa }}">
+  Mesa {{ mesa.numero_mesa }} — {{ mesa.capacidad }} pers.
+</option>
+  {% endfor %}
+</select>
           </div>
           <div>
             <label>Estado</label>
@@ -425,13 +433,8 @@
       <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem;">
         <input type="hidden" name="seccion" value="orden-lista">
         <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
-               type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o cliente…">
-        <select name="estado_orden" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
-          <option value="">Todos los estados</option>
-          {% for val,lbl in estados_orden %}
-          <option value="{{ val }}" {% if estado_orden_sel == val %}selected{% endif %}>{{ lbl }}</option>
-          {% endfor %}
-        </select>
+               type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o mesa…">
+        
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
       </form>
 
@@ -441,12 +444,12 @@
           <div class="fecha-header">
             <span class="fecha-label">{{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
             <div class="fecha-line"></div>
-            <span class="fecha-subtotal">{{ grupo.count }} orden{{ grupo.count|pluralize:"es" }} · ${{ grupo.total|floatformat:0 }}</span>
+            <span class="fecha-subtotal">{{ grupo.count }} orden{{ grupo.count|pluralize:"es" }}</span>
           </div>
           <div class="pm-table-wrap">
             <table class="pm-table">
               <thead>
-                <tr><th>Número</th><th>Cliente</th><th>Estado</th><th>Subtotal</th><th>Impuesto</th><th>Total</th><th>Hora</th><th>Acciones</th></tr>
+                <tr><th>Número</th><th>Mesa</th><th>Estado</th><th>Subtotal</th><th>Impuesto</th><th>Total</th><th>Hora</th><th>Acciones</th></tr>
               </thead>
               <tbody>
                 {% for o in grupo.ordenes %}
@@ -619,7 +622,7 @@
 
         <div class="pm-form-grid" style="margin-bottom:1.2rem;">
           <div class="full">
-            <label>Cliente</label>
+            <label>Mesa</label>
             {{ form_pedido.cliente }}
           </div>
           <div>

@@ -22,12 +22,10 @@
   }
   body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);min-height:100vh}
 
-  /* CONTENT */
   .mc-wrap{max-width:100%;margin:0 auto;padding:1rem 1.5rem 2rem}
   .mc-section{display:none}.mc-section.active{display:block;animation:mcFade .2s ease}
   @keyframes mcFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-  /* NAV BUTTONS */
   .mc-nav-btn{
     padding:10px 22px;font-size:14px;font-weight:500;
     border:1.5px solid var(--border2);border-radius:25px;
@@ -41,11 +39,9 @@
   .mc-sec-header h2{font-family:'Playfair Display',serif;font-size:26px;font-weight:500;margin-bottom:5px}
   .mc-sec-header p{font-size:13px;color:var(--muted)}
 
-  /* CARDS */
   .mc-card{background:#FDF7EC;border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.35rem;margin-bottom:1rem}
   .mc-card-title{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
 
-  /* FORMS */
   .mc-form-row{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
   .mc-form-row.three{grid-template-columns:1fr 1fr 1fr}
   .mc-form-group{display:flex;flex-direction:column;gap:5px}
@@ -61,14 +57,12 @@
   .mc-input::placeholder{color:var(--hint)}
   .mc-textarea{resize:vertical;min-height:75px;line-height:1.5}
 
-  /* BUTTONS */
   .mc-btn{padding:9px 20px;font-size:13px;font-weight:500;border-radius:var(--radius);cursor:pointer;border:1px solid;transition:all .15s;font-family:'DM Sans',sans-serif}
   .mc-btn-primary{background:#C0392B;color:#F5ECD7;border-color:#C0392B}.mc-btn-primary:hover{background:#9B2D21}
   .mc-btn-secondary{background:transparent;color:var(--text);border-color:var(--border2)}.mc-btn-secondary:hover{background:var(--bg2)}
   .mc-btn-danger{background:var(--red-bg);color:var(--red-t);border-color:transparent}.mc-btn-danger:hover{opacity:.8}
   .mc-btn-row{display:flex;gap:8px;margin-top:1.1rem;justify-content:flex-end}
 
-  /* TABLE */
   .mc-table-wrap{overflow-x:auto}
   .mc-table{width:100%;border-collapse:collapse;font-size:13px}
   .mc-table th{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--border2);background:var(--bg)}
@@ -76,38 +70,32 @@
   .mc-table tr:last-child td{border-bottom:none}
   .mc-table tbody tr:hover td{background:var(--bg2)}
 
-  /* BADGES */
   .mc-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
   .mc-badge-ok{background:#EAF3DE;color:#27500A}
   .mc-badge-warn{background:#FAEEDA;color:#8B4000}
   .mc-badge-danger{background:#FAE0DC;color:#C0392B}
   .mc-badge-info{background:#E6F1FB;color:#0C447C}
 
-  /* ACTION BTNS */
   .mc-action-btns{display:flex;gap:5px}
   .mc-icon-btn{padding:5px 11px;font-size:12px;border-radius:var(--radius);border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif}
   .mc-icon-btn:hover{background:var(--bg2);color:var(--text)}
   .mc-icon-btn.edit:hover{color:#0C447C;border-color:#378ADD}
   .mc-icon-btn.del:hover{color:#C0392B;border-color:#C0392B}
 
-  /* FILTER BAR */
   .mc-filter-bar{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
   .mc-filter-bar .mc-input,.mc-filter-bar .mc-select{flex:1;min-width:150px;max-width:240px}
 
-  /* DETAIL */
   .mc-detail-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
   .mc-detail-item{padding:11px 13px;background:var(--bg2);border-radius:var(--radius)}
   .mc-detail-key{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px;font-weight:500}
   .mc-detail-val{font-size:14px;font-weight:500}
 
-  /* FLOOR PLAN */
   .mc-floor-outer{border-radius:var(--radius-xl);border:1px solid var(--border);overflow:hidden;background:#FDF7EC}
   .mc-floor-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg2)}
   .mc-floor-label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
   .mc-floor-container{position:relative;min-height:380px;background:#FBF5E6}
   .mc-floor-grid{position:absolute;inset:0;background-image:repeating-linear-gradient(var(--border) 0 0.5px,transparent 0.5px 44px),repeating-linear-gradient(90deg,var(--border) 0 0.5px,transparent 0.5px 44px);background-size:44px 44px;opacity:.35;pointer-events:none}
 
-  /* MESAS */
   .mc-mesa{position:absolute;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:transform .15s,box-shadow .15s;border:2px solid;border-radius:10px;user-select:none}
   .mc-mesa:hover{transform:scale(1.1);z-index:10;box-shadow:0 4px 16px rgba(26,16,8,.15)}
   .mc-mesa.disponible{background:#EAF3DE;border-color:#3B6D11;color:#27500A}
@@ -127,7 +115,6 @@
   .mc-legend-dot.o{background:#FAE0DC;border-color:#C0392B}
   .mc-legend-dot.r{background:#FAEEDA;border-color:#E8651A}
 
-  /* MODALS */
   .mc-modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,16,8,.5);z-index:100;align-items:center;justify-content:center;padding:1rem}
   .mc-modal-overlay.open{display:flex}
   .mc-modal{background:#FDF7EC;border-radius:var(--radius-xl);border:1px solid var(--border2);padding:1.6rem;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(26,16,8,.2)}
@@ -136,7 +123,6 @@
   .mc-close-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;padding:2px 7px;border-radius:var(--radius);transition:all .12s}
   .mc-close-btn:hover{background:var(--bg2);color:var(--text)}
 
-  /* CONFIRM */
   .mc-confirm-overlay{display:none;position:fixed;inset:0;background:rgba(26,16,8,.5);z-index:150;align-items:center;justify-content:center}
   .mc-confirm-overlay.open{display:flex}
   .mc-confirm-box{background:#FDF7EC;border-radius:var(--radius-lg);padding:1.5rem;max-width:360px;width:100%;box-shadow:0 8px 40px rgba(26,16,8,.2);border:1px solid var(--border2)}
@@ -144,10 +130,8 @@
   .mc-confirm-box p{font-size:13px;color:var(--muted);margin-bottom:1.2rem;line-height:1.5}
   .mc-confirm-btns{display:flex;gap:8px;justify-content:flex-end}
 
-  /* MESA MGR GRID */
   .mc-mgr-grid{display:grid;grid-template-columns:320px 1fr;gap:1rem;align-items:start}
 
-  /* TOAST */
   .mc-toast{position:fixed;bottom:28px;right:28px;background:#1A1008;color:#F5ECD7;padding:10px 20px;border-radius:var(--radius);font-size:13px;opacity:0;transform:translateY(10px);transition:all .22s;z-index:200;pointer-events:none;box-shadow:0 4px 20px rgba(26,16,8,.25)}
   .mc-toast.show{opacity:1;transform:translateY(0)}
 
@@ -162,7 +146,6 @@
     .mc-mgr-grid{grid-template-columns:1fr}
     .mc-nav-btn{padding:6px 12px;font-size:12px}
   }
-  
 </style>
 
 <!-- ===== BANNER + NAV ===== -->
@@ -241,7 +224,7 @@
       <div class="mc-form-row">
         <div class="mc-form-group">
           <label class="mc-label">Correo electrónico</label>
-          <input type="email" class="mc-input" id="mc-c-email" placeholder="correo@ejemplo.com" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}">
+          <input type="email" class="mc-input" id="mc-c-email" placeholder="correo@ejemplo.com">
         </div>
         <div class="mc-form-group">
           <label class="mc-label">N.° de personas *</label>
@@ -254,7 +237,6 @@
       <div class="mc-form-row three">
         <div class="mc-form-group">
           <label class="mc-label">Fecha *</label>
-          <!-- FIX: onchange actualiza el selector de mesas según la fecha elegida -->
           <input type="date" class="mc-input" id="mc-c-fecha" onchange="mcPoblarMesas()">
         </div>
         <div class="mc-form-group">
@@ -439,12 +421,12 @@
 
 <script>
 (function(){
-  // STATE
-  let reservas   = JSON.parse(localStorage.getItem('mc_reservas') || '[]');
-  let mesas      = JSON.parse(localStorage.getItem('mc_mesas')    || '[]');
-  let contadorR  = 0;
-  let contadorM  = 0;
-  let editandoId = null;
+  // ── STATE ────────────────────────────────────────────────
+  let reservas       = JSON.parse(localStorage.getItem('mc_reservas') || '[]');
+  let mesas          = JSON.parse(localStorage.getItem('mc_mesas')    || '[]');
+  let contadorR      = parseInt(localStorage.getItem('mc_contador_r') || '0');
+  let contadorM      = parseInt(localStorage.getItem('mc_contador_m') || '0');
+  let editandoId     = null;
   let editandoMesaId = null;
 
   function nextIdR(){ contadorR++; localStorage.setItem('mc_contador_r', contadorR); return contadorR; }
@@ -457,7 +439,31 @@
     localStorage.setItem('mc_contador_m', contadorM);
   }
 
-  // NAV
+  // ── CSRF + fetch helper ──────────────────────────────────
+  function getCookie(name) {
+    let value = null;
+    if (document.cookie) {
+      document.cookie.split(';').forEach(c => {
+        const cv = c.trim();
+        if (cv.startsWith(name + '='))
+          value = decodeURIComponent(cv.substring(name.length + 1));
+      });
+    }
+    return value;
+  }
+
+  function djangoPost(url, data) {
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ── NAV ──────────────────────────────────────────────────
   window.mcShow = function(id){
     document.querySelectorAll('.mc-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.mc-nav-btn').forEach(b => b.classList.remove('active'));
@@ -472,7 +478,7 @@
     if(id==='crear' && !editandoId){ mcLimpiar(); mcPoblarMesas(); }
   };
 
-  // TOAST
+  // ── TOAST ────────────────────────────────────────────────
   function toast(msg, tipo){
     const t = document.getElementById('mc-toast');
     t.textContent = msg;
@@ -481,7 +487,7 @@
     setTimeout(()=> t.classList.remove('show'), 2800);
   }
 
-  // CONFIRM
+  // ── CONFIRM ──────────────────────────────────────────────
   window.mcCloseConfirm = function(){ document.getElementById('mc-confirm-overlay').classList.remove('open'); };
   function mcConfirm(titulo, msg, cb){
     document.getElementById('mc-confirm-title').textContent = titulo;
@@ -490,10 +496,10 @@
     document.getElementById('mc-confirm-overlay').classList.add('open');
   }
 
-  // MODAL
+  // ── MODAL ────────────────────────────────────────────────
   window.mcCloseModal = function(id){ document.getElementById(id).classList.remove('open'); };
 
-  // HELPERS
+  // ── HELPERS ──────────────────────────────────────────────
   function getMesa(id)      { return mesas.find(m => m.id === id); }
   function getMesaLabel(id) { const m = getMesa(id); return m ? 'Mesa '+m.numero : '—'; }
   function hoy()            { return new Date().toISOString().slice(0,10); }
@@ -501,40 +507,27 @@
     return estado==='confirmada'?'mc-badge-ok':estado==='pendiente'?'mc-badge-warn':'mc-badge-danger';
   }
 
-  // =====================================================================
-  // FIX: POBLAR SELECT MESAS filtrando por disponibilidad en la fecha Y hora elegidas
-  // =====================================================================
+  // ── POBLAR SELECT MESAS ──────────────────────────────────
   function mcPoblarMesas(){
     const sel   = document.getElementById('mc-c-mesa');
     const fecha = document.getElementById('mc-c-fecha').value;
     const hora  = document.getElementById('mc-c-hora').value;
     const r     = editandoId ? reservas.find(x => x.id === editandoId) : null;
-
-    // Mesas ocupadas en el mismo día Y misma hora, excluyendo la reserva en edición
     const mesasOcupadas = new Set(
       reservas
-        .filter(x =>
-          x.fecha === fecha &&
-          x.hora  === hora  &&
-          x.estado !== 'cancelada' &&
-          x.id !== editandoId
-        )
+        .filter(x => x.fecha===fecha && x.hora===hora && x.estado!=='cancelada' && x.id!==editandoId)
         .map(x => x.mesaId)
     );
-
     sel.innerHTML = '<option value="">— Seleccionar mesa —</option>';
     mesas.forEach(m => {
       const ocupada    = mesasOcupadas.has(m.id);
       const esLaActual = r && r.mesaId === m.id;
-      if (!ocupada || esLaActual) {
+      if (!ocupada || esLaActual)
         sel.innerHTML += `<option value="${m.id}">Mesa ${m.numero} — ${m.capacidad} pers. (${m.ubicacion})</option>`;
-      }
     });
   }
 
-  // =====================================================================
-  // CREAR / EDITAR RESERVA
-  // =====================================================================
+  // ── GUARDAR RESERVA ──────────────────────────────────────
   window.mcGuardarReserva = function(){
     const nom = document.getElementById('mc-c-nombre').value.trim();
     const tel = document.getElementById('mc-c-telefono').value.trim();
@@ -543,43 +536,31 @@
     const hor = document.getElementById('mc-c-hora').value;
     const mes = document.getElementById('mc-c-mesa').value;
 
-    // Validación campos obligatorios
     if(!nom||!tel||!per||!fec||!hor||!mes){ toast('Completa todos los campos obligatorios (*)','error'); return; }
-
-    // FIX: Validación de exactamente 10 dígitos en el teléfono
     if(tel.length !== 10){ toast('El teléfono debe tener exactamente 10 dígitos','error'); return; }
-
     if(fec < hoy()){ toast('No se pueden crear reservas en fechas pasadas','error'); return; }
-
     const emailVal = document.getElementById('mc-c-email').value.trim();
     if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){ toast('El correo electrónico no es válido','error'); return; }
-
-    // Segunda defensa: verificar conflicto de mesa en mismo día Y hora
     const conflicto = reservas.find(x =>
-      x.fecha === fec &&
-      x.hora  === hor &&
-      x.mesaId === parseInt(mes) &&
-      x.estado !== 'cancelada' &&
-      x.id !== editandoId
+      x.fecha===fec && x.hora===hor && x.mesaId===parseInt(mes) && x.estado!=='cancelada' && x.id!==editandoId
     );
     if(conflicto){ toast('Esa mesa ya está reservada para ese día y hora','error'); return; }
 
     const obj = {
-      id:      editandoId || nextIdR(),
-      nombre:  nom, telefono: tel,
-      email:   document.getElementById('mc-c-email').value.trim(),
-      personas:parseInt(per), fecha:fec, hora:hor, mesaId:parseInt(mes),
-      ocasion: document.getElementById('mc-c-ocasion').value,
-      estado:  document.getElementById('mc-c-estado').value,
-      notas:   document.getElementById('mc-c-notas').value.trim(),
-      creada:  editandoId
-               ? (reservas.find(r=>r.id===editandoId)||{}).creada||new Date().toISOString()
-               : new Date().toISOString()
+      id:       editandoId || nextIdR(),
+      nombre:   nom, telefono: tel,
+      email:    document.getElementById('mc-c-email').value.trim(),
+      personas: parseInt(per), fecha:fec, hora:hor, mesaId:parseInt(mes),
+      ocasion:  document.getElementById('mc-c-ocasion').value,
+      estado:   document.getElementById('mc-c-estado').value,
+      notas:    document.getElementById('mc-c-notas').value.trim(),
+      creada:   editandoId
+                ? (reservas.find(r=>r.id===editandoId)||{}).creada||new Date().toISOString()
+                : new Date().toISOString()
     };
 
     if(editandoId){ reservas = reservas.map(r=>r.id===editandoId?obj:r); toast('Reserva actualizada'); }
     else          { reservas.push(obj); toast('Reserva creada exitosamente'); }
-
     save(); mcLimpiar(); mcShow('reservas');
   };
 
@@ -593,11 +574,10 @@
     document.getElementById('mc-crear-titulo').textContent = 'Nueva reserva';
     document.getElementById('mc-crear-sub').textContent   = 'Completa los datos para registrar la reserva';
     document.getElementById('mc-btn-guardar').textContent  = 'Guardar reserva';
-    mcPoblarMesas();
-    fijarFechaMin();
+    mcPoblarMesas(); fijarFechaMin();
   };
 
-  // TABLA RESERVAS
+  // ── TABLA RESERVAS ───────────────────────────────────────
   window.mcRenderTabla = function(){
     const buscar = document.getElementById('mc-buscar').value.toLowerCase();
     const estado = document.getElementById('mc-filtro-estado').value;
@@ -677,7 +657,6 @@
       document.getElementById('mc-c-personas').value = r.personas;
       document.getElementById('mc-c-fecha').value    = r.fecha;
       document.getElementById('mc-c-hora').value     = r.hora;
-      // Repoblar mesas con la fecha de la reserva antes de asignar la mesa
       mcPoblarMesas();
       document.getElementById('mc-c-mesa').value     = r.mesaId||'';
       document.getElementById('mc-c-ocasion').value  = r.ocasion||'';
@@ -696,7 +675,8 @@
       ()=>{ reservas=reservas.filter(x=>x.id!==id); save(); mcRenderTabla(); toast('Reserva eliminada'); });
   };
 
-  // CREAR MESA
+  // ── CREAR / EDITAR MESA ──────────────────────────────────
+  // CAMBIO: guarda también en Django vía fetch
   window.mcCrearMesa = function(){
     const num = parseInt(document.getElementById('mc-m-numero').value);
     const cap = parseInt(document.getElementById('mc-m-capacidad').value);
@@ -706,27 +686,31 @@
     if(!num || !cap){ toast('Ingresa número y capacidad','error'); return; }
 
     if(editandoMesaId){
-      if(mesas.find(m => m.numero === num && m.id !== editandoMesaId)){
+      if(mesas.find(m => m.numero===num && m.id!==editandoMesaId)){
         toast('Ya existe una mesa con ese número','error'); return;
       }
       mesas = mesas.map(m =>
-        m.id === editandoMesaId ? {...m, numero:num, capacidad:cap, ubicacion:ubi, estado:est} : m
+        m.id===editandoMesaId ? {...m, numero:num, capacidad:cap, ubicacion:ubi, estado:est} : m
       );
+      // Sincronizar edición en Django
+      djangoPost('/reservas/mesa/guardar/', { numero_mesa:num, capacidad:cap, ubicacion:ubi, estado:est })
+        .catch(e => console.error('Error guardando mesa:', e));
       toast('Mesa actualizada');
     } else {
       if(mesas.find(m=>m.numero===num)){ toast('Ya existe una mesa con ese número','error'); return; }
       const cols=4, size=92, gap=20, offX=28, offY=46;
       const idx=mesas.length, col=idx%cols, row=Math.floor(idx/cols);
       mesas.push({
-        id: nextIdM(), numero: num, capacidad: cap, ubicacion: ubi, estado: est,
-        x: offX + col*(size+gap), y: offY + row*(size+gap)
+        id: nextIdM(), numero:num, capacidad:cap, ubicacion:ubi, estado:est,
+        x: offX+col*(size+gap), y: offY+row*(size+gap)
       });
+      // Sincronizar nueva mesa en Django
+      djangoPost('/reservas/mesa/guardar/', { numero_mesa:num, capacidad:cap, ubicacion:ubi, estado:est })
+        .catch(e => console.error('Error guardando mesa:', e));
       toast('Mesa '+num+' agregada');
     }
 
-    save();
-    mcRenderTablaMesas();
-    mcRenderDiagrama();
+    save(); mcRenderTablaMesas(); mcRenderDiagrama();
 
     document.getElementById('mc-m-numero').value='';
     document.getElementById('mc-m-capacidad').value='';
@@ -738,17 +722,17 @@
     editandoMesaId = null;
   };
 
-  // TABLA MESAS
+  // ── TABLA MESAS ──────────────────────────────────────────
   window.mcRenderTablaMesas = function(){
     const buscar    = document.getElementById('mc-buscar-mesa')?.value.toLowerCase() || '';
     const ubicacion = document.getElementById('mc-filtro-ubicacion')?.value || '';
     const capacidad = document.getElementById('mc-filtro-capacidad')?.value || '';
     const tb = document.getElementById('mc-tbody-mesas');
-    let lista = mesas.filter(m => {
-      return String(m.numero).includes(buscar) &&
-             (!ubicacion || m.ubicacion === ubicacion) &&
-             (!capacidad || m.capacidad == capacidad);
-    });
+    let lista = mesas.filter(m =>
+      String(m.numero).includes(buscar) &&
+      (!ubicacion || m.ubicacion===ubicacion) &&
+      (!capacidad || m.capacidad==capacidad)
+    );
     if(!lista.length){
       tb.innerHTML = `<tr><td colspan="5"><div class="mc-empty"><p>No se encontraron mesas</p></div></td></tr>`;
       return;
@@ -782,7 +766,7 @@
     toast('Editando mesa ' + m.numero);
   };
 
-  // DIAGRAMA
+  // ── DIAGRAMA ─────────────────────────────────────────────
   window.mcRenderDiagrama = function(){
     const fe = document.getElementById('mc-filtro-diagrama').value;
     const fu = document.getElementById('mc-filtro-zona').value;
@@ -847,7 +831,7 @@
             <option value="reservada"  ${m.estado==='reservada'?'selected':''}>Reservada</option>
             <option value="ocupada"    ${m.estado==='ocupada'?'selected':''}>Ocupada</option>
           </select>
-          <button class="mc-btn mc-btn-primary" onclick="mcCambiarEstadoMesa(${m.id})">Actualizar</button>
+          <button class="mc-btn mc-btn-primary" onclick="mcCambiarEstadoMesa(${m.id},${m.numero})">Actualizar</button>
         </div>
       </div>
       <div class="mc-btn-row">
@@ -856,31 +840,45 @@
     document.getElementById('mc-modal-mesa').classList.add('open');
   };
 
-  window.mcCambiarEstadoMesa = function(id){
-    const est=document.getElementById('mc-nuevo-estado').value;
-    mesas=mesas.map(m=>m.id===id?{...m,estado:est}:m);
+  // CAMBIO: también sincroniza estado en Django
+  window.mcCambiarEstadoMesa = function(id, numeroMesa){
+    const est = document.getElementById('mc-nuevo-estado').value;
+    const mesa = mesas.find(m=>m.id===id);
+    mesas = mesas.map(m=>m.id===id?{...m,estado:est}:m);
+    if(mesa){
+      djangoPost('/reservas/mesa/guardar/', {
+        numero_mesa: numeroMesa,
+        capacidad:   mesa.capacidad,
+        ubicacion:   mesa.ubicacion,
+        estado:      est,
+      }).catch(e => console.error('Error actualizando estado:', e));
+    }
     save(); mcCloseModal('mc-modal-mesa'); mcRenderDiagrama(); mcRenderTablaMesas(); toast('Estado actualizado');
   };
 
+  // CAMBIO: también elimina en Django
   window.mcPedirEliminarMesa = function(id){
     const m=mesas.find(x=>x.id===id); if(!m) return;
     mcConfirm('Eliminar mesa',
       `¿Eliminar la Mesa ${m.numero}? También se perderán sus reservas asociadas.`,
-      ()=>{ mesas=mesas.filter(x=>x.id!==id); reservas=reservas.filter(r=>r.mesaId!==id);
-        save(); mcRenderTablaMesas(); mcRenderDiagrama(); toast('Mesa eliminada'); });
+      ()=>{
+        mesas   = mesas.filter(x=>x.id!==id);
+        reservas= reservas.filter(r=>r.mesaId!==id);
+        djangoPost('/reservas/mesa/eliminar/', { numero_mesa: m.numero })
+          .catch(e => console.error('Error eliminando mesa:', e));
+        save(); mcRenderTablaMesas(); mcRenderDiagrama(); toast('Mesa eliminada');
+      });
   };
 
-  // Sincronizar contadores con datos existentes
+  // ── BOOT ─────────────────────────────────────────────────
   if(reservas.length) contadorR = Math.max(contadorR, ...reservas.map(r=>r.id||0));
   if(mesas.length)    contadorM = Math.max(contadorM, ...mesas.map(m=>m.id||0));
 
-  // Restringir fechas pasadas
   function fijarFechaMin(){
     const input = document.getElementById('mc-c-fecha');
     if(input) input.min = hoy();
   }
 
-  // BOOT
   save();
   fijarFechaMin();
   mcPoblarMesas();
