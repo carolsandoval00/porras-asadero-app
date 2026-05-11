@@ -51,13 +51,21 @@
   .pg-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
   .pg-card-body   { padding:1.4rem; }
 
-  .fecha-grupo    { margin-bottom:1.5rem; }
-  .fecha-header   { display:flex; align-items:center; gap:1rem; margin-bottom:.7rem; }
-  .fecha-label    { background:var(--p-primary); color:#F5ECD7; font-size:.78rem; font-weight:800;
-                    padding:.3rem .9rem; border-radius:50px; text-transform:uppercase;
-                    letter-spacing:.5px; white-space:nowrap; }
-  .fecha-line     { flex:1; height:1px; background:var(--p-border); }
-  .fecha-subtotal { font-size:.78rem; font-weight:700; color:var(--p-muted); white-space:nowrap; }
+  .fecha-grupo        { margin-bottom:1.5rem; }
+  .fecha-header       { display:flex; align-items:center; gap:1rem; margin-bottom:.7rem; }
+  .fecha-label        { background:var(--p-primary); color:#F5ECD7; font-size:.78rem;
+                        font-weight:800; padding:.3rem .9rem; border-radius:50px;
+                        text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
+  .fecha-line         { flex:1; height:1px; background:var(--p-border); }
+  .fecha-subtotal     { font-size:.78rem; font-weight:700; color:var(--p-muted);
+                        white-space:nowrap; }
+
+  .pg-search-bar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.2rem; }
+  .pg-search-bar input,
+  .pg-search-bar select { padding:.45rem .8rem; border:1px solid var(--p-border);
+                           border-radius:8px; font-size:.88rem; background:var(--p-surface);
+                           color:var(--p-text); }
+  .pg-search-bar input  { flex:1; min-width:180px; }
 
   .pg-table-wrap { overflow-x:auto; }
   .pg-table      { width:100%; border-collapse:collapse; font-size:.87rem; }
@@ -69,7 +77,7 @@
   .pg-table tr:hover td      { background:var(--p-surface); }
   .pg-table tr.fila-pendiente td       { background:#FFFBEB; }
   .pg-table tr.fila-pendiente:hover td { background:#FEF3C7; }
-  .pg-table tfoot td { background:var(--p-surface); font-weight:700; }
+  .pg-table tr.fila-oculta { display:none; }
 
   .pg-badge { display:inline-flex; font-size:.73rem; font-weight:700;
               padding:.25rem .65rem; border-radius:50px; text-transform:uppercase; letter-spacing:.4px; }
@@ -129,29 +137,8 @@
   .pg-modal-box p  { font-size:.9rem; color:var(--p-muted); margin:0 0 1.4rem; }
   .pg-modal-actions{ display:flex; gap:.7rem; }
 
-  .caja-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-  .caja-form-grid .full { grid-column:1/-1; }
-  .caja-form-grid label { font-size:.8rem; font-weight:600; color:var(--p-muted);
-                          text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:.3rem; }
-  .caja-form-grid input,
-  .caja-form-grid textarea { width:100%; padding:.55rem .85rem; border:1px solid var(--p-border);
-                              border-radius:8px; font-size:.9rem; color:var(--p-text);
-                              background:var(--p-surface); box-sizing:border-box;
-                              transition:border-color .2s,box-shadow .2s; font-family:inherit; }
-  .caja-form-grid input:focus,
-  .caja-form-grid textarea:focus { outline:none; border-color:var(--p-primary);
-                                    box-shadow:0 0 0 3px rgba(192,57,43,.12); }
-  .caja-form-grid input[readonly] { background:#EDE3C8; color:var(--p-muted); cursor:default; }
-  .caja-estado-badge { display:inline-flex; align-items:center; gap:.4rem; font-size:.8rem;
-                       font-weight:700; padding:.45rem .9rem; border-radius:50px;
-                       text-transform:uppercase; letter-spacing:.4px;
-                       background:#d4edda; color:#155724; border:1px solid #b8dfc4; }
-  .caja-estado-dot { width:8px; height:8px; border-radius:50%; background:#27AE60; display:inline-block; }
-
-  .info-row { display:flex; flex-wrap:wrap; gap:.5rem 2rem; background:var(--p-surface);
-              border-radius:8px; padding:.9rem 1.2rem; margin-bottom:1.5rem;
-              font-size:.87rem; color:var(--p-muted); }
-  .info-row strong { color:var(--p-text); }
+  #sin-resultados { display:none; text-align:center; color:var(--p-muted);
+                    padding:2rem; font-size:.9rem; }
 
   @media(max-width:600px){
     .pg-form-grid   { grid-template-columns:1fr; }
@@ -224,18 +211,19 @@
           <table class="pg-table">
             <thead>
               <tr>
-                <th>Orden</th><th>Cliente / Pedido</th><th>Descripción</th>
-                <th>Total a cobrar</th><th>Fecha orden</th><th>Acción</th>
+                <th>Orden</th>
+                <th>mesa</th>
+                <th>Descripción</th>
+                <th>Total a cobrar</th>
+                <th>Fecha orden</th>
+                <th>Acción</th>
               </tr>
             </thead>
             <tbody>
               {% for o in ordenes_sin_pago %}
               <tr class="fila-pendiente">
                 <td><strong>{{ o.numero_orden }}</strong></td>
-                <td>
-                  <strong>{{ o.pedido.cliente }}</strong><br>
-                  <small style="color:var(--p-muted)">Pedido #{{ o.pedido.pk }}</small>
-                </td>
+                <td><strong>{{ o.pedido.cliente }}</strong></td>
                 <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
                   {{ o.pedido.descripcion|default:"—" }}
                 </td>
@@ -243,8 +231,13 @@
                 <td>{{ o.creada_en|date:"d/m/Y H:i" }}</td>
                 <td>
                   <button class="pg-btn pg-btn-pago pg-btn-sm"
-                          onclick="registrarPago('{{ o.numero_orden }}',{{ o.pk }},{{ o.pedido.pk }},'{{ o.pedido.cliente|escapejs }}',{{ o.total }})">
-                    Registrar pago
+                          onclick="registrarPago(
+                            '{{ o.numero_orden }}',
+                            {{ o.pk }},
+                            '{{ o.pedido.cliente|escapejs }}',
+                            {{ o.total }}
+                          )">
+                     Registrar pago
                   </button>
                 </td>
               </tr>
@@ -268,9 +261,22 @@
     <div class="pg-card">
       <div class="pg-card-header"><h3>Pagos registrados</h3></div>
       <div class="pg-card-body">
+
+        <div class="pg-search-bar">
+  <input type="text" id="buscador-pagos"
+       placeholder="Buscar por orden, cliente o referencia…"
+       oninput="filtrarPagos()">
+  <select id="filtro-metodo">
+    <option value="">Todos los métodos</option>
+    <option value="efectivo">Efectivo</option>
+    <option value="transferencia">Transferencia</option>
+  </select>
+  <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()">Filtrar</button>
+</div>
+
         {% if pagos_por_fecha %}
           {% for grupo in pagos_por_fecha %}
-          <div class="fecha-grupo">
+          <div class="fecha-grupo" data-fecha-grupo>
             <div class="fecha-header">
               <span class="fecha-label">{{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
               <div class="fecha-line"></div>
@@ -280,21 +286,40 @@
               <table class="pg-table">
                 <thead>
                   <tr>
-                    <th>#</th><th>Orden</th><th>Cliente</th><th>Método</th>
-                    <th>Monto</th><th>Referencia</th><th>Estado</th><th>Hora</th>
+                    <th>Orden</th>
+                    <th>Cliente</th>
+                    <th>Método</th>
+                    <th>Monto</th>
+                    <th>Referencia</th>
+                    <th>Estado</th>
+                    <th>Hora</th>
+                    <!-- ✅ NUEVO: columna acciones -->
+                 
                   </tr>
                 </thead>
                 <tbody>
                   {% for pg in grupo.pagos %}
-                  <tr>
-                    <td><strong>#{{ pg.pk }}</strong></td>
-                    <td>{% if pg.orden %}<strong>{{ pg.orden.numero_orden }}</strong>{% else %}<span style="color:var(--p-muted)">Manual</span>{% endif %}</td>
+                  <!-- data-* para búsqueda client-side -->
+                  <tr class="fila-pago"
+                      data-orden="{% if pg.orden %}{{ pg.orden.numero_orden|lower }}{% endif %}"
+                      data-cliente="{% if pg.orden %}{{ pg.orden.pedido.cliente|lower }}{% endif %}"
+                      data-referencia="{{ pg.referencia|lower }}"
+                      data-metodo="{{ pg.metodo_pago }}"
+                      data-estado="{{ pg.estado }}">
+                    <td>
+                      {% if pg.orden %}
+                        <strong>{{ pg.orden.numero_orden }}</strong>
+                      {% else %}
+                        <span style="color:var(--p-muted)">Manual</span>
+                      {% endif %}
+                    </td>
                     <td>{% if pg.orden %}{{ pg.orden.pedido.cliente }}{% else %}—{% endif %}</td>
                     <td>{{ pg.get_metodo_pago_display }}</td>
                     <td><strong style="color:#C0392B">${{ pg.monto }}</strong></td>
                     <td>{{ pg.referencia|default:"—" }}</td>
                     <td><span class="pg-badge pg-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
                     <td>{{ pg.fecha_pago|date:"H:i" }}</td>
+                 
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -302,6 +327,10 @@
             </div>
           </div>
           {% endfor %}
+
+          <!-- Mensaje cuando el buscador no encuentra resultados -->
+          <p id="sin-resultados">No se encontraron pagos con ese criterio.</p>
+
         {% else %}
           <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pagos registrados aún.</p>
         {% endif %}
@@ -324,7 +353,6 @@
             <p class="orden-banner-title">Registrando pago para: <span id="banner-orden-num"></span></p>
             <p class="orden-banner-detail">
               Cliente: <strong id="banner-cliente"></strong> &nbsp;·&nbsp;
-              Pedido: <strong id="banner-pedido-id"></strong> &nbsp;·&nbsp;
               Total: <strong id="banner-total"></strong>
             </p>
           </div>
@@ -365,7 +393,7 @@
               <tr>
                 <th>#</th><th>Cajero</th><th>Saldo inicial</th>
                 <th>Estado</th><th>Apertura</th><th>Cierre</th>
-                <th>Observaciones</th><th>Acciones</th>
+                <th>Observaciones</th>
               </tr>
             </thead>
             <tbody>
@@ -569,7 +597,11 @@
 </div><!-- fin pg-wrapper -->
 
 
+
 <!-- Modal eliminar pago -->
+
+<!-- ✅ NUEVO: Modal confirmar eliminación con form POST -->
+
 <div id="modal-eliminar" class="pg-modal-overlay">
   <div class="pg-modal-box">
     <h4>Confirmar eliminación</h4>
@@ -605,19 +637,20 @@
 </div>
 
 <script>
+// ── Tabs ────────────────────────────────────────────────────
 function showTab(name) {
   document.querySelectorAll('.pg-section').forEach(s => s.classList.remove('active'));
   var section = document.getElementById('tab-' + name);
   if (section) section.classList.add('active');
 }
 
-function registrarPago(numeroOrden, ordenId, pedidoId, cliente, total) {
+// ── Registrar pago ──────────────────────────────────────────
+function registrarPago(numeroOrden, ordenId, cliente, total) {
   const ordenSelect = document.querySelector('[name="orden"]');
   if (ordenSelect) ordenSelect.value = ordenId;
   document.getElementById('orden-banner').classList.add('visible');
   document.getElementById('banner-orden-num').textContent = numeroOrden;
   document.getElementById('banner-cliente').textContent   = cliente;
-  document.getElementById('banner-pedido-id').textContent = 'Pedido #' + pedidoId;
   document.getElementById('banner-total').textContent     = '$' + Number(total).toLocaleString('es-CO');
   document.getElementById('form-titulo').textContent      = 'Pago — ' + numeroOrden;
   showTab('crear');
@@ -631,15 +664,18 @@ function cancelarPago() {
   showTab('pendientes');
 }
 
-function confirmarEliminar(pk) {
+// ── Eliminar pago ───────────────────────────────────────────
+function confirmarEliminar(pk, referencia) {
   document.getElementById('modal-form').action = `/pagos/${pk}/eliminar/`;
-  document.getElementById('modal-msg').textContent = `¿Eliminar el pago #${pk}? Esta acción no se puede deshacer.`;
+  document.getElementById('modal-msg').textContent =
+    `¿Eliminar el pago de la orden "${referencia}"? Esta acción no se puede deshacer.`;
   document.getElementById('modal-eliminar').classList.add('open');
 }
 
 function cerrarModal() {
   document.getElementById('modal-eliminar').classList.remove('open');
 }
+
 
 function confirmarCierreCaja(cajaId, cajero) {
   document.getElementById('modal-cierre-caja-id').value = cajaId;
@@ -670,6 +706,49 @@ function setFechaApertura() {
 setFechaApertura();
 setInterval(setFechaApertura, 30000);
 
+document.getElementById('modal-eliminar').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
+
+// ── Buscador de pagos (client-side) ─────────────────────────
+function filtrarPagos() {
+  const texto   = document.getElementById('buscador-pagos').value.toLowerCase().trim();
+  const metodo  = document.getElementById('filtro-metodo').value;
+  const estado  = '';
+  const filas   = document.querySelectorAll('.fila-pago');
+  const grupos  = document.querySelectorAll('[data-fecha-grupo]');
+  let   hayAlgo = false;
+
+
+  filas.forEach(function(fila) {
+    const orden      = fila.dataset.orden      || '';
+    const cliente    = fila.dataset.cliente    || '';
+    const referencia = fila.dataset.referencia || '';
+    const mFila      = fila.dataset.metodo     || '';
+    const eFila      = fila.dataset.estado     || '';
+
+    const coincideTexto  = !texto  || orden.includes(texto) || cliente.includes(texto) || referencia.includes(texto);
+    const coincideMetodo = !metodo || mFila === metodo;
+    if (coincideTexto && coincideMetodo)  {
+      fila.classList.remove('fila-oculta');
+      hayAlgo = true;
+    } else {
+      fila.classList.add('fila-oculta');
+    }
+  });
+
+  // Ocultar grupos de fecha que quedaron sin filas visibles
+  grupos.forEach(function(grupo) {
+    const visibles = grupo.querySelectorAll('.fila-pago:not(.fila-oculta)');
+    grupo.style.display = visibles.length > 0 ? '' : 'none';
+  });
+
+  // Mostrar mensaje "sin resultados"
+  const sinRes = document.getElementById('sin-resultados');
+  if (sinRes) sinRes.style.display = hayAlgo ? 'none' : 'block';
+}
+
+// ── Init ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   {% if form.errors %}showTab('crear');
   {% elif form_apertura and form_apertura.errors %}showTab('abrir-caja');

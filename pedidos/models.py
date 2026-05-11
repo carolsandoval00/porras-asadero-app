@@ -5,6 +5,23 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
+class Contador(models.Model):
+    """Contador global para numeración secuencial de pedidos/órdenes."""
+    ultimo_numero = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = 'mod_contador'
+
+    @classmethod
+    def siguiente(cls):
+        from django.db import transaction
+        with transaction.atomic():
+            obj, _ = cls.objects.select_for_update().get_or_create(pk=1)
+            obj.ultimo_numero += 1
+            obj.save()
+            return obj.ultimo_numero
+
+
 class Producto(models.Model):
     CATEGORIA_CHOICES = [
         ('carnes',   'Carnes al Carbón'),
@@ -32,9 +49,8 @@ class Producto(models.Model):
 
 class Pedido(models.Model):
     ESTADO_CHOICES = [
-        ('pendiente',   'Pendiente'),
+  
         ('en_proceso',  'En Proceso'),
-        ('completado',  'Completado'),
         ('cancelado',   'Cancelado'),
     ]
     cliente             = models.CharField(max_length=200)
@@ -106,28 +122,20 @@ class Orden(models.Model):
 
 @receiver(post_save, sender=Producto)
 def actualizar_ordenes_al_cambiar_producto(sender, instance, **kwargs):
-    """
-    Cuando un producto cambia de precio, actualiza las órdenes abiertas
-    que tengan items relacionados con ese producto.
-    """
     from django.db.models import Sum, F
-    # Obtener pedidos que tienen este producto como item
     pedidos_con_producto = Pedido.objects.filter(
         items__producto=instance,
         estado='pendiente'
     ).distinct()
 
     for pedido in pedidos_con_producto:
-        # Actualizar precio_unitario en los items de ese producto
         pedido.items.filter(producto=instance).update(precio_unitario=instance.precio)
-        # Recalcular total del pedido
         nuevo_total = sum(
             item.precio_unitario * item.cantidad
             for item in pedido.items.all()
         )
         Pedido.objects.filter(pk=pedido.pk).update(total=nuevo_total)
 
-    # Actualizar órdenes abiertas relacionadas
     Orden.objects.filter(
         pedido__items__producto=instance,
         estado='abierta'

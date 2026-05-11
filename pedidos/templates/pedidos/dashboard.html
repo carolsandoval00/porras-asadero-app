@@ -47,16 +47,16 @@
                     border:1px solid var(--p-border); }
   .pm-btn-sm      { font-size:.76rem; padding:.3rem .7rem; }
 
-  .pm-section     { display:none; }
+  .pm-section        { display:none; }
   .pm-section.active { display:block; animation: fadeIn .25s ease; }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+  @keyframes fadeIn  { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
 
   .pm-card         { background: var(--p-card); border:1px solid var(--p-border); box-shadow: var(--p-shadow);
                      border-radius:var(--p-radius); }
-  .pm-card-header { display:flex; align-items:center; justify-content:space-between;
-                    padding:1rem 1.4rem; border-bottom:1px solid var(--p-border); }
+  .pm-card-header  { display:flex; align-items:center; justify-content:space-between;
+                     padding:1rem 1.4rem; border-bottom:1px solid var(--p-border); }
   .pm-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
-  .pm-card-body   { padding:1.4rem; }
+  .pm-card-body    { padding:1.4rem; }
 
   .pm-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1.8rem; }
   .pm-stat  { background: var(--p-card); border:1px solid var(--p-border); box-shadow: var(--p-shadow);
@@ -73,6 +73,14 @@
   .pm-table td   { padding:.75rem 1rem; border-bottom:1px solid var(--p-border); vertical-align:middle; }
   .pm-table tr:last-child td { border-bottom:none; }
   .pm-table tr:hover td      { background:var(--p-surface); }
+
+  .fecha-grupo    { margin-bottom:1.5rem; }
+  .fecha-header   { display:flex; align-items:center; gap:1rem; margin-bottom:.7rem; }
+  .fecha-label    { background:var(--p-primary); color:#F5ECD7; font-size:.78rem;
+                    font-weight:800; padding:.3rem .9rem; border-radius:50px;
+                    text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
+  .fecha-line     { flex:1; height:1px; background:var(--p-border); }
+  .fecha-subtotal { font-size:.78rem; font-weight:700; color:var(--p-muted); white-space:nowrap; }
 
   .pm-badge { display:inline-flex; align-items:center; gap:.3rem; font-size:.73rem;
               font-weight:700; padding:.25rem .65rem; border-radius:50px; text-transform:uppercase; letter-spacing:.4px; }
@@ -131,8 +139,7 @@
     display:inline-flex; align-items:center; justify-content:center;
     width:26px; height:26px; border-radius:50%; border:1px solid var(--p-border);
     background:var(--p-surface); color:var(--p-text); font-size:1rem;
-    font-weight:700; cursor:pointer; line-height:1; transition:all .15s;
-    padding:0;
+    font-weight:700; cursor:pointer; line-height:1; transition:all .15s; padding:0;
   }
   .qty-btn:hover { background:#C0392B; color:#F5ECD7; border-color:#C0392B; }
 
@@ -216,14 +223,12 @@
       <div class="pm-table-wrap">
         <table class="pm-table">
           <thead>
-            <tr>
-              <th>#</th><th>Cliente</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th>
-            </tr>
+            <tr><th>#</th><th>Mesa</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr>
           </thead>
           <tbody>
             {% for p in ultimos_pedidos %}
             <tr>
-              <td><strong>#{{ forloop.counter }}</strong></td>
+              <td><strong>{{ p.ordenes.first.numero_orden|default:p.pk }}</strong></td>
               <td>{{ p.cliente }}</td>
               <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
               <td>${{ p.total }}</td>
@@ -253,10 +258,10 @@
       <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="showSection('pedido-crear')">Nuevo pedido</button>
     </div>
     <div class="pm-card-body">
-      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem;">
         <input type="hidden" name="seccion" value="pedido-lista">
         <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
-               type="text" name="q" value="{{ q }}" placeholder="🔍 Buscar cliente…">
+               type="text" name="q" value="{{ q }}" placeholder=" Buscar mesa…">
         <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
           <option value="">Todos los estados</option>
           {% for val,lbl in estados %}
@@ -265,51 +270,55 @@
         </select>
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
       </form>
-      <div class="pm-table-wrap">
-        <table class="pm-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Cliente</th>
-              <th>Productos</th>
-              <th>Descripción</th>
-              <th>Estado</th>
-              <th>Total</th>
-              <th>Creado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for p in pedidos %}
-            <tr>
-              <td><strong>#{{ forloop.counter }}</strong></td>
-              <td>{{ p.cliente }}</td>
-              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
-                {% for item in p.items.all %}
-                  {{ item.cantidad }}x {{ item.producto.nombre }}{% if not forloop.last %}, {% endif %}
-                {% empty %}
-                  —
+
+      {% if pedidos_por_fecha %}
+        {% for grupo in pedidos_por_fecha %}
+        <div class="fecha-grupo">
+          <div class="fecha-header">
+            <span class="fecha-label">{{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
+            <div class="fecha-line"></div>
+            <span class="fecha-subtotal">{{ grupo.count }} pedido{{ grupo.count|pluralize }}</span>
+          </div>
+          <div class="pm-table-wrap">
+            <table class="pm-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Mesa</th><th>Productos</th>
+                  <th>Descripción</th><th>Estado</th><th>Total</th><th>Hora</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in grupo.pedidos %}
+                <tr>
+                  <td><strong>{{ p.ordenes.first.numero_orden|default:p.pk }}</strong></td>
+                  <td>{{ p.cliente }}</td>
+                  <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+                    {% for item in p.items.all %}
+                      {{ item.cantidad }}x {{ item.producto.nombre }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}—{% endfor %}
+                  </td>
+                  <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)"
+                      title="{{ p.descripcion }}">
+                    {{ p.descripcion|default:"—" }}
+                  </td>
+                  <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
+                  <td><strong>${{ p.total }}</strong></td>
+                  <td>{{ p.fecha_creacion|date:"H:i" }}</td>
+                  <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+                    <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
+                    <button class="pm-btn pm-btn-danger pm-btn-sm"
+                            onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">Eliminar</button>
+                  </td>
+                </tr>
                 {% endfor %}
-              </td>
-              <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)"
-                  title="{{ p.descripcion }}">
-                {{ p.descripcion|default:"—" }}
-              </td>
-              <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
-              <td>${{ p.total }}</td>
-              <td>{{ p.fecha_creacion|date:"d/m/Y" }}</td>
-              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
-                <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">Eliminar</button>
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8" style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos.</p>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -330,8 +339,17 @@
 
         <div class="pm-form-grid" style="margin-bottom:1.2rem;">
           <div class="full">
-            <label>Cliente</label>
-            {{ form_pedido.cliente }}
+            <label>Mesa</label>
+            <select name="cliente"
+        style="width:100%;padding:.55rem .85rem;border:1px solid var(--p-border);
+               border-radius:8px;font-size:.9rem;color:var(--p-text);background:var(--p-surface);">
+  <option value="">— Selecciona una mesa —</option>
+  {% for mesa in mesas_bd %}
+    <option value="Mesa {{ mesa.numero_mesa }}">
+  Mesa {{ mesa.numero_mesa }} — {{ mesa.capacidad }} pers.
+</option>
+  {% endfor %}
+</select>
           </div>
           <div>
             <label>Estado</label>
@@ -412,45 +430,52 @@
       <h3>Órdenes</h3>
     </div>
     <div class="pm-card-body">
-      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem;">
         <input type="hidden" name="seccion" value="orden-lista">
         <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
-               type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o cliente…">
-        <select name="estado_orden" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
-          <option value="">Todos los estados</option>
-          {% for val,lbl in estados_orden %}
-          <option value="{{ val }}" {% if estado_orden_sel == val %}selected{% endif %}>{{ lbl }}</option>
-          {% endfor %}
-        </select>
+               type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o mesa…">
+        
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
       </form>
-      <div class="pm-table-wrap">
-        <table class="pm-table">
-          <thead>
-            <tr><th>Número</th><th>Pedido</th><th>Estado</th><th>Subtotal</th><th>Impuesto</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr>
-          </thead>
-          <tbody>
-            {% for o in ordenes %}
-            <tr>
-              <td><strong>{{ o.numero_orden }}</strong></td>
-              <td>{{ o.pedido.cliente }}</td>
-              <td><span class="pm-badge pm-badge-{{ o.estado }}">{{ o.get_estado_display }}</span></td>
-              <td>${{ o.subtotal }}</td>
-              <td>${{ o.impuesto }}</td>
-              <td><strong>${{ o.total }}</strong></td>
-              <td>{{ o.creada_en|date:"d/m/Y" }}</td>
-              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
-                <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDeleteOrden({{ o.pk }},'{{ o.numero_orden }}')">Eliminar</button>
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="8" style="text-align:center;color:var(--p-muted);padding:2rem">No hay órdenes.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+
+      {% if ordenes_por_fecha %}
+        {% for grupo in ordenes_por_fecha %}
+        <div class="fecha-grupo">
+          <div class="fecha-header">
+            <span class="fecha-label">{{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
+            <div class="fecha-line"></div>
+            <span class="fecha-subtotal">{{ grupo.count }} orden{{ grupo.count|pluralize:"es" }}</span>
+          </div>
+          <div class="pm-table-wrap">
+            <table class="pm-table">
+              <thead>
+                <tr><th>Número</th><th>Mesa</th><th>Estado</th><th>Subtotal</th><th>Impuesto</th><th>Total</th><th>Hora</th><th>Acciones</th></tr>
+              </thead>
+              <tbody>
+                {% for o in grupo.ordenes %}
+                <tr>
+                  <td><strong>{{ o.numero_orden }}</strong></td>
+                  <td>{{ o.pedido.cliente }}</td>
+                  <td><span class="pm-badge pm-badge-{{ o.estado }}">{{ o.get_estado_display }}</span></td>
+                  <td>${{ o.subtotal }}</td>
+                  <td>${{ o.impuesto }}</td>
+                  <td><strong>${{ o.total }}</strong></td>
+                  <td>{{ o.creada_en|date:"H:i" }}</td>
+                  <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+                    <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
+                    <button class="pm-btn pm-btn-danger pm-btn-sm"
+                            onclick="confirmDeleteOrden({{ o.pk }},'{{ o.numero_orden }}')">Eliminar</button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay órdenes.</p>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -597,7 +622,7 @@
 
         <div class="pm-form-grid" style="margin-bottom:1.2rem;">
           <div class="full">
-            <label>Cliente</label>
+            <label>Mesa</label>
             {{ form_pedido.cliente }}
           </div>
           <div>
@@ -749,7 +774,10 @@ let platosCrear  = [];
 let platosEditar = [];
 
 function getPlatosList(modo) { return modo === 'crear' ? platosCrear : platosEditar; }
-function setPlatosList(modo, lista) { if (modo === 'crear') platosCrear = lista; else platosEditar = lista; }
+function setPlatosList(modo, lista) {
+  if (modo === 'crear') platosCrear = lista;
+  else platosEditar = lista;
+}
 
 function agregarProducto(modo) {
   var selectId = modo === 'crear' ? 'menu-select' : 'menu-select-editar';
@@ -792,7 +820,8 @@ function renderPlatos(modo) {
     tabla.style.display = 'none'; vacio.style.display = 'block';
     if (display) display.innerText = '$0'; return;
   }
-  tabla.style.display = 'table'; vacio.style.display = 'none';
+  tabla.style.display = 'table';
+  vacio.style.display = 'none';
   tbody.innerHTML = '';
   var total = 0;
   lista.forEach(function(p, i) {
@@ -806,7 +835,8 @@ function renderPlatos(modo) {
       '</div></td>' +
       '<td style="text-align:right;">$' + p.precio.toLocaleString('es-CO') + '</td>' +
       '<td style="text-align:right;"><strong>$' + sub.toLocaleString('es-CO') + '</strong></td>' +
-      '<td><button type="button" class="pm-btn pm-btn-danger pm-btn-sm" onclick="eliminarPlato(\'' + modo + '\',' + i + ')">×</button></td>' +
+      '<td><button type="button" class="pm-btn pm-btn-danger pm-btn-sm" ' +
+              'onclick="eliminarPlato(\'' + modo + '\',' + i + ')">×</button></td>' +
     '</tr>';
   });
   if (display) display.innerText = '$' + total.toLocaleString('es-CO');

@@ -55,3 +55,4 @@ class DetalleReserva(models.Model):
 
     def __str__(self):
         return f"Detalle {self.codigo} - Reserva {self.reserva.numero}"
+    

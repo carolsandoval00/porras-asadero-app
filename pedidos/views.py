@@ -4,6 +4,13 @@ from django.db.models import Q
 from .models import Pedido, Orden, Producto, PedidoItem
 from .forms import PedidoForm, OrdenForm, ProductoForm
 import uuid
+from itertools import groupby
+from .models import Pedido, Orden, Producto, Caja, PedidoItem, Contador
+from .forms import PedidoForm, OrdenForm, ProductoForm, CajaForm, CajaCierreForm
+from reservas.models import Mesa
+
+import json
+
 
 
 # ─────────────────────────────────────────────────────────────
@@ -18,7 +25,7 @@ def _dashboard_context(request, extra=None):
     estado_orden_sel = request.GET.get('estado_orden', '').strip()
     seccion_get = request.GET.get('seccion', '').strip()
 
-    pedidos_qs = Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')
+    pedidos_qs = Pedido.objects.select_related('creado_por').prefetch_related('items__producto', 'ordenes').order_by('-fecha_creacion')
     if q:
         pedidos_qs = pedidos_qs.filter(Q(cliente__icontains=q) | Q(descripcion__icontains=q))
     if estado_sel:
@@ -37,6 +44,33 @@ def _dashboard_context(request, extra=None):
         )
     if estado_orden_sel:
         ordenes_qs = ordenes_qs.filter(estado=estado_orden_sel)
+
+    # Agrupar pedidos por fecha
+    pedidos_lista = list(pedidos_qs)
+    pedidos_por_fecha = []
+    for fecha, grupo in groupby(pedidos_lista, key=lambda p: p.fecha_creacion.date()):
+        items = list(grupo)
+        pedidos_por_fecha.append({
+            'fecha':   fecha,
+            'pedidos': items,
+            'total':   sum(p.total for p in items),
+            'count':   len(items),
+        })
+
+    # Agrupar órdenes por fecha
+    ordenes_lista = list(ordenes_qs)
+    ordenes_por_fecha = []
+    for fecha, grupo in groupby(ordenes_lista, key=lambda o: o.creada_en.date()):
+        items = list(grupo)
+        ordenes_por_fecha.append({
+            'fecha':   fecha,
+            'ordenes': items,
+            'total':   sum(o.total for o in items),
+            'count':   len(items),
+        })
+
+    # ── CAMBIO 3: mesas desde la BD ordenadas por número ──────────────────────
+    mesas_bd = Mesa.objects.all().order_by('numero_mesa')
 
     ctx = {
         'titulo': 'Módulo de Pedidos',
@@ -64,6 +98,31 @@ def _dashboard_context(request, extra=None):
         'form_orden':    OrdenForm(),
         'form_producto': ProductoForm(),
         'seccion_activa': (extra.get('seccion_activa') if extra and 'seccion_activa' in extra else None) or seccion_get or None,
+
+        'pedidos':            pedidos_qs,
+        'pedidos_por_fecha':  pedidos_por_fecha,
+        'ordenes':            ordenes_qs,
+        'ordenes_por_fecha':  ordenes_por_fecha,
+        'productos':          productos_qs,
+        'cajas':              Caja.objects.select_related('responsable').all(),
+        'productos_disponibles': Producto.objects.filter(disponible=True).order_by('categoria', 'nombre'),
+        'estados':            Pedido.ESTADO_CHOICES,
+        'estados_orden':      Orden.ESTADO_CHOICES,
+        'categorias':         Producto.CATEGORIA_CHOICES,
+        'q':                  q,
+        'estado_sel':         estado_sel,
+        'q_orden':            q_orden,
+        'estado_orden_sel':   estado_orden_sel,
+        'q_prod':             q_prod,
+        'cat_sel':            cat_sel,
+        'form_pedido':        PedidoForm(),
+        'form_orden':         OrdenForm(),
+        'form_producto':      ProductoForm(),
+        'form_caja':          CajaForm(),
+        # ── CAMBIO 3: mesas disponibles para el selector ──────────────────────
+        'mesas_bd':           mesas_bd,
+        'seccion_activa':     (extra.get('seccion_activa') if extra and 'seccion_activa' in extra else None) or seccion_get or None,
+
     }
 
     if extra:
@@ -85,6 +144,12 @@ def dashboard(request):
             if form.is_valid():
                 pedido = form.save(commit=False)
                 pedido.creado_por = request.user
+
+
+
+                # ── CAMBIO 2: fecha y hora del servidor ───────
+                pedido.fecha_creacion = timezone.now()
+
 
                 items_data = []
                 i = 0
@@ -125,9 +190,16 @@ def dashboard(request):
                     f"{it['cantidad']}x {it['producto'].nombre}" for it in items_data
                 )
 
+
+
+                # ── CAMBIO 1: numeración desde 01 ─────────────
+                numero = Contador.siguiente()
+                numero_str = f'{numero:02d}'
+
+
                 Orden.objects.create(
                     pedido=pedido,
-                    numero_orden=f'ORD-{uuid.uuid4().hex[:8].upper()}',
+                    numero_orden=numero_str,
                     estado='abierta',
                     subtotal=total,
                     impuesto=0,
@@ -135,7 +207,7 @@ def dashboard(request):
                     notas=resumen_productos,
                 )
 
-                messages.success(request, '✅ Pedido creado con sus productos correctamente.')
+                messages.success(request, f'✅ Pedido #{numero_str} creado correctamente.')
                 return redirect('pedidos:dashboard')
             else:
                 messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
@@ -175,6 +247,8 @@ def pedido_crear(request):
     if form.is_valid():
         pedido = form.save(commit=False)
         pedido.creado_por = request.user
+        # ── CAMBIO 2 ──
+        pedido.fecha_creacion = timezone.now()
         pedido.save()
         messages.success(request, '✅ Pedido creado correctamente.')
         return redirect('pedidos:dashboard')
@@ -258,7 +332,9 @@ def pedido_editar(request, pk):
 
 
 def _items_as_json(pedido):
+
     import json
+
     items = [
         {
             'id':       str(item.producto.pk),
@@ -295,7 +371,9 @@ def orden_crear(request):
     form = OrdenForm(request.POST or None)
     if form.is_valid():
         orden = form.save(commit=False)
-        orden.numero_orden = f'ORD-{uuid.uuid4().hex[:8].upper()}'
+        # ── CAMBIO 1 ──
+        numero = Contador.siguiente()
+        orden.numero_orden = f'{numero:02d}'
         orden.save()
         messages.success(request, '✅ Orden creada.')
         return redirect('pedidos:dashboard')
