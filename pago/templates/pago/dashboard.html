@@ -22,16 +22,12 @@
   .pg-header h1 { font-size:1.8rem; font-weight:700; margin:0 0 .25rem; }
   .pg-header p  { font-size:1rem; margin:0; opacity:.75; }
 
-  .pg-tabs  { display:flex; gap:.5rem; margin-bottom:1.5rem; flex-wrap:wrap; }
-  .pg-tab   { padding:.5rem 1.2rem; border-radius:50px; border:1.5px solid var(--p-border);
-              background:var(--p-card); color:var(--p-muted); font-size:.85rem; font-weight:600;
-              cursor:pointer; transition:all .2s; position:relative; }
-  .pg-tab:hover, .pg-tab.active { background:var(--p-primary); color:#F5ECD7; border-color:var(--p-primary); }
-  .pg-tab .badge-count { position:absolute; top:-6px; right:-6px; background:#C0392B; color:#fff;
-                         font-size:.65rem; font-weight:800; min-width:18px; height:18px;
-                         border-radius:50px; display:flex; align-items:center; justify-content:center;
-                         padding:0 4px; border:2px solid #EDE3C8; }
-  .pg-tab.active .badge-count { border-color:#C0392B; background:#fff; color:#C0392B; }
+  .pg-nav       { display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:1.8rem; }
+  .pg-nav-group { display:flex; flex-wrap:wrap; gap:.4rem; background:var(--p-card);
+                  border:1px solid var(--p-border); border-radius:50px; padding:.35rem .5rem; }
+  .pg-nav-group .pg-nav-label { font-size:.7rem; font-weight:700; text-transform:uppercase;
+                                letter-spacing:.8px; color:var(--p-muted); padding:.3rem .6rem;
+                                align-self:center; }
 
   .pg-section        { display:none; animation:fadeIn .25s ease; }
   .pg-section.active { display:block; }
@@ -43,6 +39,7 @@
   .pg-stat.red   { border-left-color:var(--p-primary); }
   .pg-stat.gold  { border-left-color:#D4A017; }
   .pg-stat.green { border-left-color:#27AE60; }
+  .pg-stat.blue  { border-left-color:#2980B9; }
   .pg-stat .val  { font-size:1.8rem; font-weight:800; color:var(--p-primary); line-height:1; }
   .pg-stat .lbl  { font-size:.75rem; color:var(--p-muted); margin-top:.3rem; font-weight:600;
                    text-transform:uppercase; letter-spacing:.5px; }
@@ -50,7 +47,7 @@
   .pg-card        { background:var(--p-card); border:1px solid var(--p-border);
                     border-radius:var(--p-radius); box-shadow:var(--p-shadow); margin-bottom:1.2rem; }
   .pg-card-header { display:flex; align-items:center; justify-content:space-between;
-                    padding:1rem 1.4rem; border-bottom:1px solid var(--p-border); }
+                    padding:1rem 1.4rem; border-bottom:1px solid var(--p-border); flex-wrap:wrap; gap:.5rem; }
   .pg-card-header h3 { font-size:1rem; font-weight:700; margin:0; }
   .pg-card-body   { padding:1.4rem; }
 
@@ -84,10 +81,10 @@
 
   .pg-badge { display:inline-flex; font-size:.73rem; font-weight:700;
               padding:.25rem .65rem; border-radius:50px; text-transform:uppercase; letter-spacing:.4px; }
-  .pg-badge-pendiente   { background:#FAEEDA; color:#8B4000; }
-  .pg-badge-aprobado    { background:#d4edda; color:#155724; }
-  .pg-badge-rechazado   { background:#FAE0DC; color:#C0392B; }
-  .pg-badge-reembolsado { background:#EDE3C8; color:#6B5A3E; }
+  .pg-badge-pendiente { background:#FAEEDA; color:#8B4000; }
+  .pg-badge-aprobado  { background:#d4edda; color:#155724; }
+  .pg-badge-abierta   { background:#FFF3CD; color:#856404; }
+  .pg-badge-cerrada   { background:#F8D7DA; color:#842029; }
 
   .pg-btn        { display:inline-flex; align-items:center; gap:.35rem; font-size:.82rem;
                    font-weight:600; padding:.42rem .95rem; border-radius:50px; border:none;
@@ -144,9 +141,10 @@
                     padding:2rem; font-size:.9rem; }
 
   @media(max-width:600px){
-    .pg-form-grid { grid-template-columns:1fr; }
-    .pg-header    { padding:1.4rem 1.2rem 1rem; }
-    .pg-header h1 { font-size:1.4rem; }
+    .pg-form-grid   { grid-template-columns:1fr; }
+    .caja-form-grid { grid-template-columns:1fr; }
+    .pg-header      { padding:1.4rem 1.2rem 1rem; }
+    .pg-header h1   { font-size:1.4rem; }
   }
 </style>
 
@@ -163,18 +161,29 @@
     {% endfor %}
   {% endif %}
 
-  <div class="pg-tabs">
-    <button class="pg-tab active" id="tab-btn-pendientes" onclick="showTab('pendientes')">
-      Órdenes por pagar
-      {% if ordenes_sin_pago %}
-        <span class="badge-count">{{ ordenes_sin_pago|length }}</span>
-      {% endif %}
-    </button>
-    <button class="pg-tab" id="tab-btn-lista" onclick="showTab('lista')">Pagos registrados</button>
+  <!-- NAV -->
+  <div class="pg-nav">
+    <div class="pg-nav-group">
+      <button class="pg-btn pg-btn-light" onclick="showTab('pendientes')">
+        Órdenes por pagar
+        {% if ordenes_sin_pago %}
+          <span style="background:#C0392B;color:#fff;font-size:.65rem;font-weight:800;min-width:18px;height:18px;border-radius:50px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:2px;">{{ ordenes_sin_pago|length }}</span>
+        {% endif %}
+      </button>
+    </div>
+    <div class="pg-nav-group">
+      <span class="pg-nav-label">Pagos</span>
+      <button class="pg-btn pg-btn-light" onclick="showTab('lista')">Registrados</button>
+    </div>
+    <div class="pg-nav-group">
+      <span class="pg-nav-label">Caja</span>
+      <button class="pg-btn pg-btn-light" onclick="showTab('consultar-caja')">Consultar</button>
+      <button class="pg-btn pg-btn-accent" onclick="showTab('abrir-caja')">Abrir caja</button>
+    </div>
   </div>
 
 
-  <!-- ══════════ ÓRDENES POR PAGAR ══════════ -->
+  <!-- ÓRDENES POR PAGAR -->
   <div id="tab-pendientes" class="pg-section active">
     <div class="pg-stats">
       <div class="pg-stat red">
@@ -196,9 +205,7 @@
     </div>
 
     <div class="pg-card">
-      <div class="pg-card-header">
-        <h3>Órdenes pendientes de pago</h3>
-      </div>
+      <div class="pg-card-header"><h3>Órdenes pendientes de pago</h3></div>
       <div class="pg-card-body">
         <div class="pg-table-wrap">
           <table class="pg-table">
@@ -237,7 +244,7 @@
               {% empty %}
               <tr>
                 <td colspan="6" style="text-align:center;color:var(--p-muted);padding:2.5rem">
-                   No hay órdenes pendientes de pago.
+                  No hay órdenes pendientes de pago.
                 </td>
               </tr>
               {% endfor %}
@@ -249,12 +256,10 @@
   </div>
 
 
-  <!-- ══════════ PAGOS REGISTRADOS ══════════ -->
+  <!-- PAGOS REGISTRADOS -->
   <div id="tab-lista" class="pg-section">
     <div class="pg-card">
-      <div class="pg-card-header">
-        <h3>Pagos registrados</h3>
-      </div>
+      <div class="pg-card-header"><h3>Pagos registrados</h3></div>
       <div class="pg-card-body">
 
         <!-- ✅ NUEVO: buscador de pagos -->
@@ -282,7 +287,6 @@
               <div class="fecha-line"></div>
               <span class="fecha-subtotal">{{ grupo.count }} pago{{ grupo.count|pluralize }} · ${{ grupo.total|floatformat:0 }}</span>
             </div>
-
             <div class="pg-table-wrap">
               <table class="pg-table">
                 <thead>
@@ -339,17 +343,14 @@
           <p id="sin-resultados">No se encontraron pagos con ese criterio.</p>
 
         {% else %}
-          <p style="text-align:center;color:var(--p-muted);padding:2rem">
-            No hay pagos registrados aún.
-          </p>
+          <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pagos registrados aún.</p>
         {% endif %}
-
       </div>
     </div>
   </div>
 
 
-  <!-- ══════════ REGISTRAR PAGO ══════════ -->
+  <!-- REGISTRAR PAGO -->
   <div id="tab-crear" class="pg-section">
     <div class="pg-card">
       <div class="pg-card-header">
@@ -357,7 +358,6 @@
         <button class="pg-btn pg-btn-light pg-btn-sm" onclick="cancelarPago()">← Volver</button>
       </div>
       <div class="pg-card-body">
-
         <div class="orden-banner" id="orden-banner">
           <div class="orden-banner-icon">🧾</div>
           <div class="orden-banner-body">
@@ -368,55 +368,236 @@
             </p>
           </div>
         </div>
-
         <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form">
           {% csrf_token %}
           <div class="pg-form-grid">
-            <div class="full">
-              <label>Orden vinculada</label>
-              {{ form.orden }}
-            </div>
-            <div>
-              <label>Método de pago</label>
-              {{ form.metodo_pago }}
-            </div>
-            <div>
-              <label>Referencia</label>
-              {{ form.referencia }}
-            </div>
-            <div>
-              <label>Estado</label>
-              {{ form.estado }}
-            </div>
-            <div class="full">
-              <label>Descripción</label>
-              {{ form.descripcion }}
-            </div>
+            <div class="full"><label>Orden vinculada</label>{{ form.orden }}</div>
+            <div><label>Método de pago</label>{{ form.metodo_pago }}</div>
+            <div><label>Referencia</label>{{ form.referencia }}</div>
+            <div><label>Estado</label>{{ form.estado }}</div>
+            <div class="full"><label>Descripción</label>{{ form.descripcion }}</div>
           </div>
-
           {% if form.errors %}
-          <div class="pg-alert pg-alert-danger" style="margin-top:1rem">
-            ⚠️ Revisa los campos e intenta de nuevo.
-          </div>
+          <div class="pg-alert pg-alert-danger" style="margin-top:1rem">⚠️ Revisa los campos e intenta de nuevo.</div>
           {% endif %}
-
           <div class="pg-form-actions">
             <button type="submit" class="pg-btn pg-btn-accent">Registrar Pago</button>
             <button type="button" class="pg-btn pg-btn-light" onclick="cancelarPago()">Cancelar</button>
           </div>
         </form>
-
       </div>
     </div>
   </div>
 
-</div>
+
+  <!-- CONSULTAR CAJAS -->
+  <div id="tab-consultar-caja" class="pg-section">
+    <div class="pg-card">
+      <div class="pg-card-header">
+        <h3>Cajas registradas</h3>
+        <button class="pg-btn pg-btn-accent pg-btn-sm" onclick="showTab('abrir-caja')">+ Abrir caja</button>
+      </div>
+      <div class="pg-card-body">
+        <div class="pg-table-wrap">
+          <table class="pg-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Cajero</th><th>Saldo inicial</th>
+                <th>Estado</th><th>Apertura</th><th>Cierre</th>
+                <th>Observaciones</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for caja in cajas %}
+              <tr>
+                <td><strong>#{{ caja.pk }}</strong></td>
+                <td>{{ caja.cajero }}</td>
+                <td><strong style="color:#C0392B">${{ caja.monto_inicial|floatformat:2 }}</strong></td>
+                <td><span class="pg-badge pg-badge-{{ caja.estado }}">{{ caja.get_estado_display }}</span></td>
+                <td>{{ caja.fecha_apertura|date:"d/m/Y H:i" }}</td>
+                <td>
+                  {% if caja.fecha_cierre %}{{ caja.fecha_cierre|date:"d/m/Y H:i" }}
+                  {% else %}<span style="color:var(--p-muted)">—</span>{% endif %}
+                </td>
+                <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+                  {{ caja.observaciones|default:"—" }}
+                </td>
+                <td>
+                  <a href="{% url 'pago:caja_detalle' caja.pk %}" class="pg-btn pg-btn-light pg-btn-sm">
+                    👁 Ver detalle
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="8" style="text-align:center;color:var(--p-muted);padding:2.5rem">
+                  No hay cajas registradas aún.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- DETALLE CAJA -->
+  <div id="tab-detalle-caja" class="pg-section">
+    {% if caja_seleccionada %}
+    <div class="pg-card">
+      <div class="pg-card-header">
+        <h3>🏦 Caja #{{ caja_seleccionada.pk }} — {{ caja_seleccionada.cajero }}</h3>
+        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+          <span class="pg-badge pg-badge-{{ caja_seleccionada.estado }}">
+            {{ caja_seleccionada.get_estado_display }}
+          </span>
+          <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('consultar-caja')">← Volver</button>
+        </div>
+      </div>
+      <div class="pg-card-body">
+
+        <div class="info-row">
+          <span>📅 <strong>Apertura:</strong> {{ caja_seleccionada.fecha_apertura|date:"d/m/Y H:i" }}</span>
+          <span>💰 <strong>Saldo inicial:</strong> ${{ caja_seleccionada.monto_inicial|floatformat:2 }}</span>
+          {% if caja_seleccionada.fecha_cierre %}
+            <span>🔒 <strong>Cierre:</strong> {{ caja_seleccionada.fecha_cierre|date:"d/m/Y H:i" }}</span>
+          {% endif %}
+          {% if caja_seleccionada.observaciones %}
+            <span>📝 <strong>Notas:</strong> {{ caja_seleccionada.observaciones }}</span>
+          {% endif %}
+        </div>
+
+        <div class="pg-stats">
+          <div class="pg-stat">
+            <div class="val">${{ caja_seleccionada.monto_inicial|floatformat:0 }}</div>
+            <div class="lbl">Saldo inicial</div>
+          </div>
+          <div class="pg-stat green">
+            <div class="val">${{ total_ingresos|floatformat:0 }}</div>
+            <div class="lbl">Ingresos aprobados</div>
+          </div>
+          <div class="pg-stat gold">
+            <div class="val">${{ total_pendientes|floatformat:0 }}</div>
+            <div class="lbl">Pagos pendientes</div>
+          </div>
+          <div class="pg-stat blue">
+            <div class="val">${{ saldo_final|floatformat:0 }}</div>
+            <div class="lbl">Saldo final estimado</div>
+          </div>
+        </div>
+
+        <h3 style="font-size:.95rem;margin-bottom:.8rem;">
+          Pagos en esta caja
+          <span style="font-size:.8rem;color:var(--p-muted);font-weight:400;">({{ pagos_caja.count }})</span>
+        </h3>
+
+        {% if pagos_caja %}
+        <div class="pg-table-wrap">
+          <table class="pg-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Orden</th><th>Cliente</th><th>Método</th>
+                <th>Monto</th><th>Estado</th><th>Fecha</th><th>Referencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pago in pagos_caja %}
+              <tr>
+                <td><strong>#{{ pago.pk }}</strong></td>
+                <td>
+                  {% if pago.orden %}<strong>{{ pago.orden.numero_orden }}</strong>
+                  {% else %}<span style="color:var(--p-muted)">Manual</span>{% endif %}
+                </td>
+                <td>{% if pago.orden %}{{ pago.orden.pedido.cliente }}{% else %}—{% endif %}</td>
+                <td>{{ pago.get_metodo_pago_display }}</td>
+                <td><strong style="color:#C0392B">${{ pago.monto|floatformat:2 }}</strong></td>
+                <td><span class="pg-badge pg-badge-{{ pago.estado }}">{{ pago.get_estado_display }}</span></td>
+                <td>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</td>
+                <td>{{ pago.referencia|default:"—" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" style="color:var(--p-muted);font-size:.82rem;">TOTALES</td>
+                <td style="color:#C0392B;">${{ saldo_final|floatformat:2 }}</td>
+                <td colspan="3" style="font-size:.8rem;color:var(--p-muted);">
+                  ✅ ${{ total_ingresos|floatformat:2 }} &nbsp;|&nbsp; ⏳ ${{ total_pendientes|floatformat:2 }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        {% else %}
+          <p style="text-align:center;color:var(--p-muted);padding:2.5rem;font-style:italic;">
+            📭 No hay pagos registrados en esta caja aún.
+          </p>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+
+  <!-- ABRIR CAJA -->
+  <div id="tab-abrir-caja" class="pg-section">
+    <div class="pg-card">
+      <div class="pg-card-header">
+        <h3>Abrir caja</h3>
+        <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('pendientes')">← Volver</button>
+      </div>
+      <div class="pg-card-body">
+        <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="abrir_caja">
+          <div class="caja-form-grid">
+            <div>
+              <label>Monto inicial ($)</label>
+              {{ form_apertura.monto_inicial }}
+            </div>
+            <div>
+              <label>Responsable / Cajero</label>
+              {{ form_apertura.cajero }}
+            </div>
+            <div>
+              <label>Fecha y hora de apertura</label>
+              <input type="text" id="fecha-apertura-display" readonly>
+            </div>
+            <div>
+              <label>Estado</label>
+              <span class="caja-estado-badge">
+                <span class="caja-estado-dot"></span>
+                Abierta
+              </span>
+            </div>
+            <div class="full">
+              <label>Observaciones <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.78rem">(opcional)</span></label>
+              {{ form_apertura.observaciones }}
+            </div>
+          </div>
+          {% if form_apertura.errors %}
+          <div class="pg-alert pg-alert-danger" style="margin-top:1rem">⚠️ Revisa los campos e intenta de nuevo.</div>
+          {% endif %}
+          <div class="pg-form-actions">
+            <button type="submit" class="pg-btn pg-btn-accent">Abrir caja</button>
+            <button type="button" class="pg-btn pg-btn-light" onclick="showTab('pendientes')">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div><!-- fin pg-wrapper -->
+
 
 <!-- ✅ NUEVO: Modal confirmar eliminación con form POST -->
 <div id="modal-eliminar" class="pg-modal-overlay">
   <div class="pg-modal-box">
     <h4>Confirmar eliminación</h4>
-    <p id="modal-msg">¿Estás seguro de eliminar este pago?</p>
+    <p id="modal-msg">¿Estás seguro de eliminar este registro?</p>
     <div class="pg-modal-actions">
       <form id="modal-form" method="post">
         {% csrf_token %}
@@ -431,22 +612,19 @@
 // ── Tabs ────────────────────────────────────────────────────
 function showTab(name) {
   document.querySelectorAll('.pg-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.pg-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  document.getElementById('tab-btn-' + name).classList.add('active');
+  var section = document.getElementById('tab-' + name);
+  if (section) section.classList.add('active');
 }
 
 // ── Registrar pago ──────────────────────────────────────────
 function registrarPago(numeroOrden, ordenId, cliente, total) {
   const ordenSelect = document.querySelector('[name="orden"]');
   if (ordenSelect) ordenSelect.value = ordenId;
-
   document.getElementById('orden-banner').classList.add('visible');
   document.getElementById('banner-orden-num').textContent = numeroOrden;
   document.getElementById('banner-cliente').textContent   = cliente;
   document.getElementById('banner-total').textContent     = '$' + Number(total).toLocaleString('es-CO');
   document.getElementById('form-titulo').textContent      = 'Pago — ' + numeroOrden;
-
   showTab('crear');
 }
 
@@ -515,14 +693,10 @@ function filtrarPagos() {
 
 // ── Init ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  {% if form.errors %}showTab('crear');{% endif %}
-  document.querySelectorAll('.pg-alert').forEach(a => {
-    setTimeout(() => {
-      a.style.transition = 'opacity .5s';
-      a.style.opacity = '0';
-      setTimeout(() => a.remove(), 500);
-    }, 4000);
-  });
+  {% if form.errors %}showTab('crear');
+  {% elif form_apertura and form_apertura.errors %}showTab('abrir-caja');
+  {% elif tab_activo %}showTab('{{ tab_activo }}');
+  {% endif %}
 });
 </script>
 

@@ -27,7 +27,7 @@
   .mc-section{display:none}.mc-section.active{display:block;animation:mcFade .2s ease}
   @keyframes mcFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-  /* NAV BUTTONS (debajo del banner) */
+  /* NAV BUTTONS */
   .mc-nav-btn{
     padding:10px 22px;font-size:14px;font-weight:500;
     border:1.5px solid var(--border2);border-radius:25px;
@@ -167,7 +167,6 @@
 
 <!-- ===== BANNER + NAV ===== -->
 <div style="padding:1.5rem 1.5rem 0;max-width:100%;">
-  <!-- Cuadro negro ancho completo -->
   <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1rem;display:flex;align-items:center;gap:16px;">
     <div style="font-size:28px;line-height:1;"></div>
     <div>
@@ -175,7 +174,6 @@
       <p style="font-size:20px;color:#A09070;margin:0;">Bienvenido, {{ nombre }}</p>
     </div>
   </div>
-  <!-- Botones de navegación alineados con el banner -->
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;padding:0 0.2rem;">
     <button class="mc-nav-btn active" onclick="mcShow('reservas')"> Reservas</button>
     <button class="mc-nav-btn" onclick="mcShow('crear')">+ Nueva reserva</button>
@@ -236,14 +234,14 @@
           <input type="text" class="mc-input" id="mc-c-nombre" placeholder="Ej: María García">
         </div>
         <div class="mc-form-group">
-          <label class="mc-label">Teléfono *</label>
-          <input type="tel" class="mc-input" id="mc-c-telefono" placeholder="+57 300 000 0000" maxlength="10" pattern="[0-9]*" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+          <label class="mc-label">Teléfono * (10 dígitos)</label>
+          <input type="tel" class="mc-input" id="mc-c-telefono" placeholder="3001234567" maxlength="10" pattern="[0-9]*" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
         </div>
       </div>
       <div class="mc-form-row">
         <div class="mc-form-group">
           <label class="mc-label">Correo electrónico</label>
-         <input type="email" class="mc-input" id="mc-c-email" placeholder="correo@ejemplo.com" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}">
+          <input type="email" class="mc-input" id="mc-c-email" placeholder="correo@ejemplo.com" pattern="[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}">
         </div>
         <div class="mc-form-group">
           <label class="mc-label">N.° de personas *</label>
@@ -256,11 +254,12 @@
       <div class="mc-form-row three">
         <div class="mc-form-group">
           <label class="mc-label">Fecha *</label>
-          <input type="date" class="mc-input" id="mc-c-fecha">
+          <!-- FIX: onchange actualiza el selector de mesas según la fecha elegida -->
+          <input type="date" class="mc-input" id="mc-c-fecha" onchange="mcPoblarMesas()">
         </div>
         <div class="mc-form-group">
           <label class="mc-label">Hora *</label>
-          <input type="time" class="mc-input" id="mc-c-hora" step="1800">
+          <input type="time" class="mc-input" id="mc-c-hora" step="1800" onchange="mcPoblarMesas()">
         </div>
         <div class="mc-form-group">
           <label class="mc-label">Mesa *</label>
@@ -291,6 +290,7 @@
         <textarea class="mc-textarea" id="mc-c-notas" placeholder="Alergias, preferencias, solicitudes especiales..."></textarea>
       </div>
       <div class="mc-btn-row">
+        <button class="mc-btn mc-btn-secondary" onclick="mcLimpiar();mcShow('reservas')">← Volver</button>
         <button class="mc-btn mc-btn-secondary" onclick="mcLimpiar()">Limpiar</button>
         <button class="mc-btn mc-btn-primary" onclick="mcGuardarReserva()" id="mc-btn-guardar">Guardar reserva</button>
       </div>
@@ -440,14 +440,21 @@
 <script>
 (function(){
   // STATE
-  let reservas = JSON.parse(localStorage.getItem('mc_reservas') || '[]');
-  let mesas    = JSON.parse(localStorage.getItem('mc_mesas')    || '[]');
+  let reservas   = JSON.parse(localStorage.getItem('mc_reservas') || '[]');
+  let mesas      = JSON.parse(localStorage.getItem('mc_mesas')    || '[]');
+  let contadorR  = 0;
+  let contadorM  = 0;
   let editandoId = null;
   let editandoMesaId = null;
 
+  function nextIdR(){ contadorR++; localStorage.setItem('mc_contador_r', contadorR); return contadorR; }
+  function nextIdM(){ contadorM++; localStorage.setItem('mc_contador_m', contadorM); return contadorM; }
+
   function save(){
-    localStorage.setItem('mc_reservas', JSON.stringify(reservas));
-    localStorage.setItem('mc_mesas',    JSON.stringify(mesas));
+    localStorage.setItem('mc_reservas',   JSON.stringify(reservas));
+    localStorage.setItem('mc_mesas',      JSON.stringify(mesas));
+    localStorage.setItem('mc_contador_r', contadorR);
+    localStorage.setItem('mc_contador_m', contadorM);
   }
 
   // NAV
@@ -494,18 +501,40 @@
     return estado==='confirmada'?'mc-badge-ok':estado==='pendiente'?'mc-badge-warn':'mc-badge-danger';
   }
 
-  // POBLAR SELECT MESAS
+  // =====================================================================
+  // FIX: POBLAR SELECT MESAS filtrando por disponibilidad en la fecha Y hora elegidas
+  // =====================================================================
   function mcPoblarMesas(){
-    const sel = document.getElementById('mc-c-mesa');
-    const r   = editandoId ? reservas.find(x=>x.id===editandoId) : null;
+    const sel   = document.getElementById('mc-c-mesa');
+    const fecha = document.getElementById('mc-c-fecha').value;
+    const hora  = document.getElementById('mc-c-hora').value;
+    const r     = editandoId ? reservas.find(x => x.id === editandoId) : null;
+
+    // Mesas ocupadas en el mismo día Y misma hora, excluyendo la reserva en edición
+    const mesasOcupadas = new Set(
+      reservas
+        .filter(x =>
+          x.fecha === fecha &&
+          x.hora  === hora  &&
+          x.estado !== 'cancelada' &&
+          x.id !== editandoId
+        )
+        .map(x => x.mesaId)
+    );
+
     sel.innerHTML = '<option value="">— Seleccionar mesa —</option>';
     mesas.forEach(m => {
-      if(m.estado==='disponible' || (r && r.mesaId===m.id))
+      const ocupada    = mesasOcupadas.has(m.id);
+      const esLaActual = r && r.mesaId === m.id;
+      if (!ocupada || esLaActual) {
         sel.innerHTML += `<option value="${m.id}">Mesa ${m.numero} — ${m.capacidad} pers. (${m.ubicacion})</option>`;
+      }
     });
   }
 
+  // =====================================================================
   // CREAR / EDITAR RESERVA
+  // =====================================================================
   window.mcGuardarReserva = function(){
     const nom = document.getElementById('mc-c-nombre').value.trim();
     const tel = document.getElementById('mc-c-telefono').value.trim();
@@ -513,11 +542,30 @@
     const fec = document.getElementById('mc-c-fecha').value;
     const hor = document.getElementById('mc-c-hora').value;
     const mes = document.getElementById('mc-c-mesa').value;
+
+    // Validación campos obligatorios
     if(!nom||!tel||!per||!fec||!hor||!mes){ toast('Completa todos los campos obligatorios (*)','error'); return; }
+
+    // FIX: Validación de exactamente 10 dígitos en el teléfono
+    if(tel.length !== 10){ toast('El teléfono debe tener exactamente 10 dígitos','error'); return; }
+
+    if(fec < hoy()){ toast('No se pueden crear reservas en fechas pasadas','error'); return; }
+
     const emailVal = document.getElementById('mc-c-email').value.trim();
     if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){ toast('El correo electrónico no es válido','error'); return; }
+
+    // Segunda defensa: verificar conflicto de mesa en mismo día Y hora
+    const conflicto = reservas.find(x =>
+      x.fecha === fec &&
+      x.hora  === hor &&
+      x.mesaId === parseInt(mes) &&
+      x.estado !== 'cancelada' &&
+      x.id !== editandoId
+    );
+    if(conflicto){ toast('Esa mesa ya está reservada para ese día y hora','error'); return; }
+
     const obj = {
-      id:      editandoId || Date.now(),
+      id:      editandoId || nextIdR(),
       nombre:  nom, telefono: tel,
       email:   document.getElementById('mc-c-email').value.trim(),
       personas:parseInt(per), fecha:fec, hora:hor, mesaId:parseInt(mes),
@@ -528,8 +576,10 @@
                ? (reservas.find(r=>r.id===editandoId)||{}).creada||new Date().toISOString()
                : new Date().toISOString()
     };
+
     if(editandoId){ reservas = reservas.map(r=>r.id===editandoId?obj:r); toast('Reserva actualizada'); }
     else          { reservas.push(obj); toast('Reserva creada exitosamente'); }
+
     save(); mcLimpiar(); mcShow('reservas');
   };
 
@@ -544,6 +594,7 @@
     document.getElementById('mc-crear-sub').textContent   = 'Completa los datos para registrar la reserva';
     document.getElementById('mc-btn-guardar').textContent  = 'Guardar reserva';
     mcPoblarMesas();
+    fijarFechaMin();
   };
 
   // TABLA RESERVAS
@@ -570,7 +621,7 @@
       return;
     }
     tb.innerHTML = lista.map(r=>`<tr>
-      <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).slice(-5)}</td>
+      <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).padStart(2,'0')}</td>
       <td><div style="font-weight:500">${r.nombre}</div><div style="font-size:12px;color:var(--muted)">${r.telefono}</div></td>
       <td>${getMesaLabel(r.mesaId)}</td>
       <td>${r.fecha}</td><td>${r.hora}</td>
@@ -626,6 +677,8 @@
       document.getElementById('mc-c-personas').value = r.personas;
       document.getElementById('mc-c-fecha').value    = r.fecha;
       document.getElementById('mc-c-hora').value     = r.hora;
+      // Repoblar mesas con la fecha de la reserva antes de asignar la mesa
+      mcPoblarMesas();
       document.getElementById('mc-c-mesa').value     = r.mesaId||'';
       document.getElementById('mc-c-ocasion').value  = r.ocasion||'';
       document.getElementById('mc-c-estado').value   = r.estado;
@@ -665,7 +718,7 @@
       const cols=4, size=92, gap=20, offX=28, offY=46;
       const idx=mesas.length, col=idx%cols, row=Math.floor(idx/cols);
       mesas.push({
-        id: Date.now(), numero: num, capacidad: cap, ubicacion: ubi, estado: est,
+        id: nextIdM(), numero: num, capacidad: cap, ubicacion: ubi, estado: est,
         x: offX + col*(size+gap), y: offY + row*(size+gap)
       });
       toast('Mesa '+num+' agregada');
@@ -687,7 +740,7 @@
 
   // TABLA MESAS
   window.mcRenderTablaMesas = function(){
-    const buscar   = document.getElementById('mc-buscar-mesa')?.value.toLowerCase() || '';
+    const buscar    = document.getElementById('mc-buscar-mesa')?.value.toLowerCase() || '';
     const ubicacion = document.getElementById('mc-filtro-ubicacion')?.value || '';
     const capacidad = document.getElementById('mc-filtro-capacidad')?.value || '';
     const tb = document.getElementById('mc-tbody-mesas');
@@ -817,34 +870,19 @@
         save(); mcRenderTablaMesas(); mcRenderDiagrama(); toast('Mesa eliminada'); });
   };
 
-  // INIT DEMO
-  function initDemo(){
-    if(!mesas.length){
-      mesas=[
-        {id:1,numero:1,capacidad:2,ubicacion:'Barra',           estado:'disponible',x:28, y:46},
-        {id:2,numero:2,capacidad:4,ubicacion:'Salón principal', estado:'reservada', x:138,y:46},
-        {id:3,numero:3,capacidad:4,ubicacion:'Salón principal', estado:'disponible',x:248,y:46},
-        {id:4,numero:4,capacidad:6,ubicacion:'Salón principal', estado:'ocupada',   x:358,y:46},
-        {id:5,numero:5,capacidad:2,ubicacion:'Terraza',         estado:'disponible',x:28, y:164},
-        {id:6,numero:6,capacidad:8,ubicacion:'Privado',         estado:'disponible',x:138,y:164},
-        {id:7,numero:7,capacidad:4,ubicacion:'Salón principal', estado:'reservada', x:248,y:164},
-        {id:8,numero:8,capacidad:4,ubicacion:'Terraza',         estado:'disponible',x:358,y:164},
-      ];
-    }
-    if(!reservas.length){
-      const h=new Date().toISOString().slice(0,10);
-      reservas=[
-        {id:101,nombre:'Carlos Mendoza',  telefono:'3001234567',email:'carlos@mail.com',personas:2,fecha:h,            hora:'12:30',mesaId:1,ocasion:'',           estado:'confirmada',notas:'',                           creada:new Date().toISOString()},
-        {id:102,nombre:'Laura Jiménez',   telefono:'3107654321',email:'laura@mail.com', personas:4,fecha:h,            hora:'13:00',mesaId:2,ocasion:'Aniversario', estado:'confirmada',notas:'Decoración especial por favor',creada:new Date().toISOString()},
-        {id:103,nombre:'Pedro Ramírez',   telefono:'3204567890',email:'',               personas:6,fecha:h,            hora:'19:30',mesaId:4,ocasion:'Cumpleaños',  estado:'pendiente', notas:'Torta de cumpleaños',         creada:new Date().toISOString()},
-        {id:104,nombre:'Ana Sofía Torres',telefono:'3156789012',email:'ana@mail.com',   personas:3,fecha:'2026-04-20', hora:'20:00',mesaId:7,ocasion:'Cena romántica',estado:'confirmada',notas:'',                          creada:new Date().toISOString()},
-      ];
-    }
-    save();
+  // Sincronizar contadores con datos existentes
+  if(reservas.length) contadorR = Math.max(contadorR, ...reservas.map(r=>r.id||0));
+  if(mesas.length)    contadorM = Math.max(contadorM, ...mesas.map(m=>m.id||0));
+
+  // Restringir fechas pasadas
+  function fijarFechaMin(){
+    const input = document.getElementById('mc-c-fecha');
+    if(input) input.min = hoy();
   }
 
   // BOOT
-  initDemo();
+  save();
+  fijarFechaMin();
   mcPoblarMesas();
   mcRenderTabla();
 })();
