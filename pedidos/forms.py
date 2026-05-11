@@ -1,5 +1,5 @@
 from django import forms
-from .models import Pedido, Orden, Producto, Caja
+from .models import Pedido, Orden, Producto
 
 # ─── Estilo base reutilizable ──────────────────────────────────
 _INPUT = (
@@ -35,8 +35,6 @@ class PedidoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Hacemos que el total no sea obligatorio para que pase is_valid() 
-        # ya que se calcula en la vista antes de guardar.
         self.fields['total'].required = False
 
 # ─── Formulario de Orden ───────────────────────────────────────
@@ -60,7 +58,6 @@ class OrdenForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Al igual que el pedido, estos campos suelen ser automáticos
         self.fields['subtotal'].required = False
         self.fields['impuesto'].required = False
 
@@ -85,36 +82,5 @@ class ProductoForm(forms.ModelForm):
             }),
             'disponible': forms.CheckboxInput(attrs={
                 'style': 'width:18px;height:18px;accent-color:#C0392B;cursor:pointer;',
-            }),
-        }
-
-# ─── Formulario de Caja (Apertura) ──────────────────────────────
-class CajaForm(forms.ModelForm):
-    class Meta:
-        model  = Caja
-        fields = ['nombre', 'saldo_inicial', 'observaciones']
-        widgets = {
-            'nombre': forms.TextInput(attrs={
-                'style': _INPUT, 'placeholder': 'Ej: Caja Principal',
-            }),
-            'saldo_inicial': forms.NumberInput(attrs={
-                'style': _INPUT, 'step': '0.01', 'placeholder': '0.00',
-            }),
-            'observaciones': forms.Textarea(attrs={
-                'style': _TEXTAREA, 'rows': 2,
-            }),
-        }
-
-# ─── Formulario de Caja (Cierre) ───────────────────────────────
-class CajaCierreForm(forms.ModelForm):
-    class Meta:
-        model  = Caja
-        fields = ['saldo_final', 'observaciones']
-        widgets = {
-            'saldo_final': forms.NumberInput(attrs={
-                'style': _INPUT, 'step': '0.01', 'placeholder': '0.00',
-            }),
-            'observaciones': forms.Textarea(attrs={
-                'style': _TEXTAREA, 'rows': 2,
             }),
         }

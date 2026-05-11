@@ -1,27 +1,41 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db.models import Sum
+from django.utils import timezone
 from itertools import groupby
-from .models import Pago, AperturaCaja
-from .forms import PagoForm, AperturaCajaForm
+from .models import Pago, Caja
+from .forms import PagoForm, CajaForm
 from pedidos.models import Orden
 
 
 def pago_dashboard(request):
-    form_apertura = AperturaCajaForm()
+    form_apertura = CajaForm()
     form = PagoForm()
 
     if request.method == 'POST':
         action = request.POST.get('action', '')
 
         if action == 'abrir_caja':
-            form_apertura = AperturaCajaForm(request.POST)
+            form_apertura = CajaForm(request.POST)
             if form_apertura.is_valid():
                 apertura = form_apertura.save(commit=False)
                 apertura.estado = 'abierta'
                 apertura.save()
                 messages.success(request, '✅ Caja abierta correctamente.')
                 return redirect('pago:dashboard')
+
+        elif action == 'cerrar_caja':
+            caja_id = request.POST.get('caja_id')
+            try:
+                caja = Caja.objects.get(pk=caja_id, estado='abierta')
+                caja.estado = 'cerrada'
+                caja.fecha_cierre = timezone.now()
+                caja.save()
+                messages.success(request, '🔒 Caja cerrada correctamente.')
+            except Caja.DoesNotExist:
+                messages.error(request, '❌ No se encontró la caja o ya está cerrada.')
+            return redirect('pago:dashboard')
+
         else:
             post_data = request.POST.copy()
             orden_id  = post_data.get('orden')
@@ -64,8 +78,8 @@ def pago_dashboard(request):
         'monto_total':      pagos_qs.filter(estado='aprobado').aggregate(
                                 t=Sum('monto'))['t'] or 0,
         'nombre':           request.user.get_full_name() or request.user.username,
-        'cajas':            AperturaCaja.objects.all().order_by('-fecha_apertura'),
-        'tab_activo':       'consultar-caja',
+        'cajas':            Caja.objects.all().order_by('-fecha_apertura'),
+        'tab_activo':       'pendientes',
     }
     return render(request, 'pago/dashboard.html', context)
 
@@ -93,7 +107,7 @@ def pago_eliminar(request, pk):
 
 
 def caja_detalle(request, pk):
-    caja_seleccionada = get_object_or_404(AperturaCaja, pk=pk)
+    caja_seleccionada = get_object_or_404(Caja, pk=pk)
 
     pagos_caja = Pago.objects.filter(
         fecha_pago__gte=caja_seleccionada.fecha_apertura
@@ -102,8 +116,7 @@ def caja_detalle(request, pk):
     total_ingresos   = pagos_caja.filter(estado='aprobado').aggregate(t=Sum('monto'))['t'] or 0
     total_pendientes = pagos_caja.filter(estado='pendiente').aggregate(t=Sum('monto'))['t'] or 0
 
-    # Reutilizamos todo el contexto del dashboard
-    form_apertura = AperturaCajaForm()
+    form_apertura = CajaForm()
     form = PagoForm()
 
     ordenes_sin_pago = Orden.objects.exclude(
@@ -133,8 +146,7 @@ def caja_detalle(request, pk):
         'monto_total':        pagos_qs.filter(estado='aprobado').aggregate(
                                   t=Sum('monto'))['t'] or 0,
         'nombre':             request.user.get_full_name() or request.user.username,
-        'cajas':              AperturaCaja.objects.all().order_by('-fecha_apertura'),
-        # datos del detalle
+        'cajas':              Caja.objects.all().order_by('-fecha_apertura'),
         'caja_seleccionada':  caja_seleccionada,
         'pagos_caja':         pagos_caja,
         'total_ingresos':     total_ingresos,

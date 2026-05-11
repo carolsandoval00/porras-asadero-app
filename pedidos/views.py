@@ -1,9 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.utils import timezone
 from django.db.models import Q
-from .models import Pedido, Orden, Producto, Caja, PedidoItem
-from .forms import PedidoForm, OrdenForm, ProductoForm, CajaForm, CajaCierreForm
+from .models import Pedido, Orden, Producto, PedidoItem
+from .forms import PedidoForm, OrdenForm, ProductoForm
 import uuid
 
 
@@ -47,12 +46,10 @@ def _dashboard_context(request, extra=None):
         'total_ordenes':      Orden.objects.count(),
         'total_productos':    Producto.objects.count(),
         'productos_activos':  Producto.objects.filter(disponible=True).count(),
-        'caja_abierta':       Caja.objects.filter(estado='abierta').first(),
         'ultimos_pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')[:5],
         'pedidos':   pedidos_qs,
         'ordenes':   ordenes_qs,
         'productos': productos_qs,
-        'cajas':     Caja.objects.select_related('responsable').all(),
         'productos_disponibles': Producto.objects.filter(disponible=True).order_by('categoria', 'nombre'),
         'estados':         Pedido.ESTADO_CHOICES,
         'estados_orden':   Orden.ESTADO_CHOICES,
@@ -66,7 +63,6 @@ def _dashboard_context(request, extra=None):
         'form_pedido':   PedidoForm(),
         'form_orden':    OrdenForm(),
         'form_producto': ProductoForm(),
-        'form_caja':     CajaForm(),
         'seccion_activa': (extra.get('seccion_activa') if extra and 'seccion_activa' in extra else None) or seccion_get or None,
     }
 
@@ -90,7 +86,6 @@ def dashboard(request):
                 pedido = form.save(commit=False)
                 pedido.creado_por = request.user
 
-                # Leer items enviados desde el formulario JS
                 items_data = []
                 i = 0
                 while True:
@@ -114,13 +109,10 @@ def dashboard(request):
                     })
                     return render(request, 'pedidos/dashboard.html', ctx)
 
-                # Calcular total — NO sobreescribir descripcion (viene del form)
                 total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
                 pedido.total = total
-                # descripcion ya fue asignada por form.save(commit=False)
                 pedido.save()
 
-                # Guardar PedidoItems
                 for it in items_data:
                     PedidoItem.objects.create(
                         pedido=pedido,
@@ -129,12 +121,10 @@ def dashboard(request):
                         precio_unitario=it['producto'].precio,
                     )
 
-                # Resumen de productos para la Orden (separado de la descripcion del pedido)
                 resumen_productos = ', '.join(
                     f"{it['cantidad']}x {it['producto'].nombre}" for it in items_data
                 )
 
-                # Crear Orden automática
                 Orden.objects.create(
                     pedido=pedido,
                     numero_orden=f'ORD-{uuid.uuid4().hex[:8].upper()}',
@@ -170,25 +160,6 @@ def dashboard(request):
                 })
                 return render(request, 'pedidos/dashboard.html', ctx)
 
-        # ── Abrir Caja ────────────────────────────────────────
-        elif action == 'caja_abrir':
-            form = CajaForm(request.POST)
-            if form.is_valid():
-                caja = form.save(commit=False)
-                caja.responsable    = request.user
-                caja.fecha_apertura = timezone.now()
-                caja.estado         = 'abierta'
-                caja.save()
-                messages.success(request, '✅ Caja abierta.')
-                return redirect('pedidos:dashboard')
-            else:
-                messages.error(request, '❌ Corrige los errores en el formulario de caja.')
-                ctx = _dashboard_context(request, {
-                    'form_caja': form,
-                    'seccion_activa': 'caja-abrir',
-                })
-                return render(request, 'pedidos/dashboard.html', ctx)
-
     return render(request, 'pedidos/dashboard.html', _dashboard_context(request))
 
 
@@ -219,7 +190,6 @@ def pedido_editar(request, pk):
     pedido = get_object_or_404(Pedido, pk=pk)
 
     if request.method == 'POST':
-        # Leer items enviados desde el formulario JS
         items_data = []
         i = 0
         while True:
@@ -240,13 +210,10 @@ def pedido_editar(request, pk):
             p = form.save(commit=False)
 
             if items_data:
-                # Recalcular total — NO sobreescribir descripcion (viene del form)
                 total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
                 p.total = total
-                # descripcion ya fue asignada por form.save(commit=False)
                 p.save()
 
-                # Reemplazar todos los PedidoItems
                 pedido.items.all().delete()
                 for it in items_data:
                     PedidoItem.objects.create(
@@ -256,12 +223,10 @@ def pedido_editar(request, pk):
                         precio_unitario=it['producto'].precio,
                     )
 
-                # Resumen de productos para la Orden (separado de la descripcion del pedido)
                 resumen_productos = ', '.join(
                     f"{it['cantidad']}x {it['producto'].nombre}" for it in items_data
                 )
 
-                # Actualizar la orden asociada si existe
                 orden = pedido.ordenes.filter(estado='abierta').first()
                 if orden:
                     orden.subtotal = total
@@ -274,16 +239,14 @@ def pedido_editar(request, pk):
             messages.success(request, '✅ Pedido actualizado correctamente.')
             return redirect('pedidos:dashboard')
 
-        # Formulario inválido — volver con errores
         ctx = _dashboard_context(request, {
-            'form_pedido':          form,
-            'pedido_editando':      pedido,
-            'pedido_items_json':    _items_as_json(pedido),
-            'seccion_activa':       'pedido-editar',
+            'form_pedido':       form,
+            'pedido_editando':   pedido,
+            'pedido_items_json': _items_as_json(pedido),
+            'seccion_activa':    'pedido-editar',
         })
         return render(request, 'pedidos/dashboard.html', ctx)
 
-    # GET — cargar pedido existente
     form = PedidoForm(instance=pedido)
     ctx  = _dashboard_context(request, {
         'form_pedido':       form,
@@ -295,7 +258,6 @@ def pedido_editar(request, pk):
 
 
 def _items_as_json(pedido):
-    """Devuelve los PedidoItems del pedido como lista JSON para precargar el JS."""
     import json
     items = [
         {
@@ -455,76 +417,3 @@ def producto_eliminar(request, pk):
         producto.delete()
         messages.success(request, '🗑️ Producto eliminado.')
     return redirect('pedidos:dashboard')
-
-
-# ─────────────────────────────────────────────────────────────
-# CAJA
-# ─────────────────────────────────────────────────────────────
-def caja_lista(request):
-    cajas = Caja.objects.select_related('responsable').all()
-    return render(request, 'pedidos/caja_lista.html', {
-        'titulo': 'Cajas',
-        'nombre': request.user.username,
-        'cajas':  cajas,
-    })
-
-
-def caja_abrir(request):
-    form = CajaForm(request.POST or None)
-    if form.is_valid():
-        caja = form.save(commit=False)
-        caja.responsable    = request.user
-        caja.fecha_apertura = timezone.now()
-        caja.estado         = 'abierta'
-        caja.save()
-        messages.success(request, '✅ Caja abierta.')
-        return redirect('pedidos:caja_lista')
-    return render(request, 'pedidos/caja_form.html', {
-        'titulo': 'Abrir Caja',
-        'nombre': request.user.username,
-        'form':   form,
-        'accion': 'Abrir',
-    })
-
-
-def caja_detalle(request, pk):
-    caja = get_object_or_404(Caja.objects.select_related('responsable'), pk=pk)
-    return render(request, 'pedidos/caja_detalle.html', {
-        'titulo': f'Caja: {caja.nombre}',
-        'nombre': request.user.username,
-        'caja':   caja,
-    })
-
-
-def caja_actualizar(request, pk):
-    caja = get_object_or_404(Caja, pk=pk)
-    form = CajaForm(request.POST or None, instance=caja)
-    if form.is_valid():
-        form.save()
-        messages.success(request, '✅ Caja actualizada.')
-        return redirect('pedidos:caja_lista')
-    return render(request, 'pedidos/caja_form.html', {
-        'titulo': f'Actualizar Caja: {caja.nombre}',
-        'nombre': request.user.username,
-        'form':   form,
-        'accion': 'Actualizar',
-        'caja':   caja,
-    })
-
-
-def caja_cerrar(request, pk):
-    caja = get_object_or_404(Caja, pk=pk, estado='abierta')
-    form = CajaCierreForm(request.POST or None, instance=caja)
-    if form.is_valid():
-        c = form.save(commit=False)
-        c.estado       = 'cerrada'
-        c.fecha_cierre = timezone.now()
-        c.save()
-        messages.success(request, '🔒 Caja cerrada correctamente.')
-        return redirect('pedidos:caja_lista')
-    return render(request, 'pedidos/caja_cierre_form.html', {
-        'titulo': f'Cerrar Caja: {caja.nombre}',
-        'nombre': request.user.get_full_name() or request.user.username,
-        'form':   form,
-        'caja':   caja,
-    })

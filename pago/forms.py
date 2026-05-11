@@ -1,5 +1,5 @@
 from django import forms
-from .models import Pago, AperturaCaja
+from .models import Pago, Caja
 
 _INPUT = (
     'width:100%;padding:.55rem .85rem;border:1px solid #D4C4A0;'
@@ -26,9 +26,9 @@ class PagoForm(forms.ModelForm):
         self.fields['monto'].required = False
 
 
-class AperturaCajaForm(forms.ModelForm):
+class CajaForm(forms.ModelForm):
     class Meta:
-        model  = AperturaCaja
+        model  = Caja
         fields = ['monto_inicial', 'cajero', 'observaciones']
         widgets = {
             'monto_inicial': forms.NumberInput(attrs={

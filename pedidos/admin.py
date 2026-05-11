@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Pedido, Orden, Producto, Caja
+from .models import Pedido, Orden, Producto
 
 
 @admin.register(Pedido)
@@ -21,9 +21,3 @@ class ProductoAdmin(admin.ModelAdmin):
     list_filter   = ['categoria', 'disponible']
     search_fields = ['nombre']
     list_editable = ['precio', 'disponible']
-
-
-@admin.register(Caja)
-class CajaAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'responsable', 'saldo_inicial', 'estado', 'fecha_apertura']
-    list_filter  = ['estado']

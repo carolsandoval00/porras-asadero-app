@@ -319,7 +319,7 @@
       </div>
       <div class="pg-card-body">
         <div class="orden-banner" id="orden-banner">
-          <div class="orden-banner-icon"></div>
+          <div class="orden-banner-icon">🧾</div>
           <div class="orden-banner-body">
             <p class="orden-banner-title">Registrando pago para: <span id="banner-orden-num"></span></p>
             <p class="orden-banner-detail">
@@ -377,16 +377,25 @@
                 <td><span class="pg-badge pg-badge-{{ caja.estado }}">{{ caja.get_estado_display }}</span></td>
                 <td>{{ caja.fecha_apertura|date:"d/m/Y H:i" }}</td>
                 <td>
-                  {% if caja.fecha_cierre %}{{ caja.fecha_cierre|date:"d/m/Y H:i" }}
-                  {% else %}<span style="color:var(--p-muted)">—</span>{% endif %}
+                  {% if caja.fecha_cierre %}
+                    {{ caja.fecha_cierre|date:"d/m/Y H:i" }}
+                  {% else %}
+                    <span style="color:var(--p-muted)">—</span>
+                  {% endif %}
                 </td>
                 <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
                   {{ caja.observaciones|default:"—" }}
                 </td>
-                <td>
+                <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
                   <a href="{% url 'pago:caja_detalle' caja.pk %}" class="pg-btn pg-btn-light pg-btn-sm">
                     👁 Ver detalle
                   </a>
+                  {% if caja.estado == 'abierta' %}
+                  <button class="pg-btn pg-btn-danger pg-btn-sm"
+                          onclick="confirmarCierreCaja({{ caja.pk }}, '{{ caja.cajero|escapejs }}')">
+                    🔒 Cerrar
+                  </button>
+                  {% endif %}
                 </td>
               </tr>
               {% empty %}
@@ -414,6 +423,12 @@
           <span class="pg-badge pg-badge-{{ caja_seleccionada.estado }}">
             {{ caja_seleccionada.get_estado_display }}
           </span>
+          {% if caja_seleccionada.estado == 'abierta' %}
+          <button class="pg-btn pg-btn-danger pg-btn-sm"
+                  onclick="confirmarCierreCaja({{ caja_seleccionada.pk }}, '{{ caja_seleccionada.cajero|escapejs }}')">
+            🔒 Cerrar caja
+          </button>
+          {% endif %}
           <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('consultar-caja')">← Volver</button>
         </div>
       </div>
@@ -554,7 +569,7 @@
 </div><!-- fin pg-wrapper -->
 
 
-<!-- Modal eliminar -->
+<!-- Modal eliminar pago -->
 <div id="modal-eliminar" class="pg-modal-overlay">
   <div class="pg-modal-box">
     <h4>Confirmar eliminación</h4>
@@ -565,6 +580,26 @@
         <button type="submit" class="pg-btn pg-btn-danger">Sí, eliminar</button>
       </form>
       <button class="pg-btn pg-btn-light" onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal cerrar caja -->
+<div id="modal-cerrar-caja" class="pg-modal-overlay">
+  <div class="pg-modal-box">
+    <h4>🔒 Cerrar caja</h4>
+    <p id="modal-cierre-msg">¿Confirmas el cierre de esta caja?</p>
+    <p style="font-size:.82rem;color:var(--p-muted);margin-top:-.8rem;margin-bottom:1.4rem;">
+      Se registrará la hora de cierre automáticamente.
+    </p>
+    <div class="pg-modal-actions">
+      <form id="modal-cierre-form" method="post" action="{% url 'pago:dashboard' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="cerrar_caja">
+        <input type="hidden" name="caja_id" id="modal-cierre-caja-id" value="">
+        <button type="submit" class="pg-btn pg-btn-danger">Sí, cerrar caja</button>
+      </form>
+      <button class="pg-btn pg-btn-light" onclick="cerrarModalCierre()">Cancelar</button>
     </div>
   </div>
 </div>
@@ -606,8 +641,23 @@ function cerrarModal() {
   document.getElementById('modal-eliminar').classList.remove('open');
 }
 
+function confirmarCierreCaja(cajaId, cajero) {
+  document.getElementById('modal-cierre-caja-id').value = cajaId;
+  document.getElementById('modal-cierre-msg').textContent =
+    `¿Confirmas el cierre de la Caja #${cajaId} (${cajero})?`;
+  document.getElementById('modal-cerrar-caja').classList.add('open');
+}
+
+function cerrarModalCierre() {
+  document.getElementById('modal-cerrar-caja').classList.remove('open');
+}
+
 document.getElementById('modal-eliminar').addEventListener('click', function(e){
   if (e.target === this) cerrarModal();
+});
+
+document.getElementById('modal-cerrar-caja').addEventListener('click', function(e){
+  if (e.target === this) cerrarModalCierre();
 });
 
 function setFechaApertura() {

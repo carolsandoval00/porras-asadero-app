@@ -104,30 +104,6 @@ class Orden(models.Model):
         super().save(*args, **kwargs)
 
 
-class Caja(models.Model):
-    ESTADO_CHOICES = [
-        ('abierta', 'Abierta'),
-        ('cerrada', 'Cerrada'),
-    ]
-    nombre         = models.CharField(max_length=100)
-    responsable    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='cajas')
-    saldo_inicial  = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    saldo_final    = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    estado         = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='abierta')
-    fecha_apertura = models.DateTimeField(default=timezone.now)
-    fecha_cierre   = models.DateTimeField(null=True, blank=True)
-    observaciones  = models.TextField(blank=True)
-
-    class Meta:
-        db_table = 'mod_caja'
-        ordering = ['-fecha_apertura']
-        verbose_name = 'Caja'
-        verbose_name_plural = 'Cajas'
-
-    def __str__(self):
-        return f'Caja {self.nombre} - {self.get_estado_display()}'
-
-
 @receiver(post_save, sender=Producto)
 def actualizar_ordenes_al_cambiar_producto(sender, instance, **kwargs):
     """
