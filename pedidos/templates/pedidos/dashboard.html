@@ -86,6 +86,7 @@
               font-weight:700; padding:.25rem .65rem; border-radius:50px; text-transform:uppercase; letter-spacing:.4px; }
   .pm-badge-pendiente  { background:#FAEEDA; color:#8B4000; }
   .pm-badge-en_proceso { background:#FFF0DC; color:#7A4500; }
+  .pm-badge-listo      { background:#DFF5E1; color:#1A6B2A; }
   .pm-badge-completado,.pm-badge-pagada,.pm-badge-aprobado
                        { background:#FFF0DC; color:#C0502A; }
   .pm-badge-cancelado,.pm-badge-anulada,.pm-badge-rechazado
@@ -167,7 +168,6 @@
   {% endfor %}
 {% endif %}
 
-<!-- ── NAV (sin Caja) ── -->
 <div class="pm-nav">
   <div class="pm-nav-group">
     <button class="pm-btn pm-btn-primary" onclick="showSection('dashboard')">Inicio</button>
@@ -228,7 +228,7 @@
           <tbody>
             {% for p in ultimos_pedidos %}
             <tr>
-              <td><strong>{{ p.ordenes.first.numero_orden|default:p.pk }}</strong></td>
+              <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
               <td>{{ p.cliente }}</td>
               <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
               <td>${{ p.total }}</td>
@@ -290,7 +290,7 @@
               <tbody>
                 {% for p in grupo.pedidos %}
                 <tr>
-                  <td><strong>{{ p.ordenes.first.numero_orden|default:p.pk }}</strong></td>
+                  <td><strong>{{ p.pk|stringformat:"02d" }}</strong></td>
                   <td>{{ p.cliente }}</td>
                   <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
                     {% for item in p.items.all %}
@@ -341,15 +341,15 @@
           <div class="full">
             <label>Mesa</label>
             <select name="cliente"
-        style="width:100%;padding:.55rem .85rem;border:1px solid var(--p-border);
-               border-radius:8px;font-size:.9rem;color:var(--p-text);background:var(--p-surface);">
-  <option value="">— Selecciona una mesa —</option>
-  {% for mesa in mesas_bd %}
-    <option value="Mesa {{ mesa.numero_mesa }}">
-  Mesa {{ mesa.numero_mesa }} — {{ mesa.capacidad }} pers.
-</option>
-  {% endfor %}
-</select>
+                    style="width:100%;padding:.55rem .85rem;border:1px solid var(--p-border);
+                           border-radius:8px;font-size:.9rem;color:var(--p-text);background:var(--p-surface);">
+              <option value="">— Selecciona una mesa —</option>
+              {% for mesa in mesas_bd %}
+                <option value="Mesa {{ mesa.numero_mesa }}">
+                  Mesa {{ mesa.numero_mesa }} — {{ mesa.capacidad }} pers.
+                </option>
+              {% endfor %}
+            </select>
           </div>
           <div>
             <label>Estado</label>
@@ -434,7 +434,6 @@
         <input type="hidden" name="seccion" value="orden-lista">
         <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
                type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o mesa…">
-        
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
       </form>
 
@@ -508,7 +507,7 @@
           <tbody>
             {% for prod in productos %}
             <tr>
-              <td><strong>#{{ forloop.counter }}</strong></td>
+              <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
               <td><strong>{{ prod.nombre }}</strong></td>
               <td>{{ prod.get_categoria_display }}</td>
               <td>${{ prod.precio }}</td>
@@ -608,7 +607,7 @@
 
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>Editar Pedido #{{ pedido_editando.pk }}</h3>
+      <h3>Editar Pedido #{{ pedido_editando.pk|stringformat:"02d" }}</h3>
       <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
     </div>
     <div class="pm-card-body">
