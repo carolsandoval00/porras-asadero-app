@@ -1,12 +1,17 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.utils import timezone
 from itertools import groupby
-from .models import Pedido, Orden, Producto, PedidoItem, Contador
+from .models import Pedido, Orden, Producto, PedidoItem
 from .forms import PedidoForm, OrdenForm, ProductoForm
 from reservas.models import Mesa
 import json
+
+
+def _get_numero_orden():
+    ultimo = Orden.objects.aggregate(Max('id'))['id__max'] or 0
+    return ultimo + 1
 
 
 def _dashboard_context(request, extra=None):
@@ -18,9 +23,10 @@ def _dashboard_context(request, extra=None):
     estado_orden_sel = request.GET.get('estado_orden', '').strip()
     seccion_get      = request.GET.get('seccion', '').strip()
 
+    # ✅ orden ascendente: el primero creado aparece primero, el nuevo al final
     pedidos_qs = Pedido.objects.select_related('creado_por').prefetch_related(
         'items__producto', 'ordenes'
-    ).order_by('-fecha_creacion')
+    ).order_by('fecha_creacion')
     if q:
         pedidos_qs = pedidos_qs.filter(Q(cliente__icontains=q) | Q(descripcion__icontains=q))
     if estado_sel:
@@ -68,7 +74,8 @@ def _dashboard_context(request, extra=None):
         'total_ordenes':      Orden.objects.count(),
         'total_productos':    Producto.objects.count(),
         'productos_activos':  Producto.objects.filter(disponible=True).count(),
-        'ultimos_pedidos':    Pedido.objects.select_related('creado_por').order_by('-fecha_creacion')[:5],
+        # ✅ ascendente: el nuevo queda de último
+        'ultimos_pedidos':    Pedido.objects.select_related('creado_por').order_by('fecha_creacion')[:5],
         'pedidos':            pedidos_qs,
         'pedidos_por_fecha':  pedidos_por_fecha,
         'ordenes':            ordenes_qs,
@@ -139,8 +146,8 @@ def dashboard(request):
                         cantidad=it['cantidad'], precio_unitario=it['producto'].precio,
                     )
 
-                resumen = ', '.join(f"{it['cantidad']}x {it['producto'].nombre}" for it in items_data)
-                numero  = Contador.siguiente()
+                resumen    = ', '.join(f"{it['cantidad']}x {it['producto'].nombre}" for it in items_data)
+                numero     = _get_numero_orden()
                 numero_str = f'{numero:02d}'
 
                 Orden.objects.create(
@@ -275,8 +282,8 @@ def orden_lista(request):
 def orden_crear(request):
     form = OrdenForm(request.POST or None)
     if form.is_valid():
-        orden = form.save(commit=False)
-        numero = Contador.siguiente()
+        orden              = form.save(commit=False)
+        numero             = _get_numero_orden()
         orden.numero_orden = f'{numero:02d}'
         orden.save()
         messages.success(request, '✅ Orden creada.')

@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db.models import Sum
 from django.utils import timezone
+from django.http import JsonResponse
 from itertools import groupby
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
@@ -40,6 +41,26 @@ def pago_dashboard(request):
             except Caja.DoesNotExist:
                 messages.error(request, '❌ No se encontró la caja o ya está cerrada.')
             return redirect('pago:dashboard')
+
+        # ✅ NUEVO: editar cajero y observaciones de una caja via AJAX
+        elif action == 'editar_caja':
+            caja_id      = request.POST.get('caja_id')
+            cajero       = request.POST.get('cajero', '').strip()
+            observaciones = request.POST.get('observaciones', '').strip()
+
+            try:
+                caja = Caja.objects.get(pk=caja_id)
+                if cajero:
+                    caja.cajero = cajero
+                caja.observaciones = observaciones
+                caja.save()
+                return JsonResponse({
+                    'ok': True,
+                    'cajero': caja.cajero,
+                    'observaciones': caja.observaciones or '—',
+                })
+            except Caja.DoesNotExist:
+                return JsonResponse({'ok': False, 'error': 'Caja no encontrada.'}, status=404)
 
         else:
             post_data = request.POST.copy()

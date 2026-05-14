@@ -1,25 +1,7 @@
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
-
-class Contador(models.Model):
-    """Contador global para numeración secuencial de pedidos/órdenes."""
-    ultimo_numero = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        db_table = 'mod_contador'
-
-    @classmethod
-    def siguiente(cls):
-        from django.db import transaction
-        with transaction.atomic():
-            obj, _ = cls.objects.select_for_update().get_or_create(pk=1)
-            obj.ultimo_numero += 1
-            obj.save()
-            return obj.ultimo_numero
 
 
 class Producto(models.Model):
@@ -49,9 +31,10 @@ class Producto(models.Model):
 
 class Pedido(models.Model):
     ESTADO_CHOICES = [
-  
-        ('en_proceso',  'En Proceso'),
-        ('cancelado',   'Cancelado'),
+        ('pendiente',  'Pendiente'),
+        ('en_proceso', 'En Proceso'),
+        ('listo',      'Listo'),
+        ('cancelado',  'Cancelado'),
     ]
     cliente             = models.CharField(max_length=200)
     descripcion         = models.TextField(blank=True)
@@ -116,13 +99,14 @@ class Orden(models.Model):
         return f'Orden {self.numero_orden}'
 
     def save(self, *args, **kwargs):
+        if not self.numero_orden:
+            self.numero_orden = f"ORD-{self.pedido.pk:05d}"
         self.total = self.subtotal + self.impuesto
         super().save(*args, **kwargs)
 
 
 @receiver(post_save, sender=Producto)
 def actualizar_ordenes_al_cambiar_producto(sender, instance, **kwargs):
-    from django.db.models import Sum, F
     pedidos_con_producto = Pedido.objects.filter(
         items__producto=instance,
         estado='pendiente'
