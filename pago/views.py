@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db.models import Sum
 from django.utils import timezone
+from django.http import JsonResponse
 from itertools import groupby
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
@@ -19,10 +20,15 @@ def pago_dashboard(request):
             form_apertura = CajaForm(request.POST)
             if form_apertura.is_valid():
                 apertura = form_apertura.save(commit=False)
+                # CORRECCIÓN: se eliminó apertura.cajero = request.user
+                # Ahora el cajero lo elige el usuario en el formulario (Select),
+                # no se asigna automáticamente al usuario logueado.
                 apertura.estado = 'abierta'
                 apertura.save()
                 messages.success(request, '✅ Caja abierta correctamente.')
                 return redirect('pago:dashboard')
+            else:
+                messages.error(request, '❌ Revisa los campos e intenta de nuevo.')
 
         elif action == 'cerrar_caja':
             caja_id = request.POST.get('caja_id')
@@ -35,6 +41,26 @@ def pago_dashboard(request):
             except Caja.DoesNotExist:
                 messages.error(request, '❌ No se encontró la caja o ya está cerrada.')
             return redirect('pago:dashboard')
+
+        # ✅ NUEVO: editar cajero y observaciones de una caja via AJAX
+        elif action == 'editar_caja':
+            caja_id      = request.POST.get('caja_id')
+            cajero       = request.POST.get('cajero', '').strip()
+            observaciones = request.POST.get('observaciones', '').strip()
+
+            try:
+                caja = Caja.objects.get(pk=caja_id)
+                if cajero:
+                    caja.cajero = cajero
+                caja.observaciones = observaciones
+                caja.save()
+                return JsonResponse({
+                    'ok': True,
+                    'cajero': caja.cajero,
+                    'observaciones': caja.observaciones or '—',
+                })
+            except Caja.DoesNotExist:
+                return JsonResponse({'ok': False, 'error': 'Caja no encontrada.'}, status=404)
 
         else:
             post_data = request.POST.copy()
@@ -89,7 +115,7 @@ def pago_editar(request, pk):
     form = PagoForm(request.POST or None, instance=pago)
     if form.is_valid():
         form.save()
-        messages.success(request, ' Pago actualizado.')
+        messages.success(request, '✅ Pago actualizado.')
         return redirect('pago:dashboard')
     return render(request, 'pago/form.html', {
         'form':   form,

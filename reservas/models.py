@@ -16,7 +16,7 @@ class Reserva(models.Model):
     numero = models.AutoField(primary_key=True, verbose_name='Número')
     hora_reserva = models.TimeField(verbose_name='Hora de la Reserva')
     numero_personas = models.IntegerField(verbose_name='Número de Personas')
-    nombre_usuario = models.CharField(max_length=100, verbose_name='Nombre del Usuario')
+    usuario = models.ForeignKey('usuarios.Usuario', on_delete=models.SET_NULL, null=True)
 
     numero_mesa = models.ForeignKey(
     'Mesa',
@@ -26,7 +26,7 @@ class Reserva(models.Model):
     blank=True
 )
 
-    numero_reserva = models.IntegerField(verbose_name='Número de Reserva')
+    
 
     class Meta:
         verbose_name = 'Reserva'
