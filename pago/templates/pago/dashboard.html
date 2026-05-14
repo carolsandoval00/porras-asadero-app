@@ -57,8 +57,7 @@
                         font-weight:800; padding:.3rem .9rem; border-radius:50px;
                         text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
   .fecha-line         { flex:1; height:1px; background:var(--p-border); }
-  .fecha-subtotal     { font-size:.78rem; font-weight:700; color:var(--p-muted);
-                        white-space:nowrap; }
+  .fecha-subtotal     { font-size:.78rem; font-weight:700; color:var(--p-muted); white-space:nowrap; }
 
   .pg-search-bar { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1.2rem; }
   .pg-search-bar input,
@@ -90,6 +89,7 @@
                    font-weight:600; padding:.42rem .95rem; border-radius:50px; border:none;
                    cursor:pointer; text-decoration:none; transition:all .2s; white-space:nowrap; }
   .pg-btn:hover  { filter:brightness(1.1); transform:translateY(-1px); text-decoration:none; }
+  .pg-btn:disabled { opacity:.6; cursor:not-allowed; transform:none; filter:none; }
   .pg-btn-accent { background:var(--p-accent); color:#F5ECD7; }
   .pg-btn-light  { background:var(--p-surface); color:var(--p-text); border:1px solid var(--p-border); }
   .pg-btn-danger { background:var(--p-primary); color:#F5ECD7; }
@@ -135,7 +135,29 @@
                      max-width:380px; width:90%; box-shadow:var(--p-shadow-lg); animation:fadeIn .2s ease; }
   .pg-modal-box h4 { font-size:1.1rem; font-weight:700; margin:0 0 .5rem; color:var(--p-primary); }
   .pg-modal-box p  { font-size:.9rem; color:var(--p-muted); margin:0 0 1.4rem; }
-  .pg-modal-actions{ display:flex; gap:.7rem; }
+  .pg-modal-actions{ display:flex; gap:.7rem; flex-wrap:wrap; }
+
+  /* Campos dentro de modales */
+  .pg-modal-field { margin-bottom:.9rem; }
+  .pg-modal-field label {
+    font-size:.8rem; font-weight:600; color:var(--p-muted);
+    text-transform:uppercase; letter-spacing:.5px;
+    display:block; margin-bottom:.3rem;
+  }
+  .pg-modal-field input,
+  .pg-modal-field textarea {
+    width:100%; padding:.55rem .85rem;
+    border:1px solid var(--p-border); border-radius:8px;
+    font-size:.9rem; color:var(--p-text); background:var(--p-surface);
+    box-sizing:border-box; transition:border-color .2s, box-shadow .2s;
+    font-family:inherit;
+  }
+  .pg-modal-field input:focus,
+  .pg-modal-field textarea:focus {
+    outline:none; border-color:var(--p-primary);
+    box-shadow:0 0 0 3px rgba(192,57,43,.12);
+  }
+  .pg-modal-field textarea { resize:vertical; }
 
   #sin-resultados { display:none; text-align:center; color:var(--p-muted);
                     padding:2rem; font-size:.9rem; }
@@ -211,12 +233,8 @@
           <table class="pg-table">
             <thead>
               <tr>
-                <th>Orden</th>
-                <th>mesa</th>
-                <th>Descripción</th>
-                <th>Total a cobrar</th>
-                <th>Fecha orden</th>
-                <th>Acción</th>
+                <th>Orden</th><th>Mesa</th><th>Descripción</th>
+                <th>Total a cobrar</th><th>Fecha orden</th><th>Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -231,13 +249,8 @@
                 <td>{{ o.creada_en|date:"d/m/Y H:i" }}</td>
                 <td>
                   <button class="pg-btn pg-btn-pago pg-btn-sm"
-                          onclick="registrarPago(
-                            '{{ o.numero_orden }}',
-                            {{ o.pk }},
-                            '{{ o.pedido.cliente|escapejs }}',
-                            {{ o.total }}
-                          )">
-                     Registrar pago
+                          onclick="registrarPago('{{ o.numero_orden }}',{{ o.pk }},'{{ o.pedido.cliente|escapejs }}',{{ o.total }})">
+                    Registrar pago
                   </button>
                 </td>
               </tr>
@@ -261,18 +274,17 @@
     <div class="pg-card">
       <div class="pg-card-header"><h3>Pagos registrados</h3></div>
       <div class="pg-card-body">
-
         <div class="pg-search-bar">
-  <input type="text" id="buscador-pagos"
-       placeholder="Buscar por orden, cliente o referencia…"
-       oninput="filtrarPagos()">
-  <select id="filtro-metodo">
-    <option value="">Todos los métodos</option>
-    <option value="efectivo">Efectivo</option>
-    <option value="transferencia">Transferencia</option>
-  </select>
-  <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()">Filtrar</button>
-</div>
+          <input type="text" id="buscador-pagos"
+               placeholder="Buscar por orden, cliente o referencia…"
+               oninput="filtrarPagos()">
+          <select id="filtro-metodo">
+            <option value="">Todos los métodos</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+          <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()">Filtrar</button>
+        </div>
 
         {% if pagos_por_fecha %}
           {% for grupo in pagos_por_fecha %}
@@ -286,40 +298,25 @@
               <table class="pg-table">
                 <thead>
                   <tr>
-                    <th>Orden</th>
-                    <th>Cliente</th>
-                    <th>Método</th>
-                    <th>Monto</th>
-                    <th>Referencia</th>
-                    <th>Estado</th>
-                    <th>Hora</th>
-                    <!-- ✅ NUEVO: columna acciones -->
-                 
+                    <th>Orden</th><th>Cliente</th><th>Método</th>
+                    <th>Monto</th><th>Referencia</th><th>Estado</th><th>Hora</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for pg in grupo.pagos %}
-                  <!-- data-* para búsqueda client-side -->
                   <tr class="fila-pago"
                       data-orden="{% if pg.orden %}{{ pg.orden.numero_orden|lower }}{% endif %}"
                       data-cliente="{% if pg.orden %}{{ pg.orden.pedido.cliente|lower }}{% endif %}"
                       data-referencia="{{ pg.referencia|lower }}"
                       data-metodo="{{ pg.metodo_pago }}"
                       data-estado="{{ pg.estado }}">
-                    <td>
-                      {% if pg.orden %}
-                        <strong>{{ pg.orden.numero_orden }}</strong>
-                      {% else %}
-                        <span style="color:var(--p-muted)">Manual</span>
-                      {% endif %}
-                    </td>
+                    <td>{% if pg.orden %}<strong>{{ pg.orden.numero_orden }}</strong>{% else %}<span style="color:var(--p-muted)">Manual</span>{% endif %}</td>
                     <td>{% if pg.orden %}{{ pg.orden.pedido.cliente }}{% else %}—{% endif %}</td>
                     <td>{{ pg.get_metodo_pago_display }}</td>
                     <td><strong style="color:#C0392B">${{ pg.monto }}</strong></td>
                     <td>{{ pg.referencia|default:"—" }}</td>
                     <td><span class="pg-badge pg-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
                     <td>{{ pg.fecha_pago|date:"H:i" }}</td>
-                 
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -327,10 +324,7 @@
             </div>
           </div>
           {% endfor %}
-
-          <!-- Mensaje cuando el buscador no encuentra resultados -->
           <p id="sin-resultados">No se encontraron pagos con ese criterio.</p>
-
         {% else %}
           <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pagos registrados aún.</p>
         {% endif %}
@@ -393,31 +387,35 @@
               <tr>
                 <th>#</th><th>Cajero</th><th>Saldo inicial</th>
                 <th>Estado</th><th>Apertura</th><th>Cierre</th>
-                <th>Observaciones</th>
+                <th>Observaciones</th><th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {% for caja in cajas %}
-              <tr>
+              <!-- data-caja-pk permite al JS actualizar la fila sin recargar -->
+              <tr data-caja-pk="{{ caja.pk }}">
                 <td><strong>#{{ caja.pk }}</strong></td>
-                <td>{{ caja.cajero }}</td>
+                <td data-col="cajero">{{ caja.cajero }}</td>
                 <td><strong style="color:#C0392B">${{ caja.monto_inicial|floatformat:2 }}</strong></td>
                 <td><span class="pg-badge pg-badge-{{ caja.estado }}">{{ caja.get_estado_display }}</span></td>
                 <td>{{ caja.fecha_apertura|date:"d/m/Y H:i" }}</td>
                 <td>
-                  {% if caja.fecha_cierre %}
-                    {{ caja.fecha_cierre|date:"d/m/Y H:i" }}
-                  {% else %}
-                    <span style="color:var(--p-muted)">—</span>
-                  {% endif %}
+                  {% if caja.fecha_cierre %}{{ caja.fecha_cierre|date:"d/m/Y H:i" }}
+                  {% else %}<span style="color:var(--p-muted)">—</span>{% endif %}
                 </td>
-                <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+                <td data-col="observaciones"
+                    style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
                   {{ caja.observaciones|default:"—" }}
                 </td>
                 <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
                   <a href="{% url 'pago:caja_detalle' caja.pk %}" class="pg-btn pg-btn-light pg-btn-sm">
                     👁 Ver detalle
                   </a>
+                  <!-- ✅ Botón Editar — solo pasa el id, los valores se leen del DOM -->
+                  <button class="pg-btn pg-btn-light pg-btn-sm"
+                          onclick="abrirEditarCaja({{ caja.pk }})">
+                    ✏️ Editar
+                  </button>
                   {% if caja.estado == 'abierta' %}
                   <button class="pg-btn pg-btn-danger pg-btn-sm"
                           onclick="confirmarCierreCaja({{ caja.pk }}, '{{ caja.cajero|escapejs }}')">
@@ -461,7 +459,6 @@
         </div>
       </div>
       <div class="pg-card-body">
-
         <div class="info-row">
           <span>📅 <strong>Apertura:</strong> {{ caja_seleccionada.fecha_apertura|date:"d/m/Y H:i" }}</span>
           <span>💰 <strong>Saldo inicial:</strong> ${{ caja_seleccionada.monto_inicial|floatformat:2 }}</span>
@@ -472,7 +469,6 @@
             <span>📝 <strong>Notas:</strong> {{ caja_seleccionada.observaciones }}</span>
           {% endif %}
         </div>
-
         <div class="pg-stats">
           <div class="pg-stat">
             <div class="val">${{ caja_seleccionada.monto_inicial|floatformat:0 }}</div>
@@ -491,12 +487,10 @@
             <div class="lbl">Saldo final estimado</div>
           </div>
         </div>
-
         <h3 style="font-size:.95rem;margin-bottom:.8rem;">
           Pagos en esta caja
           <span style="font-size:.8rem;color:var(--p-muted);font-weight:400;">({{ pagos_caja.count }})</span>
         </h3>
-
         {% if pagos_caja %}
         <div class="pg-table-wrap">
           <table class="pg-table">
@@ -510,10 +504,7 @@
               {% for pago in pagos_caja %}
               <tr>
                 <td><strong>#{{ pago.pk }}</strong></td>
-                <td>
-                  {% if pago.orden %}<strong>{{ pago.orden.numero_orden }}</strong>
-                  {% else %}<span style="color:var(--p-muted)">Manual</span>{% endif %}
-                </td>
+                <td>{% if pago.orden %}<strong>{{ pago.orden.numero_orden }}</strong>{% else %}<span style="color:var(--p-muted)">Manual</span>{% endif %}</td>
                 <td>{% if pago.orden %}{{ pago.orden.pedido.cliente }}{% else %}—{% endif %}</td>
                 <td>{{ pago.get_metodo_pago_display }}</td>
                 <td><strong style="color:#C0392B">${{ pago.monto|floatformat:2 }}</strong></td>
@@ -539,7 +530,6 @@
             📭 No hay pagos registrados en esta caja aún.
           </p>
         {% endif %}
-
       </div>
     </div>
     {% endif %}
@@ -597,11 +587,7 @@
 </div><!-- fin pg-wrapper -->
 
 
-
 <!-- Modal eliminar pago -->
-
-<!-- ✅ NUEVO: Modal confirmar eliminación con form POST -->
-
 <div id="modal-eliminar" class="pg-modal-overlay">
   <div class="pg-modal-box">
     <h4>Confirmar eliminación</h4>
@@ -635,6 +621,39 @@
     </div>
   </div>
 </div>
+
+<!-- ✅ Modal editar caja — AJAX, no recarga la página -->
+<div id="modal-editar-caja" class="pg-modal-overlay">
+  <div class="pg-modal-box" style="max-width:440px;width:92%;">
+    <h4>✏️ Editar caja</h4>
+    <p id="modal-editar-titulo" style="margin-bottom:1rem;font-size:.88rem;"></p>
+
+    <!-- Feedback inline dentro del modal -->
+    <div id="editar-feedback"
+         style="display:none;padding:.7rem 1rem;border-radius:8px;font-size:.85rem;
+                font-weight:600;margin-bottom:1rem;border-left:4px solid transparent;">
+    </div>
+
+    <div class="pg-modal-field">
+      <label>Cajero</label>
+      <input type="text" id="editar-cajero" placeholder="Nombre del cajero">
+    </div>
+    <div class="pg-modal-field">
+      <label>Observaciones
+        <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.78rem">(opcional)</span>
+      </label>
+      <textarea id="editar-observaciones" rows="3" placeholder="Observaciones de la caja…"></textarea>
+    </div>
+
+    <div class="pg-modal-actions" style="margin-top:1.4rem;">
+      <button id="btn-guardar-caja" class="pg-btn pg-btn-accent" onclick="guardarEditarCaja()">
+        💾 Guardar cambios
+      </button>
+      <button class="pg-btn pg-btn-light" onclick="cerrarEditarCaja()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 
 <script>
 // ── Tabs ────────────────────────────────────────────────────
@@ -671,31 +690,121 @@ function confirmarEliminar(pk, referencia) {
     `¿Eliminar el pago de la orden "${referencia}"? Esta acción no se puede deshacer.`;
   document.getElementById('modal-eliminar').classList.add('open');
 }
-
 function cerrarModal() {
   document.getElementById('modal-eliminar').classList.remove('open');
 }
 
-
+// ── Cerrar caja ─────────────────────────────────────────────
 function confirmarCierreCaja(cajaId, cajero) {
   document.getElementById('modal-cierre-caja-id').value = cajaId;
   document.getElementById('modal-cierre-msg').textContent =
     `¿Confirmas el cierre de la Caja #${cajaId} (${cajero})?`;
   document.getElementById('modal-cerrar-caja').classList.add('open');
 }
-
 function cerrarModalCierre() {
   document.getElementById('modal-cerrar-caja').classList.remove('open');
 }
 
-document.getElementById('modal-eliminar').addEventListener('click', function(e){
-  if (e.target === this) cerrarModal();
-});
+// ── Editar caja (AJAX) ──────────────────────────────────────
+let _editandoCajaId = null;
 
-document.getElementById('modal-cerrar-caja').addEventListener('click', function(e){
-  if (e.target === this) cerrarModalCierre();
-});
+function abrirEditarCaja(cajaId) {
+  _editandoCajaId = cajaId;
 
+  // Lee los valores ACTUALES del DOM para reflejar ediciones previas
+  const fila = document.querySelector(`[data-caja-pk="${cajaId}"]`);
+  const cajeroActual = fila ? fila.querySelector('[data-col="cajero"]').textContent.trim() : '';
+  const obsActual    = fila ? fila.querySelector('[data-col="observaciones"]').textContent.trim() : '';
+
+  document.getElementById('editar-cajero').value        = cajeroActual;
+  // Si el placeholder es "—" lo tratamos como vacío
+  document.getElementById('editar-observaciones').value = obsActual === '—' ? '' : obsActual;
+  document.getElementById('modal-editar-titulo').textContent = 'Editando Caja #' + cajaId;
+
+  // Limpia feedback anterior
+  const fb = document.getElementById('editar-feedback');
+  fb.style.display = 'none';
+  fb.textContent   = '';
+
+  // Restaura el botón por si quedó deshabilitado
+  const btn = document.getElementById('btn-guardar-caja');
+  btn.disabled    = false;
+  btn.textContent = '💾 Guardar cambios';
+
+  document.getElementById('modal-editar-caja').classList.add('open');
+}
+
+function cerrarEditarCaja() {
+  document.getElementById('modal-editar-caja').classList.remove('open');
+}
+
+function guardarEditarCaja() {
+  const cajero        = document.getElementById('editar-cajero').value.trim();
+  const observaciones = document.getElementById('editar-observaciones').value.trim();
+  const btn           = document.getElementById('btn-guardar-caja');
+  const fb            = document.getElementById('editar-feedback');
+
+  if (!cajero) {
+    mostrarFeedback(fb, 'error', '⚠️ El nombre del cajero no puede estar vacío.');
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = 'Guardando…';
+
+  const formData = new FormData();
+  formData.append('action',               'editar_caja');
+  formData.append('caja_id',             _editandoCajaId);
+  formData.append('cajero',              cajero);
+  formData.append('observaciones',       observaciones);
+  formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+  fetch("{% url 'pago:dashboard' %}", { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled    = false;
+      btn.textContent = '💾 Guardar cambios';
+
+      if (data.ok) {
+        // ✅ Actualiza la fila en la tabla sin recargar
+        const fila = document.querySelector(`[data-caja-pk="${_editandoCajaId}"]`);
+        if (fila) {
+          const tdCajero = fila.querySelector('[data-col="cajero"]');
+          const tdObs    = fila.querySelector('[data-col="observaciones"]');
+          if (tdCajero) tdCajero.textContent = data.cajero;
+          if (tdObs)    tdObs.textContent    = data.observaciones;
+        }
+        mostrarFeedback(fb, 'success', '✅ Cambios guardados correctamente.');
+        setTimeout(cerrarEditarCaja, 1200);
+      } else {
+        mostrarFeedback(fb, 'error', '❌ ' + (data.error || 'Error al guardar.'));
+      }
+    })
+    .catch(() => {
+      btn.disabled    = false;
+      btn.textContent = '💾 Guardar cambios';
+      mostrarFeedback(fb, 'error', '❌ Error de conexión. Intenta de nuevo.');
+    });
+}
+
+function mostrarFeedback(el, tipo, texto) {
+  el.textContent          = texto;
+  el.style.display        = 'block';
+  el.style.background     = tipo === 'success' ? '#FFF0DC' : '#FAE0DC';
+  el.style.color          = tipo === 'success' ? '#C0502A' : '#C0392B';
+  el.style.borderLeftColor = tipo === 'success' ? 'var(--p-accent)' : 'var(--p-primary)';
+}
+
+function getCookie(name) {
+  let v = null;
+  document.cookie.split(';').forEach(c => {
+    const [k, val] = c.trim().split('=');
+    if (k === name) v = decodeURIComponent(val);
+  });
+  return v;
+}
+
+// ── Fecha apertura ──────────────────────────────────────────
 function setFechaApertura() {
   const el = document.getElementById('fecha-apertura-display');
   if (!el) return;
@@ -706,44 +815,38 @@ function setFechaApertura() {
 setFechaApertura();
 setInterval(setFechaApertura, 30000);
 
-document.getElementById('modal-eliminar').addEventListener('click', function(e) {
-  if (e.target === this) cerrarModal();
-});
+// ── Cerrar modales al clic en overlay ──────────────────────
+document.getElementById('modal-eliminar').addEventListener('click',     function(e){ if(e.target===this) cerrarModal(); });
+document.getElementById('modal-cerrar-caja').addEventListener('click',  function(e){ if(e.target===this) cerrarModalCierre(); });
+document.getElementById('modal-editar-caja').addEventListener('click',  function(e){ if(e.target===this) cerrarEditarCaja(); });
 
 // ── Buscador de pagos (client-side) ─────────────────────────
 function filtrarPagos() {
-  const texto   = document.getElementById('buscador-pagos').value.toLowerCase().trim();
-  const metodo  = document.getElementById('filtro-metodo').value;
-  const estado  = '';
-  const filas   = document.querySelectorAll('.fila-pago');
-  const grupos  = document.querySelectorAll('[data-fecha-grupo]');
-  let   hayAlgo = false;
-
+  const texto  = document.getElementById('buscador-pagos').value.toLowerCase().trim();
+  const metodo = document.getElementById('filtro-metodo').value;
+  const filas  = document.querySelectorAll('.fila-pago');
+  const grupos = document.querySelectorAll('[data-fecha-grupo]');
+  let hayAlgo  = false;
 
   filas.forEach(function(fila) {
     const orden      = fila.dataset.orden      || '';
     const cliente    = fila.dataset.cliente    || '';
     const referencia = fila.dataset.referencia || '';
     const mFila      = fila.dataset.metodo     || '';
-    const eFila      = fila.dataset.estado     || '';
-
     const coincideTexto  = !texto  || orden.includes(texto) || cliente.includes(texto) || referencia.includes(texto);
     const coincideMetodo = !metodo || mFila === metodo;
-    if (coincideTexto && coincideMetodo)  {
-      fila.classList.remove('fila-oculta');
-      hayAlgo = true;
+    if (coincideTexto && coincideMetodo) {
+      fila.classList.remove('fila-oculta'); hayAlgo = true;
     } else {
       fila.classList.add('fila-oculta');
     }
   });
 
-  // Ocultar grupos de fecha que quedaron sin filas visibles
   grupos.forEach(function(grupo) {
     const visibles = grupo.querySelectorAll('.fila-pago:not(.fila-oculta)');
     grupo.style.display = visibles.length > 0 ? '' : 'none';
   });
 
-  // Mostrar mensaje "sin resultados"
   const sinRes = document.getElementById('sin-resultados');
   if (sinRes) sinRes.style.display = hayAlgo ? 'none' : 'block';
 }
