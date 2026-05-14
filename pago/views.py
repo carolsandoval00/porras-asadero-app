@@ -20,10 +20,15 @@ def pago_dashboard(request):
             form_apertura = CajaForm(request.POST)
             if form_apertura.is_valid():
                 apertura = form_apertura.save(commit=False)
+                # CORRECCIÓN: se eliminó apertura.cajero = request.user
+                # Ahora el cajero lo elige el usuario en el formulario (Select),
+                # no se asigna automáticamente al usuario logueado.
                 apertura.estado = 'abierta'
                 apertura.save()
                 messages.success(request, '✅ Caja abierta correctamente.')
                 return redirect('pago:dashboard')
+            else:
+                messages.error(request, '❌ Revisa los campos e intenta de nuevo.')
 
         elif action == 'cerrar_caja':
             caja_id = request.POST.get('caja_id')
@@ -110,7 +115,7 @@ def pago_editar(request, pk):
     form = PagoForm(request.POST or None, instance=pago)
     if form.is_valid():
         form.save()
-        messages.success(request, ' Pago actualizado.')
+        messages.success(request, '✅ Pago actualizado.')
         return redirect('pago:dashboard')
     return render(request, 'pago/form.html', {
         'form':   form,

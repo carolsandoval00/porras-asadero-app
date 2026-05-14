@@ -37,9 +37,10 @@ class CajaForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0',
             }),
+            # CORRECCIÓN: vuelve a TextInput, el cajero se escribe manualmente.
             'cajero': forms.TextInput(attrs={
                 'style': _INPUT,
-                'placeholder': 'Nombre del cajero',
+                'placeholder': 'Nombre del cajero responsable',
             }),
             'observaciones': forms.Textarea(attrs={
                 'style': _INPUT + 'resize:vertical;min-height:80px;',
@@ -51,3 +52,4 @@ class CajaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['observaciones'].required = False
+        self.fields['cajero'].required = False
