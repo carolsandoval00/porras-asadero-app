@@ -2,8 +2,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class Usuario(AbstractUser):
-    # AbstractUser ya trae: username, first_name, last_name, email, password, etc.
-    
     email = models.EmailField(unique=True, verbose_name='Correo electrónico')
     telefono = models.CharField(max_length=15, blank=True, null=True, verbose_name='Teléfono')
     
@@ -40,8 +38,15 @@ class Usuario(AbstractUser):
         default='MESERO', 
         verbose_name='Rol del Usuario'
     )
+    
+    
+    foto = models.ImageField(
+        upload_to='fotos_perfil/',
+        blank=True,
+        null=True,
+        verbose_name='Foto de perfil'
+    )
 
-    # El campo 'email' es obligatorio para el superusuario
     REQUIRED_FIELDS = ['email']
 
     class Meta:
@@ -49,5 +54,4 @@ class Usuario(AbstractUser):
         verbose_name_plural = 'Usuarios'
         
     def __str__(self):
-        # Usamos los campos nativos de AbstractUser
         return f"{self.first_name} {self.last_name} ({self.username})"

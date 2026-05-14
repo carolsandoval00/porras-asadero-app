@@ -46,6 +46,8 @@
         background: linear-gradient(135deg, #8B1A10 0%, #C0392B 50%, #E8773A 100%);
         position: relative;
     }
+
+    /* AVATAR — ahora soporta foto */
     .perfil-avatar {
         position: absolute;
         bottom: -38px;
@@ -61,7 +63,35 @@
         font-family: 'Playfair Display', serif;
         font-size: 24px;
         color: #E87A3A;
+        overflow: hidden;
+        cursor: pointer;
     }
+    .perfil-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    /* Overlay "Cambiar" al hacer hover */
+    .perfil-avatar:hover .avatar-overlay { opacity: 1; }
+    .avatar-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,.45);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity .2s;
+        font-size: 10px;
+        font-family: 'Lato', sans-serif;
+        color: white;
+        font-weight: 700;
+        letter-spacing: .04em;
+    }
+    /* Input de archivo oculto */
+    #foto-input { display: none; }
+
     .perfil-edit-cover {
         position: absolute;
         top: 14px;
@@ -120,7 +150,6 @@
         color: #888;
     }
 
-    /* CONTENT — ahora es flex column para que el footer siempre quede pegado */
     .perfil-body {
         display: flex;
         flex-direction: column;
@@ -164,17 +193,14 @@
     .info-row .val { font-size: 13px; font-weight: 700; color: var(--carbon); }
     .info-row .val.highlight { color: var(--verde); }
 
-    /* PERMISOS — fuera del grid, en su propia fila */
     .perms-section {
         padding: 0 2.2rem 1.5rem;
     }
-
     .perms-box {
         background: var(--gris-suave);
         border-radius: 10px;
         padding: 1rem 1.1rem;
     }
-
     .perms-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -256,10 +282,21 @@
 
         <!-- COVER -->
         <div class="perfil-cover">
-            
-            <div class="perfil-avatar">
-                {{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}
-            </div>
+
+            <!-- AVATAR con subida de foto directa -->
+            <form id="foto-form" method="POST" action="{% url 'actualizar_foto' usuario.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="file" id="foto-input" name="foto" accept="image/*">
+                <div class="perfil-avatar" onclick="document.getElementById('foto-input').click()">
+                    {% if usuario.foto %}
+                        <img id="avatar-img" src="{{ usuario.foto.url }}" alt="Foto de {{ usuario.first_name }}">
+                    {% else %}
+                        <span id="avatar-iniciales">{{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}</span>
+                    {% endif %}
+                    <div class="avatar-overlay">Cambiar</div>
+                </div>
+            </form>
+
         </div>
 
         <div class="perfil-body">
@@ -281,7 +318,6 @@
             <!-- INFO + SEGURIDAD -->
             <div class="perfil-content">
 
-                <!-- Información personal -->
                 <div>
                     <p class="section-label">Información personal</p>
                     <div class="info-box">
@@ -308,7 +344,6 @@
                     </div>
                 </div>
 
-                <!-- Seguridad -->
                 <div>
                     <p class="section-label">Seguridad</p>
                     <div class="info-box">
@@ -341,12 +376,11 @@
 
             </div>
 
-            <!-- PERMISOS — fuera del grid de 2 columnas -->
+            <!-- PERMISOS -->
             <div class="perms-section">
                 <p class="section-label">Permisos del sistema</p>
                 <div class="perms-box">
                     <div class="perms-grid">
-
                         {% if usuario.rol == 'ADMIN' %}
                             <div class="perm-item"><div class="perm-check"></div> Gestionar personal</div>
                             <div class="perm-item"><div class="perm-check"></div> Crear usuarios</div>
@@ -356,21 +390,17 @@
                             <div class="perm-item"><div class="perm-check"></div> Reservas y mesas</div>
                             <div class="perm-item"><div class="perm-check"></div> Reportes</div>
                             <div class="perm-item"><div class="perm-check"></div> Gestionar menú</div>
-
                         {% elif usuario.rol == 'MESERO' %}
                             <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
                             <div class="perm-item"><div class="perm-check"></div> Crear pedidos</div>
                             <div class="perm-item"><div class="perm-check"></div> Reservas y mesas</div>
-
                         {% elif usuario.rol == 'COCINA' %}
                             <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
                             <div class="perm-item"><div class="perm-check"></div> Actualizar estado pedido</div>
-
                         {% elif usuario.rol == 'CAJA' or usuario.rol == 'CAJERO' %}
                             <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
                             <div class="perm-item"><div class="perm-check"></div> Gestionar pagos</div>
                             <div class="perm-item"><div class="perm-check"></div> Reportes de caja</div>
-
                         {% elif usuario.is_superuser %}
                             <div class="perm-item"><div class="perm-check"></div> Gestionar personal</div>
                             <div class="perm-item"><div class="perm-check"></div> Crear usuarios</div>
@@ -380,11 +410,9 @@
                             <div class="perm-item"><div class="perm-check"></div> Reservas y mesas</div>
                             <div class="perm-item"><div class="perm-check"></div> Reportes</div>
                             <div class="perm-item"><div class="perm-check"></div> Gestionar menú</div>
-
                         {% else %}
                             <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
                         {% endif %}
-
                     </div>
                 </div>
             </div>
@@ -395,9 +423,34 @@
                 <a href="{% url 'actualizar_usuarios' usuario.id %}" class="btn-editar">✎ Editar mis datos</a>
             </div>
 
-        </div><!-- /perfil-body -->
-
+        </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('foto-input').addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            // Preview instantáneo
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const avatar = document.querySelector('.perfil-avatar');
+                // Reemplaza iniciales o imagen anterior
+                const iniciales = document.getElementById('avatar-iniciales');
+                const imgExistente = document.getElementById('avatar-img');
+                if (iniciales) iniciales.remove();
+                if (imgExistente) imgExistente.remove();
+
+                const img = document.createElement('img');
+                img.id = 'avatar-img';
+                img.src = e.target.result;
+                avatar.insertBefore(img, avatar.firstChild);
+            };
+            reader.readAsDataURL(this.files[0]);
+
+            // Envía el formulario automáticamente
+            document.getElementById('foto-form').submit();
+        }
+    });
+</script>
 
 {% endblock %}

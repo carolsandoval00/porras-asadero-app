@@ -32,7 +32,6 @@
         padding: 2rem 1.2rem 3rem;
     }
 
-    /* TABS */
     .usr-tabs {
         display:flex; gap:.5rem; flex-wrap:wrap;
         margin-bottom:1.8rem; border-bottom:2px solid var(--gris-borde);
@@ -51,7 +50,6 @@
     .usr-tab.tab-nuevo { background:var(--rojo-lt); color:var(--rojo); border-color:var(--rojo); }
     .usr-tab.tab-nuevo:hover,.usr-tab.tab-nuevo.activo { background:var(--rojo); color:#F5ECD7; border-color:var(--rojo); }
 
-    /* SECCIONES */
     .usr-sec { display:none; animation:fadeUp .3s ease both; }
     .usr-sec.activa { display:block; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
@@ -61,18 +59,15 @@
     .sec-hdr h2 span { color:#C0392B; }
     .sec-hdr p { font-size:.87rem; color:var(--muted); }
 
-    /* CARD */
     .usr-card { background:var(--blanco); border-radius:14px; box-shadow:0 2px 16px rgba(26,16,8,.08); padding:1.5rem 1.6rem; margin-bottom:1.2rem; border:1px solid rgba(212,196,160,.6); }
     .c-label { font-size:.72rem; font-weight:700; letter-spacing:.09em; color:#A09070; text-transform:uppercase; padding-bottom:.75rem; border-bottom:1px solid var(--gris-borde); margin-bottom:1rem; }
 
-    /* STATS */
     .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.9rem; margin-bottom:1.5rem; }
     .stat-box { background:var(--blanco); border-radius:12px; border:1px solid rgba(212,196,160,.7); padding:1rem 1.1rem; box-shadow:0 1px 8px rgba(26,16,8,.05); }
     .stat-num { font-family:'Playfair Display',serif; font-size:2rem; line-height:1; color:var(--carbon); }
     .stat-lbl { font-size:.78rem; color:var(--muted); margin-top:.3rem; font-weight:700; letter-spacing:.04em; }
     .s-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
 
-    /* TABLA */
     .tbl-wrap { overflow-x:auto; border-radius:12px; }
     .usr-tbl { width:100%; border-collapse:collapse; font-size:.88rem; }
     .usr-tbl thead th { font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#A09070; padding:.75rem 1rem; text-align:left; background:var(--gris-suave); border-bottom:1px solid var(--gris-borde); }
@@ -80,11 +75,9 @@
     .usr-tbl tbody tr:last-child td { border-bottom:none; }
     .usr-tbl tbody tr:hover td { background:rgba(232,101,26,.04); transition:background .15s; }
 
-    /* AVATAR */
     .av { width:38px; height:38px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:14px; font-weight:700; color:#F5ECD7; flex-shrink:0; }
     .av-lg { width:72px; height:72px; font-size:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-weight:700; color:#F5ECD7; flex-shrink:0; }
 
-    /* BADGES */
     .bdg { display:inline-block; padding:.25rem .75rem; border-radius:20px; font-size:.74rem; font-weight:700; letter-spacing:.04em; }
     .b-activo   { background:var(--verde-lt);       color:var(--verde-dk); }
     .b-inactivo { background:var(--rojo-lt);        color:var(--rojo); }
@@ -93,19 +86,16 @@
     .b-cajero   { background:var(--amarillo-lt);    color:var(--amarillo); }
     .b-cocina   { background:var(--rojo-lt);        color:var(--rojo); }
 
-    /* BOTONES TABLA */
     .btn-ac { font-family:'Lato',sans-serif; font-size:.76rem; font-weight:700; padding:.32rem .8rem; border-radius:7px; border:1.5px solid var(--gris-borde); background:transparent; color:var(--muted); cursor:pointer; transition:all .15s; margin-right:3px; }
     .btn-ac:hover     { background:var(--gris-suave); color:var(--carbon); }
     .btn-ver:hover    { border-color:var(--verde);    color:var(--verde-dk);  background:var(--verde-lt); }
     .btn-edit:hover   { border-color:var(--amarillo); color:var(--amarillo);  background:var(--amarillo-lt); }
     .btn-del:hover    { border-color:var(--rojo);     color:var(--rojo);      background:var(--rojo-lt); }
 
-    /* FILTROS */
     .filtros { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin-bottom:1.2rem; }
     .filtros input,.filtros select { font-family:'Lato',sans-serif; border:1.5px solid var(--gris-borde); border-radius:9px; padding:.5rem .9rem; font-size:.87rem; background:var(--blanco); color:var(--carbon); transition:border-color .2s; flex:1; min-width:160px; max-width:240px; }
     .filtros input:focus,.filtros select:focus { outline:none; border-color:#C0392B; box-shadow:0 0 0 3px rgba(192,57,43,.14); }
 
-    /* FORM */
     .fg2 { display:grid; grid-template-columns:1fr 1fr;     gap:1rem; margin-bottom:1rem; }
     .fg3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1rem; }
     .f-label { font-size:.78rem; font-weight:700; letter-spacing:.05em; color:#6B5A3E; text-transform:uppercase; margin-bottom:.3rem; display:block; }
@@ -118,7 +108,6 @@
     .pw-tog { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:.76rem; font-weight:700; color:#A09070; font-family:'Lato',sans-serif; transition:color .15s; }
     .pw-tog:hover { color:var(--verde-dk); }
 
-    /* BOTONES PRINCIPALES */
     .btn { font-family:'Lato',sans-serif; font-weight:700; letter-spacing:.06em; font-size:.88rem; padding:.7rem 1.4rem; border-radius:10px; border:1.5px solid transparent; cursor:pointer; transition:all .18s; }
     .btn-ok  { background:#C0392B; color:#F5ECD7; border-color:#C0392B; }
     .btn-ok:hover  { background:#9B2D21; border-color:#9B2D21; transform:translateY(-1px); }
@@ -128,19 +117,16 @@
     .btn-del2:hover { background:var(--rojo); color:#F5ECD7; }
     .btn-row { display:flex; gap:.7rem; justify-content:flex-end; margin-top:1.2rem; flex-wrap:wrap; }
 
-    /* PERFIL HERO */
     .p-hero { display:flex; align-items:center; gap:1.4rem; background:var(--blanco); border-radius:16px; border:1px solid rgba(212,196,160,.7); padding:1.6rem; margin-bottom:1.2rem; box-shadow:0 2px 16px rgba(26,16,8,.06); }
     .p-hero-info h3 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--carbon); margin-bottom:3px; }
     .p-hero-info .sub { font-size:.84rem; color:var(--muted); margin-bottom:.6rem; }
     .p-meta { display:flex; gap:.5rem; flex-wrap:wrap; }
 
-    /* DETALLES */
     .det-g { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin-bottom:.8rem; }
     .det-it { padding:.85rem 1rem; background:var(--gris-suave); border-radius:10px; }
     .det-k  { font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; color:#A09070; font-weight:700; margin-bottom:4px; }
     .det-v  { font-size:.92rem; font-weight:700; color:var(--carbon); }
 
-    /* PERMISOS */
     .perm-g { display:grid; grid-template-columns:1fr 1fr; gap:.55rem; }
     .perm-it { display:flex; align-items:center; gap:8px; padding:.6rem .85rem; border-radius:9px; border:1.5px solid var(--gris-borde); font-size:.83rem; cursor:pointer; transition:all .15s; user-select:none; color:#6B5A3E; }
     .perm-it:hover { background:var(--verde-lt); border-color:var(--verde); color:var(--verde-dk); }
@@ -148,19 +134,16 @@
     .perm-dot { width:8px; height:8px; border-radius:50%; border:2px solid #C0AD84; flex-shrink:0; transition:all .15s; }
     .perm-it.on .perm-dot { background:var(--verde-dk); border-color:var(--verde-dk); }
 
-    /* ACTIVIDAD */
     .act-it { display:flex; align-items:flex-start; gap:11px; padding:.85rem 0; border-bottom:1px solid #E8DFC8; }
     .act-it:last-child { border-bottom:none; }
     .act-ic { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
     .act-b strong { font-size:.87rem; display:block; margin-bottom:2px; color:var(--carbon); }
     .act-b span   { font-size:.78rem; color:var(--muted); }
 
-    /* ZONA PELIGRO */
     .z-peligro { border:1.5px solid var(--rojo); border-radius:12px; padding:1.2rem 1.4rem; background:var(--rojo-lt); margin-top:1rem; }
     .z-peligro h4 { font-family:'Playfair Display',serif; color:var(--rojo); font-size:1.05rem; margin-bottom:.4rem; }
     .z-peligro p  { font-size:.84rem; color:var(--rojo); opacity:.85; margin-bottom:1rem; line-height:1.5; }
 
-    /* MODAL */
     .m-bg { display:none; position:fixed; inset:0; background:rgba(26,16,8,.5); z-index:999; align-items:center; justify-content:center; padding:1rem; }
     .m-bg.open { display:flex; }
     .m-box { background:var(--blanco); border-radius:16px; padding:1.7rem; width:100%; max-width:560px; max-height:88vh; overflow-y:auto; box-shadow:0 12px 50px rgba(26,16,8,.2); animation:fadeUp .25s ease both; }
@@ -169,24 +152,20 @@
     .m-cls { background:none; border:none; font-size:1.4rem; cursor:pointer; color:#A09070; line-height:1; padding:2px 8px; border-radius:7px; transition:all .12s; }
     .m-cls:hover { background:var(--gris-suave); color:var(--carbon); }
 
-    /* CONFIRM */
     .cf-bg { display:none; position:fixed; inset:0; background:rgba(26,16,8,.55); z-index:1100; align-items:center; justify-content:center; }
     .cf-bg.open { display:flex; }
     .cf-box { background:var(--blanco); border-radius:14px; padding:1.6rem; max-width:370px; width:100%; box-shadow:0 10px 40px rgba(26,16,8,.18); border:1px solid rgba(212,196,160,.6); animation:fadeUp .2s ease both; }
     .cf-box h3 { font-family:'Playfair Display',serif; font-size:1.1rem; margin-bottom:.5rem; color:var(--carbon); }
     .cf-box p  { font-size:.86rem; color:var(--muted); margin-bottom:1.3rem; line-height:1.55; }
 
-    /* TOAST */
     .toast { position:fixed; bottom:26px; right:26px; background:var(--carbon); color:#F5ECD7; padding:.65rem 1.3rem; border-radius:10px; font-size:.85rem; font-family:'Lato',sans-serif; font-weight:700; opacity:0; transform:translateY(8px); transition:all .22s; z-index:2000; pointer-events:none; box-shadow:0 4px 20px rgba(26,16,8,.22); }
     .toast.show { opacity:1; transform:translateY(0); }
     .toast.ok   { background:var(--verde-dk); }
     .toast.err  { background:var(--rojo); }
 
-    /* VACÍO */
     .vacio { text-align:center; padding:3rem 1.5rem; color:#C0AD84; }
     .v-ic  { width:54px; height:54px; border-radius:14px; background:var(--gris-suave); display:flex; align-items:center; justify-content:center; margin:0 auto .9rem; font-size:22px; }
 
-    /* ROL GRID */
     .rol-g { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; }
     .rol-op { display:none; }
     .rol-lb { border:1.5px solid var(--gris-borde); border-radius:10px; padding:.55rem .4rem; text-align:center; cursor:pointer; font-family:'Lato',sans-serif; font-size:.82rem; font-weight:700; color:#6B5A3E; transition:all .2s; user-select:none; display:block; }
@@ -207,7 +186,6 @@
 
 <div class="usr-page">
 
-    <!-- TABS -->
     <div class="usr-tabs">
         <button class="usr-tab activo" onclick="nav('lista')">
             <i class="bi bi-people"></i> Usuarios
@@ -366,9 +344,8 @@
         </div>
     </div>
 
-</div><!-- /.usr-page -->
+</div>
 
-<!-- MODAL VER -->
 <div class="m-bg" id="m-ver">
     <div class="m-box">
         <div class="m-hdr">
@@ -379,7 +356,6 @@
     </div>
 </div>
 
-<!-- CONFIRM -->
 <div class="cf-bg" id="cf-bg">
     <div class="cf-box">
         <h3 id="cf-tit">¿Estás seguro?</h3>
@@ -408,9 +384,6 @@ const ACTS=[
     {t:'Editó reserva de López',h:'Ayer 17:35',     bg:'rgba(212,160,23,.12)',  ic:'✎'},
 ];
 
-// ─── DATOS DESDE DJANGO ───────────────────────────────────────────────────────
-// Cargamos el listado inicial desde el contexto de Django y lo sincronizamos
-// con localStorage para los filtros/búsqueda en cliente.
 let djangoData = [];
 try {
     djangoData = JSON.parse('{{ personal_list_json|escapejs }}');
@@ -418,15 +391,12 @@ try {
     djangoData = [];
 }
 
-// Mezclamos: si hay datos del servidor los usamos como fuente de verdad,
-// si no hay (p.ej. primera carga sin contexto JSON) usamos localStorage.
 let uList = djangoData.length ? djangoData : JSON.parse(localStorage.getItem('poa_u') || '[]');
 if(djangoData.length) localStorage.setItem('poa_u', JSON.stringify(uList));
 
 let editId = null;
 const save = () => localStorage.setItem('poa_u', JSON.stringify(uList));
 
-// ─── HELPERS CSRF ─────────────────────────────────────────────────────────────
 function getCookie(name) {
     let val = null;
     if (document.cookie && document.cookie !== '') {
@@ -446,7 +416,15 @@ const bRol = (r) => {
 };
 const bEst = (e) => `<span class="bdg ${e==='activo'?'b-activo':'b-inactivo'}">${e}</span>`;
 
-/* ── NAVEGACIÓN ── */
+/* ── AVATAR helper — foto si existe, iniciales si no ── */
+const avSm = (u, idx) => u.foto
+    ? `<img src="${u.foto}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+    : `<div class="av" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
+
+const avLg = (u, idx) => u.foto
+    ? `<img src="${u.foto}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid #FDF7EC;">`
+    : `<div class="av-lg" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
+
 window.nav = function(id) {
     document.querySelectorAll('.usr-sec').forEach(s => s.classList.remove('activa'));
     document.getElementById('sec-' + id).classList.add('activa');
@@ -459,14 +437,12 @@ window.nav = function(id) {
     if (id === 'crear' && !editId) { limpiar(); }
 };
 
-/* ── TOAST ── */
 function toast(msg, tipo) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.className = 'toast show ' + (tipo || '');
     clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-/* ── CONFIRM ── */
 window.cConfirm = () => document.getElementById('cf-bg').classList.remove('open');
 function confirm2(tit, msg, cb) {
     document.getElementById('cf-tit').textContent = tit;
@@ -476,7 +452,6 @@ function confirm2(tit, msg, cb) {
 }
 window.cModal = id => document.getElementById(id).classList.remove('open');
 
-/* ── STATS ── */
 function stats() {
     const t  = uList.length,
           a  = uList.filter(u => u.e === 'activo').length,
@@ -489,7 +464,6 @@ function stats() {
          <div class="stat-box"><div class="stat-num">${ad}</div><div class="stat-lbl"><span class="s-dot" style="background:#D4A017"></span>Admins</div></div>`;
 }
 
-/* ── TABLA ── */
 window.renderTabla = function() {
     stats();
     const q = document.getElementById('f-buscar').value.toLowerCase();
@@ -507,7 +481,7 @@ window.renderTabla = function() {
     tb.innerHTML = li.map(u => `
         <tr id="fila-${u.id}">
           <td><div style="display:flex;align-items:center;gap:9px">
-              <div class="av" style="background:${col(uList.indexOf(u))}">${ini(u.nom, u.ape)}</div>
+              ${avSm(u, uList.indexOf(u))}
               <strong>@${u.user}</strong></div></td>
           <td>${u.nom} ${u.ape}</td>
           <td style="font-size:.83rem;color:var(--muted)">${u.email}</td>
@@ -522,7 +496,6 @@ window.renderTabla = function() {
         </tr>`).join('');
 };
 
-/* ── PERFIL ── */
 window.verPerfil = function(id) {
     const u = uList.find(x => x.id === id); if (!u) return;
     const idx = uList.indexOf(u);
@@ -533,7 +506,7 @@ window.verPerfil = function(id) {
     document.getElementById('tab-perfil-txt').textContent = u.nom;
     document.getElementById('perfil-ctn').innerHTML = `
         <div class="p-hero">
-            <div class="av-lg" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>
+            ${avLg(u, idx)}
             <div class="p-hero-info">
                 <h3>${u.nom} ${u.ape}</h3>
                 <div class="sub">@${u.user}</div>
@@ -582,7 +555,6 @@ window.verPerfil = function(id) {
     nav('perfil');
 };
 
-/* ── EDITAR ── */
 window.editar = function(id) {
     const u = uList.find(x => x.id === id); if (!u) return;
     editId = id; nav('crear');
@@ -609,7 +581,6 @@ window.editar = function(id) {
     }, 30);
 };
 
-/* ── GUARDAR ── */
 window.guardar = function() {
     const nom = document.getElementById('u-nom').value.trim();
     const ape = document.getElementById('u-ape').value.trim();
@@ -652,40 +623,39 @@ window.guardar = function() {
         tdoc: document.getElementById('u-tdoc').value,
         dir:  document.getElementById('u-dir').value.trim(),
         notas:document.getElementById('u-notas').value.trim(),
+        foto: editId ? (uList.find(u => u.id === editId) || {}).foto || '' : '',  // ← conserva foto
         perms,
         acc:  editId ? (uList.find(u => u.id === editId) || {}).acc || '—' : '—',
         cr:   editId ? (uList.find(u => u.id === editId) || {}).cr  || new Date().toISOString() : new Date().toISOString()
     };
-   const url = editId ? `/usuarios/editar/${editId}/` : `/usuarios/crear/`;
-fetch(url, {
-    method: 'POST',
-    headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(obj),
-})
-.then(res => res.json())
-.then(data => {
-    if (data.ok) {
-        // Actualiza ID real que devuelve el servidor (en creación)
-        if (!editId && data.id) obj.id = data.id;
-        if (editId) {
-            uList = uList.map(u => u.id === editId ? obj : u);
-            toast('Usuario actualizado', 'ok');
+    const url = editId ? `/usuarios/editar/${editId}/` : `/usuarios/crear/`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(obj),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            if (!editId && data.id) obj.id = data.id;
+            if (editId) {
+                uList = uList.map(u => u.id === editId ? obj : u);
+                toast('Usuario actualizado', 'ok');
+            } else {
+                uList.push(obj);
+                toast('Usuario creado', 'ok');
+            }
+            save(); limpiar(); nav('lista');
         } else {
-            uList.push(obj);
-            toast('Usuario creado', 'ok');
+            toast(data.error || 'Error al guardar', 'err');
         }
-        save(); limpiar(); nav('lista');
-    } else {
-        toast(data.error || 'Error al guardar', 'err');
-    }
-})
-.catch(() => toast('Error de conexión', 'err'));
-}
+    })
+    .catch(() => toast('Error de conexión', 'err'));
+};
 
-/* ── LIMPIAR ── */
 window.limpiar = function() {
     editId = null;
     ['u-nom','u-ape','u-email','u-tel','u-doc','u-user','u-dir','u-notas','u-pw','u-pw2']
@@ -701,28 +671,24 @@ window.limpiar = function() {
     renderPermsForm([]);
 };
 
-/* ── PERMISOS FORM ── */
 function renderPermsForm(activos) {
     document.getElementById('perm-form').innerHTML =
         PERMS.map(p => `<div class="perm-it ${activos.includes(p)?'on':''}" data-p="${p}"
             onclick="this.classList.toggle('on')"><div class="perm-dot"></div>${p}</div>`).join('');
 }
 
-/* ── ELIMINAR — conectado al backend Django ── */
 window.pedirDel = function(id) {
     const u = uList.find(x => x.id === id); if (!u) return;
     confirm2(
         'Eliminar usuario',
         `¿Eliminar a ${u.nom} ${u.ape} (@${u.user})? Esta acción no se puede deshacer.`,
         () => {
-            // Animación de salida en la fila
             const fila = document.getElementById('fila-' + id);
             if (fila) {
                 fila.style.transition = 'opacity .3s, transform .3s';
                 fila.style.opacity    = '0';
                 fila.style.transform  = 'translateX(20px)';
             }
-
             fetch(`/usuarios/eliminar/${id}/`, {
                 method: 'POST',
                 headers: {
@@ -732,7 +698,6 @@ window.pedirDel = function(id) {
             })
             .then(res => {
                 if (res.ok || res.redirected) {
-                    // Éxito: eliminamos del array local y re-renderizamos
                     setTimeout(() => {
                         uList = uList.filter(x => x.id !== id);
                         save();
@@ -740,7 +705,6 @@ window.pedirDel = function(id) {
                         toast('Usuario eliminado correctamente', 'err');
                     }, 300);
                 } else {
-                    // Error del servidor: revertimos la animación
                     if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; }
                     toast('Error al eliminar el usuario', 'err');
                 }
@@ -753,7 +717,6 @@ window.pedirDel = function(id) {
     );
 };
 
-/* ── TOGGLE PW ── */
 window.tPw = function(id, btn) {
     const el = document.getElementById(id);
     const h  = el.type === 'password';
@@ -765,14 +728,13 @@ window.tPwEdit = function() {
         document.getElementById('cb-pw').checked ? '' : 'none';
 };
 
-/* ── DEMO DATA (solo si no hay datos del servidor) ── */
 function initDemo() {
     if (uList.length) return;
     uList = [
-        {id:1,nom:'Admin',ape:'Sistema',email:'admin@porras.com',user:'admin',rol:'Administrador',e:'activo',tel:'3001111111',doc:'1000001',tdoc:'Cédula de Ciudadanía',dir:'Calle 1 #1-1',notas:'Cuenta principal.',perms:PERMS,acc:'Hoy 09:15',cr:new Date().toISOString()},
-        {id:3,nom:'Carlos',ape:'Mendoza',email:'carlos@porras.com',user:'cmendoza',rol:'Mesero',e:'activo',tel:'3204567890',doc:'3000003',tdoc:'Cédula de Ciudadanía',dir:'Av. 68 #23-4',notas:'Turno diurno.',perms:['Ver reservas','Crear reservas'],acc:'Ayer 20:10',cr:new Date().toISOString()},
-        {id:4,nom:'Sofía',ape:'Torres',email:'sofia@porras.com',user:'storres',rol:'Cajero',e:'activo',tel:'3156789012',doc:'4000004',tdoc:'Cédula de Ciudadanía',dir:'Calle 93 #15-20',notas:'',perms:['Gestionar pagos','Ver reportes'],acc:'Ayer 21:00',cr:new Date().toISOString()},
-        {id:5,nom:'Miguel',ape:'Vargas',email:'miguel@porras.com',user:'mvargas',rol:'Cocina',e:'inactivo',tel:'3009876543',doc:'5000005',tdoc:'Cédula de Ciudadanía',dir:'Transversal 20 #8-3',notas:'En vacaciones.',perms:[],acc:'15/03/2026',cr:new Date().toISOString()},
+        {id:1,nom:'Admin',ape:'Sistema',email:'admin@porras.com',user:'admin',rol:'Administrador',e:'activo',tel:'3001111111',doc:'1000001',tdoc:'Cédula de Ciudadanía',dir:'Calle 1 #1-1',notas:'Cuenta principal.',foto:'',perms:PERMS,acc:'Hoy 09:15',cr:new Date().toISOString()},
+        {id:3,nom:'Carlos',ape:'Mendoza',email:'carlos@porras.com',user:'cmendoza',rol:'Mesero',e:'activo',tel:'3204567890',doc:'3000003',tdoc:'Cédula de Ciudadanía',dir:'Av. 68 #23-4',notas:'Turno diurno.',foto:'',perms:['Ver reservas','Crear reservas'],acc:'Ayer 20:10',cr:new Date().toISOString()},
+        {id:4,nom:'Sofía',ape:'Torres',email:'sofia@porras.com',user:'storres',rol:'Cajero',e:'activo',tel:'3156789012',doc:'4000004',tdoc:'Cédula de Ciudadanía',dir:'Calle 93 #15-20',notas:'',foto:'',perms:['Gestionar pagos','Ver reportes'],acc:'Ayer 21:00',cr:new Date().toISOString()},
+        {id:5,nom:'Miguel',ape:'Vargas',email:'miguel@porras.com',user:'mvargas',rol:'Cocina',e:'inactivo',tel:'3009876543',doc:'5000005',tdoc:'Cédula de Ciudadanía',dir:'Transversal 20 #8-3',notas:'En vacaciones.',foto:'',perms:[],acc:'15/03/2026',cr:new Date().toISOString()},
     ];
     save();
 }

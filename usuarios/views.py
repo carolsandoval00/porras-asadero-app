@@ -14,14 +14,10 @@ TEMPLATE_LISTA = 'usuarios/lista/lista_personal.html'
 TEMPLATE_PERFIL = 'usuarios/panel_perfil.html'
 
 
-# ─── LOGIN Y FLUJO DE ACCESO ──────────────────────────────────────────────────
-
 def login_view(request):
     vista = request.GET.get('vista', 'login')
-
     if request.user.is_authenticated and vista == 'login':
         return redirect('inicio_usuarios')
-
     if request.method == 'POST':
         if vista in ['login', 'acceder', None]:
             usuario_input  = request.POST.get('username')
@@ -36,7 +32,6 @@ def login_view(request):
             else:
                 messages.error(request, 'Usuario o contraseña incorrectos.')
                 return render(request, TEMPLATE_LOGIN, {'vista': 'login'})
-
     return render(request, TEMPLATE_LOGIN, {'vista': vista})
 
 
@@ -53,8 +48,6 @@ def logout_view(request):
     return redirect('login')
 
 
-# ─── PANEL DE CONTROL ────────────────────────────────────────────────────────
-
 @login_required
 def inicio_usuarios(request):
     usuarios = Usuario.objects.all()
@@ -63,8 +56,6 @@ def inicio_usuarios(request):
         'usuarios': usuarios,
     })
 
-
-# ─── GESTIÓN DE PERSONAL ─────────────────────────────────────────────────────
 
 @login_required
 def lista_personal(request):
@@ -86,6 +77,7 @@ def lista_personal(request):
             'doc':   getattr(u, 'documento', '') or '',
             'tdoc':  getattr(u, 'tipo_documento', '') or '',
             'dir':   getattr(u, 'direccion', '') or '',
+            'foto':  u.foto.url if u.foto else '',  # ← NUEVO
             'notas': '',
             'perms': [],
             'acc':   '-',
@@ -104,27 +96,21 @@ def lista_personal(request):
 @login_required
 @require_POST
 def crear_usuario(request):
-    """Endpoint JSON — crea un usuario desde el formulario del frontend."""
     if request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
-
     try:
         data = json.loads(request.body)
-
         if not data.get('nom') or not data.get('ape') or not data.get('email') \
                 or not data.get('user') or not data.get('rol'):
             return JsonResponse({'ok': False, 'error': 'Faltan campos obligatorios'}, status=400)
-
         if Usuario.objects.filter(username=data['user']).exists():
             return JsonResponse({'ok': False, 'error': 'Ese nombre de usuario ya existe'}, status=400)
-
         ROL_MAP = {
             'Administrador': 'ADMIN',
             'Mesero':        'MESERO',
             'Cajero':        'CAJERO',
             'Cocina':        'COCINA',
         }
-
         nuevo = Usuario.objects.create_user(
             username       = data['user'],
             password       = data.get('pw', 'cambiar123'),
@@ -137,13 +123,10 @@ def crear_usuario(request):
             rol            = ROL_MAP.get(data['rol'], 'MESERO'),
             is_active      = data.get('e', 'activo') == 'activo',
         )
-
         if hasattr(nuevo, 'direccion'):
             nuevo.direccion = data.get('dir', '')
             nuevo.save()
-
         return JsonResponse({'ok': True, 'id': nuevo.pk})
-
     except Exception as e:
         return JsonResponse({'ok': False, 'error': str(e)}, status=400)
 
@@ -151,21 +134,17 @@ def crear_usuario(request):
 @login_required
 @require_POST
 def editar_usuario_json(request, id):
-    """Endpoint JSON — edita un usuario desde el formulario del frontend."""
     if request.user.rol != 'ADMIN' and not request.user.is_superuser and request.user.id != id:
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
-
     try:
         data    = json.loads(request.body)
         usuario = get_object_or_404(Usuario, pk=id)
-
         ROL_MAP = {
             'Administrador': 'ADMIN',
             'Mesero':        'MESERO',
             'Cajero':        'CAJERO',
             'Cocina':        'COCINA',
         }
-
         usuario.first_name     = data.get('nom', usuario.first_name)
         usuario.last_name      = data.get('ape', usuario.last_name)
         usuario.email          = data.get('email', usuario.email)
@@ -173,16 +152,12 @@ def editar_usuario_json(request, id):
         usuario.tipo_documento = data.get('tdoc', '')
         usuario.documento      = data.get('doc', '')
         usuario.is_active      = data.get('e', 'activo') == 'activo'
-
         if request.user.rol == 'ADMIN' or request.user.is_superuser:
             usuario.rol = ROL_MAP.get(data.get('rol', ''), usuario.rol)
-
         if hasattr(usuario, 'direccion'):
             usuario.direccion = data.get('dir', '')
-
         usuario.save()
         return JsonResponse({'ok': True})
-
     except Exception as e:
         return JsonResponse({'ok': False, 'error': str(e)}, status=400)
 
@@ -193,24 +168,19 @@ def eliminar_usuario(request, id):
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403) \
             if request.headers.get('Content-Type') == 'application/json' \
             else redirect('validar_permisos')
-
     usuario = get_object_or_404(Usuario, id=id)
-
     if request.method == 'POST':
         if usuario.id == request.user.id:
             if request.headers.get('Content-Type') == 'application/json':
                 return JsonResponse({'ok': False, 'error': 'No puedes eliminar tu propia cuenta'}, status=400)
             messages.error(request, 'No puedes eliminar tu propia cuenta.')
             return redirect('lista_personal')
-
         nombre = f'{usuario.first_name} {usuario.last_name}'
         usuario.delete()
-
         if request.headers.get('Content-Type') == 'application/json':
             return JsonResponse({'ok': True})
         messages.success(request, f'Usuario {nombre} eliminado correctamente.')
         return redirect('lista_personal')
-
     return redirect('lista_personal')
 
 
@@ -246,21 +216,17 @@ def acceder_sistema(request):
     return redirect('login')
 
 
-# ─── RECUPERACIÓN DE CONTRASEÑA ──────────────────────────────────────────────
-
 class CustomPasswordResetView(PasswordResetView):
     template_name = TEMPLATE_LOGIN
     success_url   = reverse_lazy('password_reset_done')
     extra_context = {'vista': 'recuperar'}
-    
+
+
 @login_required
 def actualizar_usuario(request, pk):
-    # Solo el propio usuario o un admin puede editar
     if request.user.id != pk and request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return redirect('validar_permisos')
-
     usuario = get_object_or_404(Usuario, pk=pk)
-
     if request.method == 'POST':
         usuario.first_name     = request.POST.get('first_name', usuario.first_name)
         usuario.last_name      = request.POST.get('last_name', usuario.last_name)
@@ -268,15 +234,27 @@ def actualizar_usuario(request, pk):
         usuario.telefono       = request.POST.get('telefono', '')
         usuario.tipo_documento = request.POST.get('tipo_documento', '')
         usuario.documento      = request.POST.get('documento', '')
-
         if request.user.rol == 'ADMIN' or request.user.is_superuser:
             usuario.rol = request.POST.get('rol', usuario.rol)
-
         usuario.save()
         messages.success(request, 'Datos actualizados correctamente.')
         return redirect('panel_perfil')
-
     return render(request, TEMPLATE_LOGIN, {
         'vista': 'actualizar',
         'usuario': usuario,
     })
+
+
+@login_required
+@require_POST
+def actualizar_foto(request, pk):
+    if request.user.id != pk and request.user.rol != 'ADMIN' and not request.user.is_superuser:
+        return redirect('validar_permisos')
+    usuario = get_object_or_404(Usuario, pk=pk)
+    if 'foto' in request.FILES:
+        usuario.foto = request.FILES['foto']
+        usuario.save()
+        messages.success(request, 'Foto de perfil actualizada.')
+    else:
+        messages.warning(request, 'No se recibió ninguna imagen.')
+    return redirect('panel_perfil')

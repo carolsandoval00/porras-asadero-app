@@ -4,21 +4,24 @@ from . import views
 
 urlpatterns = [
     # AUTENTICACIÓN
-    path('login/',       views.login_view,          name='login'),
-    path('logout/',      views.logout_view,          name='logout'),
-    path('acceder/',     views.acceder_sistema,      name='acceder_sistema'),
+    path('login/',       views.login_view,            name='login'),
+    path('logout/',      views.logout_view,            name='logout'),
+    path('acceder/',     views.acceder_sistema,        name='acceder_sistema'),
     path('redireccion/', views.redireccion_post_login, name='redireccion'),
 
     # GESTIÓN DE PERSONAL
-    path('lista/',                    views.lista_personal,      name='lista_personal'),
-    path('perfil/',                   views.panel_perfil,        name='panel_perfil'),
-    path('inactivar/',                views.inactivar_usuario,   name='inactivar_usuario'),
-    path('eliminar/<int:id>/',        views.eliminar_usuario,    name='eliminar_usuario'),
+    path('lista/',             views.lista_personal,    name='lista_personal'),
+    path('perfil/',            views.panel_perfil,      name='panel_perfil'),
+    path('inactivar/',         views.inactivar_usuario, name='inactivar_usuario'),
+    path('eliminar/<int:id>/', views.eliminar_usuario,  name='eliminar_usuario'),
 
-    # ENDPOINTS JSON (usados por el frontend)
-    path('crear/',                    views.crear_usuario,       name='crear_usuario'),
-    path('editar/<int:id>/',          views.editar_usuario_json, name='editar_usuario_json'),
+    # ENDPOINTS JSON
+    path('crear/',              views.crear_usuario,       name='crear_usuario'),
+    path('editar/<int:id>/',    views.editar_usuario_json, name='editar_usuario_json'),
     path('actualizar/<int:pk>/', views.actualizar_usuario, name='actualizar_usuarios'),
+
+    # ← NUEVA: foto de perfil
+    path('foto/<int:pk>/', views.actualizar_foto, name='actualizar_foto'),
 
     # RECUPERACIÓN DE CONTRASEÑA
     path('recuperar/', auth_views.PasswordResetView.as_view(
