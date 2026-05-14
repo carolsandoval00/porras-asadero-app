@@ -252,3 +252,31 @@ class CustomPasswordResetView(PasswordResetView):
     template_name = TEMPLATE_LOGIN
     success_url   = reverse_lazy('password_reset_done')
     extra_context = {'vista': 'recuperar'}
+    
+@login_required
+def actualizar_usuario(request, pk):
+    # Solo el propio usuario o un admin puede editar
+    if request.user.id != pk and request.user.rol != 'ADMIN' and not request.user.is_superuser:
+        return redirect('validar_permisos')
+
+    usuario = get_object_or_404(Usuario, pk=pk)
+
+    if request.method == 'POST':
+        usuario.first_name     = request.POST.get('first_name', usuario.first_name)
+        usuario.last_name      = request.POST.get('last_name', usuario.last_name)
+        usuario.email          = request.POST.get('email', usuario.email)
+        usuario.telefono       = request.POST.get('telefono', '')
+        usuario.tipo_documento = request.POST.get('tipo_documento', '')
+        usuario.documento      = request.POST.get('documento', '')
+
+        if request.user.rol == 'ADMIN' or request.user.is_superuser:
+            usuario.rol = request.POST.get('rol', usuario.rol)
+
+        usuario.save()
+        messages.success(request, 'Datos actualizados correctamente.')
+        return redirect('panel_perfil')
+
+    return render(request, TEMPLATE_LOGIN, {
+        'vista': 'actualizar',
+        'usuario': usuario,
+    })

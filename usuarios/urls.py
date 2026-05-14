@@ -18,6 +18,7 @@ urlpatterns = [
     # ENDPOINTS JSON (usados por el frontend)
     path('crear/',                    views.crear_usuario,       name='crear_usuario'),
     path('editar/<int:id>/',          views.editar_usuario_json, name='editar_usuario_json'),
+    path('actualizar/<int:pk>/', views.actualizar_usuario, name='actualizar_usuarios'),
 
     # RECUPERACIÓN DE CONTRASEÑA
     path('recuperar/', auth_views.PasswordResetView.as_view(
