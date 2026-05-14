@@ -14,6 +14,28 @@ def _get_numero_orden():
     return ultimo + 1
 
 
+def _get_mesas_disponibles():
+    """
+    Retorna las mesas que NO tienen un pedido activo (pendiente o en_proceso).
+    Una mesa se considera disponible si su pedido está en 'listo', 'cancelado',
+    o simplemente no tiene pedido asociado.
+    """
+    # Obtener los textos "Mesa X" que están ocupadas
+    numeros_ocupados = []
+    for texto in Pedido.objects.filter(
+        estado__in=['pendiente', 'en_proceso']
+    ).values_list('cliente', flat=True):
+        if texto and texto.startswith('Mesa '):
+            try:
+                numeros_ocupados.append(int(texto.replace('Mesa ', '').strip()))
+            except ValueError:
+                pass
+
+    return Mesa.objects.exclude(
+        numero_mesa__in=numeros_ocupados
+    ).order_by('numero_mesa')
+
+
 def _dashboard_context(request, extra=None):
     q                = request.GET.get('q', '').strip()
     estado_sel       = request.GET.get('estado', '').strip()
@@ -64,7 +86,8 @@ def _dashboard_context(request, extra=None):
             'total': sum(o.total for o in items), 'count': len(items),
         })
 
-    mesas_bd = Mesa.objects.all().order_by('numero_mesa')
+    # ✅ Solo mesas sin pedido activo (pendiente o en_proceso)
+    mesas_bd = _get_mesas_disponibles()
 
     ctx = {
         'titulo':             'Módulo de Pedidos',
@@ -99,7 +122,7 @@ def _dashboard_context(request, extra=None):
     }
 
     if extra:
-        ctx.update(extra)
+        ctx.update(ctx | extra)
 
     return ctx
 
