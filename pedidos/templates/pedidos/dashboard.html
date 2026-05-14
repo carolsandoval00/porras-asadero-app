@@ -462,8 +462,7 @@
                   <td>{{ o.creada_en|date:"H:i" }}</td>
                   <td style="display:flex;gap:.3rem;flex-wrap:wrap">
                     <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
-                    <button class="pm-btn pm-btn-danger pm-btn-sm"
-                            onclick="confirmDeleteOrden({{ o.pk }},'{{ o.numero_orden }}')">Eliminar</button>
+                    <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">Ver detalle</a>
                   </td>
                 </tr>
                 {% endfor %}
@@ -575,7 +574,7 @@
       <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
     </div>
     <div class="pm-card-body">
-      <form method="post" action="{% if producto_editando %}{% url 'pedidos:producto_editar' producto_editando.pk %}{% endif %}" class="pm-form">
+      <form method="post" action="{% if producto_editando %}{% url 'pedidos:producto_editar' producto_editando.pk %}{% else %}#{% endif %}" class="pm-form">
         {% csrf_token %}
         <div class="pm-form-grid">
           <div class="full"><label>Nombre del Producto</label>{{ form_producto.nombre }}</div>
@@ -612,7 +611,7 @@
     </div>
     <div class="pm-card-body">
       <form method="post"
-            action="{% if pedido_editando %}{% url 'pedidos:pedido_editar' pedido_editando.pk %}{% endif %}"
+            action="{% if pedido_editando %}{% url 'pedidos:pedido_editar' pedido_editando.pk %}{% else %}#{% endif %}"
             class="pm-form"
             id="form-editar-pedido"
             style="max-width:100%">
@@ -707,7 +706,7 @@
       <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm">Cancelar</a>
     </div>
     <div class="pm-card-body">
-      <form method="post" action="{% if orden_editando %}{% url 'pedidos:orden_editar' orden_editando.pk %}{% endif %}" class="pm-form">
+      <form method="post" action="{% if orden_editando %}{% url 'pedidos:orden_editar' orden_editando.pk %}{% else %}#{% endif %}" class="pm-form">
         {% csrf_token %}
         <div class="pm-form-grid">
           <div class="full"><label>Pedido</label>{{ form_orden.pedido }}</div>
