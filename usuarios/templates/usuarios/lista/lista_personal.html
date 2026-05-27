@@ -19,17 +19,22 @@
         --azul:       #A07810;
         --azul-lt:    rgba(160,120,16,.10);
         --blanco:     #FDF7EC;
+        --crema:      #F5ECD7;
         --muted:      #6B5A3E;
     }
 
     .usr-page {
         font-family: 'Lato', sans-serif;
-        background:
-            radial-gradient(ellipse at 8% 10%, rgba(232,101,26,.06) 0%, transparent 50%),
-            radial-gradient(ellipse at 92% 90%, rgba(26,16,8,.04) 0%, transparent 50%),
-            #F5ECD7;
+        background: #F5ECD7;
         min-height: 90vh;
         padding: 2rem 1.2rem 3rem;
+    }
+
+    .panel-container {
+        background: #FDF7EC;
+        border-radius: 18px;
+        padding: 2rem 2.2rem 2.5rem;
+        border: 1px solid #E8DFC8;
     }
 
     .usr-tabs {
@@ -59,11 +64,11 @@
     .sec-hdr h2 span { color:#C0392B; }
     .sec-hdr p { font-size:.87rem; color:var(--muted); }
 
-    .usr-card { background:var(--blanco); border-radius:14px; box-shadow:0 2px 16px rgba(26,16,8,.08); padding:1.5rem 1.6rem; margin-bottom:1.2rem; border:1px solid rgba(212,196,160,.6); }
+    .usr-card { background:var(--crema); border-radius:14px; box-shadow:0 2px 16px rgba(26,16,8,.08); padding:1.5rem 1.6rem; margin-bottom:1.2rem; border:1px solid rgba(212,196,160,.6); }
     .c-label { font-size:.72rem; font-weight:700; letter-spacing:.09em; color:#A09070; text-transform:uppercase; padding-bottom:.75rem; border-bottom:1px solid var(--gris-borde); margin-bottom:1rem; }
 
     .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.9rem; margin-bottom:1.5rem; }
-    .stat-box { background:var(--blanco); border-radius:12px; border:1px solid rgba(212,196,160,.7); padding:1rem 1.1rem; box-shadow:0 1px 8px rgba(26,16,8,.05); }
+    .stat-box { background:var(--crema); border-radius:12px; border:1px solid rgba(212,196,160,.7); padding:1rem 1.1rem; }
     .stat-num { font-family:'Playfair Display',serif; font-size:2rem; line-height:1; color:var(--carbon); }
     .stat-lbl { font-size:.78rem; color:var(--muted); margin-top:.3rem; font-weight:700; letter-spacing:.04em; }
     .s-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
@@ -117,7 +122,7 @@
     .btn-del2:hover { background:var(--rojo); color:#F5ECD7; }
     .btn-row { display:flex; gap:.7rem; justify-content:flex-end; margin-top:1.2rem; flex-wrap:wrap; }
 
-    .p-hero { display:flex; align-items:center; gap:1.4rem; background:var(--blanco); border-radius:16px; border:1px solid rgba(212,196,160,.7); padding:1.6rem; margin-bottom:1.2rem; box-shadow:0 2px 16px rgba(26,16,8,.06); }
+    .p-hero { display:flex; align-items:center; gap:1.4rem; background:var(--crema); border-radius:16px; border:1px solid rgba(212,196,160,.7); padding:1.6rem; margin-bottom:1.2rem; }
     .p-hero-info h3 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--carbon); margin-bottom:3px; }
     .p-hero-info .sub { font-size:.84rem; color:var(--muted); margin-bottom:.6rem; }
     .p-meta { display:flex; gap:.5rem; flex-wrap:wrap; }
@@ -179,6 +184,7 @@
 </style>
 
 <div class="usr-page">
+  <div class="panel-container">
 
     <div class="usr-tabs">
         <button class="usr-tab activo" onclick="nav('lista')">
@@ -338,6 +344,7 @@
         </div>
     </div>
 
+  </div>
 </div>
 
 <div class="m-bg" id="m-ver">
@@ -405,7 +412,6 @@ const bRol = (r) => {
 };
 const bEst = (e) => `<span class="bdg ${e==='activo'?'b-activo':'b-inactivo'}">${e}</span>`;
 
-/* ── AVATAR helper — foto si existe, iniciales si no ── */
 const avSm = (u, idx) => u.foto
     ? `<img src="${u.foto}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
     : `<div class="av" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
@@ -606,7 +612,7 @@ window.guardar = function() {
         tdoc: document.getElementById('u-tdoc').value,
         dir:  document.getElementById('u-dir').value.trim(),
         notas:document.getElementById('u-notas').value.trim(),
-        foto: editId ? (uList.find(u => u.id === editId) || {}).foto || '' : '',  // ← conserva foto
+        foto: editId ? (uList.find(u => u.id === editId) || {}).foto || '' : '',
         perms,
         acc:  editId ? (uList.find(u => u.id === editId) || {}).acc || '—' : '—',
         cr:   editId ? (uList.find(u => u.id === editId) || {}).cr  || new Date().toISOString() : new Date().toISOString()
