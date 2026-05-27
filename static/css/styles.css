@@ -10,8 +10,9 @@
         .text-naranja { color: var(--naranja) !important; }
         .text-dorado  { color: var(--dorado)  !important; }
         .text-crema   { color: var(--crema)   !important; }
+        
 
-      
+    
         .bg-negro  { background: var(--negro) !important; }
         .bg-humo   { background: var(--humo)  !important; }
         .bg-naranja{ background: var(--naranja) !important; }
