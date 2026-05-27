@@ -223,7 +223,7 @@
                 <table class="usr-tbl">
                     <thead><tr>
                         <th>Usuario</th><th>Nombre</th><th>Correo</th>
-                        <th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th>
+                        <th>Rol</th><th>Estado</th><th>Acciones</th>
                     </tr></thead>
                     <tbody id="tbody"></tbody>
                 </table>
@@ -482,7 +482,6 @@ window.renderTabla = function() {
           <td style="font-size:.83rem;color:var(--muted)">${u.email}</td>
           <td>${bRol(u.rol)}</td>
           <td>${bEst(u.e)}</td>
-          <td style="font-size:.8rem;color:#A09070">${u.acc||'—'}</td>
           <td><div style="display:flex;gap:4px;flex-wrap:wrap">
               <button class="btn-ac btn-ver"  onclick="verPerfil(${u.id})">Ver perfil</button>
               <button class="btn-ac btn-edit" onclick="editar(${u.id})">Editar</button>
