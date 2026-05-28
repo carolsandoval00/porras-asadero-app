@@ -3,17 +3,21 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+class Categoria(models.Model):
+    nombre = models.CharField(max_length=100, verbose_name="Nombre")
+    descripcion = models.TextField(blank=True, verbose_name="Descripción")
+
+    class Meta:
+        verbose_name = "Categoría"
+        verbose_name_plural = "Categorías"
+
+    def __str__(self):
+        return self.nombre
+
 
 class Producto(models.Model):
-    CATEGORIA_CHOICES = [
-        ('carnes',   'Carnes al Carbón'),
-        ('sopas',    'Sopas'),
-        ('carta',    'Platos a la Carta'),
-        ('bebidas',  'Bebidas'),
-        ('otros',    'Otros'),
-    ]
     nombre      = models.CharField(max_length=200)
-    categoria   = models.CharField(max_length=20, choices=CATEGORIA_CHOICES, default='otros')
+    categoria   = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name='productos', verbose_name='Categoría')
     precio      = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     descripcion = models.TextField(blank=True)
     disponible  = models.BooleanField(default=True)
@@ -30,19 +34,28 @@ class Producto(models.Model):
 
 
 class Pedido(models.Model):
-    ESTADO_CHOICES = [
-        ('pendiente',  'Pendiente'),
-        ('en_proceso', 'En Proceso'),
-        ('listo',      'Listo'),
-        ('cancelado',  'Cancelado'),
+    TIPO_PEDIDO_CHOICES = [
+        ('LOCAL', 'Local'),
+        ('LLEVAR', 'Para Llevar'),
+        ('DOMICILIO', 'Domicilio'),
     ]
-    cliente             = models.CharField(max_length=200)
-    descripcion         = models.TextField(blank=True)
-    estado              = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    ESTADO_CHOICES = [
+        ('PREPARACION', 'En Preparación'),
+        ('SERVIDO', 'Servido'),
+        ('PAGADO', 'Pagado'),
+        ('CANCELADO', 'Cancelado'),
+    ]
+    id                  = models.AutoField(primary_key=True)
+    cliente             = models.ForeignKey('usuarios.Cliente', on_delete=models.SET_NULL, null=True, blank=True, related_name='pedidos', verbose_name='Cliente')
+    mesero              = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='pedidos_atendidos', verbose_name='Mesero')
+    mesa                = models.ForeignKey('reservas.Mesa', on_delete=models.SET_NULL, null=True, blank=True, related_name='pedidos', verbose_name='Mesa')
+    tipo_pedido         = models.CharField(max_length=20, choices=TIPO_PEDIDO_CHOICES, default='LOCAL', verbose_name='Tipo de Pedido')
+    estado              = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PREPARACION', verbose_name='Estado')
+    descripcion         = models.TextField(blank=True, null=True, verbose_name="Descripción")
+    subtotal            = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    impuestos           = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total               = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    creado_por          = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='pedidos')
     fecha_creacion      = models.DateTimeField(auto_now_add=True)
-    fecha_actualizacion = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'mod_pedido'
@@ -50,8 +63,21 @@ class Pedido(models.Model):
         verbose_name = 'Pedido'
         verbose_name_plural = 'Pedidos'
 
+    @property
+    def numero_orden(self):
+        return f"ORD-{self.id:05d}"
+
+    @property
+    def impuesto(self):
+        return self.impuestos
+
+    @property
+    def notas(self):
+        return self.descripcion
+
     def __str__(self):
-        return f'Pedido #{self.pk} - {self.cliente}'
+        cliente_str = self.cliente.nombre_completo if self.cliente else "Cliente de Paso"
+        return f'Pedido #{self.pk} - {cliente_str}'
 
 
 class PedidoItem(models.Model):
@@ -59,6 +85,7 @@ class PedidoItem(models.Model):
     producto        = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='items')
     cantidad        = models.PositiveIntegerField(default=1)
     precio_unitario = models.DecimalField(max_digits=12, decimal_places=2)
+    notas           = models.CharField(max_length=255, blank=True, null=True, verbose_name="Notas")
 
     class Meta:
         db_table = 'mod_pedido_item'
@@ -73,43 +100,11 @@ class PedidoItem(models.Model):
         return self.precio_unitario * self.cantidad
 
 
-class Orden(models.Model):
-    ESTADO_CHOICES = [
-        ('abierta',    'Abierta'),
-        ('procesando', 'Procesando'),
-        ('pagada',     'Pagada'),
-        ('anulada',    'Anulada'),
-    ]
-    pedido       = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name='ordenes')
-    numero_orden = models.CharField(max_length=50, unique=True)
-    estado       = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='abierta')
-    subtotal     = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    impuesto     = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    total        = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    notas        = models.TextField(blank=True)
-    creada_en    = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'mod_orden'
-        ordering = ['-creada_en']
-        verbose_name = 'Orden'
-        verbose_name_plural = 'Órdenes'
-
-    def __str__(self):
-        return f'Orden {self.numero_orden}'
-
-    def save(self, *args, **kwargs):
-        if not self.numero_orden:
-            self.numero_orden = f"ORD-{self.pedido.pk:05d}"
-        self.total = self.subtotal + self.impuesto
-        super().save(*args, **kwargs)
-
-
 @receiver(post_save, sender=Producto)
-def actualizar_ordenes_al_cambiar_producto(sender, instance, **kwargs):
+def actualizar_pedidos_al_cambiar_producto(sender, instance, **kwargs):
     pedidos_con_producto = Pedido.objects.filter(
         items__producto=instance,
-        estado='pendiente'
+        estado='PREPARACION'
     ).distinct()
 
     for pedido in pedidos_con_producto:
@@ -118,9 +113,4 @@ def actualizar_ordenes_al_cambiar_producto(sender, instance, **kwargs):
             item.precio_unitario * item.cantidad
             for item in pedido.items.all()
         )
-        Pedido.objects.filter(pk=pedido.pk).update(total=nuevo_total)
-
-    Orden.objects.filter(
-        pedido__items__producto=instance,
-        estado='abierta'
-    ).distinct().update(subtotal=instance.precio)
+        Pedido.objects.filter(pk=pedido.pk).update(total=nuevo_total, subtotal=nuevo_total)
