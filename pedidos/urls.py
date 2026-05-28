@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 
 app_name = 'pedidos'
@@ -15,7 +16,7 @@ urlpatterns = [
 
     # ── Órdenes ──────────────────────────────────────────────
     path('ordenes/',                    views.orden_lista,    name='orden_lista'),
-    path('ordenes/crear/',              views.orden_crear,    name='orden_crear'),
+    path('ordenes/crear/',              RedirectView.as_view(pattern_name='pedidos:pedido_crear', permanent=False), name='orden_crear'),
     path('ordenes/<int:pk>/',           views.orden_detalle,  name='orden_detalle'),
     path('ordenes/<int:pk>/editar/',    views.orden_editar,   name='orden_editar'),
     path('ordenes/<int:pk>/eliminar/',  views.orden_eliminar, name='orden_eliminar'),

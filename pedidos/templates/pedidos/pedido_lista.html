@@ -71,10 +71,13 @@
       {% if pedidos_por_fecha %}
         {% for grupo in pedidos_por_fecha %}
         <div class="fecha-grupo">
-          <div class="fecha-header">
-            <span class="fecha-label">{{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
-            <div class="fecha-line"></div>
-            <span class="fecha-subtotal">{{ grupo.count }} pedido{{ grupo.count|pluralize }}</span>
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 mt-4 border-bottom pb-2">
+            <span class="badge text-crema px-3 py-2 rounded-pill fs-7 text-uppercase fw-bold" style="background-color: #C0392B;">
+              {{ grupo.fecha|date:"l d \d\e F \d\e Y" }}
+            </span>
+            <span class="text-muted fw-bold small">
+              {{ grupo.count }} pedido{{ grupo.count|pluralize }}
+            </span>
           </div>
           <div class="pm-table-wrap">
             <table class="pm-table">
