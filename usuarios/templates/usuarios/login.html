@@ -207,16 +207,11 @@
             </button>
         </form>
 
-        <div class="auth-divider">o</div>
-
-       <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
-            <i class="bi bi-person-plus me-1"></i> Registrar nuevo personal
-        </a>
     </div>
 </div>
 
 {% elif vista == "inicio" %}
-<div class="auth-wrap" style="align-items: flex-start; padding-top: 3rem;">
+<div class="auth-wrap" style="align-items: flex-start; padding-top: 3rem; min-height: auto;">
     <div class="auth-card" style="max-width: 1100px;">
         <h1 class="auth-title">Panel de <span>Control</span></h1>
         <p class="auth-sub">Bienvenido, {{ user.first_name }} {{ user.last_name }}. ¿Qué deseas hacer hoy?</p>
@@ -235,6 +230,18 @@
             <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
                 <i class="bi bi-person-plus-fill"></i>
                 <h3>Nuevo Usuario</h3>
+            </a>
+            <a href="{% url 'pedidos:producto_lista' %}" class="dash-card">
+                <i class="bi bi-egg-fried"></i>
+                <h3>Gestionar Productos</h3>
+            </a>
+            <a href="{% url 'pedidos:categoria_lista' %}" class="dash-card">
+                <i class="bi bi-tags"></i>
+                <h3>Gestionar Categorías</h3>
+            </a>
+            <a href="{% url 'pedidos:cliente_lista' %}" class="dash-card">
+                <i class="bi bi-person-lines-fill"></i>
+                <h3>Gestionar Clientes</h3>
             </a>
             {% endif %}
 
@@ -263,7 +270,7 @@
 </div>
 
 {% elif vista == "registrar" or vista == "actualizar" %}
-<div class="auth-wrap" style="align-items:flex-start; padding-top:2rem;">
+<div class="auth-wrap" style="align-items:flex-start; padding-top:2rem; min-height: auto;">
     <div class="auth-card" style="max-width:660px;">
 
         <h1 class="auth-title">

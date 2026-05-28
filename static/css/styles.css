@@ -27,8 +27,22 @@
             clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
             border-radius: 0;
             transition: background .3s, transform .2s;
+            letter-spacing: 4px;
+            font-size: 0.8rem;
         }
         .btn-parrilla:hover { background: var(--dorado) !important; transform: translateY(-2px); }
+
+        .hero-subtitle {
+            font-size: 0.75rem;
+            letter-spacing: 6px;
+        }
+        .hero-title {
+            font-size: clamp(3.5rem, 10vw, 8rem);
+            text-shadow: 0 0 80px rgba(232, 101, 26, .3);
+        }
+        .hero-title span {
+            font-size: 0.7em;
+        }
 
         .gold-line { width: 60px; height: 3px; background: var(--dorado); }
 
@@ -38,10 +52,73 @@
 
         
         #inicio {
-            background:
-                radial-gradient(ellipse at 50% 80%, rgba(232,101,26,.18) 0%, transparent 60%),
-                radial-gradient(ellipse at 20% 30%, rgba(192,57,43,.12) 0%, transparent 50%),
-                var(--negro);
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+            background-color: var(--negro);
+        }
+        #inicio::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background-image: url('../img/fondos/carne.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(1.8px) brightness(0.42) contrast(1.1);
+            z-index: -2;
+            pointer-events: none;
+        }
+        #inicio::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 50% 80%, rgba(232, 101, 26, 0.28) 0%, transparent 65%),
+                radial-gradient(ellipse at 20% 30%, rgba(192, 57, 43, 0.18) 0%, transparent 55%),
+                linear-gradient(to bottom, rgba(26, 16, 8, 0.12) 0%, rgba(26, 16, 8, 0.5) 60%, var(--negro) 100%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Smooth, Seamless Section Transitions */
+        #menu {
+            background: linear-gradient(to bottom, var(--negro) 0%, var(--humo) 150px, var(--humo) calc(100% - 150px), var(--negro) 100%) !important;
+            position: relative;
+        }
+        #nosotros {
+            background: var(--negro) !important;
+            position: relative;
+        }
+        #contacto {
+            background: linear-gradient(to bottom, var(--negro) 0%, var(--humo) 150px, var(--humo) 100%) !important;
+            position: relative;
+        }
+
+        /* Menu Card Image Zoom & Premium UI/UX */
+        .card-img-container {
+            border-radius: 0;
+            transition: border-color .3s, box-shadow .3s;
+            background: #110904;
+        }
+        .card-img-zoom {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .menu-card:hover .card-img-zoom {
+            transform: scale(1.08);
+        }
+        .menu-card:hover .card-img-container {
+            border-color: var(--naranja) !important;
+            box-shadow: 0 0 15px rgba(232, 101, 26, 0.2);
         }
         .flames { animation: flicker 1.5s ease-in-out infinite alternate; opacity: .25; filter: blur(2px); }
         @keyframes flicker {
@@ -96,8 +173,35 @@
             background: linear-gradient(90deg, transparent, var(--naranja), transparent);
         }
 
-        .contacto-card { transition: background .3s; }
-        .contacto-card:hover { background: #221406 !important; }
+        .contacto-card {
+            transition: transform .3s ease, background .3s ease, border-top-color .3s ease, box-shadow .3s ease;
+            border-top: 3px solid transparent;
+        }
+        .contacto-card:hover {
+            background: #221406 !important;
+            transform: translateY(-4px);
+            border-top-color: var(--naranja) !important;
+            box-shadow: 0 8px 25px rgba(232, 101, 26, 0.15);
+        }
+
+        /* Stat items hover */
+        .stat-item {
+            transition: transform .3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .stat-item:hover {
+            transform: translateY(-5px);
+        }
+        .stat-item:hover .text-dorado {
+            text-shadow: 0 0 15px rgba(212, 160, 23, 0.45);
+        }
+
+        /* Nosotros Image Zoom */
+        .nosotros-img-zoom {
+            transition: transform .6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .nosotros-img-container:hover .nosotros-img-zoom {
+            transform: scale(1.06) rotate(1deg);
+        }
     
        /* AJUSTE SOLO PARA QUE LA NAVBAR NO TAPE CONTENIDO */
   
@@ -108,4 +212,136 @@
     height: 200px;
     width: auto;
     display: block;
+}
+
+/* WhatsApp premium custom styles */
+.btn-whatsapp {
+    background-color: #25D366 !important;
+    border-color: #25D366 !important;
+    transition: background-color .3s, transform .2s, box-shadow .3s !important;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    letter-spacing: 3px;
+    font-size: .9rem;
+    border-radius: 0;
+}
+.btn-whatsapp:hover {
+    background-color: #128C7E !important;
+    border-color: #128C7E !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+}
+.whatsapp-pulse {
+    animation: pulse-green 2s infinite;
+}
+@keyframes pulse-green {
+    0% {
+        transform: scale(0.95);
+        filter: drop-shadow(0 0 0 rgba(37, 211, 102, 0.7));
+    }
+    70% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 10px rgba(37, 211, 102, 0));
+    }
+    100% {
+        transform: scale(0.95);
+        filter: drop-shadow(0 0 0 rgba(37, 211, 102, 0));
+    }
+}
+
+/* Image Lightbox Modal */
+.lightbox-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    padding: 40px;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(10, 6, 3, 0.95);
+    backdrop-filter: blur(8px);
+    transition: opacity 0.3s ease;
+}
+.lightbox-content {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 80vh;
+    border: 2px solid rgba(212, 160, 23, 0.4);
+    box-shadow: 0 0 45px rgba(232, 101, 26, 0.35);
+    transform: scale(0.92);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    object-fit: contain;
+}
+.lightbox-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+.lightbox-modal.show .lightbox-content {
+    transform: scale(1);
+}
+.lightbox-close {
+    position: absolute;
+    top: 25px;
+    right: 35px;
+    color: var(--crema);
+    font-size: 50px;
+    font-weight: 300;
+    cursor: pointer;
+    transition: color 0.3s, transform 0.2s;
+    z-index: 10000;
+    line-height: 1;
+}
+.lightbox-close:hover {
+    color: var(--naranja);
+    transform: scale(1.1);
+}
+.lightbox-caption {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--crema);
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+/* Customized clean classes to eliminate inline HTML styles */
+.section-subtitle {
+    font-size: 0.7rem;
+    letter-spacing: 6px;
+}
+.menu-card-title {
+    letter-spacing: 2px;
+}
+.nosotros-img-overlay {
+    background: linear-gradient(to top, rgba(26, 16, 8, 0.4), transparent);
+}
+.stat-number {
+    font-size: 3rem;
+    line-height: 1;
+}
+.stat-label {
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+}
+.contacto-card-title {
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+}
+.whatsapp-cta-card {
+    border-color: rgba(212, 160, 23, 0.15) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+.whatsapp-cta-title {
+    letter-spacing: 2px;
+    font-size: 1.5rem;
+}
+.map-container {
+    height: 100%;
+    min-height: 350px;
+    border: 1px solid rgba(212, 160, 23, 0.15);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
 }

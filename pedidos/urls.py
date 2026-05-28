@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 
 app_name = 'pedidos'
@@ -15,7 +16,7 @@ urlpatterns = [
 
     # ── Órdenes ──────────────────────────────────────────────
     path('ordenes/',                    views.orden_lista,    name='orden_lista'),
-    path('ordenes/crear/',              views.orden_crear,    name='orden_crear'),
+    path('ordenes/crear/',              RedirectView.as_view(pattern_name='pedidos:pedido_crear', permanent=False), name='orden_crear'),
     path('ordenes/<int:pk>/',           views.orden_detalle,  name='orden_detalle'),
     path('ordenes/<int:pk>/editar/',    views.orden_editar,   name='orden_editar'),
     path('ordenes/<int:pk>/eliminar/',  views.orden_eliminar, name='orden_eliminar'),
@@ -25,4 +26,16 @@ urlpatterns = [
     path('productos/crear/',             views.producto_crear,    name='producto_crear'),
     path('productos/<int:pk>/editar/',   views.producto_editar,   name='producto_editar'),
     path('productos/<int:pk>/eliminar/', views.producto_eliminar, name='producto_eliminar'),
+
+    # ── Categorías ────────────────────────────────────────────
+    path('categorias/',                   views.categoria_lista,    name='categoria_lista'),
+    path('categorias/crear/',             views.categoria_crear,    name='categoria_crear'),
+    path('categorias/<int:pk>/editar/',   views.categoria_editar,   name='categoria_editar'),
+    path('categorias/<int:pk>/eliminar/', views.categoria_eliminar, name='categoria_eliminar'),
+
+    # ── Clientes ──────────────────────────────────────────────
+    path('clientes/',                   views.cliente_lista,    name='cliente_lista'),
+    path('clientes/crear/',             views.cliente_crear,    name='cliente_crear'),
+    path('clientes/<int:pk>/editar/',   views.cliente_editar,   name='cliente_editar'),
+    path('clientes/<int:pk>/eliminar/', views.cliente_eliminar, name='cliente_eliminar'),
 ]

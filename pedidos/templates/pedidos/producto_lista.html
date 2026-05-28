@@ -20,7 +20,7 @@
   <!-- Navegación Compartida -->
   <div class="pm-nav">
     <div class="pm-nav-group">
-      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-primary">Inicio</a>
+      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light">Inicio</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Pedidos</span>
@@ -33,7 +33,7 @@
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Productos</span>
-      <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
+      <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-primary">Consultar</a>
       <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-light">Crear</a>
     </div>
     <div class="pm-nav-group">
@@ -48,62 +48,53 @@
     </div>
   </div>
 
-  <!-- Rejilla de Estadísticas -->
-  <div class="pm-stats">
-    <div class="pm-stat">
-      <div class="val">{{ total_pedidos|default:"0" }}</div>
-      <div class="lbl">Pedidos totales</div>
-    </div>
-    <div class="pm-stat" style="border-left-color:#D4A017">
-      <div class="val">{{ pedidos_pendientes|default:"0" }}</div>
-      <div class="lbl">Pedidos pendientes</div>
-    </div>
-    <div class="pm-stat" style="border-left-color:#A07810">
-      <div class="val">{{ total_ordenes|default:"0" }}</div>
-      <div class="lbl">Órdenes totales</div>
-    </div>
-    <div class="pm-stat" style="border-left-color:#C0392B">
-      <div class="val">{{ total_productos|default:"0" }}</div>
-      <div class="lbl">Productos totales</div>
-    </div>
-    <div class="pm-stat" style="border-left-color:#E8651A">
-      <div class="val">{{ total_categorias|default:"0" }}</div>
-      <div class="lbl">Categorías</div>
-    </div>
-    <div class="pm-stat" style="border-left-color:#27AE60">
-      <div class="val">{{ total_clientes|default:"0" }}</div>
-      <div class="lbl">Clientes</div>
-    </div>
-  </div>
-
-  <!-- Tabla de Últimos Pedidos -->
+  <!-- Contenedor del Listado -->
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>Últimos pedidos</h3>
-      <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo pedido</a>
+      <h3>Productos</h3>
+      <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo producto</a>
     </div>
     <div class="pm-card-body">
+      <!-- Buscador -->
+      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
+               type="text" name="q_prod" value="{{ q_prod }}" placeholder="Buscar producto…">
+        <select name="categoria" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
+          <option value="">Todas las categorías</option>
+          {% for cat in categorias %}
+          <option value="{{ cat.id }}" {% if cat_sel == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.nombre }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
+      </form>
       <div class="pm-table-wrap">
         <table class="pm-table">
           <thead>
-            <tr><th>#</th><th>Mesa/Cliente</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr>
+            <tr><th>#</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Descripción</th><th>Disponible</th><th>Acciones</th></tr>
           </thead>
           <tbody>
-            {% for p in ultimos_pedidos %}
+            {% for prod in productos %}
             <tr>
-              <td><strong>{{ p.pk|stringformat:"02d" }}</strong></td>
-              <td>{{ p.cliente }}</td>
-              <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
-              <td>${{ p.total|floatformat:0 }}</td>
-              <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
+              <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
+              <td><strong>{{ prod.nombre }}</strong></td>
+              <td>{{ prod.categoria.nombre }}</td>
+              <td>${{ prod.precio|floatformat:0 }}</td>
+              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">{{ prod.descripcion|default:"—" }}</td>
               <td>
-                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
+                {% if prod.disponible %}
+                  <span class="pm-badge pm-badge-completado">Sí</span>
+                {% else %}
+                  <span class="pm-badge pm-badge-cancelado">No</span>
+                {% endif %}
+              </td>
+              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+                <a href="{% url 'pedidos:producto_editar' prod.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
-                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">Eliminar</button>
+                        onclick="confirmDelete('producto',{{ prod.pk }},'{{ prod.nombre|escapejs }}')">Eliminar</button>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="6" style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos aún.</td></tr>
+            <tr><td colspan="7" style="text-align:center;color:var(--p-muted);padding:2rem">No hay productos registrados.</td></tr>
             {% endfor %}
           </tbody>
         </table>
