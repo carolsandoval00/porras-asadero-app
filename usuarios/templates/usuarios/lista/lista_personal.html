@@ -139,12 +139,6 @@
     .perm-dot { width:8px; height:8px; border-radius:50%; border:2px solid #C0AD84; flex-shrink:0; transition:all .15s; }
     .perm-it.on .perm-dot { background:var(--verde-dk); border-color:var(--verde-dk); }
 
-    .act-it { display:flex; align-items:flex-start; gap:11px; padding:.85rem 0; border-bottom:1px solid #E8DFC8; }
-    .act-it:last-child { border-bottom:none; }
-    .act-ic { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
-    .act-b strong { font-size:.87rem; display:block; margin-bottom:2px; color:var(--carbon); }
-    .act-b span   { font-size:.78rem; color:var(--muted); }
-
     .z-peligro { border:1.5px solid var(--rojo); border-radius:12px; padding:1.2rem 1.4rem; background:var(--rojo-lt); margin-top:1rem; }
     .z-peligro h4 { font-family:'Playfair Display',serif; color:var(--rojo); font-size:1.05rem; margin-bottom:.4rem; }
     .z-peligro p  { font-size:.84rem; color:var(--rojo); opacity:.85; margin-bottom:1rem; line-height:1.5; }
@@ -229,7 +223,7 @@
                 <table class="usr-tbl">
                     <thead><tr>
                         <th>Usuario</th><th>Nombre</th><th>Correo</th>
-                        <th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th>
+                        <th>Rol</th><th>Estado</th><th>Acciones</th>
                     </tr></thead>
                     <tbody id="tbody"></tbody>
                 </table>
@@ -383,13 +377,8 @@ const PERMS=['Ver reservas','Crear reservas','Editar reservas','Eliminar reserva
              'Ver mesas','Gestionar mesas','Ver reportes','Gestionar pagos',
              'Ver usuarios','Gestionar usuarios','Configuración','Acceso total'];
 const COLS=['#1A1008','#C0392B','#E8651A','#8B2000','#D4A017','#633806','#C0502A'];
-const ACTS=[
-    {t:'Inició sesión',         h:'Hace 1 hora',    bg:'rgba(232,101,26,.12)',  ic:'→'},
-    {t:'Creó reserva #10248',   h:'Hace 3 horas',   bg:'rgba(212,160,23,.12)',  ic:'+'},
-    {t:'Actualizó mesa 4',      h:'Hace 5 horas',   bg:'rgba(212,160,23,.12)',  ic:'~'},
-    {t:'Cerró sesión',          h:'Ayer 22:10',     bg:'rgba(200,180,150,.2)',  ic:'←'},
-    {t:'Editó reserva de López',h:'Ayer 17:35',     bg:'rgba(212,160,23,.12)',  ic:'✎'},
-];
+
+
 
 let djangoData = [];
 try {
@@ -493,7 +482,6 @@ window.renderTabla = function() {
           <td style="font-size:.83rem;color:var(--muted)">${u.email}</td>
           <td>${bRol(u.rol)}</td>
           <td>${bEst(u.e)}</td>
-          <td style="font-size:.8rem;color:#A09070">${u.acc||'—'}</td>
           <td><div style="display:flex;gap:4px;flex-wrap:wrap">
               <button class="btn-ac btn-ver"  onclick="verPerfil(${u.id})">Ver perfil</button>
               <button class="btn-ac btn-edit" onclick="editar(${u.id})">Editar</button>
@@ -546,13 +534,7 @@ window.verPerfil = function(id) {
                     <div class="perm-dot"></div>${p}</div>`).join('')}
             </div>
         </div>
-        <div class="usr-card">
-            <div class="c-label">Actividad reciente</div>
-            ${ACTS.map(a => `<div class="act-it">
-                <div class="act-ic" style="background:${a.bg}">${a.ic}</div>
-                <div class="act-b"><strong>${a.t}</strong><span>${a.h}</span></div>
-            </div>`).join('')}
-        </div>
+      
         ${u.notas ? `<div class="usr-card"><div class="c-label">Notas internas</div><p style="font-size:.88rem;color:#6B5A3E;line-height:1.6">${u.notas}</p></div>` : ''}
         <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.5rem">
             <button class="btn btn-ok" onclick="editar(${u.id})"><i class="bi bi-pencil"></i> Editar</button>

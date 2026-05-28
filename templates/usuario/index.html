@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{%load static%}
 {% block content %}
 
 <section id="menu" class="bg-humo py-5 px-4 px-md-5">
@@ -121,8 +122,8 @@
             <div class="col-lg-5">
                 <div class="position-relative" style="height:460px">
                     <div class="w-100 h-100 d-flex align-items-center justify-content-center border" style="border-color:rgba(212,160,23,.2)!important; background:radial-gradient(ellipse at 50% 70%, rgba(232,101,26,.4) 0%, rgba(192,57,43,.2) 40%, transparent 70%), var(--humo); overflow:hidden;">
-                        <span class="fire-glow" style="font-size:8rem">🔥</span>
-                        <span class="position-absolute bottom-0 end-0 m-4 fs-3 fire-glow">🔥</span>
+                        <img src="{% static 'img/restaurante.png' %}" style="width:35rem;">
+                        
                     </div>
                 </div>
             </div>
