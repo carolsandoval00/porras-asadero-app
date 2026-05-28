@@ -207,11 +207,6 @@
             </button>
         </form>
 
-        <div class="auth-divider">o</div>
-
-       <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
-            <i class="bi bi-person-plus me-1"></i> Registrar nuevo personal
-        </a>
     </div>
 </div>
 
@@ -235,6 +230,18 @@
             <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
                 <i class="bi bi-person-plus-fill"></i>
                 <h3>Nuevo Usuario</h3>
+            </a>
+            <a href="{% url 'pedidos:producto_lista' %}" class="dash-card">
+                <i class="bi bi-egg-fried"></i>
+                <h3>Gestionar Productos</h3>
+            </a>
+            <a href="{% url 'pedidos:categoria_lista' %}" class="dash-card">
+                <i class="bi bi-tags"></i>
+                <h3>Gestionar Categorías</h3>
+            </a>
+            <a href="{% url 'pedidos:cliente_lista' %}" class="dash-card">
+                <i class="bi bi-person-lines-fill"></i>
+                <h3>Gestionar Clientes</h3>
             </a>
             {% endif %}
 

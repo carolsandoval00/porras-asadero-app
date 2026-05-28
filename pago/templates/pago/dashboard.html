@@ -354,10 +354,9 @@
         <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form">
           {% csrf_token %}
           <div class="pg-form-grid">
-            <div class="full"><label>Orden vinculada</label>{{ form.orden }}</div>
+            <div class="full"><label>Pedido vinculado</label>{{ form.pedido }}</div>
             <div><label>Método de pago</label>{{ form.metodo_pago }}</div>
             <div><label>Referencia</label>{{ form.referencia }}</div>
-            <div><label>Estado</label>{{ form.estado }}</div>
             <div class="full"><label>Descripción</label>{{ form.descripcion }}</div>
           </div>
           {% if form.errors %}
@@ -665,7 +664,7 @@ function showTab(name) {
 
 // ── Registrar pago ──────────────────────────────────────────
 function registrarPago(numeroOrden, ordenId, cliente, total) {
-  const ordenSelect = document.querySelector('[name="orden"]');
+  const ordenSelect = document.querySelector('[name="pedido"]');
   if (ordenSelect) ordenSelect.value = ordenId;
   document.getElementById('orden-banner').classList.add('visible');
   document.getElementById('banner-orden-num').textContent = numeroOrden;
@@ -676,7 +675,7 @@ function registrarPago(numeroOrden, ordenId, cliente, total) {
 }
 
 function cancelarPago() {
-  const ordenSelect = document.querySelector('[name="orden"]');
+  const ordenSelect = document.querySelector('[name="pedido"]');
   if (ordenSelect) ordenSelect.value = '';
   document.getElementById('orden-banner').classList.remove('visible');
   document.getElementById('form-titulo').textContent = 'Registrar Pago';

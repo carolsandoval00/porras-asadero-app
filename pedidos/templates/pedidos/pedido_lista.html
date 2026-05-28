@@ -1,0 +1,148 @@
+{% extends "base 2.html" %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
+
+<div class="pm-wrapper">
+  <!-- Cabecera -->
+  <div class="pm-header">
+    <h1>{{ titulo }}</h1>
+    <h2>Bienvenido, {{ nombre }}</h2>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+    <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Navegación Compartida -->
+  <div class="pm-nav">
+    <div class="pm-nav-group">
+      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light">Inicio</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Pedidos</span>
+      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-primary">Consultar</a>
+      <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Órdenes</span>
+      <a href="{% url 'pedidos:orden_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Productos</span>
+      <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
+      <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Categorías</span>
+      <a href="{% url 'pedidos:categoria_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
+      <a href="{% url 'pedidos:categoria_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Clientes</span>
+      <a href="{% url 'pedidos:cliente_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
+      <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+    </div>
+  </div>
+
+  <!-- Contenedor del Listado -->
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>Pedidos</h3>
+      <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo pedido</a>
+    </div>
+    <div class="pm-card-body">
+      <!-- Formulario de Búsqueda -->
+      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
+               type="text" name="q" value="{{ q }}" placeholder=" Buscar mesa…">
+        <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
+          <option value="">Todos los estados</option>
+          {% for val,lbl in estados %}
+          <option value="{{ val }}" {% if estado_sel == val %}selected{% endif %}>{{ lbl }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
+      </form>
+
+      {% if pedidos_por_fecha %}
+        {% for grupo in pedidos_por_fecha %}
+        <div class="fecha-grupo">
+          <div class="fecha-header">
+            <span class="fecha-label">{{ grupo.fecha|date:"l d \d\e F \d\e Y" }}</span>
+            <div class="fecha-line"></div>
+            <span class="fecha-subtotal">{{ grupo.count }} pedido{{ grupo.count|pluralize }}</span>
+          </div>
+          <div class="pm-table-wrap">
+            <table class="pm-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Mesa/Cliente</th><th>Productos</th>
+                  <th>Descripción</th><th>Estado</th><th>Total</th><th>Hora</th><th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in grupo.pedidos %}
+                <tr>
+                  <td><strong>{{ p.pk|stringformat:"02d" }}</strong></td>
+                  <td>{{ p.cliente }}</td>
+                  <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+                    {% for item in p.items.all %}
+                      {{ item.cantidad }}x {{ item.producto.nombre }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}—{% endfor %}
+                  </td>
+                  <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)"
+                      title="{{ p.descripcion }}">
+                    {{ p.descripcion|default:"—" }}
+                  </td>
+                  <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
+                  <td><strong>${{ p.total|floatformat:0 }}</strong></td>
+                  <td>{{ p.fecha_creacion|date:"H:i" }}</td>
+                  <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+                    <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
+                    <button class="pm-btn pm-btn-danger pm-btn-sm"
+                            onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">Eliminar</button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmación Unificado -->
+<div id="modal-delete" class="pm-modal-overlay">
+  <div class="pm-modal-box">
+    <h4>Confirmar eliminación</h4>
+    <p id="modal-msg">¿Estás seguro de que deseas eliminar este registro?</p>
+    <div class="pm-modal-actions">
+      <form id="modal-form" method="post">
+        {% csrf_token %}
+        <button type="submit" class="pm-btn pm-btn-danger">Sí, eliminar</button>
+      </form>
+      <button class="pm-btn pm-btn-light" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDelete(tipo, id, nombre) {
+  var modal = document.getElementById('modal-delete');
+  document.getElementById('modal-msg').innerText = '¿Estás seguro de eliminar el ' + tipo + ' "' + nombre + '"?';
+  document.getElementById('modal-form').action = '/pedidos/' + tipo + 's/' + id + '/eliminar/';
+  modal.classList.add('open');
+}
+function closeModal() { document.getElementById('modal-delete').classList.remove('open'); }
+</script>
+
+{% endblock %}

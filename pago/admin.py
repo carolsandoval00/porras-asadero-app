@@ -3,8 +3,8 @@ from .models import Pago, Caja
 
 @admin.register(Pago)
 class PagoAdmin(admin.ModelAdmin):
-    list_display = ['pk', 'orden', 'metodo_pago', 'monto', 'estado', 'fecha_pago']
-    list_filter  = ['estado', 'metodo_pago']
+    list_display = ['pk', 'pedido', 'metodo_pago', 'monto', 'fecha_pago']
+    list_filter  = ['metodo_pago']
 
 @admin.register(Caja)
 class CajaAdmin(admin.ModelAdmin):

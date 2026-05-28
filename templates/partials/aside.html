@@ -20,6 +20,7 @@
     <hr style="border-color: #3a2a18;">
     
     <ul class="nav nav-pills flex-column mb-auto gap-1">
+        <!-- ── Panel de Control (Inicio) ─────────────────────── -->
         <li class="nav-item">
             <a href="{% url 'inicio_admin' %}" class="nav-link {% if request.resolver_match.url_name == 'inicio_admin' %}active-custom{% endif %}" style="color: #F5ECD7;">
                 <i class="bi bi-speedometer2 me-2"></i>
@@ -27,20 +28,77 @@
             </a>
         </li>
 
+        <!-- ── Personal y Control (Colapsable) ──────────────── -->
         <li>
-            <a href="{% url 'lista_personal' %}" class="nav-link {% if request.resolver_match.url_name == 'lista_personal' %}active-custom{% endif %}" style="color: #F5ECD7;">
-                <i class="bi bi-people me-2"></i>
-                Usuarios y Personal
+            <a href="#personalSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.url_name == 'lista_personal' or request.resolver_match.url_name == 'panel_perfil' %}active-custom{% endif %}" style="color: #F5ECD7;" aria-expanded="{% if request.resolver_match.url_name == 'lista_personal' or request.resolver_match.url_name == 'panel_perfil' %}true{% else %}false{% endif %}">
+                <span>
+                    <i class="bi bi-people me-2"></i>
+                    Personal y Control
+                </span>
+                <i class="bi bi-chevron-down fs-7"></i>
             </a>
+            <div class="collapse {% if request.resolver_match.url_name == 'lista_personal' or request.resolver_match.url_name == 'panel_perfil' %}show{% endif %}" id="personalSubmenu">
+                <ul class="nav flex-column ms-3 mt-1 gap-1" style="font-size: 0.88rem; border-left: 1px solid rgba(245, 236, 215, 0.15); padding-left: 0.5rem;">
+                    <li>
+                        <a href="{% url 'lista_personal' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'lista_personal' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-person-lines-fill me-2"></i>Lista Personal
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'panel_perfil' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'panel_perfil' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-person-badge me-2"></i>Mi Perfil
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </li>
 
+        <!-- ── Pedidos y Carta (Colapsable) ──────────────────── -->
         <li>
-            <a href="/pedidos/" class="nav-link {% if request.resolver_match.namespace == 'pedidos' %}active-custom{% endif %}" style="color: #F5ECD7;">
-                <i class="bi bi-journal-text me-2"></i>
-                Pedidos
+            <a href="#pedidosSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.namespace == 'pedidos' %}active-custom{% endif %}" style="color: #F5ECD7;" aria-expanded="{% if request.resolver_match.namespace == 'pedidos' %}true{% else %}false{% endif %}">
+                <span>
+                    <i class="bi bi-journal-text me-2"></i>
+                    Pedidos y Carta
+                </span>
+                <i class="bi bi-chevron-down fs-7"></i>
             </a>
+            <div class="collapse {% if request.resolver_match.namespace == 'pedidos' %}show{% endif %}" id="pedidosSubmenu">
+                <ul class="nav flex-column ms-3 mt-1 gap-1" style="font-size: 0.88rem; border-left: 1px solid rgba(245, 236, 215, 0.15); padding-left: 0.5rem;">
+                    <li>
+                        <a href="{% url 'pedidos:dashboard' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'dashboard' and not seccion_activa %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-grid-fill me-2"></i>Tablero
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'pedidos:pedido_lista' %}" class="nav-link py-1 {% if seccion_activa == 'pedido-lista' or request.resolver_match.url_name == 'pedido_lista' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-list-check me-2"></i>Ver Pedidos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'pedidos:orden_lista' %}" class="nav-link py-1 {% if seccion_activa == 'orden-lista' or request.resolver_match.url_name == 'orden_lista' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-receipt me-2"></i>Ver Órdenes
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'pedidos:producto_lista' %}" class="nav-link py-1 {% if seccion_activa == 'producto-lista' or request.resolver_match.url_name == 'producto_lista' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-egg-fried me-2"></i>Productos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'pedidos:categoria_lista' %}" class="nav-link py-1 {% if seccion_activa == 'categoria-lista' or request.resolver_match.url_name == 'categoria_lista' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-tags me-2"></i>Categorías
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'pedidos:cliente_lista' %}" class="nav-link py-1 {% if seccion_activa == 'cliente-lista' or request.resolver_match.url_name == 'cliente_lista' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-person-lines-fill me-2"></i>Clientes
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </li>
 
+        <!-- ── Gestión de Pagos (Directo) ───────────────────── -->
         <li>
             <a href="{% url 'pago:dashboard' %}" 
                class="nav-link {% if request.resolver_match.namespace == 'pago' %}active-custom{% endif %}" 
@@ -50,11 +108,34 @@
             </a>
         </li>
 
+        <!-- ── Reservas y Mesas (Colapsable) ────────────────── -->
         <li>
-            <a href="{% url 'reserva_inicio' %}" class="nav-link {% if request.resolver_match.url_name == 'reserva_inicio' %}active-custom{% endif %}" style="color: #F5ECD7;">
-                <i class="bi bi-calendar-check me-2"></i>
-                Reservas y Mesas
+            <a href="#reservasSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'eliminar_detalle' %}active-custom{% endif %}" style="color: #F5ECD7;" aria-expanded="{% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'eliminar_detalle' %}true{% else %}false{% endif %}">
+                <span>
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Reservas y Mesas
+                </span>
+                <i class="bi bi-chevron-down fs-7"></i>
             </a>
+            <div class="collapse {% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'eliminar_detalle' %}show{% endif %}" id="reservasSubmenu">
+                <ul class="nav flex-column ms-3 mt-1 gap-1" style="font-size: 0.88rem; border-left: 1px solid rgba(245, 236, 215, 0.15); padding-left: 0.5rem;">
+                    <li>
+                        <a href="{% url 'reserva_inicio' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-grid-fill me-2"></i>Tablero Reservas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'actualizar_mesa' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'actualizar_mesa' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-gear-fill me-2"></i>Editar Mesas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'eliminar_detalle' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'eliminar_detalle' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-trash-fill me-2"></i>Eliminar Reserva
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </li>
     </ul>
 
