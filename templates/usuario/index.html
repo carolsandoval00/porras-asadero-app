@@ -1,113 +1,52 @@
 {% extends "base.html" %}
+{%load static%}
 {% block content %}
 
 <section id="menu" class="bg-humo py-5 px-4 px-md-5">
     <div class="container-xl">
-        <p class="ff-oswald fw-light text-uppercase text-naranja mb-2" style="font-size:.7rem; letter-spacing:6px">Lo Mejor de la Parrilla</p>
+        <p class="ff-oswald fw-light text-uppercase text-naranja mb-2 section-subtitle">Lo Mejor de la Parrilla</p>
         <h2 class="ff-playfair fw-bold text-crema display-4">Nuestro Menú</h2>
         <div class="gold-line mb-5"></div>
        
 
 
         <div class="row g-1">
-        
-            
-
-        
+            {% for cat in categorias_menu %}
             <div class="col-sm-6 col-xl-3">
                 <div class="menu-card bg-negro p-4 p-lg-5 h-100">
-                    <span class="d-block mb-3" style="font-size:2.5rem">🥩</span>
-                    <p class="ff-oswald fw-bold text-dorado text-uppercase mb-4" style="letter-spacing:2px">Carnes al Carbón</p>
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom border-secondary border-opacity-10 pb-2 mb-3">
-                        <div>
-                            <span class="ff-crimson text-crema">1 Carne</span>
-                            <span class="d-block small fst-italic text-white-50">Porción completa a la brasa</span>
-                        </div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$42.000</span>
+                    <div class="card-img-container mb-4 position-relative overflow-hidden">
+                        {% if "carne" in cat.nombre|lower %}
+                            <img src="{% static 'img/carta/carne.png' %}" class="card-img-zoom" alt="{{ cat.nombre }}" onclick="openLightbox(this)">
+                        {% elif "sopa" in cat.nombre|lower %}
+                            <img src="{% static 'img/carta/sopas.png' %}" class="card-img-zoom" alt="{{ cat.nombre }}" onclick="openLightbox(this)">
+                        {% elif "bebida" in cat.nombre|lower %}
+                            <img src="{% static 'img/carta/limonanda.png' %}" class="card-img-zoom" alt="{{ cat.nombre }}" onclick="openLightbox(this)">
+                        {% else %}
+                            <img src="{% static 'img/carta/mojarra.png' %}" class="card-img-zoom" alt="{{ cat.nombre }}" onclick="openLightbox(this)">
+                        {% endif %}
                     </div>
-                    <div class="d-flex justify-content-between align-items-baseline">
-                        <div>
-                            <span class="ff-crimson text-crema">½ Carne</span>
-                            <span class="d-block small fst-italic text-white-50">Media porción a la brasa</span>
+                    <p class="ff-oswald fw-bold text-dorado text-uppercase mb-4 menu-card-title">{{ cat.nombre }}</p>
+                    
+                    {% for prod in cat.productos.all %}
+                        {% if prod.disponible %}
+                        <div class="d-flex justify-content-between align-items-baseline {% if not forloop.last %}border-bottom border-secondary border-opacity-10 pb-2 mb-3{% endif %}">
+                            <div>
+                                <span class="ff-crimson text-crema">{{ prod.nombre }}</span>
+                                <span class="d-block small fst-italic text-white-50">{{ prod.descripcion|default:"" }}</span>
+                            </div>
+                            <span class="ff-oswald fw-bold text-naranja ms-3">${{ prod.precio|floatformat:0 }}</span>
                         </div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$32.000</span>
-                    </div>
+                        {% endif %}
+                    {% empty %}
+                        <p class="text-white-50 small fst-italic">Sin platos disponibles hoy.</p>
+                    {% endfor %}
                 </div>
             </div>
-
-            <div class="col-sm-6 col-xl-3">
-                <div class="menu-card bg-negro p-4 p-lg-5 h-100">
-                    <span class="d-block mb-3" style="font-size:2.5rem">🍲</span>
-                    <p class="ff-oswald fw-bold text-dorado text-uppercase mb-4" style="letter-spacing:2px">Sopas</p>
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom border-secondary border-opacity-10 pb-2 mb-3">
-                        <div>
-                            <span class="ff-crimson text-crema">1 Sopa</span>
-                            <span class="d-block small fst-italic text-white-50">Porción completa</span>
-                        </div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$10.000</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-baseline">
-                        <div>       
-                            <span class="ff-crimson text-crema">½ Sopa</span>
-                            <span class="d-block small fst-italic text-white-50">Media porción</span>
-                        </div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$5.000</span>
-                    </div>
-                </div>
+            {% empty %}
+            <div class="col-12 text-center text-white-50 py-5">
+                <p>No se encontraron categorías de menú en el sistema.</p>
             </div>
-
-            
-            <div class="col-sm-6 col-xl-3">
-                <div class="menu-card bg-negro p-4 p-lg-5 h-100">
-                    <span class="d-block mb-3" style="font-size:2.5rem">🍽️</span>
-                    <p class="ff-oswald fw-bold text-dorado text-uppercase mb-4" style="letter-spacing:2px">Platos a la Carta</p>
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom border-secondary border-opacity-10 pb-2 mb-3">
-                        <div><span class="ff-crimson text-crema">Pechuga</span><span class="d-block small fst-italic text-white-50">Asada al carbón</span></div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$35.000</span>
-                    </div> 
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom border-secondary border-opacity-10 pb-2 mb-3">
-                        <div><span class="ff-crimson text-crema">Trucha</span><span class="d-block small fst-italic text-white-50">Fresca y a la brasa</span></div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$35.000</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom border-secondary border-opacity-10 pb-2 mb-3">
-                        <div><span class="ff-crimson text-crema">Mojarra</span><span class="d-block small fst-italic text-white-50">A la parrilla</span></div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$35.000</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-baseline">
-                        <div><span class="ff-crimson text-crema">Gallina</span><span class="d-block small fst-italic text-white-50">Tradicional y jugosa</span></div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$45.000</span>
-                    </div>
-                </div>
-            </div>
-
-            
-            <div class="col-sm-6 col-xl-3">
-                <div class="menu-card bg-negro p-4 p-lg-5 h-100">
-                    <span class="d-block mb-3" style="font-size:2.5rem">🍹</span>
-                    <p class="ff-oswald fw-bold text-dorado text-uppercase mb-4" style="letter-spacing:2px">Bebidas</p>
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom border-secondary border-opacity-10 pb-2 mb-3">
-                        <div><span class="ff-crimson text-crema">Limonada Natural</span><span class="d-block small fst-italic text-white-50">Fresca y natural</span></div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$4.000</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom border-secondary border-opacity-10 pb-2 mb-3">
-                        <div><span class="ff-crimson text-crema">Gaseosa 350ml</span><span class="d-block small fst-italic text-white-50">Todas las marcas</span></div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$3.000</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom border-secondary border-opacity-10 pb-2 mb-3">
-                        <div><span class="ff-crimson text-crema">Gaseosa 1.5L</span><span class="d-block small fst-italic text-white-50">Para compartir</span></div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$8.000</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom border-secondary border-opacity-10 pb-2 mb-3">
-                        <div><span class="ff-crimson text-crema">Gaseosa 3L</span><span class="d-block small fst-italic text-white-50">Familiar</span></div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$10.000</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-baseline">
-                        <div><span class="ff-crimson text-crema">Cerveza</span><span class="d-block small fst-italic text-white-50">Bien fría</span></div>
-                        <span class="ff-oswald fw-bold text-naranja ms-3">$4.000</span>
-                    </div>
-                </div>
-            </div>
-
+            {% endfor %}
         </div>
     </div>
 </section>
@@ -117,19 +56,16 @@
     <div class="container-xl">
         <div class="row g-5 align-items-center">
 
-            
             <div class="col-lg-5">
-                <div class="position-relative" style="height:460px">
-                    <div class="w-100 h-100 d-flex align-items-center justify-content-center border" style="border-color:rgba(212,160,23,.2)!important; background:radial-gradient(ellipse at 50% 70%, rgba(232,101,26,.4) 0%, rgba(192,57,43,.2) 40%, transparent 70%), var(--humo); overflow:hidden;">
-                        <span class="fire-glow" style="font-size:8rem">🔥</span>
-                        <span class="position-absolute bottom-0 end-0 m-4 fs-3 fire-glow">🔥</span>
-                    </div>
+                <div class="nosotros-img-container position-relative overflow-hidden w-100" onclick="openLightbox(document.getElementById('restauranteImg'))">
+                    <img id="restauranteImg" src="{% static 'img/restaurante.png' %}" class="w-100 h-100 object-fit-cover nosotros-img-zoom" alt="Nuestra Historia - Asadero Porras">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 nosotros-img-overlay pointer-events-none"></div>
                 </div>
             </div>
 
            
             <div class="col-lg-7">
-                <p class="ff-oswald fw-light text-uppercase text-naranja mb-2" style="font-size:.7rem; letter-spacing:6px">Quiénes Somos</p>
+                <p class="ff-oswald fw-light text-uppercase text-naranja mb-2 section-subtitle">Quiénes Somos</p>
                 <h2 class="ff-playfair fw-bold text-crema display-4 lh-1 mb-3">Nuestra<br>Historia</h2>
                 <div class="gold-line mb-4"></div>
                 <p class="text-white-50 lh-lg mb-3">En Asadero Porras, creemos que el fuego y la familia son el alma de la buena mesa. Lo que comenzó como un sueño compartido por llevar el sabor auténtico del campo a la ciudad, se ha convertido hoy en el punto de encuentro favorito de quienes buscan calidad y tradición.</p>
@@ -139,17 +75,17 @@
                 
 
                 <div class="d-flex flex-wrap gap-5">
-                    <div>
-                        <div class="ff-playfair fw-bold text-dorado" style="font-size:3rem; line-height:1">15+</div>
-                        <div class="ff-oswald fw-light text-uppercase text-white-50" style="font-size:.7rem; letter-spacing:3px">Años de tradición</div>
+                    <div class="stat-item">
+                        <div class="ff-playfair fw-bold text-dorado stat-number">15+</div>
+                        <div class="ff-oswald fw-light text-uppercase text-white-50 stat-label">Años de tradición</div>
                     </div>
-                    <div>
-                        <div class="ff-playfair fw-bold text-dorado" style="font-size:3rem; line-height:1">500+</div>
-                        <div class="ff-oswald fw-light text-uppercase text-white-50" style="font-size:.7rem; letter-spacing:3px">Clientes al mes</div>
+                    <div class="stat-item">
+                        <div class="ff-playfair fw-bold text-dorado stat-number">500+</div>
+                        <div class="ff-oswald fw-light text-uppercase text-white-50 stat-label">Clientes al mes</div>
                     </div>
-                    <div>
-                        <div class="ff-playfair fw-bold text-dorado" style="font-size:3rem; line-height:1">100%</div>
-                        <div class="ff-oswald fw-light text-uppercase text-white-50" style="font-size:.7rem; letter-spacing:3px">Carbón natural</div>
+                    <div class="stat-item">
+                        <div class="ff-playfair fw-bold text-dorado stat-number">100%</div>
+                        <div class="ff-oswald fw-light text-uppercase text-white-50 stat-label">Carbón natural</div>
                     </div>
                 </div>
             </div>
@@ -160,7 +96,7 @@
 
 <section id="contacto" class="bg-humo py-5 px-4 px-md-5 text-center">
     <div class="container-xl">
-        <p class="ff-oswald fw-light text-uppercase text-naranja mb-2" style="font-size:.7rem; letter-spacing:6px">Estamos para Servirte</p>
+        <p class="ff-oswald fw-light text-uppercase text-naranja mb-2 section-subtitle">Estamos para Servirte</p>
         <h2 class="ff-playfair fw-bold text-crema display-4">Contáctanos</h2>
         <p class="ff-crimson fst-italic text-white-50 mb-5 fs-5">Reservas, eventos especiales o simplemente una pregunta — aquí estamos.</p>
 
@@ -168,52 +104,90 @@
             <div class="col-sm-6 col-lg-3">
                 <div class="contacto-card bg-negro p-4 py-5 h-100">
                     <div class="fs-2 mb-3">📍</div>
-                    <p class="ff-oswald fw-bold text-uppercase text-naranja mb-2" style="font-size:.75rem; letter-spacing:3px">Dirección</p>
+                    <p class="ff-oswald fw-bold text-uppercase text-naranja mb-2 contacto-card-title">Dirección</p>
                     <p class="ff-crimson text-crema lh-base mb-0">Carrera 11 #26-147 Sur<br>Sogamoso, Boyacá</p>
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
                 <div class="contacto-card bg-negro p-4 py-5 h-100">
                     <div class="fs-2 mb-3">📞</div>
-                    <p class="ff-oswald fw-bold text-uppercase text-naranja mb-2" style="font-size:.75rem; letter-spacing:3px">Teléfono</p>
+                    <p class="ff-oswald fw-bold text-uppercase text-naranja mb-2 contacto-card-title">Teléfono</p>
                     <p class="ff-crimson text-crema mb-0">312 388 3777</p>
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
                 <div class="contacto-card bg-negro p-4 py-5 h-100">
                     <div class="fs-2 mb-3">🕐</div>
-                    <p class="ff-oswald fw-bold text-uppercase text-naranja mb-2" style="font-size:.75rem; letter-spacing:3px">Horarios</p>
+                    <p class="ff-oswald fw-bold text-uppercase text-naranja mb-2 contacto-card-title">Horarios</p>
                     <p class="ff-crimson text-crema lh-base mb-0">Lun – Vie: 11am – 9pm<br>Sáb – Dom: 11am – 10pm</p>
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
                 <div class="contacto-card bg-negro p-4 py-5 h-100">
                     <div class="fs-2 mb-3">📧</div>
-                    <p class="ff-oswald fw-bold text-uppercase text-naranja mb-2" style="font-size:.75rem; letter-spacing:3px">Correo</p>
+                    <p class="ff-oswald fw-bold text-uppercase text-naranja mb-2 contacto-card-title">Correo</p>
                     <p class="ff-crimson text-crema mb-0"><a href="mailto:porrasasadero@gmail.com" class="text-crema text-decoration-none">porrasasadero@gmail.com</a></p>
                 </div>
             </div>
         </div>
 
-       
-        <form class="mx-auto text-start" style="max-width:600px" onsubmit="enviarForm(event)">
-            <div class="row g-3 mb-3">
-                <div class="col-sm-6">
-                    <label class="ff-oswald fw-light text-uppercase text-white-50 mb-2 d-block" style="font-size:.7rem; letter-spacing:3px">Tu Nombre</label>
-                    <input type="text" class="form-control form-control-brasa" placeholder="Juan García" required>
+        <div class="row g-4 mt-5 text-start justify-content-center align-items-stretch">
+            
+            <div class="col-lg-5 text-start d-flex flex-column">
+                <div class="p-4 p-md-5 bg-negro border h-100 d-flex flex-column justify-content-center whatsapp-cta-card">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="fs-1 whatsapp-pulse">💬</span>
+                        <h3 class="ff-oswald fw-bold text-dorado text-uppercase mb-0 whatsapp-cta-title">Pedidos y Reservas</h3>
+                    </div>
+                    <p class="text-white-50 mb-4 lh-lg">¿Listo para saborear la mejor parrilla de Sogamoso? Escríbenos directamente a nuestro WhatsApp. Atendemos tus reservas, pedidos a domicilio y consultas especiales al instante.</p>
+                    <a href="https://wa.me/573123883777?text=Hola!%20Quiero%20hacer%20un%20pedido%20en%20Asadero%20Porras." target="_blank" rel="noopener noreferrer" class="btn btn-lg w-100 bg-success text-white ff-oswald fw-bold text-uppercase py-3 d-flex align-items-center justify-content-center gap-2 btn-whatsapp">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
+                            <path d="M13.601 2.326A7.85 7.85 0 0 0 10.84 0 7.89 7.89 0 0 0 2.93 7.89c.002 1.35.353 2.67 1.02 3.84L2.52 16l4.35-1.14a7.82 7.82 0 0 0 3.73.93h.003A7.89 7.89 0 0 0 16 7.89a7.8 7.8 0 0 0-2.399-5.564zM10.84 14.533h-.002a6.45 6.45 0 0 1-3.298-.902l-.236-.141-2.458.644.656-2.396-.155-.247a6.46 6.46 0 0 1-.968-3.414c.005-3.561 2.91-6.464 6.467-6.464a6.47 6.47 0 0 1 4.582 1.902A6.47 6.47 0 0 1 14.54 7.9a6.46 6.46 0 0 1-3.701 6.633z"/>
+                        </svg>
+                        Escríbenos por WhatsApp
+                    </a>
                 </div>
-                <div class="col-sm-6">
-                    <label class="ff-oswald fw-light text-uppercase text-white-50 mb-2 d-block" style="font-size:.7rem; letter-spacing:3px">Teléfono</label>
-                    <input type="tel" class="form-control form-control-brasa" placeholder="300 000 0000">
-                </div> 
             </div>
-            <div class="mb-3">
-                <label class="ff-oswald fw-light text-uppercase text-white-50 mb-2 d-block" style="font-size:.7rem; letter-spacing:3px">Mensaje</label>
-                <textarea class="form-control form-control-brasa" rows="4" placeholder="¿Quieres hacer una reserva o tienes alguna pregunta?" required></textarea>
+
+            <div class="col-lg-6 d-flex flex-column">
+                <div class="map-container overflow-hidden w-100 shadow h-100">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1403.6846814906046!2d-72.95538897206464!3d5.681334253716828!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e6a44f88701b03b%3A0x9eed4db8ae5c0bad!2sPORRAS%20ASADERO!5e0!3m2!1ses-419!2sco!4v1779976877705!5m2!1ses-419!2sco" width="100%" height="100%" class="border-0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
             </div>
-            <button type="submit" id="btnSubmit" class="btn w-100 bg-naranja text-dark ff-oswald fw-bold text-uppercase btn-parrilla py-3 mt-2" style="letter-spacing:4px; font-size:.8rem">Enviar Mensaje</button>
-       
-        </form>
+
+        </div>
+    </div>
+</section>
+
+    <!-- Image Lightbox Modal -->
+    <div id="imageLightbox" class="lightbox-modal" onclick="closeLightbox()">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img class="lightbox-content" id="lightboxImg">
+        <div id="lightboxCaption" class="lightbox-caption"></div>
+    </div>
+
+    <script>
+        function openLightbox(element) {
+            const lightbox = document.getElementById('imageLightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+            const lightboxCaption = document.getElementById('lightboxCaption');
+            
+            lightboxImg.src = element.src;
+            lightboxCaption.innerHTML = element.alt || 'Asadero Porras';
+            lightbox.style.display = 'flex';
+            setTimeout(() => {
+                lightbox.classList.add('show');
+            }, 10);
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('imageLightbox');
+            lightbox.classList.remove('show');
+            setTimeout(() => {
+                lightbox.style.display = 'none';
+            }, 300);
+        }
+    </script>
 </section>
 
 

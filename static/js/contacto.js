@@ -270,6 +270,9 @@ function closeModalOrden() {
   document.getElementById('modal-editar-orden').classList.remove('open');
 }
 
-document.getElementById('modal-editar-orden').addEventListener('click', function(e) {
-  if (e.target === this) closeModalOrden();
-});
+const modalEditarOrden = document.getElementById('modal-editar-orden');
+if (modalEditarOrden) {
+  modalEditarOrden.addEventListener('click', function(e) {
+    if (e.target === this) closeModalOrden();
+  });
+}

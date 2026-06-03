@@ -11,13 +11,12 @@ _INPUT = (
 class PagoForm(forms.ModelForm):
     class Meta:
         model  = Pago
-        fields = ['orden', 'metodo_pago', 'monto', 'referencia', 'estado', 'descripcion']
+        fields = ['pedido', 'metodo_pago', 'monto', 'referencia', 'descripcion']
         widgets = {
-            'orden':       forms.Select(attrs={'style': _INPUT}),
+            'pedido':      forms.Select(attrs={'style': _INPUT}),
             'metodo_pago': forms.Select(attrs={'style': _INPUT}),
             'monto':       forms.HiddenInput(),
             'referencia':  forms.TextInput(attrs={'style': _INPUT, 'placeholder': 'Nro. de referencia (opcional)'}),
-            'estado':      forms.Select(attrs={'style': _INPUT}),
             'descripcion': forms.Textarea(attrs={'style': _INPUT + 'resize:vertical;min-height:80px;', 'rows': 2}),
         }
 
@@ -37,11 +36,7 @@ class CajaForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0',
             }),
-            # CORRECCIÓN: vuelve a TextInput, el cajero se escribe manualmente.
-            'cajero': forms.TextInput(attrs={
-                'style': _INPUT,
-                'placeholder': 'Nombre del cajero responsable',
-            }),
+            'cajero': forms.Select(attrs={'style': _INPUT}),
             'observaciones': forms.Textarea(attrs={
                 'style': _INPUT + 'resize:vertical;min-height:80px;',
                 'rows': 3,
@@ -52,4 +47,4 @@ class CajaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['observaciones'].required = False
-        self.fields['cajero'].required = False
+        self.fields['cajero'].required = True

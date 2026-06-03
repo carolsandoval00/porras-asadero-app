@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import DetalleReserva, Mesa
+from .models import Reserva, Mesa
 import json
 
 
@@ -24,6 +25,7 @@ def reserva_view(request):
 # Recibe fetch() desde el template cuando se crea o edita una mesa
 # ─────────────────────────────────────────────────────────────
 @require_POST
+@login_required
 def mesa_guardar(request):
     try:
         data = json.loads(request.body)
@@ -44,6 +46,7 @@ def mesa_guardar(request):
 # ELIMINAR MESA DESDE EL JS
 # ─────────────────────────────────────────────────────────────
 @require_POST
+@login_required
 def mesa_eliminar(request):
     try:
         data = json.loads(request.body)
@@ -56,18 +59,19 @@ def mesa_eliminar(request):
 # ─────────────────────────────────────────────────────────────
 # ELIMINAR DETALLE RESERVA
 # ─────────────────────────────────────────────────────────────
+@login_required
 def eliminar_detalle(request):
-    detalles = DetalleReserva.objects.all()
+    detalles = Reserva.objects.all()
 
     if request.method == 'POST':
         detalle_id = request.POST.get('detalle')
         if detalle_id:
-            detalle = get_object_or_404(DetalleReserva, pk=detalle_id)
+            detalle = get_object_or_404(Reserva, pk=detalle_id)
             detalle.delete()
-            messages.success(request, f'Detalle #{detalle_id} eliminado correctamente.')
+            messages.success(request, f'Reserva #{detalle_id} eliminada correctamente.')
             return redirect('eliminar_detalle')
         else:
-            messages.error(request, 'Debes seleccionar un detalle para eliminar.')
+            messages.error(request, 'Debes seleccionar una reserva para eliminar.')
 
     return render(request, 'reservas/eliminar_detalle.html', {
         'detalles': detalles
@@ -77,6 +81,7 @@ def eliminar_detalle(request):
 # ─────────────────────────────────────────────────────────────
 # ACTUALIZAR MESA (vista HTML existente)
 # ─────────────────────────────────────────────────────────────
+@login_required
 def actualizar_mesa(request):
     mesa = Mesa.objects.first()
 

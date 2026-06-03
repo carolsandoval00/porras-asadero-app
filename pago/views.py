@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.utils import timezone
 from django.http import JsonResponse
@@ -7,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from itertools import groupby
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
-from pedidos.models import Orden
+from pedidos.models import Pedido
 
 
 @login_required
@@ -19,6 +20,8 @@ def pago_dashboard(request):
     form_apertura = CajaForm()
     form = PagoForm()
 
+    caja_activa = Caja.objects.filter(estado='ABIERTA').first()
+
     if request.method == 'POST':
         action = request.POST.get('action', '')
 
@@ -26,7 +29,11 @@ def pago_dashboard(request):
             form_apertura = CajaForm(request.POST)
             if form_apertura.is_valid():
                 apertura = form_apertura.save(commit=False)
+
                 apertura.estado = 'abierta'
+
+                apertura.estado = 'ABIERTA'
+
                 apertura.save()
                 messages.success(request, '✅ Caja abierta correctamente.')
                 return redirect('pago:dashboard')
@@ -36,8 +43,8 @@ def pago_dashboard(request):
         elif action == 'cerrar_caja':
             caja_id = request.POST.get('caja_id')
             try:
-                caja = Caja.objects.get(pk=caja_id, estado='abierta')
-                caja.estado = 'cerrada'
+                caja = Caja.objects.get(pk=caja_id, estado='ABIERTA')
+                caja.estado = 'CERRADA'
                 caja.fecha_cierre = timezone.now()
                 caja.save()
                 messages.success(request, '🔒 Caja cerrada correctamente.')
@@ -46,43 +53,57 @@ def pago_dashboard(request):
             return redirect('pago:dashboard')
 
         elif action == 'editar_caja':
+
             caja_id       = request.POST.get('caja_id')
             cajero        = request.POST.get('cajero', '').strip()
+
+            caja_id      = request.POST.get('caja_id')
+            cajero_id    = request.POST.get('cajero')
+
             observaciones = request.POST.get('observaciones', '').strip()
             try:
                 caja = Caja.objects.get(pk=caja_id)
-                if cajero:
-                    caja.cajero = cajero
+                if cajero_id:
+                    caja.cajero_id = cajero_id
                 caja.observaciones = observaciones
                 caja.save()
                 return JsonResponse({
                     'ok': True,
-                    'cajero': caja.cajero,
+                    'cajero': caja.cajero.username,
                     'observaciones': caja.observaciones or '—',
                 })
-            except Caja.DoesNotExist:
-                return JsonResponse({'ok': False, 'error': 'Caja no encontrada.'}, status=404)
+            except Exception as e:
+                return JsonResponse({'ok': False, 'error': str(e)}, status=400)
 
         else:
             post_data = request.POST.copy()
-            orden_id  = post_data.get('orden')
-            if orden_id:
+            pedido_id  = post_data.get('pedido')
+            if pedido_id:
                 try:
-                    orden = Orden.objects.get(pk=orden_id)
-                    post_data['monto'] = orden.total
-                except Orden.DoesNotExist:
+                    pedido = Pedido.objects.get(pk=pedido_id)
+                    post_data['monto'] = pedido.total
+                except Pedido.DoesNotExist:
                     pass
             form = PagoForm(post_data)
             if form.is_valid():
-                form.save()
-                messages.success(request, '✅ Pago registrado correctamente.')
+                pago = form.save(commit=False)
+                if caja_activa:
+                    pago.caja = caja_activa
+                    pago.save()
+                    # Actualizar estado de comanda
+                    pago.pedido.estado = 'PAGADO'
+                    pago.pedido.save()
+                    messages.success(request, '✅ Pago registrado y comanda marcada como PAGADA.')
+                else:
+                    messages.error(request, '❌ No puedes registrar pagos sin una caja abierta.')
                 return redirect('pago:dashboard')
 
-    ordenes_sin_pago = Orden.objects.exclude(
-        pagos__estado='aprobado'
-    ).select_related('pedido').order_by('-creada_en')
+    # Pedidos pendientes de pago
+    ordenes_sin_pago = Pedido.objects.exclude(
+        estado='PAGADO'
+    ).order_by('-fecha_creacion')
 
-    pagos_qs = Pago.objects.select_related('orden__pedido').order_by('-fecha_pago')
+    pagos_qs = Pago.objects.select_related('pedido').order_by('-fecha_pago')
 
     pagos_por_fecha = []
     for fecha, grupo in groupby(pagos_qs, key=lambda p: p.fecha_pago.date()):
@@ -100,13 +121,13 @@ def pago_dashboard(request):
         'pagos_por_fecha':  pagos_por_fecha,
         'ordenes_sin_pago': ordenes_sin_pago,
         'total_pagos':      pagos_qs.count(),
-        'pagos_aprobados':  pagos_qs.filter(estado='aprobado').count(),
-        'pagos_pendientes': pagos_qs.filter(estado='pendiente').count(),
-        'monto_total':      pagos_qs.filter(estado='aprobado').aggregate(
-                                t=Sum('monto'))['t'] or 0,
+        'pagos_aprobados':  pagos_qs.count(),
+        'pagos_pendientes': 0,
+        'monto_total':      pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'nombre':           request.user.get_full_name() or request.user.username,
-        'cajas':            Caja.objects.all().order_by('-fecha_apertura'),
+        'cajas':            Caja.objects.select_related('cajero').all().order_by('-fecha_apertura'),
         'tab_activo':       'pendientes',
+        'caja_activa':      caja_activa,
     }
     return render(request, 'pago/dashboard.html', context)
 
@@ -150,22 +171,19 @@ def caja_detalle(request, pk):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
     caja_seleccionada = get_object_or_404(Caja, pk=pk)
+    pagos_caja = Pago.objects.filter(caja=caja_seleccionada).select_related('pedido').order_by('-fecha_pago')
 
-    pagos_caja = Pago.objects.filter(
-        fecha_pago__gte=caja_seleccionada.fecha_apertura
-    ).select_related('orden__pedido').order_by('-fecha_pago')
-
-    total_ingresos   = pagos_caja.filter(estado='aprobado').aggregate(t=Sum('monto'))['t'] or 0
-    total_pendientes = pagos_caja.filter(estado='pendiente').aggregate(t=Sum('monto'))['t'] or 0
+    total_ingresos = pagos_caja.aggregate(t=Sum('monto'))['t'] or 0
+    total_pendientes = 0
 
     form_apertura = CajaForm()
     form = PagoForm()
 
-    ordenes_sin_pago = Orden.objects.exclude(
-        pagos__estado='aprobado'
-    ).select_related('pedido').order_by('-creada_en')
+    ordenes_sin_pago = Pedido.objects.exclude(
+        estado='PAGADO'
+    ).order_by('-fecha_creacion')
 
-    pagos_qs = Pago.objects.select_related('orden__pedido').order_by('-fecha_pago')
+    pagos_qs = Pago.objects.select_related('pedido').order_by('-fecha_pago')
 
     pagos_por_fecha = []
     for fecha, grupo in groupby(pagos_qs, key=lambda p: p.fecha_pago.date()):
@@ -183,17 +201,17 @@ def caja_detalle(request, pk):
         'pagos_por_fecha':    pagos_por_fecha,
         'ordenes_sin_pago':   ordenes_sin_pago,
         'total_pagos':        pagos_qs.count(),
-        'pagos_aprobados':    pagos_qs.filter(estado='aprobado').count(),
-        'pagos_pendientes':   pagos_qs.filter(estado='pendiente').count(),
-        'monto_total':        pagos_qs.filter(estado='aprobado').aggregate(
-                                  t=Sum('monto'))['t'] or 0,
+        'pagos_aprobados':    pagos_qs.count(),
+        'pagos_pendientes':   0,
+        'monto_total':        pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'nombre':             request.user.get_full_name() or request.user.username,
-        'cajas':              Caja.objects.all().order_by('-fecha_apertura'),
+        'cajas':              Caja.objects.select_related('cajero').all().order_by('-fecha_apertura'),
         'caja_seleccionada':  caja_seleccionada,
         'pagos_caja':         pagos_caja,
         'total_ingresos':     total_ingresos,
         'total_pendientes':   total_pendientes,
         'saldo_final':        caja_seleccionada.monto_inicial + total_ingresos,
         'tab_activo':         'detalle-caja',
+        'caja_activa':        Caja.objects.filter(estado='ABIERTA').first(),
     }
     return render(request, 'pago/dashboard.html', context)

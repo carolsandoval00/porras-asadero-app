@@ -1,0 +1,64 @@
+{% extends "base 2.html" %}
+{% load static %}
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{% static 'css/reservas.css' %}">
+
+<div style="padding:1.5rem 1.5rem 0;max-width:560px;margin:0 auto">
+  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1.5rem;display:flex;align-items:center;gap:16px;">
+    <div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;margin:0 0 4px;color:#F5ECD7;">Actualizar Mesa</h1>
+      <p style="font-size:13px;color:#A09070;margin:0;">Modifica los datos de la mesa seleccionada</p>
+    </div>
+  </div>
+</div>
+
+<div class="mc-wrap">
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="mc-card">
+    <div class="mc-card-title">Datos de la mesa</div>
+
+    <div style="margin-bottom:14px;padding:11px 13px;background:var(--bg2);border-radius:var(--radius);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:var(--muted)">Mesa actual</span>
+      <span style="font-weight:600;font-family:'Playfair Display',serif">Mesa {{ mesa.numero_mesa }}</span>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="mc-form-group">
+        <label class="mc-label">Capacidad (personas) *</label>
+        <input type="number" class="mc-input" name="capacidad" value="{{ mesa.capacidad }}" min="1" max="30" required>
+      </div>
+      <div class="mc-form-group">
+        <label class="mc-label">Ubicación</label>
+        <select class="mc-select" name="ubicacion">
+          <option value="Salón principal"   {% if mesa.ubicacion == "Salón principal"   %}selected{% endif %}>Salón principal</option>
+          <option value="Salón secundario"  {% if mesa.ubicacion == "Salón secundario"  %}selected{% endif %}>Salón secundario</option>
+        </select>
+      </div>
+      <div class="mc-form-group">
+        <label class="mc-label">Estado</label>
+        <select class="mc-select" name="estado">
+          <option value="disponible" {% if mesa.estado == "disponible" %}selected{% endif %}>Disponible</option>
+          <option value="reservada"  {% if mesa.estado == "reservada"  %}selected{% endif %}>Reservada</option>
+          <option value="ocupada"    {% if mesa.estado == "ocupada"    %}selected{% endif %}>Ocupada</option>
+        </select>
+      </div>
+      <div class="mc-btn-row">
+        <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
+        <button type="submit" class="mc-btn mc-btn-primary">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
