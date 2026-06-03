@@ -1,0 +1,88 @@
+{% extends "base 2.html" %}
+{% load static %}
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{% static 'css/reservas.css' %}">
+
+<div style="padding:1.5rem 1.5rem 0;max-width:640px;margin:0 auto">
+  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1.5rem;display:flex;align-items:center;gap:16px;">
+    <div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;margin:0 0 4px;color:#F5ECD7;">Eliminar Reserva</h1>
+      <p style="font-size:13px;color:#A09070;margin:0;">Selecciona la reserva que deseas eliminar</p>
+    </div>
+  </div>
+</div>
+
+<div class="mc-wrap">
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if detalles %}
+    <div class="mc-card">
+      <div class="mc-card-title">Reservas registradas</div>
+      <table class="mc-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Cliente</th><th>Mesa</th>
+            <th>Fecha</th><th>Personas</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in detalles %}
+          <tr>
+            <td style="font-family:monospace;font-size:11px;color:var(--hint)">#{{ d.pk|stringformat:"02d" }}</td>
+            <td style="font-weight:500">{{ d.nombre_cliente }}</td>
+            <td>{{ d.mesa }}</td>
+            <td>{{ d.fecha_reserva }}</td>
+            <td style="text-align:center">{{ d.numero_personas }}</td>
+            <td>
+              <span class="mc-badge {% if d.estado == 'confirmada' %}mc-badge-ok{% elif d.estado == 'pendiente' %}mc-badge-warn{% else %}mc-badge-danger{% endif %}">
+                {{ d.estado }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mc-card">
+      <div class="mc-card-title">Seleccionar reserva a eliminar</div>
+      <form method="post">
+        {% csrf_token %}
+        <label class="mc-label">Reserva *</label>
+        <select class="mc-select" name="detalle" required>
+          <option value="">— Seleccionar —</option>
+          {% for d in detalles %}
+            <option value="{{ d.pk }}">
+              #{{ d.pk }} — {{ d.nombre_cliente }} · {{ d.fecha_reserva }}
+            </option>
+          {% endfor %}
+        </select>
+        <div class="mc-btn-row">
+          <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
+          <button type="submit" class="mc-btn mc-btn-primary">Eliminar reserva</button>
+        </div>
+      </form>
+    </div>
+
+  {% else %}
+    <div class="mc-card">
+      <div class="mc-empty">
+        <div style="font-size:40px;margin-bottom:12px">📋</div>
+        <p>No hay reservas registradas.</p>
+        <a href="{% url 'reserva_inicio' %}" style="display:inline-block;margin-top:12px;font-size:13px;color:#C0392B">← Volver al panel</a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
