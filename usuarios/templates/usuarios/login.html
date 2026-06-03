@@ -20,17 +20,16 @@
         align-items: center;
         justify-content: center;
         padding: 2rem 1rem;
-        
     }
 
     .auth-card {
-  background: #FDF7EC;
-  border-radius: 18px;
-  box-shadow: 0 8px 40px rgba(26,16,8,.10);
-  padding: 2.5rem 2.8rem;
-  width: 100%;
-  animation: fadeUp .45s ease both;
-}
+        background: #FDF7EC;
+        border-radius: 18px;
+        box-shadow: 0 8px 40px rgba(26,16,8,.10);
+        padding: 2.5rem 2.8rem;
+        width: 100%;
+        animation: fadeUp .45s ease both;
+    }
 
     @keyframes fadeUp {
         from { opacity:0; transform:translateY(22px); }
@@ -164,17 +163,36 @@
         color: var(--rojo);
     }
 
-    /* Estilos para el Dashboard de Inicio */
     .dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 1rem; }
     .dash-card {
         background: #FDF7EC; border: 1.5px solid var(--gris-borde); padding: 1.5rem; border-radius: 15px;
-        text-align: center; transition: 0.3s; text-decoration: none; color: inherit; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; transition: 0.3s; text-decoration: none; color: inherit; min-height: 140px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
     .dash-card:hover { border-color: var(--verde); transform: translateY(-5px); box-shadow: 0 5px 15px rgba(26,16,8,.08); }
     .dash-card i { font-size: 2.5rem; color: var(--verde); margin-bottom: 10px; display: block; }
     .dash-card h3 { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--carbon); }
 
     .auth-card .alert { border-radius: 10px; font-size: .88rem; }
+
+    .rol-register-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: .6rem;
+    }
+    .rol-register-grid a {
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: .65rem .4rem;
+        font-size: .82rem;
+    }
+    @media(max-width:400px) {
+        .rol-register-grid { grid-template-columns: 1fr; }
+        .dash-grid { grid-template-columns: 1fr 1fr; }
+    }
 </style>
 
 {% if vista == "login" or vista == "acceder" or not vista %}
@@ -207,11 +225,19 @@
             </button>
         </form>
 
-        <div class="auth-divider">o</div>
+        <div class="auth-divider">Registrar personal</div>
 
-       <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
-            <i class="bi bi-person-plus me-1"></i> Registrar nuevo personal
-        </a>
+        <div class="rol-register-grid">
+            <a href="{% url 'lista_personal' %}?seccion=crear&rol=ADMIN" class="btn-auth-outline">
+                <i class="bi bi-shield-lock"></i> Administrador
+            </a>
+            <a href="{% url 'lista_personal' %}?seccion=crear&rol=CAJA" class="btn-auth-outline">
+                <i class="bi bi-cash-coin"></i> Cajero
+            </a>
+            <a href="{% url 'lista_personal' %}?seccion=crear&rol=MESERO" class="btn-auth-outline">
+                <i class="bi bi-person-standing"></i> Mesero
+            </a>
+        </div>
     </div>
 </div>
 
@@ -220,37 +246,61 @@
     <div class="auth-card" style="max-width: 1100px;">
         <h1 class="auth-title">Panel de <span>Control</span></h1>
         <p class="auth-sub">Bienvenido, {{ user.first_name }} {{ user.last_name }}. ¿Qué deseas hacer hoy?</p>
-        
+
         <div class="dash-grid">
             <a href="{% url 'panel_perfil' %}" class="dash-card">
                 <i class="bi bi-person-badge"></i>
                 <h3>Mi Perfil</h3>
             </a>
-            
+
             {% if user.rol == 'ADMIN' or user.is_superuser %}
-            <a href="{% url 'lista_personal' %}" class="dash-card">
-                <i class="bi bi-people"></i>
-                <h3>Gestionar Personal</h3>
-            </a>
-            <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
-                <i class="bi bi-person-plus-fill"></i>
-                <h3>Nuevo Usuario</h3>
-            </a>
+                <a href="{% url 'lista_personal' %}" class="dash-card">
+                    <i class="bi bi-people"></i>
+                    <h3>Gestionar Personal</h3>
+                </a>
+                <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
+                    <i class="bi bi-person-plus-fill"></i>
+                    <h3>Nuevo Usuario</h3>
+                </a>
+                <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+                    <i class="bi bi-receipt"></i>
+                    <h3>Ver Pedidos</h3>
+                </a>
+                <a href="{% url 'pago:dashboard' %}" class="dash-card">
+                    <i class="bi bi-credit-card"></i>
+                    <h3>Gestión de Pagos</h3>
+                </a>
+                <a href="{% url 'reserva_inicio' %}" class="dash-card">
+                    <i class="bi bi-calendar-check"></i>
+                    <h3>Reservas y Mesas</h3>
+                </a>
+
+            {% elif user.rol == 'CAJERO' or user.rol == 'CAJA' %}
+                <a href="{% url 'pago:dashboard' %}" class="dash-card">
+                    <i class="bi bi-credit-card"></i>
+                    <h3>Gestión de Pagos</h3>
+                </a>
+                <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+                    <i class="bi bi-receipt"></i>
+                    <h3>Ver Pedidos</h3>
+                </a>
+
+            {% elif user.rol == 'MESERO' %}
+                <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+                    <i class="bi bi-receipt"></i>
+                    <h3>Ver Pedidos</h3>
+                </a>
+                <a href="{% url 'reserva_inicio' %}" class="dash-card">
+                    <i class="bi bi-calendar-check"></i>
+                    <h3>Reservas y Mesas</h3>
+                </a>
+
+            {% elif user.rol == 'COCINA' %}
+                <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+                    <i class="bi bi-receipt"></i>
+                    <h3>Ver Pedidos</h3>
+                </a>
             {% endif %}
-
-            <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
-               <i class="bi bi-receipt"></i>
-               <h3>Ver Pedidos</h3>
-               </a>
-            <a href="{% url 'pago:dashboard' %}" class="dash-card">
-               <i class="bi bi-credit-card"></i>
-               <h3>Gestión de Pagos</h3>
-               </a>
-
-            <a href="{% url 'reserva_inicio' %}" class="dash-card">
-               <i class="bi bi-calendar-check"></i>
-               <h3>Reservas y Mesas</h3>
-               </a>      
         </div>
 
         <div class="mt-5">
@@ -305,14 +355,14 @@
                 </div>
                 <div>
                     <label>Número de Documento <span class="text-danger">*</span></label>
-                  <input type="text" name="documento" class="form-control" required value="{{ usuario.documento|default:'' }}" maxlength="10" pattern="[0-9]{6,10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+                    <input type="text" name="documento" class="form-control" required value="{{ usuario.documento|default:'' }}" maxlength="10" pattern="[0-9]{6,10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                 </div>
             </div>
 
             <div class="form-row-2 mb-3">
                 <div>
                     <label>Teléfono</label>
-                   <input type="text" name="telefono" class="form-control" value="{{ usuario.telefono|default:'' }}" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+                    <input type="text" name="telefono" class="form-control" value="{{ usuario.telefono|default:'' }}" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                 </div>
                 <div>
                     <label>Correo electrónico <span class="text-danger">*</span></label>
@@ -359,7 +409,7 @@
             <button type="submit" class="btn-auth">
                 <i class="bi bi-check-circle me-2"></i>{% if vista == 'actualizar' %}Guardar Cambios{% else %}Registrar y Entrar{% endif %}
             </button>
-            
+
             <a href="{% url 'panel_perfil' %}" class="btn-auth-outline">Cancelar</a>
         </form>
     </div>

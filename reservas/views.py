@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from .models import DetalleReserva, Mesa
 import json
 
@@ -9,8 +10,12 @@ import json
 # ─────────────────────────────────────────────────────────────
 # VISTA PRINCIPAL
 # ─────────────────────────────────────────────────────────────
+@login_required
 def reserva_view(request):
     """Renderiza el panel principal de reservas"""
+    rol = getattr(request.user, 'rol', None)
+    if rol in ('CAJERO', 'CAJA', 'COCINA') and not request.user.is_superuser:
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
     return render(request, 'reserva_inicio.html')
 
 
