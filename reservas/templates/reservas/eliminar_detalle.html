@@ -1,0 +1,120 @@
+{% extends "base 2.html" %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#F5ECD7;--bg2:#EDE3C8;
+    --text:#1A1008;--muted:#6B5A3E;--hint:#A09070;
+    --border:#D4C4A0;--border2:#C0AD84;
+    --red-bg:#FAE0DC;--red-t:#C0392B;
+    --radius:8px;--radius-lg:12px;
+  }
+  body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
+  .mc-wrap{max-width:640px;margin:0 auto;padding:2rem 1.5rem}
+  .mc-card{background:#FDF7EC;border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.35rem;margin-bottom:1rem}
+  .mc-card-title{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+  .mc-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px}
+  .mc-select{font-family:'DM Sans',sans-serif;font-size:14px;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);width:100%;transition:border-color .15s}
+  .mc-select:focus{outline:none;border-color:#C0392B;box-shadow:0 0 0 3px rgba(192,57,43,.12)}
+  .mc-btn{padding:9px 20px;font-size:13px;font-weight:500;border-radius:var(--radius);cursor:pointer;border:1px solid;transition:all .15s;font-family:'DM Sans',sans-serif}
+  .mc-btn-primary{background:#C0392B;color:#F5ECD7;border-color:#C0392B}.mc-btn-primary:hover{background:#9B2D21}
+  .mc-btn-secondary{background:transparent;color:var(--text);border-color:var(--border2)}.mc-btn-secondary:hover{background:var(--bg2)}
+  .mc-btn-row{display:flex;gap:8px;margin-top:1.1rem;justify-content:flex-end}
+  .mc-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+  .mc-badge-ok{background:#EAF3DE;color:#27500A}
+  .mc-badge-warn{background:#FAEEDA;color:#8B4000}
+  .mc-badge-danger{background:#FAE0DC;color:#C0392B}
+  .mc-msg-ok{background:#EAF3DE;color:#27500A;padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:1rem}
+  .mc-msg-err{background:#FAE0DC;color:#C0392B;padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:1rem}
+  .mc-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:1rem}
+  .mc-table th{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--border2);background:var(--bg)}
+  .mc-table td{padding:11px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+  .mc-table tr:last-child td{border-bottom:none}
+  .mc-table tbody tr:hover td{background:var(--bg2)}
+  .mc-empty{text-align:center;padding:3rem 2rem;color:var(--hint);font-size:14px}
+</style>
+
+<div style="padding:1.5rem 1.5rem 0;max-width:640px;margin:0 auto">
+  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1.5rem;display:flex;align-items:center;gap:16px;">
+    <div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;margin:0 0 4px;color:#F5ECD7;">Eliminar Reserva</h1>
+      <p style="font-size:13px;color:#A09070;margin:0;">Selecciona la reserva que deseas eliminar</p>
+    </div>
+  </div>
+</div>
+
+<div class="mc-wrap">
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if detalles %}
+    <div class="mc-card">
+      <div class="mc-card-title">Reservas registradas</div>
+      <table class="mc-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Cliente</th><th>Mesa</th>
+            <th>Fecha</th><th>Personas</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in detalles %}
+          <tr>
+            <td style="font-family:monospace;font-size:11px;color:var(--hint)">#{{ d.pk|stringformat:"02d" }}</td>
+            <td style="font-weight:500">{{ d.nombre_cliente }}</td>
+            <td>{{ d.mesa }}</td>
+            <td>{{ d.fecha_reserva }}</td>
+            <td style="text-align:center">{{ d.numero_personas }}</td>
+            <td>
+              <span class="mc-badge {% if d.estado == 'confirmada' %}mc-badge-ok{% elif d.estado == 'pendiente' %}mc-badge-warn{% else %}mc-badge-danger{% endif %}">
+                {{ d.estado }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mc-card">
+      <div class="mc-card-title">Seleccionar reserva a eliminar</div>
+      <form method="post">
+        {% csrf_token %}
+        <label class="mc-label">Reserva *</label>
+        <select class="mc-select" name="detalle" required>
+          <option value="">— Seleccionar —</option>
+          {% for d in detalles %}
+            <option value="{{ d.pk }}">
+              #{{ d.pk }} — {{ d.nombre_cliente }} · {{ d.fecha_reserva }}
+            </option>
+          {% endfor %}
+        </select>
+        <div class="mc-btn-row">
+          <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
+          <button type="submit" class="mc-btn mc-btn-primary">Eliminar reserva</button>
+        </div>
+      </form>
+    </div>
+
+  {% else %}
+    <div class="mc-card">
+      <div class="mc-empty">
+        <div style="font-size:40px;margin-bottom:12px">📋</div>
+        <p>No hay reservas registradas.</p>
+        <a href="{% url 'reserva_inicio' %}" style="display:inline-block;margin-top:12px;font-size:13px;color:#C0392B">← Volver al panel</a>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
