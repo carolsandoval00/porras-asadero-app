@@ -1,38 +1,10 @@
 {% extends "base 2.html" %}
-
+{% load static %}
 {% block content %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  :root{
-    --gold:#D4A017;--gold-light:#F5ECD7;--gold-dark:#A07810;
-    --bg:#F5ECD7;--bg2:#EDE3C8;--bg3:#E0D4B0;
-    --text:#1A1008;--muted:#6B5A3E;--hint:#A09070;
-    --border:#D4C4A0;--border2:#C0AD84;
-    --red-bg:#FAE0DC;--red-t:#C0392B;
-    --radius:8px;--radius-lg:12px;--radius-xl:16px;
-  }
-  body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
-  .mc-wrap{max-width:560px;margin:0 auto;padding:2rem 1.5rem}
-  .mc-card{background:#FDF7EC;border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.35rem;margin-bottom:1rem}
-  .mc-card-title{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
-  .mc-form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
-  .mc-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
-  .mc-input,.mc-select{font-family:'DM Sans',sans-serif;font-size:14px;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);width:100%;transition:border-color .15s,box-shadow .15s}
-  .mc-input:focus,.mc-select:focus{outline:none;border-color:#C0392B;box-shadow:0 0 0 3px rgba(192,57,43,.12)}
-  .mc-btn{padding:9px 20px;font-size:13px;font-weight:500;border-radius:var(--radius);cursor:pointer;border:1px solid;transition:all .15s;font-family:'DM Sans',sans-serif}
-  .mc-btn-primary{background:#C0392B;color:#F5ECD7;border-color:#C0392B}.mc-btn-primary:hover{background:#9B2D21}
-  .mc-btn-secondary{background:transparent;color:var(--text);border-color:var(--border2)}.mc-btn-secondary:hover{background:var(--bg2)}
-  .mc-btn-row{display:flex;gap:8px;margin-top:1.1rem;justify-content:flex-end}
-  .mc-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
-  .mc-badge-ok{background:#EAF3DE;color:#27500A}
-  .mc-badge-warn{background:#FAEEDA;color:#8B4000}
-  .mc-badge-danger{background:#FAE0DC;color:#C0392B}
-  .mc-msg-ok{background:#EAF3DE;color:#27500A;padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:1rem}
-  .mc-msg-err{background:#FAE0DC;color:#C0392B;padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:1rem}
-</style>
+<link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
 <div style="padding:1.5rem 1.5rem 0;max-width:560px;margin:0 auto">
   <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1.5rem;display:flex;align-items:center;gap:16px;">
