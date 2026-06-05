@@ -1,0 +1,177 @@
+<!-- Modal eliminar pago -->
+<div id="modal-eliminar" class="pg-modal-overlay">
+  <div class="pg-modal-box">
+    <h4>Confirmar eliminación</h4>
+
+    <p id="modal-msg">
+      ¿Estás seguro de eliminar este registro?
+    </p>
+
+    <div class="pg-modal-actions">
+
+      <form id="modal-form" method="post">
+        {% csrf_token %}
+        <button type="submit" class="pg-btn pg-btn-danger">
+          Sí, eliminar
+        </button>
+      </form>
+
+      <button
+        class="pg-btn pg-btn-light"
+        onclick="cerrarModal()">
+        Cancelar
+      </button>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal cerrar caja -->
+<div id="modal-cerrar-caja" class="pg-modal-overlay">
+  <div class="pg-modal-box">
+
+    <h4>🔒 Cerrar caja</h4>
+
+    <p id="modal-cierre-msg">
+      ¿Confirmas el cierre de esta caja?
+    </p>
+
+    <p
+      style="
+        font-size:.82rem;
+        color:var(--p-muted);
+        margin-top:-.8rem;
+        margin-bottom:1.4rem;
+      ">
+      Se registrará la hora de cierre automáticamente.
+    </p>
+
+    <div class="pg-modal-actions">
+
+      <form
+        id="modal-cierre-form"
+        method="post"
+        action="{% url 'pago:dashboard' %}">
+
+        {% csrf_token %}
+
+        <input
+          type="hidden"
+          name="action"
+          value="cerrar_caja">
+
+        <input
+          type="hidden"
+          name="caja_id"
+          id="modal-cierre-caja-id"
+          value="">
+
+        <button
+          type="submit"
+          class="pg-btn pg-btn-danger">
+          Sí, cerrar caja
+        </button>
+
+      </form>
+
+      <button
+        class="pg-btn pg-btn-light"
+        onclick="cerrarModalCierre()">
+        Cancelar
+      </button>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal editar caja -->
+<div id="modal-editar-caja" class="pg-modal-overlay">
+  <div
+    class="pg-modal-box"
+    style="max-width:440px;width:92%;">
+
+    <h4>✏️ Editar caja</h4>
+
+    <p
+      id="modal-editar-titulo"
+      style="
+        margin-bottom:1rem;
+        font-size:.88rem;
+      ">
+    </p>
+
+    <!-- Mensajes -->
+    <div
+      id="editar-feedback"
+      style="
+        display:none;
+        padding:.7rem 1rem;
+        border-radius:8px;
+        font-size:.85rem;
+        font-weight:600;
+        margin-bottom:1rem;
+        border-left:4px solid transparent;
+      ">
+    </div>
+
+    <div class="pg-modal-field">
+      <label>Cajero</label>
+
+      <input
+        type="text"
+        id="editar-cajero"
+        placeholder="Nombre del cajero">
+    </div>
+
+    <div class="pg-modal-field">
+
+      <label>
+        Observaciones
+
+        <span
+          style="
+            font-weight:400;
+            text-transform:none;
+            letter-spacing:0;
+            font-size:.78rem;
+          ">
+          (opcional)
+        </span>
+
+      </label>
+
+      <textarea
+        id="editar-observaciones"
+        rows="3"
+        placeholder="Observaciones de la caja…">
+      </textarea>
+
+    </div>
+
+    <div
+      class="pg-modal-actions"
+      style="margin-top:1.4rem;">
+
+      <button
+        id="btn-guardar-caja"
+        class="pg-btn pg-btn-accent"
+        onclick="guardarEditarCaja()">
+
+        💾 Guardar cambios
+
+      </button>
+
+      <button
+        class="pg-btn pg-btn-light"
+        onclick="cerrarEditarCaja()">
+
+        Cancelar
+
+      </button>
+
+    </div>
+
+  </div>
+</div>
