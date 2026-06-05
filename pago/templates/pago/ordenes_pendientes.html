@@ -1,0 +1,69 @@
+<div id="tab-pendientes" class="pg-section active">
+
+  <div class="pg-stats">
+    <div class="pg-stat red">
+      <div class="val">{{ ordenes_sin_pago|length|default:"0" }}</div>
+      <div class="lbl">Por pagar</div>
+    </div>
+    <div class="pg-stat">
+      <div class="val">{{ total_pagos }}</div>
+      <div class="lbl">Pagos registrados</div>
+    </div>
+    <div class="pg-stat green">
+      <div class="val">{{ pagos_aprobados }}</div>
+      <div class="lbl">Aprobados</div>
+    </div>
+    <div class="pg-stat gold">
+      <div class="val">${{ monto_total|floatformat:0 }}</div>
+      <div class="lbl">Monto cobrado</div>
+    </div>
+  </div>
+
+  <div class="pg-card">
+    <div class="pg-card-header">
+      <h3>Órdenes pendientes de pago</h3>
+    </div>
+    <div class="pg-card-body">
+      <div class="pg-table-wrap">
+        <table class="pg-table">
+          <thead>
+            <tr>
+              <th>Orden</th>
+              <th>Mesa</th>
+              <th>Descripción</th>
+              <th>Total a cobrar</th>
+              <th>Fecha orden</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in ordenes_sin_pago %}
+            <tr class="fila-pendiente">
+              <td><strong>{{ o.numero_orden }}</strong></td>
+              <td><strong>{{ o.pedido.cliente }}</strong></td>
+              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+                {{ o.pedido.descripcion|default:"—" }}
+              </td>
+              <td><strong style="font-size:1rem;color:#C0392B">${{ o.total }}</strong></td>
+              <td>{{ o.creada_en|date:"d/m/Y H:i" }}</td>
+              <td>
+                <button class="pg-btn pg-btn-pago pg-btn-sm"
+                        onclick="registrarPago('{{ o.numero_orden }}',{{ o.pk }},'{{ o.pedido.cliente|escapejs }}',{{ o.total }})">
+                  Registrar pago
+                </button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" style="text-align:center;color:var(--p-muted);padding:2.5rem">
+                No hay órdenes pendientes de pago.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
