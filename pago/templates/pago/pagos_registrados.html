@@ -1,0 +1,113 @@
+<!-- PAGOS REGISTRADOS -->
+<div id="tab-lista" class="pg-section">
+  <div class="pg-card">
+    <div class="pg-card-header"><h3>Pagos registrados</h3></div>
+    <div class="pg-card-body">
+
+      <div class="pg-search-bar">
+        <input type="text" id="buscador-pagos"
+               placeholder="Buscar por orden, cliente o referencia…"
+               oninput="filtrarPagos()">
+        <select id="filtro-metodo">
+          <option value="">Todos los métodos</option>
+          <option value="efectivo">Efectivo</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+        <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()">Filtrar</button>
+      </div>
+
+      {% if pagos_por_fecha %}
+        {% for grupo in pagos_por_fecha %}
+        <div class="fecha-grupo" data-fecha-grupo>
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 mt-4 border-bottom pb-2">
+            <span class="badge text-crema px-3 py-2 rounded-pill fs-7 text-uppercase fw-bold"
+                  style="background-color: #C0392B;">
+              {{ grupo.fecha|date:"l d \d\e F \d\e Y" }}
+            </span>
+            <span class="text-muted fw-bold small">
+              {{ grupo.count }} pago{{ grupo.count|pluralize }} · ${{ grupo.total|floatformat:0 }}
+            </span>
+          </div>
+          <div class="pg-table-wrap">
+            <table class="pg-table">
+              <thead>
+                <tr>
+                  <th>Orden</th><th>Cliente</th><th>Método</th>
+                  <th>Monto</th><th>Referencia</th><th>Estado</th><th>Hora</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pg in grupo.pagos %}
+                <tr class="fila-pago"
+                    data-orden="{% if pg.orden %}{{ pg.orden.numero_orden|lower }}{% endif %}"
+                    data-cliente="{% if pg.orden %}{{ pg.orden.pedido.cliente|lower }}{% endif %}"
+                    data-referencia="{{ pg.referencia|lower }}"
+                    data-metodo="{{ pg.metodo_pago }}"
+                    data-estado="{{ pg.estado }}">
+                  <td>
+                    {% if pg.orden %}<strong>{{ pg.orden.numero_orden }}</strong>
+                    {% else %}<span style="color:var(--p-muted)">Manual</span>{% endif %}
+                  </td>
+                  <td>{% if pg.orden %}{{ pg.orden.pedido.cliente }}{% else %}—{% endif %}</td>
+                  <td>{{ pg.get_metodo_pago_display }}</td>
+                  <td><strong style="color:#C0392B">${{ pg.monto }}</strong></td>
+                  <td>{{ pg.referencia|default:"—" }}</td>
+                  <td><span class="pg-badge pg-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
+                  <td>{{ pg.fecha_pago|date:"H:i" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endfor %}
+        <p id="sin-resultados">No se encontraron pagos con ese criterio.</p>
+      {% else %}
+        <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pagos registrados aún.</p>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+
+<!-- REGISTRAR PAGO -->
+<div id="tab-crear" class="pg-section">
+  <div class="pg-card">
+    <div class="pg-card-header">
+      <h3 id="form-titulo">Registrar Pago</h3>
+      <button class="pg-btn pg-btn-light pg-btn-sm" onclick="cancelarPago()">← Volver</button>
+    </div>
+    <div class="pg-card-body">
+
+      <div class="orden-banner" id="orden-banner">
+        <div class="orden-banner-icon">🧾</div>
+        <div class="orden-banner-body">
+          <p class="orden-banner-title">Registrando pago para: <span id="banner-orden-num"></span></p>
+          <p class="orden-banner-detail">
+            Cliente: <strong id="banner-cliente"></strong> &nbsp;·&nbsp;
+            Total: <strong id="banner-total"></strong>
+          </p>
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form">
+        {% csrf_token %}
+        <div class="pg-form-grid">
+          <div class="full"><label>Pedido vinculado</label>{{ form.pedido }}</div>
+          <div><label>Método de pago</label>{{ form.metodo_pago }}</div>
+          <div><label>Referencia</label>{{ form.referencia }}</div>
+          <div class="full"><label>Descripción</label>{{ form.descripcion }}</div>
+        </div>
+        {% if form.errors %}
+        <div class="pg-alert pg-alert-danger" style="margin-top:1rem">⚠️ Revisa los campos e intenta de nuevo.</div>
+        {% endif %}
+        <div class="pg-form-actions">
+          <button type="submit" class="pg-btn pg-btn-accent">Registrar Pago</button>
+          <button type="button" class="pg-btn pg-btn-light" onclick="cancelarPago()">Cancelar</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>

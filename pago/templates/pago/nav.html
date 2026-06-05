@@ -1,0 +1,25 @@
+<div class="pg-nav">
+
+  <div class="pg-nav-group">
+    <button class="pg-btn pg-btn-light" onclick="showTab('pendientes')">
+      Órdenes por pagar
+      {% if ordenes_sin_pago %}
+        <span style="background:#C0392B;color:#fff;font-size:.65rem;font-weight:800;min-width:18px;height:18px;border-radius:50px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:2px;">
+          {{ ordenes_sin_pago|length }}
+        </span>
+      {% endif %}
+    </button>
+  </div>
+
+  <div class="pg-nav-group">
+    <span class="pg-nav-label">Pagos</span>
+    <button class="pg-btn pg-btn-light" onclick="showTab('lista')">Registrados</button>
+  </div>
+
+  <div class="pg-nav-group">
+    <span class="pg-nav-label">Caja</span>
+    <button class="pg-btn pg-btn-light" onclick="showTab('consultar-caja')">Consultar</button>
+    <button class="pg-btn pg-btn-accent" onclick="showTab('abrir-caja')">Abrir caja</button>
+  </div>
+
+</div>
