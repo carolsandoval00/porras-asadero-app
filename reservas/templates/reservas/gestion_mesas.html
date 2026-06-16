@@ -1,0 +1,103 @@
+<div id="mc-crear-mesa" class="mc-section">
+  <div class="mc-sec-header">
+    <h2>Gestión de mesas</h2>
+    <p>Agrega y administra las mesas del restaurante</p>
+  </div>
+
+  <div class="mc-mgr-grid">
+    <div>
+      <div class="mc-card">
+        <div class="mc-card-title">Agregar mesa</div>
+
+        <div class="mc-form-group" style="margin-bottom:12px">
+          <label class="mc-label">Número de mesa *</label>
+          <input type="number" class="mc-input" id="mc-m-numero" min="1" placeholder="Ej: 7">
+        </div>
+
+        <div class="mc-form-group" style="margin-bottom:12px">
+          <label class="mc-label">Capacidad (personas) *</label>
+          <input type="number" class="mc-input" id="mc-m-capacidad" min="1" max="30" placeholder="Ej: 4">
+        </div>
+
+        <div class="mc-form-group" style="margin-bottom:12px">
+          <label class="mc-label">Ubicación</label>
+          <select class="mc-select" id="mc-m-ubicacion">
+            <option>Salón principal</option>
+            <option>Salón secundario</option>
+          </select>
+        </div>
+
+        <div class="mc-form-group" style="margin-bottom:12px">
+          <label class="mc-label">Estado inicial</label>
+          <select class="mc-select" id="mc-m-estado">
+            <option value="disponible">Disponible</option>
+            <option value="reservada">Reservada</option>
+            <option value="ocupada">Ocupada</option>
+          </select>
+        </div>
+
+        <div class="mc-btn-row" style="justify-content:stretch">
+          <button class="mc-btn mc-btn-primary" style="flex:1" onclick="mcCrearMesa()">
+            Agregar mesa
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mc-card" style="padding:0;overflow:hidden">
+      <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border)">
+        <div class="mc-card-title" style="margin:0;border:none;padding:0">
+          Mesas registradas
+        </div>
+      </div>
+
+      <div class="mc-filter-bar" style="padding:10px 15px;">
+        <input
+          type="text"
+          class="mc-input"
+          id="mc-buscar-mesa"
+          placeholder="Buscar por número..."
+          oninput="mcRenderTablaMesas()"
+        >
+
+        <select
+          class="mc-select"
+          id="mc-filtro-ubicacion"
+          onchange="mcRenderTablaMesas()"
+        >
+          <option value="">Todas las ubicaciones</option>
+          <option>Salón principal</option>
+          <option>Salón secundario</option>
+        </select>
+
+        <select
+          class="mc-select"
+          id="mc-filtro-capacidad"
+          onchange="mcRenderTablaMesas()"
+        >
+          <option value="">Todas las capacidades</option>
+          <option value="2">2 personas</option>
+          <option value="4">4 personas</option>
+          <option value="6">6 personas</option>
+          <option value="8">8 personas</option>
+        </select>
+      </div>
+
+      <div class="mc-table-wrap">
+        <table class="mc-table">
+          <thead>
+            <tr>
+              <th>Mesa</th>
+              <th>Capacidad</th>
+              <th>Ubicación</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody id="mc-tbody-mesas"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
