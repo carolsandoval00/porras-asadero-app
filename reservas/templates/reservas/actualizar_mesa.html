@@ -26,13 +26,20 @@
   <div class="mc-card">
     <div class="mc-card-title">Datos de la mesa</div>
 
-    <div style="margin-bottom:14px;padding:11px 13px;background:var(--bg2);border-radius:var(--radius);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:13px;color:var(--muted)">Mesa actual</span>
-      <span style="font-weight:600;font-family:'Playfair Display',serif">Mesa {{ mesa.numero_mesa }}</span>
-    </div>
-
     <form method="post">
       {% csrf_token %}
+
+      <div class="mc-form-group">
+        <label class="mc-label">Mesa actual</label>
+       
+<select class="mc-select" name="mesa_id" onchange="this.form.submit()">
+  {% for m in mesas %}
+    <option value="{{ m.numero_mesa }}" {% if m.numero_mesa == mesa.numero_mesa %}selected{% endif %}>
+      Mesa {{ m.numero_mesa }}
+    </option>
+  {% endfor %}
+</select>
+      </div>
       <div class="mc-form-group">
         <label class="mc-label">Capacidad (personas) *</label>
         <input type="number" class="mc-input" name="capacidad" value="{{ mesa.capacidad }}" min="1" max="30" required>

@@ -1,0 +1,102 @@
+{% extends "base 2.html" %}
+{% load static %}
+{% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/reservas.css' %}">
+
+<div style="padding:1.5rem 1.5rem 0;max-width:100%;">
+  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1rem;display:flex;align-items:center;gap:16px;">
+    <div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:600;margin:0 0 4px;color:#F5ECD7;">Editar Mesas</h1>
+      <p style="font-size:20px;color:#A09070;margin:0;">Selecciona una mesa para editar su información</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;padding:0 0.2rem;">
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">← Volver a Reservas</a>
+  </div>
+</div>
+
+<div class="mc-wrap">
+  <div class="mesa-list-card">
+    <div class="mc-table-wrap">
+      <table class="mc-table">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Capacidad</th>
+            <th>Ubicación</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for mesa in mesas %}
+          <tr>
+            <td>Mesa {{ mesa.numero_mesa }}</td>
+            <td>{{ mesa.capacidad }} personas</td>
+            <td>{{ mesa.ubicacion }}</td>
+            <td>
+              {% if mesa.estado == 'LIBRE' %}
+                <span class="mc-badge mc-badge-ok">Libre</span>
+              {% elif mesa.estado == 'OCUPADA' %}
+                <span class="mc-badge mc-badge-danger">Ocupada</span>
+              {% elif mesa.estado == 'RESERVADA' %}
+                <span class="mc-badge mc-badge-warn">Reservada</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex;gap:5px;">
+                <a href="{% url 'actualizar_mesa' mesa.numero_mesa %}" class="mc-icon-btn edit">
+                  <i class="bi bi-pencil-fill"></i> Editar
+                </a>
+                <button type="button" class="mc-icon-btn del"
+                        onclick="abrirConfirm({{ mesa.numero_mesa }})">
+                  <i class="bi bi-trash-fill"></i> Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="mc-empty">
+              <div class="mc-empty-icon"><i class="bi bi-table"></i></div>
+              <p>No hay mesas registradas</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL CONFIRMAR ELIMINAR ===== -->
+<div class="mc-confirm-overlay" id="confirm-eliminar">
+  <div class="mc-confirm-box">
+    <h3>Eliminar mesa</h3>
+    <p id="confirm-msg">¿Eliminar la Mesa? También se perderán sus reservas asociadas.</p>
+    <div class="mc-confirm-btns">
+      <button class="mc-btn mc-btn-secondary" onclick="cerrarConfirm()">Cancelar</button>
+      <form method="post" id="confirm-form" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="mc-btn mc-btn-danger">Eliminar</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirConfirm(mesaId) {
+  document.getElementById('confirm-msg').textContent = 
+    '¿Eliminar la Mesa ' + mesaId + '? También se perderán sus reservas asociadas.';
+  document.getElementById('confirm-form').action = '/reservas/mesa/eliminar/' + mesaId + '/';
+  document.getElementById('confirm-eliminar').classList.add('open');
+}
+function cerrarConfirm() {
+  document.getElementById('confirm-eliminar').classList.remove('open');
+}
+</script>
+
+{% endblock %}2

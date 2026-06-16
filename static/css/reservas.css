@@ -139,3 +139,32 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
   .mc-nav-btn{padding:6px 12px;font-size:12px}
 }
 
+/* ── Listar Mesas ─────────────────────────────────────── */
+.mesa-list-wrap {
+  max-width: 100%;
+  padding: 1rem 1.5rem 2rem;
+}
+
+.mesa-list-header {
+  margin-bottom: 1.75rem;
+}
+
+.mesa-list-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: var(--text);
+}
+
+.mesa-list-header p {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.mesa-list-card {
+  background: #FDF7EC;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
