@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import DetalleReserva, Mesa
+from .models import Mesa
 from .models import Reserva, Mesa
 import json
 
