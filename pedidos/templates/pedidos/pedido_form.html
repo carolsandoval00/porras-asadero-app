@@ -3,7 +3,26 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
-
+<style>
+  .pm-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    background: var(--p-card) !important;
+    border: 1px solid var(--p-border) !important;
+    border-radius: 50px !important;
+    padding: .5rem .7rem !important;
+    overflow-x: auto !important;
+  }
+  .pm-nav-group {
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .pm-nav-group + .pm-nav-group {
+    padding-left: .4rem !important;
+    border-left: 1px solid var(--p-border) !important;
+  }
+</style>
 {% if pedido_items_json %}
 <script>
   window._pedidoItemsIniciales = {{ pedido_items_json|safe }};
@@ -222,11 +241,11 @@ function renderPlatos() {
 
 function prepararPedido() {
   if (platos.length === 0) { alert('Agrega al menos un producto al pedido.'); return false; }
-  var container   = document.getElementById('items-hidden-container');
+  var container = document.getElementById('items-hidden-container');
   container.innerHTML = '';
   platos.forEach(function(p, i) {
     container.innerHTML +=
-      '<input type="hidden" name="items[' + i + '][nombre]"   value="' + p.nombre + '">' +
+      '<input type="hidden" name="items[' + i + '][id]"       value="' + p.id + '">' +
       '<input type="hidden" name="items[' + i + '][cantidad]" value="' + p.cantidad + '">';
   });
   return true;

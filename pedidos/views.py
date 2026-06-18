@@ -1,22 +1,30 @@
-from django.shortcuts import render, get_object_or_404, redirect
+import csv
+import json
+from itertools import groupby
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from itertools import groupby
-from .models import Pedido, Producto, PedidoItem, Categoria
-from .forms import PedidoForm, ProductoForm, CategoriaForm, ClienteForm
+
 from usuarios.models import Cliente
-import json
+
+from .forms import CategoriaForm, ClienteForm, PedidoForm, ProductoForm
+from .models import Categoria, Pedido, PedidoItem, Producto
+
+# ── ReportLab (PDF) ─────────────────────────────────────────────────
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 
 # ── HELPERS PRIVADOS ────────────────────────────────────────────────
 
 def _productos_disponibles():
-    """
-    Queryset centralizado de productos activos para los formularios de pedido.
-    Evita repetir la misma query en múltiples puntos del mismo view.
-    """
     return (
         Producto.objects
         .filter(disponible=True)
@@ -26,11 +34,6 @@ def _productos_disponibles():
 
 
 def _parse_items_from_post(request):
-    """
-    Extrae los items del pedido enviados desde el frontend JS.
-    Busca los productos por ID (no por nombre) para evitar colisiones.
-    Retorna una lista de dicts {'producto': Producto, 'cantidad': int}.
-    """
     items_data = []
     i = 0
     while True:
@@ -49,9 +52,6 @@ def _parse_items_from_post(request):
 
 
 def _items_as_json(pedido):
-    """
-    Serialización auxiliar de items a formato JSON para precargar el formulario JS.
-    """
     items = [
         {
             'id': str(item.producto.pk),
@@ -64,19 +64,36 @@ def _items_as_json(pedido):
     return json.dumps(items, ensure_ascii=False)
 
 
+def _pedidos_filtrados(request):
+    """Retorna el queryset de pedidos aplicando los filtros q y estado del GET."""
+    q = request.GET.get('q', '').strip()
+    estado_sel = request.GET.get('estado', '').strip()
+
+    qs = (
+        Pedido.objects
+        .select_related('cliente', 'mesero', 'mesa')
+        .prefetch_related('items__producto')
+        .order_by('-fecha_creacion')
+    )
+    if q:
+        qs = qs.filter(
+            Q(cliente__nombre_completo__icontains=q) | Q(descripcion__icontains=q)
+        )
+    if estado_sel:
+        qs = qs.filter(estado=estado_sel)
+    return qs
+
+
 # ── TABLERO PRINCIPAL (DASHBOARD) ──────────────────────────────────
 
 @login_required
 def dashboard(request):
-    """
-    Tablero consolidado de estadísticas administrativas y últimos pedidos.
-    """
-    total_pedidos = Pedido.objects.count()
+    total_pedidos      = Pedido.objects.count()
     pedidos_pendientes = Pedido.objects.filter(estado='PREPARACION').count()
-    total_productos = Producto.objects.count()
-    total_categorias = Categoria.objects.count()
-    total_clientes = Cliente.objects.count()
-    ultimos_pedidos = (
+    total_productos    = Producto.objects.count()
+    total_categorias   = Categoria.objects.count()
+    total_clientes     = Cliente.objects.count()
+    ultimos_pedidos    = (
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
         .order_by('-fecha_creacion')[:5]
@@ -86,7 +103,7 @@ def dashboard(request):
         'titulo': 'Módulo de Pedidos',
         'total_pedidos': total_pedidos,
         'pedidos_pendientes': pedidos_pendientes,
-        'total_ordenes': total_pedidos,  # En el MER, Órdenes y Pedidos comparten la entidad Pedido
+        'total_ordenes': total_pedidos,
         'total_productos': total_productos,
         'total_categorias': total_categorias,
         'total_clientes': total_clientes,
@@ -98,35 +115,16 @@ def dashboard(request):
 
 @login_required
 def pedido_lista(request):
-    """
-    Listado interactivo de pedidos con filtros de búsqueda por mesa y estado.
-    """
-    q = request.GET.get('q', '').strip()
+    q         = request.GET.get('q', '').strip()
     estado_sel = request.GET.get('estado', '').strip()
 
-    pedidos_qs = (
-        Pedido.objects
-        .select_related('cliente', 'mesero', 'mesa')
-        .prefetch_related('items__producto')
-        .order_by('-fecha_creacion')
-    )
+    pedidos_qs = _pedidos_filtrados(request)
 
-    if q:
-        pedidos_qs = pedidos_qs.filter(
-            Q(cliente__nombre_completo__icontains=q) | Q(descripcion__icontains=q)
-        )
-    if estado_sel:
-        pedidos_qs = pedidos_qs.filter(estado=estado_sel)
-
-    pedidos_lista = list(pedidos_qs)
-    pedidos_por_fecha = []
-    for fecha, grupo in groupby(pedidos_lista, key=lambda p: p.fecha_creacion.date()):
+    pedidos_lista_data = list(pedidos_qs)
+    pedidos_por_fecha  = []
+    for fecha, grupo in groupby(pedidos_lista_data, key=lambda p: p.fecha_creacion.date()):
         items = list(grupo)
-        pedidos_por_fecha.append({
-            'fecha': fecha,
-            'pedidos': items,
-            'count': len(items),
-        })
+        pedidos_por_fecha.append({'fecha': fecha, 'pedidos': items, 'count': len(items)})
 
     return render(request, 'pedidos/pedido_lista.html', {
         'titulo': 'Módulo de Pedidos',
@@ -139,20 +137,110 @@ def pedido_lista(request):
 
 
 @login_required
+def pedido_exportar_pdf(request):
+    """Exporta los pedidos filtrados a PDF."""
+    pedidos_qs = _pedidos_filtrados(request)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="pedidos.pdf"'
+
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=landscape(A4),
+        leftMargin=1 * cm, rightMargin=1 * cm,
+        topMargin=1.5 * cm, bottomMargin=1.5 * cm,
+    )
+    styles   = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Reporte de Pedidos", styles['Title']))
+    elements.append(Spacer(1, 0.5 * cm))
+
+    # Cabecera
+    data = [['#', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Total', 'Fecha']]
+
+    for p in pedidos_qs:
+        productos_str = ', '.join(
+            f"{it.cantidad}x {it.producto.nombre}" for it in p.items.all()
+        ) or '—'
+        data.append([
+            f"{p.pk:02d}",
+            str(p.cliente),
+            str(p.mesa) if p.mesa else '—',
+            Paragraph(productos_str, styles['Normal']),
+            p.get_estado_display(),
+            f"${p.total:,.0f}",
+            p.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
+        ])
+
+    tabla = Table(
+        data,
+        colWidths=[1.2*cm, 4*cm, 2.5*cm, 8*cm, 3*cm, 2.5*cm, 4*cm],
+        repeatRows=1,
+    )
+    tabla.setStyle(TableStyle([
+        # Encabezado
+        ('BACKGROUND',    (0, 0), (-1, 0), colors.HexColor('#C0392B')),
+        ('TEXTCOLOR',     (0, 0), (-1, 0), colors.HexColor('#F5ECD7')),
+        ('FONTNAME',      (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE',      (0, 0), (-1, 0), 9),
+        # Filas
+        ('FONTSIZE',      (0, 1), (-1, -1), 8),
+        ('ROWBACKGROUNDS',(0, 1), (-1, -1), [colors.HexColor('#FDF7EC'), colors.HexColor('#EDE3C8')]),
+        # Bordes y padding
+        ('GRID',          (0, 0), (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
+        ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING',    (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 5),
+    ]))
+
+    elements.append(tabla)
+    doc.build(elements)
+    return response
+
+
+@login_required
+def pedido_exportar_excel(request):
+    """Exporta los pedidos filtrados a CSV (compatible con Excel)."""
+    pedidos_qs = _pedidos_filtrados(request)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="pedidos.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['#', 'Cliente', 'Mesa', 'Productos', 'Descripción', 'Estado', 'Total', 'Fecha'])
+
+    for p in pedidos_qs:
+        productos_str = ', '.join(
+            f"{it.cantidad}x {it.producto.nombre}" for it in p.items.all()
+        ) or '—'
+        writer.writerow([
+            f"{p.pk:02d}",
+            str(p.cliente),
+            str(p.mesa) if p.mesa else '—',
+            productos_str,
+            p.descripcion or '—',
+            p.get_estado_display(),
+            p.total,
+            p.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
+        ])
+
+    return response
+
+
+@login_required
 def pedido_crear(request):
-    """
-    Formulario dinámico e interactivo de creación de un nuevo pedido.
-    """
-    # Calculamos una sola vez el catálogo disponible (se reutiliza en todos los renders)
     productos_disponibles = _productos_disponibles()
 
     if request.method == 'POST':
         form = PedidoForm(request.POST)
         if form.is_valid():
             pedido = form.save(commit=False)
-            pedido.mesero = request.user
+            pedido.mesero       = request.user
             pedido.fecha_creacion = timezone.now()
-            pedido.estado = 'PREPARACION'
+            pedido.estado       = 'PREPARACION'
 
             items_data = _parse_items_from_post(request)
             if not items_data:
@@ -163,8 +251,8 @@ def pedido_crear(request):
                     'seccion_activa': 'pedido-crear',
                 })
 
-            total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
-            pedido.total = total
+            total          = sum(it['producto'].precio * it['cantidad'] for it in items_data)
+            pedido.total   = total
             pedido.subtotal = total
             pedido.impuestos = 0
             pedido.save()
@@ -199,20 +287,17 @@ def pedido_crear(request):
 
 @login_required
 def pedido_editar(request, pk):
-    """
-    Edición de un pedido y sus productos dinámicos con precarga JSON.
-    """
-    pedido = get_object_or_404(Pedido, pk=pk)
+    pedido                = get_object_or_404(Pedido, pk=pk)
     productos_disponibles = _productos_disponibles()
 
     if request.method == 'POST':
         items_data = _parse_items_from_post(request)
-        form = PedidoForm(request.POST, instance=pedido)
+        form       = PedidoForm(request.POST, instance=pedido)
         if form.is_valid():
             p = form.save(commit=False)
             if items_data:
-                total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
-                p.total = total
+                total      = sum(it['producto'].precio * it['cantidad'] for it in items_data)
+                p.total    = total
                 p.subtotal = total
                 p.save()
                 pedido.items.all().delete()
@@ -250,9 +335,6 @@ def pedido_editar(request, pk):
 
 @login_required
 def pedido_eliminar(request, pk):
-    """
-    Eliminación de un pedido específico.
-    """
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
         pedido.delete()
@@ -264,9 +346,6 @@ def pedido_eliminar(request, pk):
 
 @login_required
 def orden_lista(request):
-    """
-    Listado financiero de órdenes comerciales agrupadas por fecha.
-    """
     q_orden = request.GET.get('q_orden', '').strip()
 
     ordenes_qs = (
@@ -283,15 +362,11 @@ def orden_lista(request):
         else:
             ordenes_qs = ordenes_qs.filter(cliente__nombre_completo__icontains=q_orden)
 
-    ordenes_lista = list(ordenes_qs)
-    ordenes_por_fecha = []
-    for fecha, grupo in groupby(ordenes_lista, key=lambda o: o.fecha_creacion.date()):
+    ordenes_lista_data = list(ordenes_qs)
+    ordenes_por_fecha  = []
+    for fecha, grupo in groupby(ordenes_lista_data, key=lambda o: o.fecha_creacion.date()):
         items = list(grupo)
-        ordenes_por_fecha.append({
-            'fecha': fecha,
-            'ordenes': items,
-            'count': len(items),
-        })
+        ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
 
     return render(request, 'pedidos/orden_lista.html', {
         'titulo': 'Módulo de Pedidos',
@@ -303,9 +378,6 @@ def orden_lista(request):
 
 @login_required
 def orden_detalle(request, pk):
-    """
-    Detalle de cobro/comprobante de una orden comercial.
-    """
     orden = get_object_or_404(
         Pedido.objects.select_related('cliente', 'mesero', 'mesa').prefetch_related('pagos'),
         pk=pk,
@@ -318,9 +390,6 @@ def orden_detalle(request, pk):
 
 @login_required
 def orden_editar(request, pk):
-    """
-    Edición de estados e información de facturación de una orden.
-    """
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
         form = PedidoForm(request.POST, instance=pedido)
@@ -344,9 +413,6 @@ def orden_editar(request, pk):
 
 @login_required
 def orden_eliminar(request, pk):
-    """
-    Eliminación de una orden comercial.
-    """
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
         pedido.delete()
@@ -358,10 +424,7 @@ def orden_eliminar(request, pk):
 
 @login_required
 def producto_lista(request):
-    """
-    Listado y buscador de la carta de platos del asadero.
-    """
-    q_prod = request.GET.get('q_prod', '').strip()
+    q_prod  = request.GET.get('q_prod', '').strip()
     cat_sel = request.GET.get('categoria', '').strip()
 
     productos_qs = Producto.objects.select_related('categoria').all()
@@ -382,9 +445,6 @@ def producto_lista(request):
 
 @login_required
 def producto_crear(request):
-    """
-    Creación de nuevos platos/productos de la carta.
-    """
     if request.method == 'POST':
         form = ProductoForm(request.POST)
         if form.is_valid():
@@ -406,9 +466,6 @@ def producto_crear(request):
 
 @login_required
 def producto_editar(request, pk):
-    """
-    Modificación de precios o detalles de un producto.
-    """
     producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
         form = ProductoForm(request.POST, instance=producto)
@@ -432,9 +489,6 @@ def producto_editar(request, pk):
 
 @login_required
 def producto_eliminar(request, pk):
-    """
-    Eliminación de un producto.
-    """
     producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
         producto.delete()
@@ -446,9 +500,6 @@ def producto_eliminar(request, pk):
 
 @login_required
 def categoria_lista(request):
-    """
-    Listado y filtrado de categorías de la carta.
-    """
     q_cat = request.GET.get('q_cat', '').strip()
 
     categorias_qs = Categoria.objects.all()
@@ -465,9 +516,6 @@ def categoria_lista(request):
 
 @login_required
 def categoria_crear(request):
-    """
-    Creación de categorías del menú.
-    """
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
         if form.is_valid():
@@ -489,9 +537,6 @@ def categoria_crear(request):
 
 @login_required
 def categoria_editar(request, pk):
-    """
-    Modificación de nombres de categorías.
-    """
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
         form = CategoriaForm(request.POST, instance=categoria)
@@ -515,9 +560,6 @@ def categoria_editar(request, pk):
 
 @login_required
 def categoria_eliminar(request, pk):
-    """
-    Eliminación de una categoría.
-    """
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
         categoria.delete()
@@ -529,9 +571,6 @@ def categoria_eliminar(request, pk):
 
 @login_required
 def cliente_lista(request):
-    """
-    Listado y buscador de clientes registrados en el restaurante.
-    """
     q_cli = request.GET.get('q_cli', '').strip()
 
     clientes_qs = Cliente.objects.all()
@@ -550,9 +589,6 @@ def cliente_lista(request):
 
 @login_required
 def cliente_crear(request):
-    """
-    Registro de nuevos clientes para reservas y compras.
-    """
     if request.method == 'POST':
         form = ClienteForm(request.POST)
         if form.is_valid():
@@ -574,9 +610,6 @@ def cliente_crear(request):
 
 @login_required
 def cliente_editar(request, pk):
-    """
-    Edición de datos demográficos de un cliente.
-    """
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
         form = ClienteForm(request.POST, instance=cliente)
@@ -600,11 +633,8 @@ def cliente_editar(request, pk):
 
 @login_required
 def cliente_eliminar(request, pk):
-    """
-    Eliminación de un cliente.
-    """
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
         cliente.delete()
         messages.success(request, '🗑️ Cliente eliminado.')
-    return redirect('pedidos:cliente_lista')
+    return redirect('pedidos:cliente_lista')    

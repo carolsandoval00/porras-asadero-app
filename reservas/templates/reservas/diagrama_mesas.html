@@ -1,0 +1,34 @@
+<div id="mc-mesas" class="mc-section">
+    <div class="mc-sec-header">
+      <h2>Diagrama de mesas</h2>
+      <p>Vista del salón en tiempo real — haz clic en una mesa para ver detalles o cambiar su estado</p>
+    </div>
+    <div class="mc-filter-bar">
+      <select class="mc-select" id="mc-filtro-diagrama" onchange="mcRenderDiagrama()">
+        <option value="">Todas las mesas</option>
+        <option value="disponible">Solo disponibles</option>
+        <option value="reservada">Solo reservadas</option>
+        <option value="ocupada">Solo ocupadas</option>
+      </select>
+      <select class="mc-select" id="mc-filtro-zona" onchange="mcRenderDiagrama()">
+        <option value="">Todas las zonas</option>
+        <option>Salón principal</option><option>Salón secundario</option>
+      </select>
+      <span id="mc-resumen" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+    <div class="mc-floor-outer">
+      <div class="mc-floor-header">
+        <span class="mc-floor-label" id="mc-zone-label">Todas las zonas</span>
+        <span style="font-size:12px;color:var(--muted)" id="mc-floor-count"></span>
+      </div>
+      <div class="mc-floor-container" id="mc-floor">
+        <div class="mc-floor-grid"></div>
+        <div id="mc-floor-mesas"></div>
+      </div>
+      <div class="mc-legend">
+        <div class="mc-legend-item"><div class="mc-legend-dot d"></div>Disponible</div>
+        <div class="mc-legend-item"><div class="mc-legend-dot r"></div>Reservada</div>
+        <div class="mc-legend-item"><div class="mc-legend-dot o"></div>Ocupada</div>
+      </div>
+    </div>
+  </div>
