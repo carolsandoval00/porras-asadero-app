@@ -1,181 +1,8 @@
 {% extends 'base 2.html' %}
-
+{%load static%}
 {% block content %}
 
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap');
-
-    :root {
-        --verde:     #E8651A;
-        --verde-dk:  #C0502A;
-        --carbon:     #1A1008;
-        --gris-suave:#F5ECD7;
-        --gris-borde:#D4C4A0;
-        --rojo:       #C0392B;
-    }
-
-    .auth-wrap {
-        min-height: 85vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 1rem;
-        
-    }
-
-    .auth-card {
-  background: #FDF7EC;
-  border-radius: 18px;
-  box-shadow: 0 8px 40px rgba(26,16,8,.10);
-  padding: 2.5rem 2.8rem;
-  width: 100%;
-  animation: fadeUp .45s ease both;
-}
-
-    @keyframes fadeUp {
-        from { opacity:0; transform:translateY(22px); }
-        to   { opacity:1; transform:translateY(0); }
-    }
-
-    .auth-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.9rem;
-        color: var(--carbon);
-        text-align: center;
-        margin-bottom: .35rem;
-    }
-    .auth-title span { color: var(--verde); }
-
-    .auth-sub {
-        text-align: center;
-        color: #888;
-        font-size: .88rem;
-        margin-bottom: 1.8rem;
-        font-family: 'Lato', sans-serif;
-    }
-
-    .auth-card .form-control,
-    .auth-card .form-select {
-        font-family: 'Lato', sans-serif;
-        border-radius: 10px;
-        border: 1.5px solid var(--gris-borde);
-        padding: .65rem 1rem;
-        font-size: .95rem;
-        background: #FDF7EC;
-        color: var(--carbon);
-        transition: border-color .2s, box-shadow .2s;
-    }
-    .auth-card .form-control:focus,
-    .auth-card .form-select:focus {
-        border-color: var(--verde);
-        box-shadow: 0 0 0 3px rgba(232,101,26,.18);
-        outline: none;
-    }
-
-    .auth-card label {
-        font-family: 'Lato', sans-serif;
-        font-size: .82rem;
-        font-weight: 700;
-        letter-spacing: .04em;
-        color: #6B5A3E;
-        margin-bottom: .3rem;
-        display: block;
-    }
-
-    .btn-auth {
-        background: var(--carbon);
-        color: #F5ECD7;
-        border: none;
-        border-radius: 10px;
-        padding: .75rem;
-        font-family: 'Lato', sans-serif;
-        font-weight: 700;
-        letter-spacing: .06em;
-        font-size: .92rem;
-        width: 100%;
-        margin-top: 1.2rem;
-        cursor: pointer;
-        transition: background .2s, transform .15s;
-        text-decoration: none;
-        display: inline-block;
-        text-align: center;
-    }
-    .btn-auth:hover  { background: var(--verde-dk); transform: translateY(-1px); color: #F5ECD7; }
-    .btn-auth:active { transform: translateY(0); }
-
-    .btn-auth-outline {
-        background: transparent;
-        color: var(--carbon);
-        border: 1.5px solid var(--gris-borde);
-        border-radius: 10px;
-        padding: .7rem;
-        font-family: 'Lato', sans-serif;
-        font-weight: 600;
-        font-size: .88rem;
-        width: 100%;
-        margin-top: .6rem;
-        display: block;
-        text-align: center;
-        text-decoration: none;
-        transition: border-color .2s, color .2s;
-    }
-    .btn-auth-outline:hover { border-color: var(--verde); color: var(--verde-dk); }
-
-    .auth-divider {
-        display: flex; align-items: center; gap: .8rem;
-        margin: 1rem 0;
-        color: #C0AD84; font-size: .8rem; font-family: 'Lato', sans-serif;
-    }
-    .auth-divider::before,
-    .auth-divider::after { content:''; flex:1; height:1px; background:var(--gris-borde); }
-
-    .section-label {
-        font-family: 'Lato', sans-serif;
-        font-size: .74rem;
-        font-weight: 700;
-        letter-spacing: .09em;
-        color: #C0AD84;
-        text-transform: uppercase;
-        margin: 1.2rem 0 .8rem;
-    }
-
-    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media(max-width:540px){ .form-row-2 { grid-template-columns: 1fr; } }
-
-    .rol-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: .6rem; margin-top: .3rem; }
-    .rol-opt  { display: none; }
-    .rol-label {
-        border: 1.5px solid var(--gris-borde);
-        border-radius: 10px;
-        padding: .55rem .4rem;
-        text-align: center;
-        cursor: pointer;
-        font-family: 'Lato', sans-serif;
-        font-size: .82rem;
-        font-weight: 700;
-        color: #6B5A3E;
-        transition: all .2s;
-        user-select: none;
-        display: block;
-    }
-    .rol-opt:checked + .rol-label {
-        border-color: var(--rojo);
-        background: rgba(192,57,43,.10);
-        color: var(--rojo);
-    }
-
-    /* Estilos para el Dashboard de Inicio */
-    .dash-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 1rem; }
-    .dash-card {
-        background: #FDF7EC; border: 1.5px solid var(--gris-borde); padding: 1.5rem; border-radius: 15px;
-        text-align: center; transition: 0.3s; text-decoration: none; color: inherit; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    }
-    .dash-card:hover { border-color: var(--verde); transform: translateY(-5px); box-shadow: 0 5px 15px rgba(26,16,8,.08); }
-    .dash-card i { font-size: 2.5rem; color: var(--verde); margin-bottom: 10px; display: block; }
-    .dash-card h3 { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--carbon); }
-
-    .auth-card .alert { border-radius: 10px; font-size: .88rem; }
-</style>
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}">
 
 {% if vista == "login" or vista == "acceder" or not vista %}
 <div class="auth-wrap">
@@ -199,7 +26,16 @@
             </div>
             <div class="mb-3">
                 <label>Contraseña</label>
-                <input type="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                <div style="position: relative;">
+                    <input type="password" id="password-input" name="password" class="form-control"
+                           placeholder="••••••••" required autocomplete="current-password"
+                           style="padding-right: 42px;">
+                    <button type="button" onclick="togglePassword()"
+                            style="position:absolute; right:10px; top:50%; transform:translateY(-50%);
+                                   background:none; border:none; cursor:pointer; color:#888; padding:4px;">
+                        <i id="eye-icon" class="bi bi-eye" style="font-size:18px;"></i>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="btn-auth">
@@ -215,14 +51,60 @@
     <div class="auth-card" style="max-width: 1100px;">
         <h1 class="auth-title">Panel de <span>Control</span></h1>
         <p class="auth-sub">Bienvenido, {{ user.first_name }} {{ user.last_name }}. ¿Qué deseas hacer hoy?</p>
-        
+
         <div class="dash-grid">
             <a href="{% url 'panel_perfil' %}" class="dash-card">
                 <i class="bi bi-person-badge"></i>
                 <h3>Mi Perfil</h3>
             </a>
-            
+
             {% if user.rol == 'ADMIN' or user.is_superuser %}
+                <a href="{% url 'lista_personal' %}" class="dash-card">
+                    <i class="bi bi-people"></i>
+                    <h3>Gestionar Personal</h3>
+                </a>
+                <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
+                    <i class="bi bi-person-plus-fill"></i>
+                    <h3>Nuevo Usuario</h3>
+                </a>
+                <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+                    <i class="bi bi-receipt"></i>
+                    <h3>Ver Pedidos</h3>
+                </a>
+                <a href="{% url 'pago:dashboard' %}" class="dash-card">
+                    <i class="bi bi-credit-card"></i>
+                    <h3>Gestión de Pagos</h3>
+                </a>
+                <a href="{% url 'reserva_inicio' %}" class="dash-card">
+                    <i class="bi bi-calendar-check"></i>
+                    <h3>Reservas y Mesas</h3>
+                </a>
+
+            {% elif user.rol == 'CAJERO' or user.rol == 'CAJA' %}
+                <a href="{% url 'pago:dashboard' %}" class="dash-card">
+                    <i class="bi bi-credit-card"></i>
+                    <h3>Gestión de Pagos</h3>
+                </a>
+                <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+                    <i class="bi bi-receipt"></i>
+                    <h3>Ver Pedidos</h3>
+                </a>
+
+            {% elif user.rol == 'MESERO' %}
+                <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+                    <i class="bi bi-receipt"></i>
+                    <h3>Ver Pedidos</h3>
+                </a>
+                <a href="{% url 'reserva_inicio' %}" class="dash-card">
+                    <i class="bi bi-calendar-check"></i>
+                    <h3>Reservas y Mesas</h3>
+                </a>
+
+            {% elif user.rol == 'COCINA' %}
+                <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+                    <i class="bi bi-receipt"></i>
+                    <h3>Ver Pedidos</h3>
+                </a>
             <a href="{% url 'lista_personal' %}" class="dash-card">
                 <i class="bi bi-people"></i>
                 <h3>Gestionar Personal</h3>
@@ -243,21 +125,8 @@
                 <i class="bi bi-person-lines-fill"></i>
                 <h3>Gestionar Clientes</h3>
             </a>
+
             {% endif %}
-
-            <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
-               <i class="bi bi-receipt"></i>
-               <h3>Ver Pedidos</h3>
-               </a>
-            <a href="{% url 'pago:dashboard' %}" class="dash-card">
-               <i class="bi bi-credit-card"></i>
-               <h3>Gestión de Pagos</h3>
-               </a>
-
-            <a href="{% url 'reserva_inicio' %}" class="dash-card">
-               <i class="bi bi-calendar-check"></i>
-               <h3>Reservas y Mesas</h3>
-               </a>      
         </div>
 
         <div class="mt-5">
@@ -312,14 +181,14 @@
                 </div>
                 <div>
                     <label>Número de Documento <span class="text-danger">*</span></label>
-                  <input type="text" name="documento" class="form-control" required value="{{ usuario.documento|default:'' }}" maxlength="10" pattern="[0-9]{6,10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+                    <input type="text" name="documento" class="form-control" required value="{{ usuario.documento|default:'' }}" maxlength="10" pattern="[0-9]{6,10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                 </div>
             </div>
 
             <div class="form-row-2 mb-3">
                 <div>
                     <label>Teléfono</label>
-                   <input type="text" name="telefono" class="form-control" value="{{ usuario.telefono|default:'' }}" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+                    <input type="text" name="telefono" class="form-control" value="{{ usuario.telefono|default:'' }}" maxlength="10" pattern="[0-9]{10}" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                 </div>
                 <div>
                     <label>Correo electrónico <span class="text-danger">*</span></label>
@@ -366,7 +235,7 @@
             <button type="submit" class="btn-auth">
                 <i class="bi bi-check-circle me-2"></i>{% if vista == 'actualizar' %}Guardar Cambios{% else %}Registrar y Entrar{% endif %}
             </button>
-            
+
             <a href="{% url 'panel_perfil' %}" class="btn-auth-outline">Cancelar</a>
         </form>
     </div>
@@ -382,5 +251,19 @@
     </div>
 </div>
 {% endif %}
+
+<script>
+function togglePassword() {
+    const input = document.getElementById('password-input');
+    const icon = document.getElementById('eye-icon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+</script>
 
 {% endblock %}

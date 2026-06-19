@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.utils import timezone
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from itertools import groupby
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
@@ -12,6 +13,10 @@ from pedidos.models import Pedido
 
 @login_required
 def pago_dashboard(request):
+    rol = getattr(request.user, 'rol', None)
+    if rol == 'MESERO' and not request.user.is_superuser:
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
+
     form_apertura = CajaForm()
     form = PagoForm()
 
@@ -24,7 +29,11 @@ def pago_dashboard(request):
             form_apertura = CajaForm(request.POST)
             if form_apertura.is_valid():
                 apertura = form_apertura.save(commit=False)
+
+                apertura.estado = 'abierta'
+
                 apertura.estado = 'ABIERTA'
+
                 apertura.save()
                 messages.success(request, '✅ Caja abierta correctamente.')
                 return redirect('pago:dashboard')
@@ -44,10 +53,14 @@ def pago_dashboard(request):
             return redirect('pago:dashboard')
 
         elif action == 'editar_caja':
+
+            caja_id       = request.POST.get('caja_id')
+            cajero        = request.POST.get('cajero', '').strip()
+
             caja_id      = request.POST.get('caja_id')
             cajero_id    = request.POST.get('cajero')
-            observaciones = request.POST.get('observaciones', '').strip()
 
+            observaciones = request.POST.get('observaciones', '').strip()
             try:
                 caja = Caja.objects.get(pk=caja_id)
                 if cajero_id:
@@ -121,6 +134,10 @@ def pago_dashboard(request):
 
 @login_required
 def pago_editar(request, pk):
+    rol = getattr(request.user, 'rol', None)
+    if rol == 'MESERO' and not request.user.is_superuser:
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
+
     pago = get_object_or_404(Pago, pk=pk)
     form = PagoForm(request.POST or None, instance=pago)
     if form.is_valid():
@@ -136,6 +153,10 @@ def pago_editar(request, pk):
 
 @login_required
 def pago_eliminar(request, pk):
+    rol = getattr(request.user, 'rol', None)
+    if rol == 'MESERO' and not request.user.is_superuser:
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
+
     pago = get_object_or_404(Pago, pk=pk)
     if request.method == 'POST':
         pago.delete()
@@ -145,6 +166,10 @@ def pago_eliminar(request, pk):
 
 @login_required
 def caja_detalle(request, pk):
+    rol = getattr(request.user, 'rol', None)
+    if rol == 'MESERO' and not request.user.is_superuser:
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
+
     caja_seleccionada = get_object_or_404(Caja, pk=pk)
     pagos_caja = Pago.objects.filter(caja=caja_seleccionada).select_related('pedido').order_by('-fecha_pago')
 

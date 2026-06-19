@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from .models import Mesa
 from .models import Reserva, Mesa
 import json
 
@@ -12,6 +13,12 @@ import json
 # ─────────────────────────────────────────────────────────────
 @login_required
 def reserva_view(request):
+    """Renderiza el panel principal de reservas"""
+    rol = getattr(request.user, 'rol', None)
+
+    if rol in ('CAJERO', 'CAJA', 'COCINA') and not request.user.is_superuser:
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
+
     return render(request, 'reserva_inicio.html')
 
 
@@ -74,7 +81,6 @@ def eliminar_detalle(request):
 # ACTUALIZAR MESA (vista HTML)
 # ─────────────────────────────────────────────────────────────
 @login_required
-@login_required
 def actualizar_mesa(request, mesa_id):
     mesas = Mesa.objects.all().order_by('numero_mesa')
     mesa = get_object_or_404(Mesa, numero_mesa=mesa_id)
@@ -96,7 +102,8 @@ def actualizar_mesa(request, mesa_id):
         'mesa':  mesa,
         'mesas': mesas,
     })
-    
+
+
 def listar_mesas_vista(request):
     mesas = Mesa.objects.all().order_by('numero_mesa')
     return render(request, 'reservas/listar_mesas.html', {'mesas': mesas})
