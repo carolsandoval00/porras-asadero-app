@@ -16,11 +16,8 @@ TEMPLATE_PERFIL = 'usuarios/panel_perfil.html'
 
 def login_view(request):
     vista = request.GET.get('vista', 'login')
-
-    # Si ya está autenticado y entra al login, redirigir según rol
     if request.user.is_authenticated and vista == 'login':
-        return _redirigir_por_rol(request.user)
-
+        return redirect('inicio_usuarios')
     if request.method == 'POST':
         if vista in ['login', 'acceder', None]:
             usuario_input  = request.POST.get('username')
@@ -31,29 +28,18 @@ def login_view(request):
                 next_url = request.POST.get('next') or request.GET.get('next')
                 if next_url:
                     return redirect(next_url)
-                # ✅ Redirigir según el rol después del login
-                return _redirigir_por_rol(user)
+                return redireccion_post_login(request)
             else:
                 messages.error(request, 'Usuario o contraseña incorrectos.')
                 return render(request, TEMPLATE_LOGIN, {'vista': 'login'})
-
     return render(request, TEMPLATE_LOGIN, {'vista': vista})
 
 
-def _redirigir_por_rol(user):
-    """
-    Redirige al Panel de Control (inicio_usuarios) para todos los roles.
-    ADMIN y superusuario van al mismo panel; el template ya filtra las opciones visibles.
-    """
-    rol = getattr(user, 'rol', None)
-
-    if rol in ['MESERO', 'CAJERO', 'CAJA', 'COCINA']:
+@login_required
+def redireccion_post_login(request):
+    if request.user.is_superuser or request.user.rol == 'ADMIN':
         return redirect('inicio_usuarios')
-    elif rol == 'ADMIN' or user.is_superuser:
-        return redirect('inicio_usuarios')
-    else:
-        # Cualquier otro rol también va al panel
-        return redirect('inicio_usuarios')
+    return redirect('panel_perfil')
 
 
 def logout_view(request):
@@ -91,7 +77,7 @@ def lista_personal(request):
             'doc':   getattr(u, 'documento', '') or '',
             'tdoc':  getattr(u, 'tipo_documento', '') or '',
             'dir':   getattr(u, 'direccion', '') or '',
-            'foto':  u.foto.url if u.foto else '',
+            'foto':  u.foto.url if u.foto else '',  # ← NUEVO
             'notas': '',
             'perms': [],
             'acc':   '-',
