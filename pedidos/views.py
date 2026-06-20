@@ -93,11 +93,14 @@ def dashboard(request):
     total_productos    = Producto.objects.count()
     total_categorias   = Categoria.objects.count()
     total_clientes     = Cliente.objects.count()
-    ultimos_pedidos    = (
+
+    # Se toman los 5 pedidos más recientes (orden descendente por fecha)
+    # y luego se invierte la lista para mostrarlos en orden ascendente por #.
+    ultimos_pedidos = list(
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
         .order_by('-fecha_creacion')[:5]
-    )
+    )[::-1]
 
     return render(request, 'pedidos/dashboard.html', {
         'titulo': 'Módulo de Pedidos',
@@ -637,4 +640,4 @@ def cliente_eliminar(request, pk):
     if request.method == 'POST':
         cliente.delete()
         messages.success(request, '🗑️ Cliente eliminado.')
-    return redirect('pedidos:cliente_lista')    
+    return redirect('pedidos:cliente_lista')
