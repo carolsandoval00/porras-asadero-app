@@ -499,6 +499,100 @@ def producto_eliminar(request, pk):
     return redirect('pedidos:producto_lista')
 
 
+def _productos_filtrados(request):
+    """Retorna el queryset de productos aplicando los filtros q_prod y categoria del GET."""
+    q_prod  = request.GET.get('q_prod', '').strip()
+    cat_sel = request.GET.get('categoria', '').strip()
+
+    qs = Producto.objects.select_related('categoria').all()
+    if q_prod:
+        qs = qs.filter(nombre__icontains=q_prod)
+    if cat_sel:
+        qs = qs.filter(categoria__id=cat_sel)
+    return qs
+
+
+@login_required
+def producto_exportar_pdf(request):
+    """Exporta los productos filtrados a PDF."""
+    productos_qs = _productos_filtrados(request)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="productos.pdf"'
+
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=landscape(A4),
+        leftMargin=1 * cm, rightMargin=1 * cm,
+        topMargin=1.5 * cm, bottomMargin=1.5 * cm,
+    )
+    styles   = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Reporte de Productos", styles['Title']))
+    elements.append(Spacer(1, 0.5 * cm))
+
+    data = [['#', 'Nombre', 'Categoría', 'Precio', 'Descripción', 'Disponible']]
+
+    for i, p in enumerate(productos_qs, start=1):
+        data.append([
+            f"{i:02d}",
+            p.nombre,
+            p.categoria.nombre if p.categoria else '—',
+            f"${p.precio:,.0f}",
+            Paragraph(p.descripcion or '—', styles['Normal']),
+            'Sí' if p.disponible else 'No',
+        ])
+
+    tabla = Table(
+        data,
+        colWidths=[1.2*cm, 5*cm, 4*cm, 2.5*cm, 8*cm, 2.5*cm],
+        repeatRows=1,
+    )
+    tabla.setStyle(TableStyle([
+        ('BACKGROUND',    (0, 0), (-1, 0), colors.HexColor('#C0392B')),
+        ('TEXTCOLOR',     (0, 0), (-1, 0), colors.HexColor('#F5ECD7')),
+        ('FONTNAME',      (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE',      (0, 0), (-1, 0), 9),
+        ('FONTSIZE',      (0, 1), (-1, -1), 8),
+        ('ROWBACKGROUNDS',(0, 1), (-1, -1), [colors.HexColor('#FDF7EC'), colors.HexColor('#EDE3C8')]),
+        ('GRID',          (0, 0), (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
+        ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING',    (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 5),
+    ]))
+
+    elements.append(tabla)
+    doc.build(elements)
+    return response
+
+
+@login_required
+def producto_exportar_excel(request):
+    """Exporta los productos filtrados a CSV (compatible con Excel)."""
+    productos_qs = _productos_filtrados(request)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="productos.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['#', 'Nombre', 'Categoría', 'Precio', 'Descripción', 'Disponible'])
+
+    for i, p in enumerate(productos_qs, start=1):
+        writer.writerow([
+            f"{i:02d}",
+            p.nombre,
+            p.categoria.nombre if p.categoria else '—',
+            p.precio,
+            p.descripcion or '—',
+            'Sí' if p.disponible else 'No',
+        ])
+
+    return response
+
+
 # ── GESTIÓN DE CATEGORÍAS ──────────────────────────────────────────
 
 @login_required

@@ -28,6 +28,8 @@ urlpatterns = [
     path('productos/crear/',             views.producto_crear,    name='producto_crear'),
     path('productos/<int:pk>/editar/',   views.producto_editar,   name='producto_editar'),
     path('productos/<int:pk>/eliminar/', views.producto_eliminar, name='producto_eliminar'),
+    path('productos/exportar/pdf/',   views.producto_exportar_pdf,   name='producto_exportar_pdf'),
+    path('productos/exportar/excel/', views.producto_exportar_excel, name='producto_exportar_excel'),
 
     # ── Categorías ────────────────────────────────────────────
     path('categorias/',                   views.categoria_lista,    name='categoria_lista'),
