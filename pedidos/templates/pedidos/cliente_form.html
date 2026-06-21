@@ -94,4 +94,48 @@
   </div>
 </div>
 
+<script>
+  function soloNumeros(input, maxLen) {
+    if (!input) return;
+    input.setAttribute('maxlength', maxLen);
+    input.setAttribute('inputmode', 'numeric');
+    input.addEventListener('input', function () {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, maxLen);
+    });
+    input.addEventListener('keypress', function (e) {
+      if (!/[0-9]/.test(e.key)) {
+        e.preventDefault();
+      }
+    });
+    input.addEventListener('paste', function (e) {
+      e.preventDefault();
+      const texto = (e.clipboardData || window.clipboardData).getData('text');
+      const limpio = texto.replace(/[^0-9]/g, '').slice(0, maxLen);
+      this.value = limpio;
+    });
+  }
+
+  function soloLetras(input) {
+    if (!input) return;
+    const permitido = /[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/;
+    input.addEventListener('input', function () {
+      this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    });
+    input.addEventListener('keypress', function (e) {
+      if (!permitido.test(e.key)) {
+        e.preventDefault();
+      }
+    });
+    input.addEventListener('paste', function (e) {
+      e.preventDefault();
+      const texto = (e.clipboardData || window.clipboardData).getData('text');
+      const limpio = texto.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+      this.value = limpio;
+    });
+  }
+  soloNumeros(document.getElementById('id_documento'), 10);
+  soloNumeros(document.getElementById('id_telefono'), 10);
+  soloLetras(document.getElementById('id_nombre_completo'));
+</script>
+
 {% endblock %}
