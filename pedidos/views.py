@@ -664,6 +664,91 @@ def categoria_eliminar(request, pk):
     return redirect('pedidos:categoria_lista')
 
 
+def _categorias_filtradas(request):
+    """Retorna el queryset de categorías aplicando el filtro q_cat del GET."""
+    q_cat = request.GET.get('q_cat', '').strip()
+
+    qs = Categoria.objects.all()
+    if q_cat:
+        qs = qs.filter(nombre__icontains=q_cat)
+    return qs
+
+
+@login_required
+def categoria_exportar_pdf(request):
+    """Exporta las categorías filtradas a PDF."""
+    categorias_qs = _categorias_filtradas(request)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="categorias.pdf"'
+
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=landscape(A4),
+        leftMargin=1 * cm, rightMargin=1 * cm,
+        topMargin=1.5 * cm, bottomMargin=1.5 * cm,
+    )
+    styles   = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Reporte de Categorías", styles['Title']))
+    elements.append(Spacer(1, 0.5 * cm))
+
+    data = [['#', 'Nombre', 'Descripción']]
+
+    for i, c in enumerate(categorias_qs, start=1):
+        data.append([
+            f"{i:02d}",
+            c.nombre,
+            Paragraph(c.descripcion or '—', styles['Normal']),
+        ])
+
+    tabla = Table(
+        data,
+        colWidths=[1.2*cm, 5*cm, 14*cm],
+        repeatRows=1,
+    )
+    tabla.setStyle(TableStyle([
+        ('BACKGROUND',    (0, 0), (-1, 0), colors.HexColor('#C0392B')),
+        ('TEXTCOLOR',     (0, 0), (-1, 0), colors.HexColor('#F5ECD7')),
+        ('FONTNAME',      (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE',      (0, 0), (-1, 0), 9),
+        ('FONTSIZE',      (0, 1), (-1, -1), 8),
+        ('ROWBACKGROUNDS',(0, 1), (-1, -1), [colors.HexColor('#FDF7EC'), colors.HexColor('#EDE3C8')]),
+        ('GRID',          (0, 0), (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
+        ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING',    (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 5),
+    ]))
+
+    elements.append(tabla)
+    doc.build(elements)
+    return response
+
+
+@login_required
+def categoria_exportar_excel(request):
+    """Exporta las categorías filtradas a CSV (compatible con Excel)."""
+    categorias_qs = _categorias_filtradas(request)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="categorias.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['#', 'Nombre', 'Descripción'])
+
+    for i, c in enumerate(categorias_qs, start=1):
+        writer.writerow([
+            f"{i:02d}",
+            c.nombre,
+            c.descripcion or '—',
+        ])
+
+    return response
+
+
 # ── GESTIÓN DE CLIENTES ─────────────────────────────────────────────
 
 @login_required

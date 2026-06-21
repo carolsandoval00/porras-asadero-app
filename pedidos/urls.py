@@ -36,6 +36,8 @@ urlpatterns = [
     path('categorias/crear/',             views.categoria_crear,    name='categoria_crear'),
     path('categorias/<int:pk>/editar/',   views.categoria_editar,   name='categoria_editar'),
     path('categorias/<int:pk>/eliminar/', views.categoria_eliminar, name='categoria_eliminar'),
+    path('categorias/exportar/pdf/',   views.categoria_exportar_pdf,   name='categoria_exportar_pdf'),
+    path('categorias/exportar/excel/', views.categoria_exportar_excel, name='categoria_exportar_excel'),
 
     # ── Clientes ──────────────────────────────────────────────
     path('clientes/',                   views.cliente_lista,    name='cliente_lista'),

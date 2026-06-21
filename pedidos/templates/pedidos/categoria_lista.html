@@ -78,7 +78,14 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Categorías del Menú</h3>
-      <a href="{% url 'pedidos:categoria_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nueva categoría</a>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+        <a href="{% url 'pedidos:categoria_exportar_pdf' %}?q_cat={{ q_cat }}"
+           class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
+        <a href="{% url 'pedidos:categoria_exportar_excel' %}?q_cat={{ q_cat }}"
+           class="pm-btn pm-btn-success pm-btn-sm">⬇ Excel</a>
+        <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm">🖨 Imprimir</button>
+        <a href="{% url 'pedidos:categoria_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nueva categoría</a>
+      </div>
     </div>
     <div class="pm-card-body">
       <!-- Buscador -->
