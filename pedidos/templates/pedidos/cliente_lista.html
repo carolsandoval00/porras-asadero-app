@@ -78,7 +78,14 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Clientes Registrados</h3>
-      <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo cliente</a>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+        <a href="{% url 'pedidos:cliente_exportar_pdf' %}?q_cli={{ q_cli }}"
+           class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
+        <a href="{% url 'pedidos:cliente_exportar_excel' %}?q_cli={{ q_cli }}"
+           class="pm-btn pm-btn-success pm-btn-sm">⬇ Excel</a>
+        <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm">🖨 Imprimir</button>
+        <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo cliente</a>
+      </div>
     </div>
     <div class="pm-card-body">
       <!-- Buscador -->

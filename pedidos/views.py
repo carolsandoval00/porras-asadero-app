@@ -315,7 +315,7 @@ def pedido_editar(request, pk):
                 ])
             else:
                 p.save()
-            messages.success(request, '✅ Pedido actualizado correctamente.')
+            messages.success(request, ' Pedido actualizado correctamente.')
             return redirect('pedidos:pedido_lista')
 
         return render(request, 'pedidos/pedido_form.html', {
@@ -398,7 +398,7 @@ def orden_editar(request, pk):
         form = PedidoForm(request.POST, instance=pedido)
         if form.is_valid():
             form.save()
-            messages.success(request, f'✅ Pedido {pedido.numero_orden} actualizado.')
+            messages.success(request, f' Pedido {pedido.numero_orden} actualizado.')
             return redirect('pedidos:orden_lista')
         return render(request, 'pedidos/orden_form.html', {
             'form_orden': form,
@@ -474,7 +474,7 @@ def producto_editar(request, pk):
         form = ProductoForm(request.POST, instance=producto)
         if form.is_valid():
             form.save()
-            messages.success(request, '✅ Producto actualizado correctamente.')
+            messages.success(request, ' Producto actualizado correctamente.')
             return redirect('pedidos:producto_lista')
         return render(request, 'pedidos/producto_form.html', {
             'form_producto': form,
@@ -797,7 +797,7 @@ def cliente_editar(request, pk):
         form = ClienteForm(request.POST, instance=cliente)
         if form.is_valid():
             form.save()
-            messages.success(request, '✅ Cliente actualizado correctamente.')
+            messages.success(request, 'Cliente actualizado correctamente.')
             return redirect('pedidos:cliente_lista')
         return render(request, 'pedidos/cliente_form.html', {
             'form_cliente': form,
@@ -820,3 +820,95 @@ def cliente_eliminar(request, pk):
         cliente.delete()
         messages.success(request, '🗑️ Cliente eliminado.')
     return redirect('pedidos:cliente_lista')
+
+
+def _clientes_filtrados(request):
+    """Retorna el queryset de clientes aplicando el filtro q_cli del GET."""
+    q_cli = request.GET.get('q_cli', '').strip()
+
+    qs = Cliente.objects.all()
+    if q_cli:
+        qs = qs.filter(
+            Q(nombre_completo__icontains=q_cli) | Q(documento__icontains=q_cli)
+        )
+    return qs
+
+
+@login_required
+def cliente_exportar_pdf(request):
+    """Exporta los clientes filtrados a PDF."""
+    clientes_qs = _clientes_filtrados(request)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="clientes.pdf"'
+
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=landscape(A4),
+        leftMargin=1 * cm, rightMargin=1 * cm,
+        topMargin=1.5 * cm, bottomMargin=1.5 * cm,
+    )
+    styles   = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Reporte de Clientes", styles['Title']))
+    elements.append(Spacer(1, 0.5 * cm))
+
+    data = [['#', 'Nombre Completo', 'Teléfono', 'Documento', 'Dirección']]
+
+    for i, c in enumerate(clientes_qs, start=1):
+        data.append([
+            f"{i:02d}",
+            c.nombre_completo,
+            c.telefono or '—',
+            f"{c.tipo_documento} {c.documento}",
+            Paragraph(c.direccion or '—', styles['Normal']),
+        ])
+
+    tabla = Table(
+        data,
+        colWidths=[1.2*cm, 5*cm, 3.5*cm, 4*cm, 9*cm],
+        repeatRows=1,
+    )
+    tabla.setStyle(TableStyle([
+        ('BACKGROUND',    (0, 0), (-1, 0), colors.HexColor('#C0392B')),
+        ('TEXTCOLOR',     (0, 0), (-1, 0), colors.HexColor('#F5ECD7')),
+        ('FONTNAME',      (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE',      (0, 0), (-1, 0), 9),
+        ('FONTSIZE',      (0, 1), (-1, -1), 8),
+        ('ROWBACKGROUNDS',(0, 1), (-1, -1), [colors.HexColor('#FDF7EC'), colors.HexColor('#EDE3C8')]),
+        ('GRID',          (0, 0), (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
+        ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING',    (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 5),
+    ]))
+
+    elements.append(tabla)
+    doc.build(elements)
+    return response
+
+
+@login_required
+def cliente_exportar_excel(request):
+    """Exporta los clientes filtrados a CSV (compatible con Excel)."""
+    clientes_qs = _clientes_filtrados(request)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="clientes.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['#', 'Nombre Completo', 'Teléfono', 'Tipo Documento', 'Documento', 'Dirección'])
+
+    for i, c in enumerate(clientes_qs, start=1):
+        writer.writerow([
+            f"{i:02d}",
+            c.nombre_completo,
+            c.telefono or '—',
+            c.tipo_documento,
+            c.documento,
+            c.direccion or '—',
+        ])
+
+    return response

@@ -44,4 +44,6 @@ urlpatterns = [
     path('clientes/crear/',             views.cliente_crear,    name='cliente_crear'),
     path('clientes/<int:pk>/editar/',   views.cliente_editar,   name='cliente_editar'),
     path('clientes/<int:pk>/eliminar/', views.cliente_eliminar, name='cliente_eliminar'),
+    path('clientes/exportar/pdf/',   views.cliente_exportar_pdf,   name='cliente_exportar_pdf'),
+    path('clientes/exportar/excel/', views.cliente_exportar_excel, name='cliente_exportar_excel'),
 ]
