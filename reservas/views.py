@@ -65,9 +65,8 @@ def eliminar_detalle(request):
         else:
             messages.error(request, 'Debes seleccionar una reserva para eliminar.')
 
-    return render(request, 'reservas/eliminar_detalle.html', {
-        'detalles': detalles
-    })
+    context = { 'detalles': detalles }
+    return render(request, 'reservas/eliminar_detalle.html', context)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -92,11 +91,10 @@ def actualizar_mesa(request, mesa_id):
         messages.success(request, f'Mesa {mesa.numero_mesa} actualizada correctamente.')
         return redirect('actualizar_mesa', mesa_id=mesa.numero_mesa)
 
-    return render(request, 'reservas/actualizar_mesa.html', {
-        'mesa':  mesa,
-        'mesas': mesas,
-    })
+    context = { 'mesa': mesa, 'mesas': mesas, }
+    return render(request, 'reservas/actualizar_mesa.html', context)
     
 def listar_mesas_vista(request):
     mesas = Mesa.objects.all().order_by('numero_mesa')
-    return render(request, 'reservas/listar_mesas.html', {'mesas': mesas})
+    context = {'mesas': mesas}
+    return render(request, 'reservas/listar_mesas.html', context)

@@ -31,8 +31,10 @@ def login_view(request):
                 return redireccion_post_login(request)
             else:
                 messages.error(request, 'Usuario o contraseña incorrectos.')
-                return render(request, TEMPLATE_LOGIN, {'vista': 'login'})
-    return render(request, TEMPLATE_LOGIN, {'vista': vista})
+                context = {'vista': 'login'}
+                return render(request, TEMPLATE_LOGIN, context)
+    context = {'vista': vista}
+    return render(request, TEMPLATE_LOGIN, context)
 
 
 @login_required
@@ -51,10 +53,11 @@ def logout_view(request):
 @login_required
 def inicio_usuarios(request):
     usuarios = Usuario.objects.all()
-    return render(request, TEMPLATE_LOGIN, {
+    context = {
         'vista': 'inicio',
         'usuarios': usuarios,
-    })
+    }
+    return render(request, TEMPLATE_LOGIN, context)
 
 
 @login_required
@@ -77,7 +80,7 @@ def lista_personal(request):
             'doc':   getattr(u, 'documento', '') or '',
             'tdoc':  getattr(u, 'tipo_documento', '') or '',
             'dir':   getattr(u, 'direccion', '') or '',
-            'foto':  u.foto.url if u.foto else '',  # ← NUEVO
+            'foto':  u.foto.url if u.foto else '',
             'notas': '',
             'perms': [],
             'acc':   '-',
@@ -86,11 +89,12 @@ def lista_personal(request):
         for u in personal
     ])
 
-    return render(request, TEMPLATE_LISTA, {
+    context = {
         'vista': 'lista',
         'personal_list': personal,
         'personal_list_json': personal_json,
-    })
+    }
+    return render(request, TEMPLATE_LISTA, context)
 
 
 @login_required
@@ -198,11 +202,14 @@ def inactivar_usuario(request):
 
 @login_required
 def panel_perfil(request):
-    return render(request, TEMPLATE_PERFIL, {'usuario': request.user})
+    context = {'usuario': request.user}
+    return render(request, TEMPLATE_PERFIL, context)
+
 
 
 def validar_permisos(request):
-    return render(request, TEMPLATE_LOGIN, {'vista': 'sin_permisos'})
+    context = {'vista': 'sin_permisos'}
+    return render(request, TEMPLATE_LOGIN, context)
 
 
 def acceder_sistema(request):
@@ -239,10 +246,11 @@ def actualizar_usuario(request, pk):
         usuario.save()
         messages.success(request, 'Datos actualizados correctamente.')
         return redirect('panel_perfil')
-    return render(request, TEMPLATE_LOGIN, {
+    context = {
         'vista': 'actualizar',
         'usuario': usuario,
-    })
+    }
+    return render(request, TEMPLATE_LOGIN, context)
 
 
 @login_required

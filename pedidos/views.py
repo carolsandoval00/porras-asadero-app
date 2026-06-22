@@ -99,16 +99,8 @@ def dashboard(request):
         .order_by('-fecha_creacion')[:5]
     )
 
-    return render(request, 'pedidos/dashboard.html', {
-        'titulo': 'Módulo de Pedidos',
-        'total_pedidos': total_pedidos,
-        'pedidos_pendientes': pedidos_pendientes,
-        'total_ordenes': total_pedidos,
-        'total_productos': total_productos,
-        'total_categorias': total_categorias,
-        'total_clientes': total_clientes,
-        'ultimos_pedidos': ultimos_pedidos,
-    })
+    context = { 'titulo': 'Módulo de Pedidos', 'total_pedidos': total_pedidos, 'pedidos_pendientes': pedidos_pendientes, 'total_ordenes': total_pedidos, 'total_productos': total_productos, 'total_categorias': total_categorias, 'total_clientes': total_clientes, 'ultimos_pedidos': ultimos_pedidos, }
+    return render(request, 'pedidos/dashboard.html', context)
 
 
 # ── GESTIÓN DE PEDIDOS ───────────────────────────────────────────────
@@ -126,14 +118,8 @@ def pedido_lista(request):
         items = list(grupo)
         pedidos_por_fecha.append({'fecha': fecha, 'pedidos': items, 'count': len(items)})
 
-    return render(request, 'pedidos/pedido_lista.html', {
-        'titulo': 'Módulo de Pedidos',
-        'pedidos_por_fecha': pedidos_por_fecha,
-        'estados': Pedido.ESTADO_CHOICES,
-        'q': q,
-        'estado_sel': estado_sel,
-        'seccion_activa': 'pedido-lista',
-    })
+    context = { 'titulo': 'Módulo de Pedidos', 'pedidos_por_fecha': pedidos_por_fecha, 'estados': Pedido.ESTADO_CHOICES, 'q': q, 'estado_sel': estado_sel, 'seccion_activa': 'pedido-lista', }
+    return render(request, 'pedidos/pedido_lista.html', context)
 
 
 @login_required
@@ -245,11 +231,8 @@ def pedido_crear(request):
             items_data = _parse_items_from_post(request)
             if not items_data:
                 messages.error(request, '❌ Agrega al menos un producto al pedido.')
-                return render(request, 'pedidos/pedido_form.html', {
-                    'form': form,
-                    'productos_disponibles': productos_disponibles,
-                    'seccion_activa': 'pedido-crear',
-                })
+                context = { 'form': form, 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-crear', }
+                return render(request, 'pedidos/pedido_form.html', context)
 
             total          = sum(it['producto'].precio * it['cantidad'] for it in items_data)
             pedido.total   = total
@@ -271,18 +254,12 @@ def pedido_crear(request):
             return redirect('pedidos:pedido_lista')
 
         messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
-        return render(request, 'pedidos/pedido_form.html', {
-            'form': form,
-            'productos_disponibles': productos_disponibles,
-            'seccion_activa': 'pedido-crear',
-        })
+        context = { 'form': form, 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-crear', }
+        return render(request, 'pedidos/pedido_form.html', context)
 
     form = PedidoForm()
-    return render(request, 'pedidos/pedido_form.html', {
-        'form': form,
-        'productos_disponibles': productos_disponibles,
-        'seccion_activa': 'pedido-crear',
-    })
+    context = { 'form': form, 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-crear', }
+    return render(request, 'pedidos/pedido_form.html', context)
 
 
 @login_required
@@ -315,22 +292,12 @@ def pedido_editar(request, pk):
             messages.success(request, '✅ Pedido actualizado correctamente.')
             return redirect('pedidos:pedido_lista')
 
-        return render(request, 'pedidos/pedido_form.html', {
-            'form': form,
-            'pedido': pedido,
-            'pedido_items_json': _items_as_json(pedido),
-            'productos_disponibles': productos_disponibles,
-            'seccion_activa': 'pedido-editar',
-        })
+        context = { 'form': form, 'pedido': pedido, 'pedido_items_json': _items_as_json(pedido), 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-editar', }
+        return render(request, 'pedidos/pedido_form.html', context)
 
     form = PedidoForm(instance=pedido)
-    return render(request, 'pedidos/pedido_form.html', {
-        'form': form,
-        'pedido': pedido,
-        'pedido_items_json': _items_as_json(pedido),
-        'productos_disponibles': productos_disponibles,
-        'seccion_activa': 'pedido-editar',
-    })
+    context = { 'form': form, 'pedido': pedido, 'pedido_items_json': _items_as_json(pedido), 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-editar', }
+    return render(request, 'pedidos/pedido_form.html', context)
 
 
 @login_required
@@ -368,12 +335,8 @@ def orden_lista(request):
         items = list(grupo)
         ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
 
-    return render(request, 'pedidos/orden_lista.html', {
-        'titulo': 'Módulo de Pedidos',
-        'ordenes_por_fecha': ordenes_por_fecha,
-        'q_orden': q_orden,
-        'seccion_activa': 'orden-lista',
-    })
+    context = { 'titulo': 'Módulo de Pedidos', 'ordenes_por_fecha': ordenes_por_fecha, 'q_orden': q_orden, 'seccion_activa': 'orden-lista', }
+    return render(request, 'pedidos/orden_lista.html', context)
 
 
 @login_required
@@ -382,10 +345,11 @@ def orden_detalle(request, pk):
         Pedido.objects.select_related('cliente', 'mesero', 'mesa').prefetch_related('pagos'),
         pk=pk,
     )
-    return render(request, 'pedidos/orden_detalle.html', {
+    context = {
         'titulo': f'Orden {orden.numero_orden}',
         'orden': orden,
-    })
+    }
+    return render(request, 'pedidos/orden_detalle.html', context)
 
 
 @login_required
@@ -397,18 +361,12 @@ def orden_editar(request, pk):
             form.save()
             messages.success(request, f'✅ Pedido {pedido.numero_orden} actualizado.')
             return redirect('pedidos:orden_lista')
-        return render(request, 'pedidos/orden_form.html', {
-            'form_orden': form,
-            'orden_editando': pedido,
-            'seccion_activa': 'orden-editar',
-        })
+        context = { 'form_orden': form, 'orden_editando': pedido, 'seccion_activa': 'orden-editar', }
+        return render(request, 'pedidos/orden_form.html', context)
 
     form = PedidoForm(instance=pedido)
-    return render(request, 'pedidos/orden_form.html', {
-        'form_orden': form,
-        'orden_editando': pedido,
-        'seccion_activa': 'orden-editar',
-    })
+    context = { 'form_orden': form, 'orden_editando': pedido, 'seccion_activa': 'orden-editar', }
+    return render(request, 'pedidos/orden_form.html', context)
 
 
 @login_required
@@ -433,14 +391,8 @@ def producto_lista(request):
     if cat_sel:
         productos_qs = productos_qs.filter(categoria__id=cat_sel)
 
-    return render(request, 'pedidos/producto_lista.html', {
-        'titulo': 'Módulo de Pedidos',
-        'productos': productos_qs,
-        'categorias': Categoria.objects.all(),
-        'q_prod': q_prod,
-        'cat_sel': cat_sel,
-        'seccion_activa': 'producto-lista',
-    })
+    context = { 'titulo': 'Módulo de Pedidos', 'productos': productos_qs, 'categorias': Categoria.objects.all(), 'q_prod': q_prod, 'cat_sel': cat_sel, 'seccion_activa': 'producto-lista', }
+    return render(request, 'pedidos/producto_lista.html', context)
 
 
 @login_required
@@ -452,16 +404,12 @@ def producto_crear(request):
             messages.success(request, '✅ Producto creado correctamente.')
             return redirect('pedidos:producto_lista')
         messages.error(request, '❌ Corrige los errores en el formulario de producto.')
-        return render(request, 'pedidos/producto_form.html', {
-            'form_producto': form,
-            'seccion_activa': 'producto-crear',
-        })
+        context = { 'form_producto': form, 'seccion_activa': 'producto-crear', }
+        return render(request, 'pedidos/producto_form.html', context)
 
     form = ProductoForm()
-    return render(request, 'pedidos/producto_form.html', {
-        'form_producto': form,
-        'seccion_activa': 'producto-crear',
-    })
+    context = { 'form_producto': form, 'seccion_activa': 'producto-crear', }
+    return render(request, 'pedidos/producto_form.html', context)
 
 
 @login_required
@@ -473,18 +421,12 @@ def producto_editar(request, pk):
             form.save()
             messages.success(request, '✅ Producto actualizado correctamente.')
             return redirect('pedidos:producto_lista')
-        return render(request, 'pedidos/producto_form.html', {
-            'form_producto': form,
-            'producto_editando': producto,
-            'seccion_activa': 'producto-editar',
-        })
+        context = { 'form_producto': form, 'producto_editando': producto, 'seccion_activa': 'producto-editar', }
+        return render(request, 'pedidos/producto_form.html', context)
 
     form = ProductoForm(instance=producto)
-    return render(request, 'pedidos/producto_form.html', {
-        'form_producto': form,
-        'producto_editando': producto,
-        'seccion_activa': 'producto-editar',
-    })
+    context = { 'form_producto': form, 'producto_editando': producto, 'seccion_activa': 'producto-editar', }
+    return render(request, 'pedidos/producto_form.html', context)
 
 
 @login_required
@@ -506,12 +448,8 @@ def categoria_lista(request):
     if q_cat:
         categorias_qs = categorias_qs.filter(nombre__icontains=q_cat)
 
-    return render(request, 'pedidos/categoria_lista.html', {
-        'titulo': 'Módulo de Pedidos',
-        'categorias': categorias_qs,
-        'q_cat': q_cat,
-        'seccion_activa': 'categoria-lista',
-    })
+    context = { 'titulo': 'Módulo de Pedidos', 'categorias': categorias_qs, 'q_cat': q_cat, 'seccion_activa': 'categoria-lista', }
+    return render(request, 'pedidos/categoria_lista.html', context)
 
 
 @login_required
@@ -523,16 +461,12 @@ def categoria_crear(request):
             messages.success(request, '✅ Categoría creada correctamente.')
             return redirect('pedidos:categoria_lista')
         messages.error(request, '❌ Corrige los errores en el formulario.')
-        return render(request, 'pedidos/categoria_form.html', {
-            'form_categoria': form,
-            'seccion_activa': 'categoria-crear',
-        })
+        context = { 'form_categoria': form, 'seccion_activa': 'categoria-crear', }
+        return render(request, 'pedidos/categoria_form.html', context)
 
     form = CategoriaForm()
-    return render(request, 'pedidos/categoria_form.html', {
-        'form_categoria': form,
-        'seccion_activa': 'categoria-crear',
-    })
+    context = { 'form_categoria': form, 'seccion_activa': 'categoria-crear', }
+    return render(request, 'pedidos/categoria_form.html', context)
 
 
 @login_required
@@ -544,18 +478,12 @@ def categoria_editar(request, pk):
             form.save()
             messages.success(request, '✅ Categoría actualizada correctamente.')
             return redirect('pedidos:categoria_lista')
-        return render(request, 'pedidos/categoria_form.html', {
-            'form_categoria': form,
-            'categoria_editando': categoria,
-            'seccion_activa': 'categoria-editar',
-        })
+        context = { 'form_categoria': form, 'categoria_editando': categoria, 'seccion_activa': 'categoria-editar', }
+        return render(request, 'pedidos/categoria_form.html', context)
 
     form = CategoriaForm(instance=categoria)
-    return render(request, 'pedidos/categoria_form.html', {
-        'form_categoria': form,
-        'categoria_editando': categoria,
-        'seccion_activa': 'categoria-editar',
-    })
+    context = { 'form_categoria': form, 'categoria_editando': categoria, 'seccion_activa': 'categoria-editar', }
+    return render(request, 'pedidos/categoria_form.html', context)
 
 
 @login_required
@@ -579,12 +507,8 @@ def cliente_lista(request):
             Q(nombre_completo__icontains=q_cli) | Q(documento__icontains=q_cli)
         )
 
-    return render(request, 'pedidos/cliente_lista.html', {
-        'titulo': 'Módulo de Pedidos',
-        'clientes': clientes_qs,
-        'q_cli': q_cli,
-        'seccion_activa': 'cliente-lista',
-    })
+    context = { 'titulo': 'Módulo de Pedidos', 'clientes': clientes_qs, 'q_cli': q_cli, 'seccion_activa': 'cliente-lista', }
+    return render(request, 'pedidos/cliente_lista.html', context)
 
 
 @login_required
@@ -596,16 +520,12 @@ def cliente_crear(request):
             messages.success(request, '✅ Cliente registrado correctamente.')
             return redirect('pedidos:cliente_lista')
         messages.error(request, '❌ Corrige los errores en el formulario.')
-        return render(request, 'pedidos/cliente_form.html', {
-            'form_cliente': form,
-            'seccion_activa': 'cliente-crear',
-        })
+        context = { 'form_cliente': form, 'seccion_activa': 'cliente-crear', }
+        return render(request, 'pedidos/cliente_form.html', context)
 
     form = ClienteForm()
-    return render(request, 'pedidos/cliente_form.html', {
-        'form_cliente': form,
-        'seccion_activa': 'cliente-crear',
-    })
+    context = { 'form_cliente': form, 'seccion_activa': 'cliente-crear', }
+    return render(request, 'pedidos/cliente_form.html', context)
 
 
 @login_required
@@ -617,18 +537,12 @@ def cliente_editar(request, pk):
             form.save()
             messages.success(request, '✅ Cliente actualizado correctamente.')
             return redirect('pedidos:cliente_lista')
-        return render(request, 'pedidos/cliente_form.html', {
-            'form_cliente': form,
-            'cliente_editando': cliente,
-            'seccion_activa': 'cliente-editar',
-        })
+        context = { 'form_cliente': form, 'cliente_editando': cliente, 'seccion_activa': 'cliente-editar', }
+        return render(request, 'pedidos/cliente_form.html', context)
 
     form = ClienteForm(instance=cliente)
-    return render(request, 'pedidos/cliente_form.html', {
-        'form_cliente': form,
-        'cliente_editando': cliente,
-        'seccion_activa': 'cliente-editar',
-    })
+    context = { 'form_cliente': form, 'cliente_editando': cliente, 'seccion_activa': 'cliente-editar', }
+    return render(request, 'pedidos/cliente_form.html', context)
 
 
 @login_required
