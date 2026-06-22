@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from pedidos.models import Categoria
 
 def inicio(request):
