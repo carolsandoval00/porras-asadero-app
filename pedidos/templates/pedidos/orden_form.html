@@ -95,4 +95,17 @@
   </div>
 </div>
 
+<script>
+  function soloLectura(input) {
+    if (!input) return;
+    input.setAttribute('readonly', 'readonly');
+    input.style.background = 'var(--p-surface)';
+    input.style.cursor = 'not-allowed';
+    input.style.color = 'var(--p-muted)';
+  }
+  soloLectura(document.getElementById('id_subtotal'));
+  soloLectura(document.getElementById('id_impuestos'));
+  soloLectura(document.getElementById('id_total'));
+</script>
+
 {% endblock %}
