@@ -112,7 +112,7 @@ def pago_dashboard(request):
         'pagos_pendientes': 0,
         'monto_total':      pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'nombre':           request.user.get_full_name() or request.user.username,
-        'cajas':            Caja.objects.select_related('cajero').all().order_by('-fecha_apertura'),
+        'cajas':            Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
         'tab_activo':       'pendientes',
         'caja_activa':      caja_activa,
     }
@@ -180,7 +180,7 @@ def caja_detalle(request, pk):
         'pagos_pendientes':   0,
         'monto_total':        pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'nombre':             request.user.get_full_name() or request.user.username,
-        'cajas':              Caja.objects.select_related('cajero').all().order_by('-fecha_apertura'),
+        'cajas':              Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
         'caja_seleccionada':  caja_seleccionada,
         'pagos_caja':         pagos_caja,
         'total_ingresos':     total_ingresos,
