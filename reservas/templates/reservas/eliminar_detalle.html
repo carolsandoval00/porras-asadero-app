@@ -14,7 +14,6 @@
 
 <div class="mc-wrap">
 
-  <!-- Mensajes Django (por si quedan) -->
   {% if messages %}
     {% for msg in messages %}
       <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">{{ msg }}</div>
@@ -71,7 +70,16 @@
     </div>
   </div>
 
-  <!-- Toast -->
+  <!-- Modal éxito -->
+  <div id="ed-modal-ok" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:12px;padding:2rem;max-width:380px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      
+      <h3 style="font-family:'Playfair Display',serif;font-size:20px;margin:0 0 8px;color:#1A1008;">Reserva eliminada</h3>
+      <p id="ed-modal-ok-texto" style="font-size:13px;color:#777;margin:0 0 1.5rem;"></p>
+      <button class="mc-btn mc-btn-primary" onclick="edCerrarModal()">Aceptar</button>
+    </div>
+  </div>
+
   <div class="mc-toast" id="ed-toast"></div>
 
 </div>
@@ -106,7 +114,6 @@
       return;
     }
 
-    // Tabla
     const tbody = document.getElementById('ed-tbody');
     tbody.innerHTML = reservas.map(r => `
       <tr>
@@ -121,7 +128,6 @@
     `).join('');
     document.getElementById('ed-tabla').style.display = 'block';
 
-    // Select
     const sel = document.getElementById('ed-select');
     sel.innerHTML = '<option value="">— Seleccionar —</option>';
     reservas.forEach(r => {
@@ -150,10 +156,21 @@
     const id = parseInt(document.getElementById('ed-select').value);
     const idx = reservas.findIndex(x => x.id === id);
     if(idx === -1) return;
+    const r = reservas[idx];
     reservas.splice(idx, 1);
     localStorage.setItem('mc_reservas', JSON.stringify(reservas));
-    toast('Reserva eliminada correctamente');
-    setTimeout(() => location.reload(), 1500);
+
+    document.getElementById('ed-confirm-box').style.display = 'none';
+
+    document.getElementById('ed-modal-ok-texto').textContent =
+      `La reserva de ${r.nombre} del ${r.fecha} a las ${r.hora} fue eliminada correctamente.`;
+    const modal = document.getElementById('ed-modal-ok');
+    modal.style.display = 'flex';
+  };
+
+  window.edCerrarModal = function(){
+    document.getElementById('ed-modal-ok').style.display = 'none';
+    location.reload();
   };
 
   render();
