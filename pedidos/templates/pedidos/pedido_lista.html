@@ -122,7 +122,7 @@
           <tbody>
             {% for p in grupo.pedidos %}
             <tr>
-              <td><strong>{{ p.pk|stringformat:"02d" }}</strong></td>
+              <td><strong>{{ p.numero_pedido }}</strong></td>
               <td>{{ p.cliente }}</td>
               <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
               <td>${{ p.total|floatformat:0 }}</td>

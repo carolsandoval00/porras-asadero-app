@@ -65,7 +65,8 @@ def _items_as_json(pedido):
 
 
 def _pedidos_filtrados(request):
-    """Retorna el queryset de pedidos aplicando los filtros q y estado del GET."""
+    """Retorna el queryset de pedidos aplicando los filtros q y estado del GET.
+    Orden ASCENDENTE por fecha de creación, así el PED-00001 siempre aparece primero."""
     q = request.GET.get('q', '').strip()
     estado_sel = request.GET.get('estado', '').strip()
 
@@ -73,7 +74,7 @@ def _pedidos_filtrados(request):
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
         .prefetch_related('items__producto')
-        .order_by('-fecha_creacion')
+        .order_by('fecha_creacion')
     )
     if q:
         qs = qs.filter(
@@ -167,7 +168,7 @@ def pedido_exportar_pdf(request):
             f"{it.cantidad}x {it.producto.nombre}" for it in p.items.all()
         ) or '—'
         data.append([
-            f"{p.pk:02d}",
+            p.numero_pedido,
             str(p.cliente),
             str(p.mesa) if p.mesa else '—',
             Paragraph(productos_str, styles['Normal']),
@@ -178,7 +179,7 @@ def pedido_exportar_pdf(request):
 
     tabla = Table(
         data,
-        colWidths=[1.2*cm, 4*cm, 2.5*cm, 8*cm, 3*cm, 2.5*cm, 4*cm],
+        colWidths=[1.8*cm, 4*cm, 2.5*cm, 7.5*cm, 3*cm, 2.5*cm, 4*cm],
         repeatRows=1,
     )
     tabla.setStyle(TableStyle([
@@ -220,7 +221,7 @@ def pedido_exportar_excel(request):
             f"{it.cantidad}x {it.producto.nombre}" for it in p.items.all()
         ) or '—'
         writer.writerow([
-            f"{p.pk:02d}",
+            p.numero_pedido,
             str(p.cliente),
             str(p.mesa) if p.mesa else '—',
             productos_str,
@@ -270,7 +271,7 @@ def pedido_crear(request):
                 for it in items_data
             ])
 
-            messages.success(request, f'✅ Pedido #{pedido.pk:02d} creado correctamente.')
+            messages.success(request, f'✅ Pedido {pedido.numero_pedido} creado correctamente.')
             return redirect('pedidos:pedido_lista')
 
         messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
@@ -354,7 +355,7 @@ def orden_lista(request):
     ordenes_qs = (
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
-        .order_by('-fecha_creacion')
+        .order_by('fecha_creacion')
     )
     if q_orden:
         clean_q = q_orden.replace('ORD-', '').lstrip('0')

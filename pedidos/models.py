@@ -68,6 +68,10 @@ class Pedido(models.Model):
         return f"ORD-{self.id:05d}"
 
     @property
+    def numero_pedido(self):
+        return f"PED-{self.id:05d}"
+
+    @property
     def impuesto(self):
         return self.impuestos
 
