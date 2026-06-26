@@ -3,7 +3,6 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Mesa
 from .models import Reserva, Mesa
 import json
 
@@ -13,12 +12,6 @@ import json
 # ─────────────────────────────────────────────────────────────
 @login_required
 def reserva_view(request):
-    """Renderiza el panel principal de reservas"""
-    rol = getattr(request.user, 'rol', None)
-
-    if rol in ('CAJERO', 'CAJA', 'COCINA') and not request.user.is_superuser:
-        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
-
     return render(request, 'reserva_inicio.html')
 
 
@@ -72,14 +65,14 @@ def eliminar_detalle(request):
         else:
             messages.error(request, 'Debes seleccionar una reserva para eliminar.')
 
-    return render(request, 'reservas/eliminar_detalle.html', {
-        'detalles': detalles
-    })
+    context = { 'detalles': detalles }
+    return render(request, 'reservas/eliminar_detalle.html', context)
 
 
 # ─────────────────────────────────────────────────────────────
 # ACTUALIZAR MESA (vista HTML)
 # ─────────────────────────────────────────────────────────────
+@login_required
 @login_required
 def actualizar_mesa(request, mesa_id):
     mesas = Mesa.objects.all().order_by('numero_mesa')
@@ -98,12 +91,10 @@ def actualizar_mesa(request, mesa_id):
         messages.success(request, f'Mesa {mesa.numero_mesa} actualizada correctamente.')
         return redirect('actualizar_mesa', mesa_id=mesa.numero_mesa)
 
-    return render(request, 'reservas/actualizar_mesa.html', {
-        'mesa':  mesa,
-        'mesas': mesas,
-    })
-
-
+    context = { 'mesa': mesa, 'mesas': mesas, }
+    return render(request, 'reservas/actualizar_mesa.html', context)
+    
 def listar_mesas_vista(request):
     mesas = Mesa.objects.all().order_by('numero_mesa')
-    return render(request, 'reservas/listar_mesas.html', {'mesas': mesas})
+    context = {'mesas': mesas}
+    return render(request, 'reservas/listar_mesas.html', context)

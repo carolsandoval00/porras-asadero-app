@@ -4,10 +4,10 @@ from . import views
 
 urlpatterns = [
     # AUTENTICACIÓN
-    path('login/',       views.login_view,     name='login'),
-    path('logout/',      views.logout_view,    name='logout'),
-    path('acceder/',     views.acceder_sistema, name='acceder_sistema'),
-    # ✅ Se eliminó: path('redireccion/', views.redireccion_post_login, name='redireccion'),
+    path('login/',       views.login_view,            name='login'),
+    path('logout/',      views.logout_view,            name='logout'),
+    path('acceder/',     views.acceder_sistema,        name='acceder_sistema'),
+    path('redireccion/', views.redireccion_post_login, name='redireccion'),
 
     # GESTIÓN DE PERSONAL
     path('lista/',             views.lista_personal,    name='lista_personal'),
@@ -16,16 +16,12 @@ urlpatterns = [
     path('eliminar/<int:id>/', views.eliminar_usuario,  name='eliminar_usuario'),
 
     # ENDPOINTS JSON
-    path('crear/',               views.crear_usuario,       name='crear_usuario'),
-    path('editar/<int:id>/',     views.editar_usuario_json, name='editar_usuario_json'),
-    path('actualizar/<int:pk>/', views.actualizar_usuario,  name='actualizar_usuarios'),
+    path('crear/',              views.crear_usuario,       name='crear_usuario'),
+    path('editar/<int:id>/',    views.editar_usuario_json, name='editar_usuario_json'),
+    path('actualizar/<int:pk>/', views.actualizar_usuario, name='actualizar_usuarios'),
 
-    # FOTO DE PERFIL
+    # ← NUEVA: foto de perfil
     path('foto/<int:pk>/', views.actualizar_foto, name='actualizar_foto'),
-
-    # RUTAS
-    path('inicio/',       views.inicio_usuarios, name='inicio_usuarios'),
-    path('sin-permisos/', views.validar_permisos, name='validar_permisos'),
 
     # RECUPERACIÓN DE CONTRASEÑA
     path('recuperar/', auth_views.PasswordResetView.as_view(
