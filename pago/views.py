@@ -80,7 +80,7 @@ def pago_dashboard(request):
                     # Actualizar estado de comanda
                     pago.pedido.estado = 'PAGADO'
                     pago.pedido.save()
-                    messages.success(request, '✅ Pago registrado y comanda marcada como PAGADA.')
+                    messages.success(request, 'Pedido registrado correctamente.', extra_tags='modal-pago')
                 else:
                     messages.error(request, '❌ No puedes registrar pagos sin una caja abierta.')
                 return redirect('pago:dashboard')

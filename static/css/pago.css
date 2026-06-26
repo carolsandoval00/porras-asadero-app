@@ -155,6 +155,12 @@
   box-shadow:0 0 0 3px rgba(192,57,43,.12);
 }
 .pg-modal-field textarea { resize:vertical; }
+.pg-success-box      { text-align:left; max-width:400px; }
+.pg-success-row      { display:flex; align-items:center; gap:.7rem; }
+.pg-success-icon      { display:flex; align-items:center; justify-content:center;
+                         width:30px; height:30px; min-width:30px; border-radius:50%;
+                         background:#27AE60; color:#fff; font-size:1rem; line-height:1; }
+.pg-success-row p     { margin:0; font-size:1rem; font-weight:600; color:var(--p-text); }
 
 #sin-resultados { display:none; text-align:center; color:var(--p-muted);
                   padding:2rem; font-size:.9rem; }

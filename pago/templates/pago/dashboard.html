@@ -13,10 +13,12 @@
   </div>
 
   {% if messages %}
-    {% for msg in messages %}
+  {% for msg in messages %}
+    {% if 'modal-pago' not in msg.tags %}
     <div class="pg-alert pg-alert-{{ msg.tags }}">{{ msg }}</div>
-    {% endfor %}
-  {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
 
  {% include 'pago/nav.html' %}
 {% include 'pago/ordenes_pendientes.html' %}
@@ -27,5 +29,19 @@
 </div><!-- fin pg-wrapper -->
 
 <script src="{%static 'js/pago.js'%}"></script>
+
+{% if messages %}
+  {% for msg in messages %}
+    {% if 'modal-pago' in msg.tags %}
+    <script>
+      document.getElementById('modal-pago-exito-msg').textContent = "{{ msg|escapejs }}";
+      document.getElementById('modal-pago-exito').classList.add('open');
+      setTimeout(function () {
+        document.getElementById('modal-pago-exito').classList.remove('open');
+      }, 2200);
+    </script>
+    {% endif %}
+  {% endfor %}
+{% endif %}
 
 {% endblock %}

@@ -157,7 +157,7 @@ setInterval(setFechaApertura, 30000);
 document.getElementById('modal-eliminar').addEventListener('click',     function(e){ if(e.target===this) cerrarModal(); });
 document.getElementById('modal-cerrar-caja').addEventListener('click',  function(e){ if(e.target===this) cerrarModalCierre(); });
 document.getElementById('modal-editar-caja').addEventListener('click',  function(e){ if(e.target===this) cerrarEditarCaja(); });
-
+document.getElementById('modal-pago-exito').addEventListener('click',   function(e){ if(e.target===this) this.classList.remove('open'); });
 // ── Buscador de pagos (client-side) ─────────────────────────
 function filtrarPagos() {
   const texto  = document.getElementById('buscador-pagos').value.toLowerCase().trim();
