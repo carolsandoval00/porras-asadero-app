@@ -27,7 +27,13 @@
 {% include 'pago/modales.html' %}
 
 </div><!-- fin pg-wrapper -->
-
+<script>
+  window.pagoConfig = {
+    tabActivo: "{{ tab_activo|default:'' }}",
+    formErrors: {{ form.errors|yesno:"true,false" }},
+    aperturaErrors: {{ form_apertura.errors|yesno:"true,false" }}
+  };
+</script>
 <script src="{%static 'js/pago.js'%}"></script>
 
 {% if messages %}

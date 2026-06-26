@@ -21,7 +21,7 @@
               <td><strong>#{{ caja.pk }}</strong></td>
               <td data-col="cajero">{{ caja.cajero }}</td>
               <td><strong style="color:#C0392B">${{ caja.monto_inicial|floatformat:2 }}</strong></td>
-              <td><span class="pg-badge pg-badge-{{ caja.estado }}">{{ caja.get_estado_display }}</span></td>
+              <td><span class="pg-badge pg-badge-{{ caja.estado|lower }}">{{ caja.get_estado_display }}</span></td>
               <td>{{ caja.fecha_apertura|date:"d/m/Y H:i" }}</td>
               <td>
                 {% if caja.fecha_cierre %}{{ caja.fecha_cierre|date:"d/m/Y H:i" }}
@@ -39,7 +39,7 @@
                         onclick="abrirEditarCaja({{ caja.pk }})">
                   ✏️ Editar
                 </button>
-                {% if caja.estado == 'abierta' %}
+                {% if caja.estado == 'ABIERTA' %}
                 <button class="pg-btn pg-btn-danger pg-btn-sm"
                         onclick="confirmarCierreCaja({{ caja.pk }}, '{{ caja.cajero|escapejs }}')">
                   🔒 Cerrar
@@ -69,10 +69,10 @@
     <div class="pg-card-header">
       <h3>🏦 Caja #{{ caja_seleccionada.pk }} — {{ caja_seleccionada.cajero }}</h3>
       <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
-        <span class="pg-badge pg-badge-{{ caja_seleccionada.estado }}">
+        <span class="pg-badge pg-badge-{{ caja_seleccionada.estado|lower }}">
           {{ caja_seleccionada.get_estado_display }}
         </span>
-        {% if caja_seleccionada.estado == 'abierta' %}
+        {% if caja_seleccionada.estado == 'ABIERTA' %}
         <button class="pg-btn pg-btn-danger pg-btn-sm"
                 onclick="confirmarCierreCaja({{ caja_seleccionada.pk }}, '{{ caja_seleccionada.cajero|escapejs }}')">
           🔒 Cerrar caja
