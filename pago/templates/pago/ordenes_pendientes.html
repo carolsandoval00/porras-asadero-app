@@ -40,15 +40,15 @@
             {% for o in ordenes_sin_pago %}
             <tr class="fila-pendiente">
               <td><strong>{{ o.numero_orden }}</strong></td>
-              <td><strong>{{ o.pedido.cliente }}</strong></td>
+              <td><strong>{{ o.mesa.numero_mesa|default:"—" }}</strong></td>
               <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
-                {{ o.pedido.descripcion|default:"—" }}
+                {{ o.descripcion|default:"—" }}
               </td>
               <td><strong style="font-size:1rem;color:#C0392B">${{ o.total }}</strong></td>
-              <td>{{ o.creada_en|date:"d/m/Y H:i" }}</td>
+              <td>{{ o.fecha_creacion|date:"d/m/Y H:i" }}</td>
               <td>
                 <button class="pg-btn pg-btn-pago pg-btn-sm"
-                        onclick="registrarPago('{{ o.numero_orden }}',{{ o.pk }},'{{ o.pedido.cliente|escapejs }}',{{ o.total }})">
+                        onclick="registrarPago('{{ o.numero_orden }}',{{ o.pk }},'Mesa {{ o.mesa.numero_mesa|default:"Sin mesa" }}',{{ o.total }})">
                   Registrar pago
                 </button>
               </td>

@@ -1,7 +1,7 @@
 :root {
   --p-primary:  #C0392B;
   --p-accent:   #E8651A;
-  --p-surface:  #EDE3C8;
+  --p-surface:  #F5ECD7;
   --p-card:     #FDF7EC;
   --p-border:   #D4C4A0;
   --p-text:     #1A1008;
@@ -12,7 +12,7 @@
 }
 
 .pg-wrapper   { font-family:'Segoe UI',system-ui,sans-serif; color:var(--p-text);
-                background:#EDE3C8; padding:1.5rem; }
+                background:#F5ECD7; padding:1.5rem; }
 
 .pg-header    { background:linear-gradient(135deg,#1A1008 0%,#3a1a08 100%);
                 color:#F5ECD7; border-radius:var(--p-radius); padding:2rem 2.5rem 1.6rem;
@@ -129,7 +129,7 @@
 .pg-modal-overlay { display:none; position:fixed; inset:0; background:rgba(26,16,8,.5);
                     z-index:9999; align-items:center; justify-content:center; }
 .pg-modal-overlay.open { display:flex; }
-.pg-modal-box    { background:#FDF7EC; border-radius:var(--p-radius); padding:2rem 2.2rem;
+.pg-modal-box    { background:var(--p-card); border-radius:var(--p-radius); padding:2rem 2.2rem;
                    max-width:380px; width:90%; box-shadow:var(--p-shadow-lg); animation:fadeIn .2s ease; }
 .pg-modal-box h4 { font-size:1.1rem; font-weight:700; margin:0 0 .5rem; color:var(--p-primary); }
 .pg-modal-box p  { font-size:.9rem; color:var(--p-muted); margin:0 0 1.4rem; }
