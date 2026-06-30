@@ -171,3 +171,105 @@
   .pg-header      { padding:1.4rem 1.2rem 1rem; }
   .pg-header h1   { font-size:1.4rem; }
 }
+
+/* ── CAJA DETALLE: META CARDS ─────────────────────────────────────────── */
+.caja-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: .85rem;
+  margin-bottom: 1.8rem;
+}
+.caja-meta-full { grid-column: 1 / -1; }
+
+.caja-meta-card {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  background: var(--p-card);
+  border: 1px solid var(--p-border);
+  border-radius: var(--p-radius);
+  padding: 1rem 1.15rem;
+  box-shadow: var(--p-shadow);
+  border-left: 4px solid var(--p-border);
+  transition: box-shadow .18s, transform .15s;
+}
+.caja-meta-card:hover { box-shadow: var(--p-shadow-lg); transform: translateY(-2px); }
+
+.caja-meta-apertura  { border-left-color: #2980B9; }
+.caja-meta-saldo-ini { border-left-color: var(--p-accent); }
+.caja-meta-ingresos  { border-left-color: #27AE60; }
+.caja-meta-pendientes{ border-left-color: #D4A017; }
+.caja-meta-saldo-fin { border-left-color: var(--p-primary); }
+.caja-meta-cierre    { border-left-color: #7F8C8D; }
+.caja-meta-notas     { border-left-color: #8E44AD; background: #FAF5FF; }
+
+.caja-meta-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.caja-meta-body {
+  display: flex;
+  flex-direction: column;
+  gap: .1rem;
+  min-width: 0;
+}
+.caja-meta-label {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .65px;
+  color: var(--p-muted);
+}
+.caja-meta-val {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--p-text);
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.caja-meta-sub {
+  font-size: .72rem;
+  color: var(--p-muted);
+  font-weight: 500;
+}
+.caja-meta-nota-text {
+  font-size: .88rem;
+  color: var(--p-muted);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Título sección pagos */
+.caja-pagos-title {
+  font-size: .95rem;
+  font-weight: 700;
+  margin-bottom: .8rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--p-border);
+  padding-top: .9rem;
+}
+.caja-pagos-count {
+  font-size: .8rem;
+  color: var(--p-muted);
+  font-weight: 400;
+}
+
+/* Badge referencia */
+.caja-ref-badge {
+  display: inline-block;
+  background: var(--p-surface);
+  border: 1px solid var(--p-border);
+  border-radius: 6px;
+  padding: .15rem .5rem;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--p-text);
+}
+
+/* badges estados pedido */
+.pg-badge-pagado      { background:#d4edda; color:#155724; }
+.pg-badge-preparacion { background:#fff3cd; color:#856404; }
+.pg-badge-servido     { background:#d1ecf1; color:#0c5460; }
+.pg-badge-cancelado   { background:#f8d7da; color:#842029; }
+
