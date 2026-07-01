@@ -35,6 +35,31 @@ class PedidoForm(forms.ModelForm):
         self.fields['impuestos'].required = False
         self.fields['total'].required = False
 
+        # ─── NUEVO: al CREAR un pedido, el estado se fija solo ───
+        # (si self.instance.pk existe, es edición y se deja el select normal)
+        if not self.instance.pk:
+            estado_field = self._meta.model._meta.get_field('estado')
+            valor_por_defecto = estado_field.get_default()
+
+            # Si el modelo no tiene un 'default' explícito, usamos la 1ra opción de choices
+            if not valor_por_defecto and estado_field.choices:
+                valor_por_defecto = estado_field.choices[0][0]
+
+            self.fields['estado'].initial = valor_por_defecto
+            self.fields['estado'].widget = forms.HiddenInput()
+            self.fields['estado'].required = False
+
+    def save(self, commit=True):
+        # Refuerzo de seguridad: si es creación, garantiza el estado
+        # sin importar lo que llegue desde el HTML/POST.
+        if not self.instance.pk:
+            estado_field = self._meta.model._meta.get_field('estado')
+            valor_por_defecto = estado_field.get_default()
+            if not valor_por_defecto and estado_field.choices:
+                valor_por_defecto = estado_field.choices[0][0]
+            self.instance.estado = valor_por_defecto
+        return super().save(commit=commit)
+
 # ─── Formulario de Producto ────────────────────────────────────
 class ProductoForm(forms.ModelForm):
     class Meta:
@@ -110,4 +135,4 @@ class ClienteForm(forms.ModelForm):
                 'rows': 2,
                 'placeholder': 'Dirección opcional...',
             }),
-        }
+        }

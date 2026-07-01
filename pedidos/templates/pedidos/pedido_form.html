@@ -98,8 +98,16 @@
             {{ form.tipo_pedido }}
           </div>
           <div>
-            <label>Estado</label>
-            {{ form.estado }}
+            {% if pedido %}
+              <label>Estado</label>
+              {{ form.estado }}
+            {% else %}
+              <label>Estado</label>
+              <div style="padding:.55rem .85rem;border:1px solid #D4C4A0;border-radius:8px;background:#FDF7EC;color:#1A1008;font-weight:600;">
+                En Preparación
+              </div>
+              {{ form.estado }}
+            {% endif %}
           </div>
           <div class="full">
             <label>Descripción / Nota adicional</label>
