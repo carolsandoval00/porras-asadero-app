@@ -44,19 +44,15 @@ def pago_dashboard(request):
             return redirect('pago:dashboard')
 
         elif action == 'editar_caja':
-            caja_id      = request.POST.get('caja_id')
-            cajero_id    = request.POST.get('cajero')
+            caja_id       = request.POST.get('caja_id')
             observaciones = request.POST.get('observaciones', '').strip()
 
             try:
                 caja = Caja.objects.get(pk=caja_id)
-                if cajero_id:
-                    caja.cajero_id = cajero_id
                 caja.observaciones = observaciones
                 caja.save()
                 return JsonResponse({
                     'ok': True,
-                    'cajero': caja.cajero.username,
                     'observaciones': caja.observaciones or '—',
                 })
             except Exception as e:
