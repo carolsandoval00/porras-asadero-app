@@ -98,3 +98,32 @@ def listar_mesas_vista(request):
     mesas = Mesa.objects.all().order_by('numero_mesa')
     context = {'mesas': mesas}
     return render(request, 'reservas/listar_mesas.html', context)
+
+@login_required
+def crear_reserva(request):
+    return render(request, 'reservas/crear_reserva.html')
+
+
+@login_required
+def crear_reserva(request):
+    context = {
+        'reservas': Reserva.objects.all().order_by('-id'),
+        'mesas': Mesa.objects.all().order_by('numero_mesa'),
+    }
+    return render(request, 'reservas/crear_reserva.html', context)
+
+
+@login_required
+def diagrama_mesas(request):
+    context = {
+        'mesas': Mesa.objects.all().order_by('numero_mesa'),
+    }
+    return render(request, 'reservas/diagrama_mesas.html', context)
+
+
+@login_required
+def gestion_mesas(request):
+    context = {
+        'mesas': Mesa.objects.all().order_by('numero_mesa'),
+    }
+    return render(request, 'reservas/gestion_mesas.html', context)
