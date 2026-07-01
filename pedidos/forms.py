@@ -15,7 +15,7 @@ _TEXTAREA = _INPUT + 'resize:vertical;min-height:80px;'
 class PedidoForm(forms.ModelForm):
     class Meta:
         model  = Pedido
-        fields = ['cliente', 'mesa', 'tipo_pedido', 'estado', 'subtotal', 'impuestos', 'total', 'descripcion']
+        fields = ['cliente', 'mesa', 'tipo_pedido', 'subtotal', 'impuestos', 'total', 'descripcion']
         widgets = {
             'cliente': forms.Select(attrs={'style': _SELECT}),
             'mesa': forms.Select(attrs={'style': _SELECT}),
