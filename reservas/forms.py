@@ -4,4 +4,4 @@ from .models import Mesa
 class MesaForm(forms.ModelForm):
     class Meta:
         model = Mesa
-        fields = ['numero_mesa', 'capacidad', 'ubicacion', 'estado']
+        fields = ['numero_mesa', 'capacidad', 'ubicacion' ]

@@ -39,7 +39,7 @@ class PedidoForm(forms.ModelForm):
 class ProductoForm(forms.ModelForm):
     class Meta:
         model  = Producto
-        fields = ['nombre', 'categoria', 'precio', 'descripcion', 'disponible']
+        fields = ['nombre', 'categoria', 'precio', 'descripcion' ]
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'style': _INPUT,
@@ -54,9 +54,7 @@ class ProductoForm(forms.ModelForm):
                 'rows': 2,
                 'placeholder': 'Descripción opcional...',
             }),
-            'disponible': forms.CheckboxInput(attrs={
-                'style': 'width:18px;height:18px;accent-color:#C0392B;cursor:pointer;',
-            }),
+            
         }
 
 # ─── Formulario de Categoría ───────────────────────────────────
@@ -110,4 +108,4 @@ class ClienteForm(forms.ModelForm):
                 'rows': 2,
                 'placeholder': 'Dirección opcional...',
             }),
-        }
+        }
