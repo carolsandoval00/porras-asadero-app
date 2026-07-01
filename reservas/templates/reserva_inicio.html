@@ -76,6 +76,17 @@
   </div>
 </div>
 
+<!-- ===== MODAL MENSAJE (reemplaza al toast) ===== -->
+<div class="mc-confirm-overlay" id="mc-msg-overlay">
+  <div class="mc-confirm-box" style="text-align:center">
+    <h3 id="mc-msg-title">¡Listo!</h3>
+    <p id="mc-msg-text" style="margin-bottom:1.3rem"></p>
+    <div class="mc-confirm-btns" style="justify-content:center">
+      <button class="mc-btn mc-btn-primary" onclick="document.getElementById('mc-msg-overlay').classList.remove('open')">Aceptar</button>
+    </div>
+  </div>
+</div>
+
 <div class="mc-toast" id="mc-toast"></div>
 
 

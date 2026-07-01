@@ -53,12 +53,10 @@
     if(id==='crear' && !editandoId){ mcLimpiar(); mcPoblarMesas(); }
   };
 
-  function toast(msg, tipo){
-    const t = document.getElementById('mc-toast');
-    t.textContent = msg;
-    t.style.background = tipo === 'error' ? '#C0392B' : '#1A1008';
-    t.classList.add('show');
-    setTimeout(()=> t.classList.remove('show'), 2800);
+ function toast(msg, tipo){
+    document.getElementById('mc-msg-title').textContent = tipo === 'error' ? 'Atención' : '¡Listo!';
+    document.getElementById('mc-msg-text').textContent  = msg;
+    document.getElementById('mc-msg-overlay').classList.add('open');
   }
 
   window.mcCloseConfirm = function(){ document.getElementById('mc-confirm-overlay').classList.remove('open'); };
