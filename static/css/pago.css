@@ -94,6 +94,10 @@
 .pg-btn-pago   { background:#27AE60; color:#fff; }
 .pg-btn-sm     { font-size:.76rem; padding:.3rem .7rem; }
 
+.pg-reportes     { display:flex; gap:.55rem; flex-wrap:wrap; }
+.pg-btn-excel    { background:#E8651A; color:#F5ECD7; }
+.pg-btn-imprimir { background:#8A7B1E; color:#F5ECD7; }
+
 .pg-form       { max-width:620px; }
 .pg-form-grid  { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
 .pg-form .full { grid-column:1/-1; }

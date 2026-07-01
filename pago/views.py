@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from itertools import groupby
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
@@ -185,4 +185,122 @@ def caja_detalle(request, pk):
         'tab_activo':         'detalle-caja',
         'caja_activa':        Caja.objects.filter(estado='ABIERTA').first(),
     }
+    # ──────────────────────────────────────────────
+#  REPORTES: PDF / Excel / Imprimir
+# ──────────────────────────────────────────────
+
+def _pagos_reporte_queryset():
+    """Pagos registrados, ordenados igual que en el listado."""
+    return Pago.objects.select_related('pedido', 'pedido__cliente').order_by('-fecha_pago')
+
+
+@login_required
+def pagos_exportar_excel(request):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+
+    pagos = _pagos_reporte_queryset()
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Pagos registrados'
+
+    encabezados = ['Orden', 'Cliente', 'Método', 'Monto', 'Referencia', 'Estado', 'Fecha', 'Hora']
+    ws.append(encabezados)
+    for col in range(1, len(encabezados) + 1):
+        celda = ws.cell(row=1, column=col)
+        celda.font = Font(bold=True, color='F5ECD7')
+        celda.fill = PatternFill(start_color='C0392B', end_color='C0392B', fill_type='solid')
+        celda.alignment = Alignment(horizontal='center')
+
+    for pg in pagos:
+        ws.append([
+            pg.pedido.numero_orden if pg.pedido else '—',
+            pg.pedido.cliente.nombre_completo if pg.pedido and pg.pedido.cliente else '—',
+            pg.get_metodo_pago_display(),
+            float(pg.monto),
+            pg.referencia or '—',
+            'Pagado',
+            pg.fecha_pago.strftime('%d/%m/%Y'),
+            pg.fecha_pago.strftime('%I:%M %p'),
+        ])
+
+    for i, ancho in enumerate([14, 26, 16, 12, 20, 12, 14, 12], start=1):
+        ws.column_dimensions[chr(64 + i)].width = ancho
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="pagos_registrados.xlsx"'
+    wb.save(response)
+    return response
+
+
+@login_required
+def pagos_exportar_pdf(request):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+
+    pagos = _pagos_reporte_queryset()
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="pagos_registrados.pdf"'
+
+    doc = SimpleDocTemplate(
+        response, pagesize=landscape(letter),
+        topMargin=1.2 * cm, bottomMargin=1.2 * cm,
+        leftMargin=1.2 * cm, rightMargin=1.2 * cm,
+    )
+    estilos = getSampleStyleSheet()
+    elementos = [
+        Paragraph('Porras Asadero — Pagos registrados', estilos['Title']),
+        Paragraph(f'Generado el {timezone.now().strftime("%d/%m/%Y %I:%M %p")}', estilos['Normal']),
+        Spacer(1, 0.5 * cm),
+    ]
+
+    datos = [['Orden', 'Cliente', 'Método', 'Monto', 'Referencia', 'Estado', 'Fecha', 'Hora']]
+    total = 0
+    for pg in pagos:
+        total += pg.monto
+        datos.append([
+            pg.pedido.numero_orden if pg.pedido else '—',
+            pg.pedido.cliente.nombre_completo if pg.pedido and pg.pedido.cliente else '—',
+            pg.get_metodo_pago_display(),
+            f'${pg.monto:,.0f}',
+            pg.referencia or '—',
+            'Pagado',
+            pg.fecha_pago.strftime('%d/%m/%Y'),
+            pg.fecha_pago.strftime('%I:%M %p'),
+        ])
+    datos.append(['', '', '', f'${total:,.0f}', '', '', '', ''])
+
+    tabla = Table(datos, repeatRows=1)
+    tabla.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C0392B')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#F5ECD7')),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8.5),
+        ('ALIGN', (3, 1), (3, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.HexColor('#FDF7EC'), colors.HexColor('#F5ECD7')]),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#F5ECD7')),
+    ]))
+    elementos.append(tabla)
+
+    doc.build(elementos)
+    return response
+
+
+@login_required
+def pagos_imprimir(request):
+    pagos = _pagos_reporte_queryset()
+    return render(request, 'pago/pagos_imprimir.html', {
+        'pagos': pagos,
+        'ahora': timezone.now(),
+        'total': pagos.aggregate(t=Sum('monto'))['t'] or 0,
+    })
     return render(request, 'pago/dashboard.html', context)
