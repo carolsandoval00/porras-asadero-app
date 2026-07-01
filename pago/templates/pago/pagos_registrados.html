@@ -53,7 +53,7 @@
                   <td>
                     <span class="pg-badge pg-badge-pagado">Pagado</span>
                   </td>
-                  <td>{{ pg.fecha_pago|date:"H:i" }}</td>
+                  <td>{{ pg.fecha_pago|date:"h:i A" }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -83,7 +83,7 @@
     <div class="pg-card-body">
 
       <div class="orden-banner" id="orden-banner">
-        <div class="orden-banner-icon">🧾</div>
+        <div class="orden-banner-icon"></div>
         <div class="orden-banner-body">
           <p class="orden-banner-title">Registrando pago para: <span id="banner-orden-num"></span></p>
           <p class="orden-banner-detail">

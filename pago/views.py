@@ -80,7 +80,7 @@ def pago_dashboard(request):
                     # Actualizar estado de comanda
                     pago.pedido.estado = 'PAGADO'
                     pago.pedido.save()
-                    messages.success(request, '✅ Pago registrado y comanda marcada como PAGADA.')
+                    messages.success(request, 'Pedido registrado correctamente.', extra_tags='modal-pago')
                 else:
                     messages.error(request, '❌ No puedes registrar pagos sin una caja abierta.')
                 return redirect('pago:dashboard')
@@ -112,7 +112,7 @@ def pago_dashboard(request):
         'pagos_pendientes': 0,
         'monto_total':      pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'nombre':           request.user.get_full_name() or request.user.username,
-        'cajas':            Caja.objects.select_related('cajero').all().order_by('-fecha_apertura'),
+        'cajas':            Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
         'tab_activo':       'pendientes',
         'caja_activa':      caja_activa,
     }
@@ -177,7 +177,7 @@ def caja_detalle(request, pk):
         'pagos_pendientes':   0,
         'monto_total':        pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'nombre':             request.user.get_full_name() or request.user.username,
-        'cajas':              Caja.objects.select_related('cajero').all().order_by('-fecha_apertura'),
+        'cajas':              Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
         'caja_seleccionada':  caja_seleccionada,
         'pagos_caja':         pagos_caja,
         'total_ingresos':     total_ingresos,
