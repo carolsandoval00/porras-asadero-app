@@ -394,16 +394,20 @@
     editandoMesaId = null;
   };
 
-  window.mcRenderTablaMesas = function(){
+  function mcListaMesasFiltrada(){
     const buscar    = document.getElementById('mc-buscar-mesa')?.value.toLowerCase() || '';
     const ubicacion = document.getElementById('mc-filtro-ubicacion')?.value || '';
     const capacidad = document.getElementById('mc-filtro-capacidad')?.value || '';
-    const tb = document.getElementById('mc-tbody-mesas');
-    let lista = mesas.filter(m =>
+    return mesas.filter(m =>
       String(m.numero).includes(buscar) &&
       (!ubicacion || m.ubicacion===ubicacion) &&
       (!capacidad || m.capacidad==capacidad)
     );
+  }
+
+  window.mcRenderTablaMesas = function(){
+    const tb = document.getElementById('mc-tbody-mesas');
+    let lista = mcListaMesasFiltrada();
     if(!lista.length){
       tb.innerHTML = `<tr><td colspan="5"><div class="mc-empty"><p>No se encontraron mesas</p></div></td></tr>`;
       return;
@@ -536,6 +540,90 @@
           .catch(e => console.error('Error eliminando mesa:', e));
         save(); mcRenderTablaMesas(); mcRenderDiagrama(); toast('Mesa eliminada');
       });
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // REPORTES DE MESAS: PDF / EXCEL / IMPRIMIR
+  // Igual que en reservas, usan mcListaMesasFiltrada() para respetar
+  // la búsqueda y los filtros de ubicación/capacidad activos.
+  // ─────────────────────────────────────────────────────────────
+  window.mcExportarMesasPDF = function(){
+    const lista = mcListaMesasFiltrada();
+    if(!lista.length){ toast('No hay mesas para exportar','error'); return; }
+    if(!window.jspdf){ toast('No se pudo cargar la librería de PDF','error'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text('Asadero Porras — Reporte de Mesas', 14, 16);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + lista.length + ' mesa(s)', 14, 22);
+
+    const filas = lista.map(m => [
+      'Mesa ' + m.numero,
+      String(m.capacidad) + ' pers.',
+      m.ubicacion,
+      m.estado,
+    ]);
+
+    doc.autoTable({
+      head: [['Mesa', 'Capacidad', 'Ubicación', 'Estado']],
+      body: filas,
+      startY: 28,
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [192, 57, 43], textColor: 255 },
+      alternateRowStyles: { fillColor: [245, 236, 215] },
+    });
+
+    doc.save('mesas_' + hoy() + '.pdf');
+    toast('Reporte PDF generado');
+  };
+
+  window.mcExportarMesasExcel = function(){
+    const lista = mcListaMesasFiltrada();
+    if(!lista.length){ toast('No hay mesas para exportar','error'); return; }
+    if(!window.XLSX){ toast('No se pudo cargar la librería de Excel','error'); return; }
+
+    const datos = lista.map(m => ({
+      'Mesa':       'Mesa ' + m.numero,
+      'Capacidad':  m.capacidad,
+      'Ubicación':  m.ubicacion,
+      'Estado':     m.estado,
+    }));
+
+    const hoja = XLSX.utils.json_to_sheet(datos);
+    hoja['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }];
+
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Mesas');
+    XLSX.writeFile(libro, 'mesas_' + hoy() + '.xlsx');
+    toast('Reporte Excel generado');
+  };
+
+  window.mcImprimirMesas = function(){
+    const lista = mcListaMesasFiltrada();
+    if(!lista.length){ toast('No hay mesas para imprimir','error'); return; }
+
+    const filas = lista.map(m => `<tr>
+        <td>Mesa ${m.numero}</td>
+        <td>${m.capacidad} pers.</td>
+        <td>${m.ubicacion}</td>
+        <td>${m.estado}</td>
+      </tr>`).join('');
+
+    document.getElementById('mc-print-area').innerHTML = `
+      <h2>Asadero Porras — Reporte de Mesas</h2>
+      <p>Generado el ${new Date().toLocaleString('es-CO')} — ${lista.length} mesa(s)</p>
+      <table>
+        <thead><tr>
+          <th>Mesa</th><th>Capacidad</th><th>Ubicación</th><th>Estado</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+
+    window.print();
   };
 
   if(reservas.length) contadorR = Math.max(contadorR, ...reservas.map(r=>r.id||0));
