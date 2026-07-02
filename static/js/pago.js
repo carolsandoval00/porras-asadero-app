@@ -1,4 +1,3 @@
-
 // ── Tabs ────────────────────────────────────────────────────
 function showTab(name) {
   document.querySelectorAll('.pg-section').forEach(s => s.classList.remove('active'));
@@ -55,10 +54,8 @@ function abrirEditarCaja(cajaId) {
   _editandoCajaId = cajaId;
 
   const fila = document.querySelector(`[data-caja-pk="${cajaId}"]`);
-  const cajeroActual = fila ? fila.querySelector('[data-col="cajero"]').textContent.trim() : '';
-  const obsActual    = fila ? fila.querySelector('[data-col="observaciones"]').textContent.trim() : '';
+  const obsActual = fila ? fila.querySelector('[data-col="observaciones"]').textContent.trim() : '';
 
-  document.getElementById('editar-cajero').value        = cajeroActual;
   document.getElementById('editar-observaciones').value = obsActual === '—' ? '' : obsActual;
   document.getElementById('modal-editar-titulo').textContent = 'Editando Caja #' + cajaId;
 
@@ -78,15 +75,9 @@ function cerrarEditarCaja() {
 }
 
 function guardarEditarCaja() {
-  const cajero        = document.getElementById('editar-cajero').value.trim();
   const observaciones = document.getElementById('editar-observaciones').value.trim();
   const btn           = document.getElementById('btn-guardar-caja');
   const fb            = document.getElementById('editar-feedback');
-
-  if (!cajero) {
-    mostrarFeedback(fb, 'error', '⚠️ El nombre del cajero no puede estar vacío.');
-    return;
-  }
 
   btn.disabled    = true;
   btn.textContent = 'Guardando…';
@@ -94,11 +85,10 @@ function guardarEditarCaja() {
   const formData = new FormData();
   formData.append('action',               'editar_caja');
   formData.append('caja_id',             _editandoCajaId);
-  formData.append('cajero',              cajero);
   formData.append('observaciones',       observaciones);
   formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
 
-  fetch("{% url 'pago:dashboard' %}", { method: 'POST', body: formData })
+  fetch(window.pagoConfig.dashboardUrl, { method: 'POST', body: formData })
     .then(r => r.json())
     .then(data => {
       btn.disabled    = false;
@@ -107,10 +97,8 @@ function guardarEditarCaja() {
       if (data.ok) {
         const fila = document.querySelector(`[data-caja-pk="${_editandoCajaId}"]`);
         if (fila) {
-          const tdCajero = fila.querySelector('[data-col="cajero"]');
-          const tdObs    = fila.querySelector('[data-col="observaciones"]');
-          if (tdCajero) tdCajero.textContent = data.cajero;
-          if (tdObs)    tdObs.textContent    = data.observaciones;
+          const tdObs = fila.querySelector('[data-col="observaciones"]');
+          if (tdObs) tdObs.textContent = data.observaciones;
         }
         mostrarFeedback(fb, 'success', '✅ Cambios guardados correctamente.');
         setTimeout(cerrarEditarCaja, 1200);

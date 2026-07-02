@@ -1,7 +1,20 @@
 <!-- PAGOS REGISTRADOS -->
 <div id="tab-lista" class="pg-section">
   <div class="pg-card">
-    <div class="pg-card-header"><h3>Pagos registrados</h3></div>
+    <div class="pg-card-header">
+  <h3>Pagos registrados</h3>
+  <div class="pg-reportes">
+    <a href="{% url 'pago:pagos_pdf' %}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank">
+      <i class="bi bi-file-earmark-arrow-down"></i> PDF
+    </a>
+    <a href="{% url 'pago:pagos_excel' %}" class="pg-btn pg-btn-excel pg-btn-sm">
+      <i class="bi bi-file-earmark-arrow-down"></i> Excel
+    </a>
+    <a href="{% url 'pago:pagos_imprimir' %}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank">
+      <i class="bi bi-printer"></i> Imprimir
+    </a>
+  </div>
+</div>
     <div class="pg-card-body">
 
       <div class="pg-search-bar">

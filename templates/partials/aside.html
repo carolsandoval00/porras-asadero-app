@@ -100,14 +100,40 @@
         </li>
 
         <!-- Gestión de Pagos -->
-        <li>
-            <a href="{% url 'pago:dashboard' %}" 
-               class="nav-link {% if request.resolver_match.namespace == 'pago' %}active-custom{% endif %}" 
-               style="color: #F5ECD7;">
-                <i class="bi bi-credit-card me-2"></i>
-                Gestión de Pagos
-            </a>
-        </li>
+        <!-- Gestión de Pagos (Colapsable) -->
+<li>
+    <a href="#pagosSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.namespace == 'pago' %}active-custom{% endif %}" style="color: #F5ECD7;" aria-expanded="{% if request.resolver_match.namespace == 'pago' %}true{% else %}false{% endif %}">
+        <span>
+            <i class="bi bi-credit-card me-2"></i>
+            Gestión de Pagos
+        </span>
+        <i class="bi bi-chevron-down fs-7"></i>
+    </a>
+    <div class="collapse {% if request.resolver_match.namespace == 'pago' %}show{% endif %}" id="pagosSubmenu">
+        <ul class="nav flex-column ms-3 mt-1 gap-1" style="font-size: 0.88rem; border-left: 1px solid rgba(245, 236, 215, 0.15); padding-left: 0.5rem;">
+            <li>
+                <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="nav-link py-1" style="color: #F5ECD7;">
+                    <i class="bi bi-hourglass-split me-2"></i>Órdenes por pagar
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'pago:dashboard' %}?tab=lista" class="nav-link py-1" style="color: #F5ECD7;">
+                    <i class="bi bi-list-check me-2"></i>Pagos registrados
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'pago:dashboard' %}?tab=consultar-caja" class="nav-link py-1" style="color: #F5ECD7;">
+                    <i class="bi bi-cash-stack me-2"></i>Cajas
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'pago:dashboard' %}?tab=abrir-caja" class="nav-link py-1" style="color: #F5ECD7;">
+                    <i class="bi bi-plus-circle me-2"></i>Abrir caja
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
 
         <!-- Reservas y Mesas (Colapsable) -->
         <li>

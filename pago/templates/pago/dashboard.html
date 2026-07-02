@@ -31,7 +31,8 @@
   window.pagoConfig = {
     tabActivo: "{{ tab_activo|default:'' }}",
     formErrors: {{ form.errors|yesno:"true,false" }},
-    aperturaErrors: {{ form_apertura.errors|yesno:"true,false" }}
+    aperturaErrors: {{ form_apertura.errors|yesno:"true,false" }},
+    dashboardUrl: "{% url 'pago:dashboard' %}"
   };
 </script>
 <script src="{%static 'js/pago.js'%}"></script>
