@@ -1,7 +1,20 @@
 <!-- PAGOS REGISTRADOS -->
 <div id="tab-lista" class="pg-section">
   <div class="pg-card">
-    <div class="pg-card-header"><h3>Pagos registrados</h3></div>
+    <div class="pg-card-header">
+  <h3>Pagos registrados</h3>
+  <div class="pg-reportes">
+    <a href="{% url 'pago:pagos_pdf' %}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank">
+      <i class="bi bi-file-earmark-arrow-down"></i> PDF
+    </a>
+    <a href="{% url 'pago:pagos_excel' %}" class="pg-btn pg-btn-excel pg-btn-sm">
+      <i class="bi bi-file-earmark-arrow-down"></i> Excel
+    </a>
+    <a href="{% url 'pago:pagos_imprimir' %}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank">
+      <i class="bi bi-printer"></i> Imprimir
+    </a>
+  </div>
+</div>
     <div class="pg-card-body">
 
       <div class="pg-search-bar">
@@ -10,8 +23,9 @@
                oninput="filtrarPagos()">
         <select id="filtro-metodo">
           <option value="">Todos los métodos</option>
-          <option value="efectivo">Efectivo</option>
-          <option value="transferencia">Transferencia</option>
+          <option value="EFECTIVO">Efectivo</option>
+          <option value="TARJETA">Tarjeta</option>
+          <option value="TRANSFERENCIA">Transferencia</option>
         </select>
         <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()">Filtrar</button>
       </div>
@@ -39,21 +53,20 @@
               <tbody>
                 {% for pg in grupo.pagos %}
                 <tr class="fila-pago"
-                    data-orden="{% if pg.orden %}{{ pg.orden.numero_orden|lower }}{% endif %}"
-                    data-cliente="{% if pg.orden %}{{ pg.orden.pedido.cliente|lower }}{% endif %}"
+                    data-orden="{{ pg.pedido.numero_orden|lower }}"
+                    data-cliente="{{ pg.pedido.cliente.nombre_completo|lower|default:'' }}"
                     data-referencia="{{ pg.referencia|lower }}"
                     data-metodo="{{ pg.metodo_pago }}"
-                    data-estado="{{ pg.estado }}">
-                  <td>
-                    {% if pg.orden %}<strong>{{ pg.orden.numero_orden }}</strong>
-                    {% else %}<span style="color:var(--p-muted)">Manual</span>{% endif %}
-                  </td>
-                  <td>{% if pg.orden %}{{ pg.orden.pedido.cliente }}{% else %}—{% endif %}</td>
+                    data-estado="PAGADO">
+                  <td><strong>{{ pg.pedido.numero_orden }}</strong></td>
+                  <td>{{ pg.pedido.cliente.nombre_completo|default:"—" }}</td>
                   <td>{{ pg.get_metodo_pago_display }}</td>
                   <td><strong style="color:#C0392B">${{ pg.monto }}</strong></td>
                   <td>{{ pg.referencia|default:"—" }}</td>
-                  <td><span class="pg-badge pg-badge-{{ pg.estado }}">{{ pg.get_estado_display }}</span></td>
-                  <td>{{ pg.fecha_pago|date:"H:i" }}</td>
+                  <td>
+                    <span class="pg-badge pg-badge-pagado">Pagado</span>
+                  </td>
+                  <td>{{ pg.fecha_pago|date:"h:i A" }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -61,7 +74,9 @@
           </div>
         </div>
         {% endfor %}
-        <p id="sin-resultados">No se encontraron pagos con ese criterio.</p>
+        <p id="sin-resultados" style="display:none;text-align:center;color:var(--p-muted);padding:1rem">
+          No se encontraron pagos con ese criterio.
+        </p>
       {% else %}
         <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pagos registrados aún.</p>
       {% endif %}
@@ -81,7 +96,7 @@
     <div class="pg-card-body">
 
       <div class="orden-banner" id="orden-banner">
-        <div class="orden-banner-icon">🧾</div>
+        <div class="orden-banner-icon"></div>
         <div class="orden-banner-body">
           <p class="orden-banner-title">Registrando pago para: <span id="banner-orden-num"></span></p>
           <p class="orden-banner-detail">
@@ -100,7 +115,7 @@
           <div class="full"><label>Descripción</label>{{ form.descripcion }}</div>
         </div>
         {% if form.errors %}
-        <div class="pg-alert pg-alert-danger" style="margin-top:1rem">⚠️ Revisa los campos e intenta de nuevo.</div>
+        <div class="pg-alert pg-alert-danger" style="margin-top:1rem"> Revisa los campos e intenta de nuevo.</div>
         {% endif %}
         <div class="pg-form-actions">
           <button type="submit" class="pg-btn pg-btn-accent">Registrar Pago</button>

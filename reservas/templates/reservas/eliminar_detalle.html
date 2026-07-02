@@ -3,13 +3,22 @@
 {% block content %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
-<div style="padding:1.5rem 1.5rem 0;">
-  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1.5rem;">
-    <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:500;margin:0 0 4px;color:#F5ECD7;">Eliminar Reserva</h1>
-    <p style="font-size:13px;color:#A09070;margin:0;">Selecciona la reserva que deseas eliminar</p>
+<div style="padding:1.5rem 1.5rem 0;max-width:100%;">
+  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1rem;display:flex;align-items:center;gap:16px;">
+    <div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:600;margin:0 0 4px;color:#F5ECD7;">Eliminar Reserva</h1>
+      <p style="font-size:20px;color:#A09070;margin:0;">Selecciona la reserva que deseas eliminar</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;padding:0 0.2rem;">
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Reservas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Diagrama de mesas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva mesa</a>
+    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn">Editar mesa</a>
+    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn active">Eliminar reserva</a>
   </div>
 </div>
 
@@ -17,70 +26,165 @@
 
   {% if messages %}
     {% for msg in messages %}
-      <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">
-        {{ msg }}
-      </div>
+      <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">{{ msg }}</div>
     {% endfor %}
   {% endif %}
 
-  {% if detalles %}
-    <div class="mc-card">
-      <div class="mc-card-title">Reservas registradas</div>
+  <!-- Estado: sin reservas -->
+  <div class="mc-card" id="ed-empty" style="display:none;">
+    <div class="mc-empty">
+      <div style="font-size:40px;margin-bottom:12px">📋</div>
+      <p>No hay reservas registradas.</p>
+      <a href="{% url 'reserva_inicio' %}" style="display:inline-block;margin-top:12px;font-size:13px;color:#C0392B">← Volver al panel</a>
+    </div>
+  </div>
+
+  <!-- Tabla de reservas -->
+  <div class="mc-card" id="ed-tabla" style="display:none;">
+    <div class="mc-card-title">Reservas registradas</div>
+    <div class="mc-table-wrap">
       <table class="mc-table">
         <thead>
           <tr>
             <th>ID</th><th>Cliente</th><th>Mesa</th>
-            <th>Fecha</th><th>Personas</th><th>Estado</th>
+            <th>Fecha</th><th>Hora</th><th>Personas</th><th>Estado</th>
           </tr>
         </thead>
-        <tbody>
-          {% for d in detalles %}
-          <tr>
-            <td style="font-family:monospace;font-size:11px;color:var(--hint)">#{{ d.pk|stringformat:"02d" }}</td>
-            <td style="font-weight:500">{{ d.nombre_cliente }}</td>
-            <td>{{ d.mesa }}</td>
-            <td>{{ d.fecha_reserva }}</td>
-            <td style="text-align:center">{{ d.numero_personas }}</td>
-            <td>
-              <span class="mc-badge {% if d.estado == 'confirmada' %}mc-badge-ok{% elif d.estado == 'pendiente' %}mc-badge-warn{% else %}mc-badge-danger{% endif %}">
-                {{ d.estado }}
-              </span>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
+        <tbody id="ed-tbody"></tbody>
       </table>
     </div>
+  </div>
 
-    <div class="mc-card">
-      <div class="mc-card-title">Seleccionar reserva a eliminar</div>
-      <form method="post">
-        {% csrf_token %}
-        <label class="mc-label">Reserva *</label>
-        <select class="mc-select" name="detalle" required>
-          <option value="">— Seleccionar —</option>
-          {% for d in detalles %}
-            <option value="{{ d.pk }}">
-              #{{ d.pk }} — {{ d.nombre_cliente }} · {{ d.fecha_reserva }}
-            </option>
-          {% endfor %}
-        </select>
-        <div class="mc-btn-row">
-          <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
-          <button type="submit" class="mc-btn mc-btn-primary">Eliminar reserva</button>
-        </div>
-      </form>
-    </div>
+  <!-- Selector + botón eliminar -->
+  <div class="mc-card" id="ed-form" style="display:none;">
+    <div class="mc-card-title">Seleccionar reserva a eliminar</div>
 
-  {% else %}
-    <div class="mc-card">
-      <div class="mc-empty">
-        <div style="font-size:40px;margin-bottom:12px">📋</div>
-        <p>No hay reservas registradas.</p>
-        <a href="{% url 'reserva_inicio' %}" style="display:inline-block;margin-top:12px;font-size:13px;color:#C0392B">← Volver al panel</a>
+    <label class="mc-label">Reserva *</label>
+    <select class="mc-select" id="ed-select">
+      <option value="">— Seleccionar —</option>
+    </select>
+
+    <!-- Confirmación -->
+    <div id="ed-confirm-box" style="display:none;margin-top:1rem;padding:1rem;background:#fff3f3;border:1px solid #f5c6c6;border-radius:8px;">
+      <p style="margin:0 0 10px;font-size:14px;color:#C0392B;font-weight:500;">⚠️ ¿Estás segura de que deseas eliminar esta reserva?</p>
+      <p id="ed-confirm-texto" style="margin:0 0 14px;font-size:13px;color:#555;"></p>
+      <div class="mc-btn-row">
+        <button class="mc-btn mc-btn-secondary" onclick="edCancelar()">Cancelar</button>
+        <button class="mc-btn mc-btn-danger" onclick="edConfirmarEliminar()">Sí, eliminar</button>
       </div>
     </div>
-  {% endif %}
+
+    <div class="mc-btn-row" id="ed-btn-row">
+      <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
+      <button class="mc-btn mc-btn-primary" onclick="edPedirConfirmacion()">Eliminar reserva</button>
+    </div>
+  </div>
+
+  <!-- Modal éxito -->
+  <div id="ed-modal-ok" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:12px;padding:2rem;max-width:380px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      
+      <h3 style="font-family:'Playfair Display',serif;font-size:20px;margin:0 0 8px;color:#1A1008;">Reserva eliminada</h3>
+      <p id="ed-modal-ok-texto" style="font-size:13px;color:#777;margin:0 0 1.5rem;"></p>
+      <button class="mc-btn mc-btn-primary" onclick="edCerrarModal()">Aceptar</button>
+    </div>
+  </div>
+
+  <div class="mc-toast" id="ed-toast"></div>
 
 </div>
+
+<script>
+(function(){
+  const reservas = JSON.parse(localStorage.getItem('mc_reservas') || '[]');
+  const mesas    = JSON.parse(localStorage.getItem('mc_mesas')    || '[]');
+
+  function getMesaLabel(id){
+    const m = mesas.find(m => m.id === id);
+    return m ? 'Mesa ' + m.numero : '—';
+  }
+
+  function badgeClass(estado){
+    return estado === 'confirmada' ? 'mc-badge-ok'
+         : estado === 'pendiente'  ? 'mc-badge-warn'
+         : 'mc-badge-danger';
+  }
+
+  function toast(msg, tipo){
+    const t = document.getElementById('ed-toast');
+    t.textContent = msg;
+    t.style.background = tipo === 'error' ? '#C0392B' : '#1A1008';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function render(){
+    if(!reservas.length){
+      document.getElementById('ed-empty').style.display = 'block';
+      return;
+    }
+
+    const tbody = document.getElementById('ed-tbody');
+    tbody.innerHTML = reservas.map(r => `
+      <tr>
+        <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).padStart(2,'0')}</td>
+        <td style="font-weight:500">${r.nombre}</td>
+        <td>${getMesaLabel(r.mesaId)}</td>
+        <td>${r.fecha}</td>
+        <td>${r.hora}</td>
+        <td style="text-align:center">${r.personas}</td>
+        <td><span class="mc-badge ${badgeClass(r.estado)}">${r.estado}</span></td>
+      </tr>
+    `).join('');
+    document.getElementById('ed-tabla').style.display = 'block';
+
+    const sel = document.getElementById('ed-select');
+    sel.innerHTML = '<option value="">— Seleccionar —</option>';
+    reservas.forEach(r => {
+      sel.innerHTML += `<option value="${r.id}">#${String(r.id).padStart(2,'0')} — ${r.nombre} · ${r.fecha} ${r.hora}</option>`;
+    });
+    document.getElementById('ed-form').style.display = 'block';
+  }
+
+  window.edPedirConfirmacion = function(){
+    const id = parseInt(document.getElementById('ed-select').value);
+    if(!id){ toast('Debes seleccionar una reserva', 'error'); return; }
+    const r = reservas.find(x => x.id === id);
+    if(!r) return;
+    document.getElementById('ed-confirm-texto').textContent =
+      `Reserva de ${r.nombre} — ${r.fecha} a las ${r.hora} (${getMesaLabel(r.mesaId)})`;
+    document.getElementById('ed-confirm-box').style.display = 'block';
+    document.getElementById('ed-btn-row').style.display = 'none';
+  };
+
+  window.edCancelar = function(){
+    document.getElementById('ed-confirm-box').style.display = 'none';
+    document.getElementById('ed-btn-row').style.display = 'flex';
+  };
+
+  window.edConfirmarEliminar = function(){
+    const id = parseInt(document.getElementById('ed-select').value);
+    const idx = reservas.findIndex(x => x.id === id);
+    if(idx === -1) return;
+    const r = reservas[idx];
+    reservas.splice(idx, 1);
+    localStorage.setItem('mc_reservas', JSON.stringify(reservas));
+
+    document.getElementById('ed-confirm-box').style.display = 'none';
+
+    document.getElementById('ed-modal-ok-texto').textContent =
+      `La reserva de ${r.nombre} del ${r.fecha} a las ${r.hora} fue eliminada correctamente.`;
+    const modal = document.getElementById('ed-modal-ok');
+    modal.style.display = 'flex';
+  };
+
+  window.edCerrarModal = function(){
+    document.getElementById('ed-modal-ok').style.display = 'none';
+    location.reload();
+  };
+
+  render();
+})();
+</script>
+
 {% endblock %}
