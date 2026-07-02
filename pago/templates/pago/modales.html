@@ -46,13 +46,7 @@
       ¿Confirmas el cierre de esta caja?
     </p>
 
-    <p
-      style="
-        font-size:.82rem;
-        color:var(--p-muted);
-        margin-top:-.8rem;
-        margin-bottom:1.4rem;
-      ">
+    <p class="pg-modal-subtext">
       Se registrará la hora de cierre automáticamente.
     </p>
 
@@ -97,46 +91,21 @@
 
 <!-- Modal editar caja -->
 <div id="modal-editar-caja" class="pg-modal-overlay">
-  <div
-    class="pg-modal-box"
-    style="max-width:440px;width:92%;">
+  <div class="pg-modal-box pg-modal-box-lg">
 
     <h4> Editar caja</h4>
 
-    <p
-      id="modal-editar-titulo"
-      style="
-        margin-bottom:1rem;
-        font-size:.88rem;
-      ">
-    </p>
+    <p id="modal-editar-titulo" class="pg-modal-edit-title"></p>
 
     <!-- Mensajes -->
-    <div
-      id="editar-feedback"
-      style="
-        display:none;
-        padding:.7rem 1rem;
-        border-radius:8px;
-        font-size:.85rem;
-        font-weight:600;
-        margin-bottom:1rem;
-        border-left:4px solid transparent;
-      ">
-    </div>
+    <div id="editar-feedback" class="pg-modal-feedback"></div>
 
     <div class="pg-modal-field">
 
       <label>
         Observaciones
 
-        <span
-          style="
-            font-weight:400;
-            text-transform:none;
-            letter-spacing:0;
-            font-size:.78rem;
-          ">
+        <span class="pg-label-optional">
           (opcional)
         </span>
 
@@ -150,9 +119,7 @@
 
     </div>
 
-    <div
-      class="pg-modal-actions"
-      style="margin-top:1.4rem;">
+    <div class="pg-modal-actions pg-mt-2">
 
       <button
         id="btn-guardar-caja"

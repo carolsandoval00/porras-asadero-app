@@ -34,8 +34,7 @@
         {% for grupo in pagos_por_fecha %}
         <div class="fecha-grupo" data-fecha-grupo>
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 mt-4 border-bottom pb-2">
-            <span class="badge text-crema px-3 py-2 rounded-pill fs-7 text-uppercase fw-bold"
-                  style="background-color: #C0392B;">
+            <span class="badge text-crema px-3 py-2 rounded-pill fs-7 text-uppercase fw-bold pg-bg-primary">
               {{ grupo.fecha|date:"l d \d\e F \d\e Y" }}
             </span>
             <span class="text-muted fw-bold small">
@@ -61,7 +60,7 @@
                   <td><strong>{{ pg.pedido.numero_orden }}</strong></td>
                   <td>{{ pg.pedido.cliente.nombre_completo|default:"—" }}</td>
                   <td>{{ pg.get_metodo_pago_display }}</td>
-                  <td><strong style="color:#C0392B">${{ pg.monto }}</strong></td>
+                  <td><strong class="pg-text-primary">${{ pg.monto }}</strong></td>
                   <td>{{ pg.referencia|default:"—" }}</td>
                   <td>
                     <span class="pg-badge pg-badge-pagado">Pagado</span>
@@ -74,11 +73,11 @@
           </div>
         </div>
         {% endfor %}
-        <p id="sin-resultados" style="display:none;text-align:center;color:var(--p-muted);padding:1rem">
+        <p id="sin-resultados">
           No se encontraron pagos con ese criterio.
         </p>
       {% else %}
-        <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pagos registrados aún.</p>
+        <p class="pg-no-pagos">No hay pagos registrados aún.</p>
       {% endif %}
 
     </div>
@@ -115,7 +114,7 @@
           <div class="full"><label>Descripción</label>{{ form.descripcion }}</div>
         </div>
         {% if form.errors %}
-        <div class="pg-alert pg-alert-danger" style="margin-top:1rem"> Revisa los campos e intenta de nuevo.</div>
+        <div class="pg-alert pg-alert-danger pg-mt-1"> Revisa los campos e intenta de nuevo.</div>
         {% endif %}
         <div class="pg-form-actions">
           <button type="submit" class="pg-btn pg-btn-accent">Registrar Pago</button>

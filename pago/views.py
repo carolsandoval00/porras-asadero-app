@@ -182,6 +182,7 @@ def caja_detalle(request, pk):
         'tab_activo':         'detalle-caja',
         'caja_activa':        Caja.objects.filter(estado='ABIERTA').first(),
     }
+    return render(request, 'pago/dashboard.html', context)
     # ──────────────────────────────────────────────
 #  REPORTES: PDF / Excel / Imprimir
 # ──────────────────────────────────────────────

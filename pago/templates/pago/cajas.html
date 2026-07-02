@@ -20,18 +20,17 @@
             <tr data-caja-pk="{{ caja.pk }}">
               <td><strong>#{{ caja.pk }}</strong></td>
               <td data-col="cajero">{{ caja.cajero }}</td>
-              <td><strong style="color:#C0392B">${{ caja.monto_inicial|floatformat:2 }}</strong></td>
+              <td><strong class="pg-text-primary">${{ caja.monto_inicial|floatformat:2 }}</strong></td>
               <td><span class="pg-badge pg-badge-{{ caja.estado|lower }}">{{ caja.get_estado_display }}</span></td>
               <td>{{ caja.fecha_apertura|date:"d/m/Y h:i A" }}</td>
               <td>
                 {% if caja.fecha_cierre %}{{ caja.fecha_cierre|date:"d/m/Y h:i A" }}
-                {% else %}<span style="color:var(--p-muted)">—</span>{% endif %}
+                {% else %}<span class="pg-text-muted">—</span>{% endif %}
               </td>
-              <td data-col="observaciones"
-                  style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+              <td data-col="observaciones" class="pg-cell-truncate pg-text-muted">
                 {{ caja.observaciones|default:"—" }}
               </td>
-              <td style="display:flex;gap:.4rem;flex-wrap:wrap;">
+              <td class="pg-flex-gap-sm">
                 <a href="{% url 'pago:caja_detalle' caja.pk %}" class="pg-btn pg-btn-light pg-btn-sm">
                    Ver detalle
                 </a>
@@ -49,7 +48,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="8" style="text-align:center;color:var(--p-muted);padding:2.5rem">
+              <td colspan="8" class="pg-table-empty">
                 No hay cajas registradas aún.
               </td>
             </tr>
@@ -68,7 +67,7 @@
   <div class="pg-card">
     <div class="pg-card-header">
       <h3> Caja #{{ caja_seleccionada.pk }} — {{ caja_seleccionada.cajero }}</h3>
-      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+      <div class="pg-flex-gap-md">
         <span class="pg-badge pg-badge-{{ caja_seleccionada.estado|lower }}">
           {{ caja_seleccionada.get_estado_display }}
         </span>
@@ -82,37 +81,6 @@
       </div>
     </div>
     <div class="pg-card-body">
-
-      <style>
-        .cmeta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.85rem;margin-bottom:1.8rem;}
-        .cmeta-full{grid-column:1/-1;}
-        .cmeta-card{display:flex;align-items:center;gap:.85rem;background:var(--p-card);border:1px solid var(--p-border);border-radius:var(--p-radius);padding:1rem 1.2rem;box-shadow:var(--p-shadow);border-left:4px solid var(--p-border);transition:box-shadow .18s,transform .15s;}
-        .cmeta-card:hover{box-shadow:var(--p-shadow-lg);transform:translateY(-2px);}
-        .cmeta-apertura{border-left-color:#2980B9;}
-        .cmeta-saldo{border-left-color:var(--p-accent);}
-        .cmeta-ingresos{border-left-color:#27AE60;}
-        .cmeta-pendientes{border-left-color:#D4A017;}
-        .cmeta-saldo-fin{border-left-color:var(--p-primary);}
-        .cmeta-cierre{border-left-color:#7F8C8D;}
-        .cmeta-notas{border-left-color:#8E44AD;background:#faf5ff;}
-        .cmeta-icon{font-size:1.6rem;line-height:1;flex-shrink:0;}
-        .cmeta-body{display:flex;flex-direction:column;gap:.1rem;min-width:0;}
-        .cmeta-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.65px;color:var(--p-muted);}
-        .cmeta-val{font-size:1.2rem;font-weight:800;color:var(--p-text);line-height:1.15;white-space:nowrap;}
-        .cmeta-sub{font-size:.72rem;color:var(--p-muted);font-weight:500;}
-        .cmeta-nota-txt{font-size:.88rem;color:var(--p-muted);font-weight:500;line-height:1.4;}
-        .caja-pagos-title{font-size:.95rem;font-weight:700;margin-bottom:.8rem;border-top:1px solid var(--p-border);padding-top:.9rem;}
-        .caja-pagos-count{font-size:.8rem;color:var(--p-muted);font-weight:400;}
-        .cref-badge{display:inline-block;background:var(--p-surface);border:1px solid var(--p-border);border-radius:6px;padding:.15rem .5rem;font-size:.8rem;font-weight:600;color:var(--p-text);}
-        .caja-tfoot-row td{background:var(--p-surface);border-top:2px solid var(--p-border);padding:.85rem 1rem;}
-        .caja-tfoot-label{font-size:.82rem;font-weight:700;color:var(--p-muted);text-transform:uppercase;letter-spacing:.5px;}
-        .caja-tfoot-icon{font-size:1rem;}
-        .caja-tfoot-total{font-size:1.1rem;font-weight:800;color:var(--p-primary);}
-        .caja-tfoot-detail{vertical-align:middle;}
-        .caja-tfoot-chip{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;border-radius:20px;font-size:.78rem;font-weight:700;margin-right:.4rem;}
-        .caja-tfoot-chip-ok{background:#d4edda;color:#155724;}
-        .caja-tfoot-chip-pend{background:#fff3cd;color:#856404;}
-      </style>
 
       <!-- ── TARJETAS UNIFICADAS ── -->
       <div class="cmeta-grid">
@@ -197,11 +165,11 @@
                 {% if pago.pedido and pago.pedido.cliente %}
                   {{ pago.pedido.cliente }}
                 {% else %}
-                  <span style="color:var(--p-muted)">—</span>
+                  <span class="pg-text-muted">—</span>
                 {% endif %}
               </td>
               <td>{{ pago.get_metodo_pago_display }}</td>
-              <td><strong style="color:#C0392B">${{ pago.monto|floatformat:2 }}</strong></td>
+              <td><strong class="pg-text-primary">${{ pago.monto|floatformat:2 }}</strong></td>
               <td>
                 {% if pago.pedido %}
                   <span class="pg-badge pg-badge-{{ pago.pedido.estado|lower }}">{{ pago.pedido.get_estado_display }}</span>
@@ -214,7 +182,7 @@
                 {% if pago.referencia %}
                   <span class="cref-badge">{{ pago.referencia }}</span>
                 {% else %}
-                  <span style="color:var(--p-muted)">—</span>
+                  <span class="pg-text-muted">—</span>
                 {% endif %}
               </td>
             </tr>
@@ -224,7 +192,7 @@
         </table>
       </div>
       {% else %}
-        <p style="text-align:center;color:var(--p-muted);padding:2.5rem;font-style:italic;">
+        <p class="pg-caja-empty">
            No hay pagos registrados en esta caja aún.
         </p>
       {% endif %}
@@ -267,12 +235,12 @@
             </span>
           </div>
           <div class="full">
-            <label>Observaciones <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.78rem">(opcional)</span></label>
+            <label>Observaciones <span class="pg-label-optional">(opcional)</span></label>
             {{ form_apertura.observaciones }}
           </div>
         </div>
         {% if form_apertura.errors %}
-        <div class="pg-alert pg-alert-danger" style="margin-top:1rem"> Revisa los campos e intenta de nuevo.</div>
+        <div class="pg-alert pg-alert-danger pg-mt-1"> Revisa los campos e intenta de nuevo.</div>
         {% endif %}
         <div class="pg-form-actions">
           <button type="submit" class="pg-btn pg-btn-accent">Abrir caja</button>

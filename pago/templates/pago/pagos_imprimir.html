@@ -1,29 +1,17 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>Pagos registrados — Porras Asadero</title>
-  <style>
-    body   { font-family: 'Segoe UI', system-ui, sans-serif; color:#1A1008; margin:2rem; }
-    h1     { color:#C0392B; margin-bottom:.2rem; }
-    .meta  { color:#6B5A3E; font-size:.85rem; margin-bottom:1.2rem; }
-    table  { width:100%; border-collapse:collapse; font-size:.85rem; }
-    th, td { border:1px solid #D4C4A0; padding:.5rem .7rem; text-align:left; }
-    th     { background:#C0392B; color:#F5ECD7; text-transform:uppercase; font-size:.75rem; }
-    tbody tr:nth-child(even) { background:#F5ECD7; }
-    tfoot td { font-weight:700; background:#F5ECD7; }
-    .monto { text-align:right; }
-    @media print {
-      .no-print { display:none; }
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'css/pago.css' %}">
 </head>
-<body onload="window.print()">
-  <button class="no-print" onclick="window.print()" style="margin-bottom:1rem;">Imprimir</button>
-  <h1>Porras Asadero — Pagos registrados</h1>
-  <p class="meta">Generado el {{ ahora|date:"d/m/Y h:i A" }}</p>
+<body class="print-body" onload="window.print()">
+  <button class="no-print print-btn-margin" onclick="window.print()">Imprimir</button>
+  <h1 class="print-title">Porras Asadero — Pagos registrados</h1>
+  <p class="print-meta">Generado el {{ ahora|date:"d/m/Y h:i A" }}</p>
 
-  <table>
+  <table class="print-table">
     <thead>
       <tr>
         <th>Orden</th><th>Cliente</th><th>Método</th>
@@ -36,7 +24,7 @@
         <td>{{ pg.pedido.numero_orden|default:"—" }}</td>
         <td>{{ pg.pedido.cliente.nombre_completo|default:"—" }}</td>
         <td>{{ pg.get_metodo_pago_display }}</td>
-        <td class="monto">${{ pg.monto|floatformat:0 }}</td>
+        <td class="print-monto">${{ pg.monto|floatformat:0 }}</td>
         <td>{{ pg.referencia|default:"—" }}</td>
         <td>Pagado</td>
         <td>{{ pg.fecha_pago|date:"d/m/Y" }}</td>
@@ -49,7 +37,7 @@
     <tfoot>
       <tr>
         <td colspan="3">Total</td>
-        <td class="monto">${{ total|floatformat:0 }}</td>
+        <td class="print-monto">${{ total|floatformat:0 }}</td>
         <td colspan="4"></td>
       </tr>
     </tfoot>

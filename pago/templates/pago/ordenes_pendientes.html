@@ -41,10 +41,10 @@
             <tr class="fila-pendiente">
               <td><strong>{{ o.numero_orden }}</strong></td>
               <td><strong>{{ o.mesa.numero_mesa|default:"—" }}</strong></td>
-              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
+              <td class="pg-desc-truncate pg-text-muted">
                 {{ o.descripcion|default:"—" }}
               </td>
-              <td><strong style="font-size:1rem;color:#C0392B">${{ o.total }}</strong></td>
+              <td><strong class="pg-text-primary-lg">${{ o.total }}</strong></td>
               <td>{{ o.fecha_creacion|date:"d/m/Y h:i A" }}</td>
               <td>
                 <button class="pg-btn pg-btn-pago pg-btn-sm"
@@ -55,7 +55,7 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="6" style="text-align:center;color:var(--p-muted);padding:2.5rem">
+              <td colspan="6" class="pg-table-empty">
                 No hay órdenes pendientes de pago.
               </td>
             </tr>

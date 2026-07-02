@@ -4,7 +4,7 @@
     <button class="pg-btn pg-btn-light" onclick="showTab('pendientes')">
       Órdenes por pagar
       {% if ordenes_sin_pago %}
-        <span style="background:#C0392B;color:#fff;font-size:.65rem;font-weight:800;min-width:18px;height:18px;border-radius:50px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;margin-left:2px;">
+        <span class="pg-nav-badge">
           {{ ordenes_sin_pago|length }}
         </span>
       {% endif %}

@@ -277,3 +277,83 @@
 .pg-badge-servido     { background:#d1ecf1; color:#0c5460; }
 .pg-badge-cancelado   { background:#f8d7da; color:#842029; }
 
+/* ── ESTILOS EXTRAÍDOS DE PLANTILLAS DE CAJA ── */
+.cmeta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .85rem; margin-bottom: 1.8rem; }
+.cmeta-full { grid-column: 1 / -1; }
+.cmeta-card { display: flex; align-items: center; gap: .85rem; background: var(--p-card); border: 1px solid var(--p-border); border-radius: var(--p-radius); padding: 1rem 1.2rem; box-shadow: var(--p-shadow); border-left: 4px solid var(--p-border); transition: box-shadow .18s, transform .15s; }
+.cmeta-card:hover { box-shadow: var(--p-shadow-lg); transform: translateY(-2px); }
+.cmeta-apertura { border-left-color: #2980B9; }
+.cmeta-saldo { border-left-color: var(--p-accent); }
+.cmeta-ingresos { border-left-color: #27AE60; }
+.cmeta-pendientes { border-left-color: #D4A017; }
+.cmeta-saldo-fin { border-left-color: var(--p-primary); }
+.cmeta-cierre { border-left-color: #7F8C8D; }
+.cmeta-notas { border-left-color: #8E44AD; background: #faf5ff; }
+.cmeta-icon { font-size: 1.6rem; line-height: 1; flex-shrink: 0; }
+.cmeta-body { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.cmeta-lbl { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .65px; color: var(--p-muted); }
+.cmeta-val { font-size: 1.2rem; font-weight: 800; color: var(--p-text); line-height: 1.15; white-space: nowrap; }
+.cmeta-sub { font-size: .72rem; color: var(--p-muted); font-weight: 500; }
+.cmeta-nota-txt { font-size: .88rem; color: var(--p-muted); font-weight: 500; line-height: 1.4; }
+.cref-badge { display: inline-block; background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 6px; padding: .15rem .5rem; font-size: .8rem; font-weight: 600; color: var(--p-text); }
+.caja-tfoot-row td { background: var(--p-surface); border-top: 2px solid var(--p-border); padding: .85rem 1rem; }
+.caja-tfoot-label { font-size: .82rem; font-weight: 700; color: var(--p-muted); text-transform: uppercase; letter-spacing: .5px; }
+.caja-tfoot-icon { font-size: 1rem; }
+.caja-tfoot-total { font-size: 1.1rem; font-weight: 800; color: var(--p-primary); }
+.caja-tfoot-detail { vertical-align: middle; }
+.caja-tfoot-chip { display: inline-flex; align-items: center; gap: .3rem; padding: .25rem .65rem; border-radius: 20px; font-size: .78rem; font-weight: 700; margin-right: .4rem; }
+.caja-tfoot-chip-ok { background: #d4edda; color: #155724; }
+.caja-tfoot-chip-pend { background: #fff3cd; color: #856404; }
+
+/* ── ESTILOS EXTRAÍDOS DE IMPRESIÓN ── */
+.print-body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1A1008; margin: 2rem; }
+.print-title { color: #C0392B; margin-bottom: .2rem; }
+.print-meta { color: #6B5A3E; font-size: .85rem; margin-bottom: 1.2rem; }
+.print-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.print-table th, .print-table td { border: 1px solid #D4C4A0; padding: .5rem .7rem; text-align: left; }
+.print-table th { background: #C0392B; color: #F5ECD7; text-transform: uppercase; font-size: .75rem; }
+.print-table tbody tr:nth-child(even) { background: #F5ECD7; }
+.print-table tfoot td { font-weight: 700; background: #F5ECD7; }
+.print-monto { text-align: right; }
+.print-btn-margin { margin-bottom: 1rem; }
+
+/* ── CLASES DE UTILIDAD GENERALES DE PAGO ── */
+.pg-text-primary { color: var(--p-primary); }
+.pg-text-muted { color: var(--p-muted); }
+.pg-text-white { color: #fff; }
+.pg-bg-primary { background-color: var(--p-primary); }
+.pg-cell-truncate { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-desc-truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-text-primary-lg { font-size: 1rem; color: var(--p-primary); }
+.pg-flex-gap-sm { display: flex; gap: .4rem; flex-wrap: wrap; }
+.pg-flex-gap-md { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.pg-table-empty { text-align: center; color: var(--p-muted); padding: 2.5rem; }
+.pg-caja-empty { text-align: center; color: var(--p-muted); padding: 2.5rem; font-style: italic; }
+.pg-no-pagos { text-align: center; color: var(--p-muted); padding: 2rem; }
+.pg-label-optional { font-weight: 400; text-transform: none; letter-spacing: 0; font-size: .78rem; }
+.pg-mt-1 { margin-top: 1rem; }
+.pg-mt-2 { margin-top: 1.4rem; }
+
+/* Contador de órdenes pendientes en navegación */
+.pg-nav-badge {
+  background: var(--p-primary);
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  margin-left: 2px;
+}
+
+/* Modales personalizados */
+.pg-modal-subtext { font-size: .82rem; color: var(--p-muted); margin-top: -.8rem; margin-bottom: 1.4rem; }
+.pg-modal-box-lg { max-width: 440px; width: 92%; }
+.pg-modal-edit-title { margin-bottom: 1rem; font-size: .88rem; }
+.pg-modal-feedback { display: none; padding: .7rem 1rem; border-radius: 8px; font-size: .85rem; font-weight: 600; margin-bottom: 1rem; border-left: 4px solid transparent; }
+
+
