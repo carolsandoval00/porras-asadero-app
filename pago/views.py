@@ -12,6 +12,26 @@ from pedidos.models import Pedido
 
 @login_required
 def pago_dashboard(request):
+    """
+    Pantalla principal de pagos y caja.
+
+    Aquí pasan varias cosas según el botón que el usuario presione
+    en el formulario (esto se sabe por el campo 'action' que llega
+    en el POST):
+
+    - 'abrir_caja': abre una caja nueva para empezar a recibir pagos.
+    - 'cerrar_caja': cierra la caja que estaba abierta.
+    - 'editar_caja': cambia las observaciones de una caja (esto lo
+      hace por AJAX, o sea sin recargar la página).
+    - si no manda ninguna de esas acciones: se asume que el usuario
+      está registrando el pago de un pedido. Solo se puede registrar
+      un pago si hay una caja abierta en ese momento.
+
+    Cuando el usuario solo entra a la página (sin enviar nada),
+    se le muestra todo: los pedidos que faltan por pagar, el
+    historial de pagos agrupado por fecha, el total de dinero
+    recibido, y la lista de cajas.
+    """
     form_apertura = CajaForm()
     form = PagoForm()
 
@@ -109,7 +129,7 @@ def pago_dashboard(request):
         'monto_total':      pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'nombre':           request.user.get_full_name() or request.user.username,
         'cajas':            Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
-       'tab_activo':       request.GET.get('tab', 'pendientes'),
+        'tab_activo':       request.GET.get('tab', 'pendientes'),
         'caja_activa':      caja_activa,
     }
     return render(request, 'pago/dashboard.html', context)
@@ -117,6 +137,10 @@ def pago_dashboard(request):
 
 @login_required
 def pago_editar(request, pk):
+    """
+    Muestra el formulario para editar un pago ya registrado y
+    guarda los cambios cuando el usuario lo envía.
+    """
     pago = get_object_or_404(Pago, pk=pk)
     form = PagoForm(request.POST or None, instance=pago)
     if form.is_valid():
@@ -129,6 +153,10 @@ def pago_editar(request, pk):
 
 @login_required
 def pago_eliminar(request, pk):
+    """
+    Borra un pago. Solo elimina si la petición es POST (por
+    seguridad, para que no se borre solo con entrar al link).
+    """
     pago = get_object_or_404(Pago, pk=pk)
     if request.method == 'POST':
         pago.delete()
@@ -138,6 +166,17 @@ def pago_eliminar(request, pk):
 
 @login_required
 def caja_detalle(request, pk):
+    """
+    Muestra el detalle completo de una caja específica: cuánto
+    dinero tenía al abrir, todos los pagos que se recibieron
+    mientras estuvo abierta, y el saldo final (dinero inicial más
+    lo que entró).
+
+    También le manda a la página la misma información general del
+    dashboard (pedidos sin pagar, historial de pagos, etc.) para
+    que el usuario pueda moverse entre pestañas sin perder el
+    contexto.
+    """
     caja_seleccionada = get_object_or_404(Caja, pk=pk)
     pagos_caja = Pago.objects.filter(caja=caja_seleccionada).select_related('pedido').order_by('-fecha_pago')
 
@@ -182,17 +221,32 @@ def caja_detalle(request, pk):
         'tab_activo':         'detalle-caja',
         'caja_activa':        Caja.objects.filter(estado='ABIERTA').first(),
     }
-    # ──────────────────────────────────────────────
+    return render(request, 'pago/dashboard.html', context)
+
+
+# ──────────────────────────────────────────────
 #  REPORTES: PDF / Excel / Imprimir
 # ──────────────────────────────────────────────
 
 def _pagos_reporte_queryset():
-    """Pagos registrados, ordenados igual que en el listado."""
+    """
+    Trae todos los pagos registrados, ordenados del más reciente
+    al más antiguo. La usan las tres funciones de reportes de
+    abajo (Excel, PDF e imprimir) para no repetir la misma consulta
+    tres veces.
+    """
     return Pago.objects.select_related('pedido', 'pedido__cliente').order_by('-fecha_pago')
 
 
 @login_required
 def pagos_exportar_excel(request):
+    """
+    Genera un archivo Excel (.xlsx) con todos los pagos registrados
+    y lo manda como descarga al navegador del usuario.
+
+    El archivo incluye: número de orden, cliente, método de pago,
+    monto, referencia, estado, fecha y hora de cada pago.
+    """
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
 
@@ -235,6 +289,13 @@ def pagos_exportar_excel(request):
 
 @login_required
 def pagos_exportar_pdf(request):
+    """
+    Genera un archivo PDF con todos los pagos registrados, en
+    formato de tabla, y lo manda como descarga al navegador.
+
+    Incluye los mismos datos que el reporte de Excel, más una
+    fila al final con el total de dinero recibido.
+    """
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import letter, landscape
     from reportlab.lib.units import cm
@@ -294,10 +355,14 @@ def pagos_exportar_pdf(request):
 
 @login_required
 def pagos_imprimir(request):
+    """
+    Muestra una versión simple en HTML de todos los pagos
+    registrados, pensada para imprimir directamente desde el
+    navegador (no descarga ningún archivo).
+    """
     pagos = _pagos_reporte_queryset()
     return render(request, 'pago/pagos_imprimir.html', {
         'pagos': pagos,
         'ahora': timezone.now(),
         'total': pagos.aggregate(t=Sum('monto'))['t'] or 0,
     })
-    return render(request, 'pago/dashboard.html', context)

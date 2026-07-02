@@ -12,9 +12,19 @@ import json
 # ─────────────────────────────────────────────────────────────
 @login_required
 def reserva_view(request):
-    """
-    Muestra la página de inicio del módulo de reservas.
-    Solo la puede ver un usuario que ya inició sesión.
+    """Muestra la página de inicio del módulo de reservas.
+
+    Requiere que el usuario haya iniciado sesión.
+
+    Args:
+        request (HttpRequest): Petición GET del usuario autenticado.
+
+    Returns:
+        HttpResponse: Renderiza la plantilla ``reserva_inicio.html``.
+
+    Raises:
+        Http404: Si la plantilla no existe (comportamiento estándar
+            de Django ante un template faltante).
     """
     return render(request, 'reserva_inicio.html')
 
@@ -25,22 +35,36 @@ def reserva_view(request):
 @require_POST
 @login_required
 def mesa_guardar(request):
-    """
-    Guarda una mesa nueva o actualiza una que ya existe.
+    """Guarda una mesa nueva o actualiza una ya existente.
 
-    Esta vista la llama el JavaScript del frontend (no un formulario
-    normal), y le manda los datos en formato JSON.
+    Vista pensada para ser consumida por el JavaScript del
+    frontend (no por un formulario HTML tradicional): recibe los
+    datos en el cuerpo de la petición como JSON.
 
-    Cómo decide si crear o actualizar:
-    - Si ya existe una mesa con ese mismo número, la actualiza.
-    - Si no existe ninguna con ese número, crea una nueva.
+    Lógica de creación/actualización:
+        - Si ya existe una mesa con ``numero_mesa`` igual al recibido,
+          se actualiza.
+        - Si no existe ninguna con ese número, se crea una nueva.
 
-    Datos que espera recibir: número de mesa, capacidad,
-    ubicación y estado.
+    Args:
+        request (HttpRequest): Petición POST cuyo body debe ser un
+            JSON con las claves:
+                numero_mesa (int): Identificador/PK de la mesa.
+                capacidad (int): Capacidad de personas de la mesa.
+                ubicacion (str): Ubicación física de la mesa.
+                estado (str): Estado actual de la mesa.
 
-    Si todo sale bien, responde {'ok': True}.
-    Si algo falla (por ejemplo faltó un dato), responde
-    {'ok': False, 'error': 'mensaje del error'}.
+    Returns:
+        JsonResponse: ``{'ok': True}`` con status 200 si la operación
+            fue exitosa. ``{'ok': False, 'error': str}`` con status 400
+            si ocurrió un error (por ejemplo, un campo faltante o un
+            JSON inválido).
+
+    Raises:
+        KeyError: Si falta alguna de las claves requeridas en el JSON
+            (capturado internamente y devuelto como respuesta 400).
+        json.JSONDecodeError: Si el body no es un JSON válido
+            (capturado internamente y devuelto como respuesta 400).
     """
     try:
         data = json.loads(request.body)
@@ -63,17 +87,23 @@ def mesa_guardar(request):
 @require_POST
 @login_required
 def eliminar_mesa_vista(request, mesa_id):
-    """
-    Borra una mesa según su número.
+    """Elimina una mesa según su número (PK).
 
-    También la llama el JavaScript del frontend cuando el usuario
-    da clic en "eliminar" desde la pantalla de mesas.
+    También es invocada por el JavaScript del frontend cuando el
+    usuario da clic en "eliminar" desde la pantalla de mesas.
 
-    Después de borrarla, muestra un mensaje de éxito y devuelve
-    al usuario a la lista de mesas.
+    Args:
+        request (HttpRequest): Petición POST del usuario autenticado.
+        mesa_id (int): Valor de ``numero_mesa`` (primary key) de la
+            mesa a eliminar.
 
-    Si la mesa no existe, Django muestra automáticamente un
-    error 404 (página no encontrada).
+    Returns:
+        HttpResponseRedirect: Redirige a la vista ``listar_mesas``
+            junto con un mensaje de éxito.
+
+    Raises:
+        Http404: Si no existe ninguna mesa con ese ``numero_mesa``
+            (lanzado automáticamente por ``get_object_or_404``).
     """
     mesa = get_object_or_404(Mesa, numero_mesa=mesa_id)
     mesa.delete()
@@ -86,16 +116,30 @@ def eliminar_mesa_vista(request, mesa_id):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def eliminar_detalle(request):
-    """
-    Muestra todas las reservas y permite borrar una de la lista.
+    """Lista las reservas existentes y permite eliminar una de ellas.
 
-    Cuando el usuario solo entra a la página (GET), se le muestra
-    la lista completa de reservas.
+    En una petición GET simplemente muestra la lista completa de
+    reservas. En una petición POST, elimina la reserva seleccionada
+    por el usuario.
 
-    Cuando el usuario manda el formulario (POST) eligiendo una
-    reserva para borrar, esta vista la elimina y muestra un
-    mensaje de éxito. Si no eligió ninguna, muestra un mensaje
-    de error pidiéndole que seleccione una.
+    Args:
+        request (HttpRequest): Petición GET o POST. En POST debe
+            incluir el campo de formulario ``detalle`` con el ID de
+            la reserva a eliminar.
+
+    Returns:
+        HttpResponse: En GET, renderiza
+            ``reservas/eliminar_detalle.html`` con el contexto
+            ``{'detalles': <QuerySet de Reserva>}``.
+        HttpResponseRedirect: En POST exitoso, redirige a
+            ``eliminar_detalle`` con un mensaje de éxito. Si no se
+            seleccionó ninguna reserva, vuelve a renderizar la misma
+            página con un mensaje de error.
+
+    Raises:
+        Http404: Si el ``detalle_id`` enviado no corresponde a
+            ninguna reserva existente (lanzado por
+            ``get_object_or_404``).
     """
     detalles = Reserva.objects.all()
 
@@ -118,19 +162,37 @@ def eliminar_detalle(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def actualizar_mesa(request, mesa_id):
-    """
-    Muestra el formulario para editar una mesa y guarda los cambios.
+    """Muestra y procesa el formulario de edición de una mesa.
 
-    Si el usuario solo entra a la página (GET), se le muestra el
-    formulario con los datos actuales de la mesa.
+    En GET, muestra el formulario precargado con los datos actuales
+    de la mesa indicada. En POST, guarda los cambios enviados. Si el
+    usuario cambia de mesa en el selector del formulario sin haber
+    guardado aún, la vista redirige a editar esa otra mesa en lugar
+    de sobrescribir por error los datos de la mesa anterior.
 
-    Si el usuario cambia la mesa en el selector del formulario
-    (sin haber guardado todavía), lo manda a editar esa otra mesa
-    en vez de guardar cambios en la mesa anterior por error.
+    Args:
+        request (HttpRequest): Petición GET o POST. En POST puede
+            incluir:
+                mesa_id (str): Si difiere del ``mesa_id`` de la URL,
+                    se interpreta como un cambio de selección y no
+                    se guardan cambios.
+                capacidad (str): Nueva capacidad de la mesa.
+                ubicacion (str): Nueva ubicación de la mesa.
+                estado (str): Nuevo estado de la mesa.
+        mesa_id (int): Valor de ``numero_mesa`` (primary key) de la
+            mesa a editar, tomado de la URL.
 
-    Si el usuario llena el formulario y lo envía (POST) para la
-    mesa correcta, se guardan los nuevos datos: capacidad,
-    ubicación y estado. Luego muestra un mensaje de éxito.
+    Returns:
+        HttpResponse: En GET, renderiza
+            ``reservas/actualizar_mesa.html`` con el contexto
+            ``{'mesa': <Mesa>, 'mesas': <QuerySet de Mesa>}``.
+        HttpResponseRedirect: En POST, redirige nuevamente a
+            ``actualizar_mesa`` (ya sea porque cambió de mesa en el
+            selector, o tras guardar los cambios exitosamente).
+
+    Raises:
+        Http404: Si no existe ninguna mesa con ese ``numero_mesa``
+            (lanzado por ``get_object_or_404``).
     """
     mesas = Mesa.objects.all().order_by('numero_mesa')
     mesa = get_object_or_404(Mesa, numero_mesa=mesa_id)
@@ -153,10 +215,17 @@ def actualizar_mesa(request, mesa_id):
 
 
 def listar_mesas_vista(request):
-    """
-    Muestra todas las mesas registradas, ordenadas de menor a
-    mayor número. Cualquier usuario puede ver esta lista (no pide
-    inicio de sesión).
+    """Lista todas las mesas registradas, ordenadas por número.
+
+    Vista pública: no requiere que el usuario haya iniciado sesión.
+
+    Args:
+        request (HttpRequest): Petición GET.
+
+    Returns:
+        HttpResponse: Renderiza ``reservas/listar_mesas.html`` con el
+            contexto ``{'mesas': <QuerySet de Mesa ordenado por
+            numero_mesa>}``.
     """
     mesas = Mesa.objects.all().order_by('numero_mesa')
     context = {'mesas': mesas}
@@ -165,13 +234,22 @@ def listar_mesas_vista(request):
 
 @login_required
 def crear_reserva(request):
-    """
-    Muestra el formulario para crear una reserva nueva.
+    """Muestra el formulario de creación de una reserva nueva.
 
-    Junto con el formulario, también le manda a la página la
-    lista de reservas ya existentes (las más nuevas primero) y
-    la lista de mesas disponibles, para que el usuario pueda
-    elegir una mesa al reservar.
+    Además del formulario, envía a la plantilla la lista de reservas
+    ya existentes (las más recientes primero) y la lista de mesas
+    disponibles, para que el usuario pueda elegir una al reservar.
+
+    Args:
+        request (HttpRequest): Petición GET del usuario autenticado.
+
+    Returns:
+        HttpResponse: Renderiza ``reservas/crear_reserva.html`` con el
+            contexto:
+                reservas (QuerySet[Reserva]): Todas las reservas,
+                    ordenadas por ``-id`` (más nuevas primero).
+                mesas (QuerySet[Mesa]): Todas las mesas, ordenadas por
+                    ``numero_mesa``.
     """
     context = {
         'reservas': Reserva.objects.all().order_by('-id'),
@@ -182,10 +260,16 @@ def crear_reserva(request):
 
 @login_required
 def diagrama_mesas(request):
-    """
-    Muestra un diagrama visual de cómo están distribuidas las mesas.
-    Le manda a la página la lista completa de mesas ordenadas por
-    número, para que el diagrama las pueda dibujar.
+    """Muestra un diagrama visual de la distribución de las mesas.
+
+    Args:
+        request (HttpRequest): Petición GET del usuario autenticado.
+
+    Returns:
+        HttpResponse: Renderiza ``reservas/diagrama_mesas.html`` con
+            el contexto ``{'mesas': <QuerySet de Mesa ordenado por
+            numero_mesa>}``, usado por el frontend para dibujar el
+            diagrama.
     """
     context = {
         'mesas': Mesa.objects.all().order_by('numero_mesa'),
@@ -195,10 +279,17 @@ def diagrama_mesas(request):
 
 @login_required
 def gestion_mesas(request):
-    """
-    Muestra el panel donde se administran las mesas: crear,
-    editar y eliminar. Le manda a la página la lista completa
-    de mesas ordenadas por número.
+    """Muestra el panel de administración de mesas.
+
+    Desde este panel se pueden crear, editar y eliminar mesas.
+
+    Args:
+        request (HttpRequest): Petición GET del usuario autenticado.
+
+    Returns:
+        HttpResponse: Renderiza ``reservas/gestion_mesas.html`` con
+            el contexto ``{'mesas': <QuerySet de Mesa ordenado por
+            numero_mesa>}``.
     """
     context = {
         'mesas': Mesa.objects.all().order_by('numero_mesa'),
