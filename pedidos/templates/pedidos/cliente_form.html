@@ -3,7 +3,26 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
-
+<style>
+  .pm-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    background: var(--p-card) !important;
+    border: 1px solid var(--p-border) !important;
+    border-radius: 50px !important;
+    padding: .5rem .7rem !important;
+    overflow-x: auto !important;
+  }
+  .pm-nav-group {
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .pm-nav-group + .pm-nav-group {
+    padding-left: .4rem !important;
+    border-left: 1px solid var(--p-border) !important;
+  }
+</style>
 <div class="pm-wrapper">
   <!-- Cabecera -->
   <div class="pm-header">
@@ -74,5 +93,49 @@
     </div>
   </div>
 </div>
+
+<script>
+  function soloNumeros(input, maxLen) {
+    if (!input) return;
+    input.setAttribute('maxlength', maxLen);
+    input.setAttribute('inputmode', 'numeric');
+    input.addEventListener('input', function () {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, maxLen);
+    });
+    input.addEventListener('keypress', function (e) {
+      if (!/[0-9]/.test(e.key)) {
+        e.preventDefault();
+      }
+    });
+    input.addEventListener('paste', function (e) {
+      e.preventDefault();
+      const texto = (e.clipboardData || window.clipboardData).getData('text');
+      const limpio = texto.replace(/[^0-9]/g, '').slice(0, maxLen);
+      this.value = limpio;
+    });
+  }
+
+  function soloLetras(input) {
+    if (!input) return;
+    const permitido = /[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/;
+    input.addEventListener('input', function () {
+      this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    });
+    input.addEventListener('keypress', function (e) {
+      if (!permitido.test(e.key)) {
+        e.preventDefault();
+      }
+    });
+    input.addEventListener('paste', function (e) {
+      e.preventDefault();
+      const texto = (e.clipboardData || window.clipboardData).getData('text');
+      const limpio = texto.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+      this.value = limpio;
+    });
+  }
+  soloNumeros(document.getElementById('id_documento'), 10);
+  soloNumeros(document.getElementById('id_telefono'), 10);
+  soloLetras(document.getElementById('id_nombre_completo'));
+</script>
 
 {% endblock %}

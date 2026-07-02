@@ -123,11 +123,8 @@ def pago_editar(request, pk):
         form.save()
         messages.success(request, '✅ Pago actualizado.')
         return redirect('pago:dashboard')
-    return render(request, 'pago/form.html', {
-        'form':   form,
-        'pago':   pago,
-        'nombre': request.user.get_full_name() or request.user.username,
-    })
+    context = { 'form': form, 'pago': pago, 'nombre': request.user.get_full_name() or request.user.username, }
+    return render(request, 'pago/form.html', context)
 
 
 @login_required

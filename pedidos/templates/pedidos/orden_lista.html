@@ -3,7 +3,26 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
-
+<style>
+  .pm-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    background: var(--p-card) !important;
+    border: 1px solid var(--p-border) !important;
+    border-radius: 50px !important;
+    padding: .5rem .7rem !important;
+    overflow-x: auto !important;
+  }
+  .pm-nav-group {
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .pm-nav-group + .pm-nav-group {
+    padding-left: .4rem !important;
+    border-left: 1px solid var(--p-border) !important;
+  }
+</style>
 <div class="pm-wrapper">
   <!-- Cabecera -->
   <div class="pm-header">
@@ -12,9 +31,16 @@
   </div>
 
   {% if messages %}
-    {% for msg in messages %}
-    <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
-    {% endfor %}
+  <div id="modal-mensaje" class="pm-modal-overlay open">
+    <div class="pm-modal-box">
+      {% for msg in messages %}
+      <div class="pm-alert pm-alert-{{ msg.tags }}" style="margin-bottom:.6rem;">{{ msg }}</div>
+      {% endfor %}
+      <div class="pm-modal-actions">
+        <button class="pm-btn pm-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
+      </div>
+    </div>
+  </div>
   {% endif %}
 
   <!-- Navegación Compartida -->

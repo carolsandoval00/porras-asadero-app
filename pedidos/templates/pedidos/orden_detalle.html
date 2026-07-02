@@ -74,20 +74,20 @@
         </div>
         <div class="info-item">
           <div class="lbl">Mesa / Cliente</div>
-          <div class="val">{{ orden.pedido.cliente }}</div>
+          <div class="val">{{ orden.cliente }}</div>
         </div>
         <div class="info-item">
           <div class="lbl">Fecha de Creación</div>
-          <div class="val">{{ orden.creada_en|date:"d/m/Y H:i" }}</div>
+          <div class="val">{{ orden.fecha_creacion|date:"d/m/Y H:i" }}</div>
         </div>
         <div class="info-item">
           <div class="lbl">Estado del Pedido</div>
-          <div class="val">{{ orden.pedido.get_estado_display }}</div>
+          <div class="val">{{ orden.get_estado_display }}</div>
         </div>
-        {% if orden.notas %}
+        {% if orden.descripcion %}
         <div class="info-item" style="grid-column:1/-1">
           <div class="lbl">Notas</div>
-          <div class="val">{{ orden.notas }}</div>
+          <div class="val">{{ orden.descripcion }}</div>
         </div>
         {% endif %}
       </div>
@@ -113,14 +113,14 @@
             </tr>
           </thead>
           <tbody>
-            {% for item in orden.pedido.items.all %}
+            {% for item in orden.items.all %}
             <tr>
               <td>{{ forloop.counter }}</td>
               <td><strong>{{ item.producto.nombre }}</strong></td>
-              <td style="color:var(--p-muted)">{{ item.producto.get_categoria_display }}</td>
+              <td style="color:var(--p-muted)">{{ item.producto.categoria.nombre }}</td>
               <td style="text-align:center;">{{ item.cantidad }}</td>
-              <td style="text-align:right;">${{ item.precio_unitario }}</td>
-              <td style="text-align:right;"><strong>${{ item.subtotal }}</strong></td>
+              <td style="text-align:right;">${{ item.precio_unitario|floatformat:0 }}</td>
+              <td style="text-align:right;"><strong>${{ item.subtotal|floatformat:0 }}</strong></td>
             </tr>
             {% empty %}
             <tr><td colspan="6" style="text-align:center;color:var(--p-muted);padding:2rem">Sin productos registrados.</td></tr>
@@ -129,15 +129,15 @@
           <tfoot>
             <tr class="total-row">
               <td colspan="5" style="text-align:right;padding:.9rem 1rem;">Subtotal</td>
-              <td style="text-align:right;padding:.9rem 1rem;">${{ orden.subtotal }}</td>
+              <td style="text-align:right;padding:.9rem 1rem;">${{ orden.subtotal|floatformat:0 }}</td>
             </tr>
             <tr class="total-row">
               <td colspan="5" style="text-align:right;padding:.9rem 1rem;">Impuesto</td>
-              <td style="text-align:right;padding:.9rem 1rem;">${{ orden.impuesto }}</td>
+              <td style="text-align:right;padding:.9rem 1rem;">${{ orden.impuesto|floatformat:0 }}</td>
             </tr>
             <tr class="total-row">
               <td colspan="5" style="text-align:right;padding:.9rem 1rem;font-size:1.1rem;color:#C0392B;">TOTAL</td>
-              <td style="text-align:right;padding:.9rem 1rem;font-size:1.1rem;color:#C0392B;">${{ orden.total }}</td>
+              <td style="text-align:right;padding:.9rem 1rem;font-size:1.1rem;color:#C0392B;">${{ orden.total|floatformat:0 }}</td>
             </tr>
           </tfoot>
         </table>
@@ -169,7 +169,7 @@
             <tr>
               <td>{{ forloop.counter }}</td>
               <td>{{ pago.get_metodo_pago_display }}</td>
-              <td><strong>${{ pago.monto }}</strong></td>
+              <td><strong>${{ pago.monto|floatformat:0 }}</strong></td>
               <td><span class="pm-badge pm-badge-{{ pago.estado }}">{{ pago.get_estado_display }}</span></td>
               <td>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</td>
               <td style="color:var(--p-muted)">{{ pago.referencia|default:"—" }}</td>

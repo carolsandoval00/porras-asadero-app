@@ -13,5 +13,8 @@ urlpatterns = [
     path('pagos/', include('pago.urls')), 
     
     path('', inicio, name='inicio'),
-    path('panel/', inicio_usuarios, name='inicio_admin'),
+    
+    # Aquí dejamos creadas ambas rutas para que ningún botón o redirección falle:
+    path('panel/', inicio_usuarios, name='inicio_usuarios'),
+    path('panel-admin/', inicio_admin, name='inicio_admin'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

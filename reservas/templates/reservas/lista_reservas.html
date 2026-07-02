@@ -1,0 +1,59 @@
+<!-- ===== LISTA RESERVAS ===== -->
+<div id="mc-reservas" class="mc-section active">
+  <div class="mc-sec-header">
+    <p>Consulta, filtra y gestiona todas las reservas del restaurante</p>
+  </div>
+
+  <div class="mc-filter-bar">
+    <input
+      type="text"
+      class="mc-input"
+      id="mc-buscar"
+      placeholder="Buscar por nombre o teléfono..."
+      oninput="mcRenderTabla()"
+    >
+
+    <select
+      class="mc-select"
+      id="mc-filtro-estado"
+      onchange="mcRenderTabla()"
+    >
+      <option value="">Todos los estados</option>
+      <option value="confirmada">Confirmada</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="cancelada">Cancelada</option>
+    </select>
+
+    <select
+      class="mc-select"
+      id="mc-filtro-fecha"
+      onchange="mcRenderTabla()"
+    >
+      <option value="">Todas las fechas</option>
+      <option value="hoy">Hoy</option>
+      <option value="futuras">Próximas</option>
+      <option value="pasadas">Pasadas</option>
+    </select>
+  </div>
+
+  <div class="mc-card" style="padding:0;overflow:hidden">
+    <div class="mc-table-wrap">
+      <table class="mc-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Mesa</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Personas</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody id="mc-tbody-reservas"></tbody>
+      </table>
+    </div>
+  </div>
+</div>

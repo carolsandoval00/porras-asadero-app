@@ -3,7 +3,26 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
-
+<style>
+  .pm-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    background: var(--p-card) !important;
+    border: 1px solid var(--p-border) !important;
+    border-radius: 50px !important;
+    padding: .5rem .7rem !important;
+    overflow-x: auto !important;
+  }
+  .pm-nav-group {
+    flex-wrap: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .pm-nav-group + .pm-nav-group {
+    padding-left: .4rem !important;
+    border-left: 1px solid var(--p-border) !important;
+  }
+</style>
 <div class="pm-wrapper">
   <!-- Cabecera -->
   <div class="pm-header">
@@ -12,9 +31,16 @@
   </div>
 
   {% if messages %}
-    {% for msg in messages %}
-    <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
-    {% endfor %}
+  <div id="modal-mensaje" class="pm-modal-overlay open">
+    <div class="pm-modal-box">
+      {% for msg in messages %}
+      <div class="pm-alert pm-alert-{{ msg.tags }}" style="margin-bottom:.6rem;">{{ msg }}</div>
+      {% endfor %}
+      <div class="pm-modal-actions">
+        <button class="pm-btn pm-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
+      </div>
+    </div>
+  </div>
   {% endif %}
 
   <!-- Navegación Compartida -->
@@ -48,77 +74,72 @@
     </div>
   </div>
 
+  <!-- Filtros de búsqueda -->
+  <form method="get" class="pm-card" style="padding:1rem 1.5rem;margin-bottom:1rem;">
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;">
+      <input type="text" name="q" value="{{ q }}" placeholder="Buscar por cliente o descripción..."
+             class="pm-input" style="flex:1;min-width:200px;">
+      <select name="estado" class="pm-input" style="max-width:200px;">
+        <option value="">Todos los estados</option>
+        {% for valor, etiqueta in estados %}
+        <option value="{{ valor }}" {% if estado_sel == valor %}selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="pm-btn pm-btn-primary">Filtrar</button>
+      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light">Limpiar</a>
+    </div>
+  </form>
+
   <!-- Contenedor del Listado -->
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>Pedidos</h3>
-      <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo pedido</a>
-    </div>
-    <div class="pm-card-body">
-      <!-- Formulario de Búsqueda -->
-      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem;">
-        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
-               type="text" name="q" value="{{ q }}" placeholder=" Buscar mesa…">
-        <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
-          <option value="">Todos los estados</option>
-          {% for val,lbl in estados %}
-          <option value="{{ val }}" {% if estado_sel == val %}selected{% endif %}>{{ lbl }}</option>
-          {% endfor %}
-        </select>
-        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
-      </form>
+  <h3>Pedidos</h3>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+    <a href="{% url 'pedidos:pedido_exportar_pdf' %}?q={{ q }}&estado={{ estado_sel }}"
+       class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
+    <a href="{% url 'pedidos:pedido_exportar_excel' %}?q={{ q }}&estado={{ estado_sel }}"
+       class="pm-btn pm-btn-success pm-btn-sm">⬇ Excel</a>
+    <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm">🖨 Imprimir</button>
+    <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo pedido</a>
+  </div>
+</div>
 
-      {% if pedidos_por_fecha %}
-        {% for grupo in pedidos_por_fecha %}
-        <div class="fecha-grupo">
-          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 mt-4 border-bottom pb-2">
-            <span class="badge text-crema px-3 py-2 rounded-pill fs-7 text-uppercase fw-bold" style="background-color: #C0392B;">
-              {{ grupo.fecha|date:"l d \d\e F \d\e Y" }}
-            </span>
-            <span class="text-muted fw-bold small">
-              {{ grupo.count }} pedido{{ grupo.count|pluralize }}
-            </span>
-          </div>
-          <div class="pm-table-wrap">
-            <table class="pm-table">
-              <thead>
-                <tr>
-                  <th>#</th><th>Mesa/Cliente</th><th>Productos</th>
-                  <th>Descripción</th><th>Estado</th><th>Total</th><th>Hora</th><th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for p in grupo.pedidos %}
-                <tr>
-                  <td><strong>{{ p.pk|stringformat:"02d" }}</strong></td>
-                  <td>{{ p.cliente }}</td>
-                  <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">
-                    {% for item in p.items.all %}
-                      {{ item.cantidad }}x {{ item.producto.nombre }}{% if not forloop.last %}, {% endif %}
-                    {% empty %}—{% endfor %}
-                  </td>
-                  <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)"
-                      title="{{ p.descripcion }}">
-                    {{ p.descripcion|default:"—" }}
-                  </td>
-                  <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
-                  <td><strong>${{ p.total|floatformat:0 }}</strong></td>
-                  <td>{{ p.fecha_creacion|date:"H:i" }}</td>
-                  <td style="display:flex;gap:.3rem;flex-wrap:wrap">
-                    <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
-                    <button class="pm-btn pm-btn-danger pm-btn-sm"
-                            onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">Eliminar</button>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        {% endfor %}
-      {% else %}
-        <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos.</p>
-      {% endif %}
+    <div class="pm-card-body">
+      {% for grupo in pedidos_por_fecha %}
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 mt-4 border-bottom pb-2">
+        <span class="badge text-crema px-3 py-2 rounded-pill fs-7 text-uppercase fw-bold" style="background-color: #C0392B;">
+          {{ grupo.fecha|date:"l d \d\e F \d\e Y" }}
+        </span>
+        <span class="text-muted fw-bold small">
+          {{ grupo.count }} pedido{{ grupo.count|pluralize }}
+        </span>
+      </div>
+      <div class="pm-table-wrap">
+        <table class="pm-table">
+          <thead>
+            <tr><th>#</th><th>Mesa/Cliente</th><th>Estado</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {% for p in grupo.pedidos %}
+            <tr>
+              <td><strong>{{ p.numero_pedido }}</strong></td>
+              <td>{{ p.cliente }}</td>
+              <td><span class="pm-badge pm-badge-{{ p.estado }}">{{ p.get_estado_display }}</span></td>
+              <td>${{ p.total|floatformat:0 }}</td>
+              <td>{{ p.fecha_creacion|date:"d/m/Y H:i" }}</td>
+              <td>
+                <a href="{% url 'pedidos:pedido_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
+                <button class="pm-btn pm-btn-danger pm-btn-sm"
+                        onclick="confirmDelete('pedido',{{ p.pk }},'{{ p.cliente }}')">Eliminar</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% empty %}
+      <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos aún.</p>
+      {% endfor %}
     </div>
   </div>
 </div>

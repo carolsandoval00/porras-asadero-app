@@ -12,13 +12,11 @@ import json
 # ─────────────────────────────────────────────────────────────
 @login_required
 def reserva_view(request):
-    """Renderiza el panel principal de reservas"""
     return render(request, 'reserva_inicio.html')
 
 
 # ─────────────────────────────────────────────────────────────
 # GUARDAR / ACTUALIZAR MESA DESDE EL JS
-# Recibe fetch() desde el template cuando se crea o edita una mesa
 # ─────────────────────────────────────────────────────────────
 @require_POST
 @login_required
@@ -43,13 +41,11 @@ def mesa_guardar(request):
 # ─────────────────────────────────────────────────────────────
 @require_POST
 @login_required
-def mesa_eliminar(request):
-    try:
-        data = json.loads(request.body)
-        Mesa.objects.filter(numero_mesa=data['numero_mesa']).delete()
-        return JsonResponse({'ok': True})
-    except Exception as e:
-        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
+def eliminar_mesa_vista(request, mesa_id):
+    mesa = get_object_or_404(Mesa, numero_mesa=mesa_id)
+    mesa.delete()
+    messages.success(request, f'Mesa {mesa_id} eliminada correctamente.')
+    return redirect('listar_mesas')
 
 
 # ─────────────────────────────────────────────────────────────
@@ -69,29 +65,65 @@ def eliminar_detalle(request):
         else:
             messages.error(request, 'Debes seleccionar una reserva para eliminar.')
 
-    return render(request, 'reservas/eliminar_detalle.html', {
-        'detalles': detalles
-    })
+    context = { 'detalles': detalles }
+    return render(request, 'reservas/eliminar_detalle.html', context)
 
 
 # ─────────────────────────────────────────────────────────────
-# ACTUALIZAR MESA (vista HTML existente)
+# ACTUALIZAR MESA (vista HTML)
 # ─────────────────────────────────────────────────────────────
 @login_required
-def actualizar_mesa(request):
-    mesa = Mesa.objects.first()
-
-    if not mesa:
-        return render(request, 'reservas/sin_mesas.html')
+@login_required
+def actualizar_mesa(request, mesa_id):
+    mesas = Mesa.objects.all().order_by('numero_mesa')
+    mesa = get_object_or_404(Mesa, numero_mesa=mesa_id)
 
     if request.method == 'POST':
+        # Si cambió de mesa en el select, redirige sin guardar
+        nueva_mesa_id = request.POST.get('mesa_id')
+        if nueva_mesa_id and str(nueva_mesa_id) != str(mesa.numero_mesa):
+            return redirect('actualizar_mesa', mesa_id=nueva_mesa_id)
+
         mesa.capacidad = request.POST.get('capacidad')
         mesa.ubicacion = request.POST.get('ubicacion')
         mesa.estado    = request.POST.get('estado')
         mesa.save()
-        messages.success(request, 'Mesa actualizada correctamente.')
-        return redirect('actualizar_mesa')
+        messages.success(request, f'Mesa {mesa.numero_mesa} actualizada correctamente.')
+        return redirect('actualizar_mesa', mesa_id=mesa.numero_mesa)
 
-    return render(request, 'reservas/actualizar_mesa.html', {
-        'mesa': mesa
-    })
+    context = { 'mesa': mesa, 'mesas': mesas, }
+    return render(request, 'reservas/actualizar_mesa.html', context)
+    
+def listar_mesas_vista(request):
+    mesas = Mesa.objects.all().order_by('numero_mesa')
+    context = {'mesas': mesas}
+    return render(request, 'reservas/listar_mesas.html', context)
+
+@login_required
+def crear_reserva(request):
+    return render(request, 'reservas/crear_reserva.html')
+
+
+@login_required
+def crear_reserva(request):
+    context = {
+        'reservas': Reserva.objects.all().order_by('-id'),
+        'mesas': Mesa.objects.all().order_by('numero_mesa'),
+    }
+    return render(request, 'reservas/crear_reserva.html', context)
+
+
+@login_required
+def diagrama_mesas(request):
+    context = {
+        'mesas': Mesa.objects.all().order_by('numero_mesa'),
+    }
+    return render(request, 'reservas/diagrama_mesas.html', context)
+
+
+@login_required
+def gestion_mesas(request):
+    context = {
+        'mesas': Mesa.objects.all().order_by('numero_mesa'),
+    }
+    return render(request, 'reservas/gestion_mesas.html', context)
