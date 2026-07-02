@@ -413,11 +413,12 @@ const bRol = (r) => {
 const bEst = (e) => `<span class="bdg ${e==='activo'?'b-activo':'b-inactivo'}">${e}</span>`;
 
 const avSm = (u, idx) => u.foto
-    ? `<img src="${u.foto}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+    const avSm = (u, idx) => u.foto
+    ? `<img src="${u.foto}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" loading="lazy">`
     : `<div class="av" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
 
 const avLg = (u, idx) => u.foto
-    ? `<img src="${u.foto}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid #FDF7EC;">`
+    ? `<img src="${u.foto}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid #FDF7EC;" loading="lazy">`
     : `<div class="av-lg" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
 
 window.nav = function(id) {
