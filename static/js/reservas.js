@@ -1,18 +1,22 @@
 (function(){
   let reservas       = JSON.parse(localStorage.getItem('mc_reservas') || '[]');
   let mesas          = JSON.parse(localStorage.getItem('mc_mesas')    || '[]');
-  let contadorR      = parseInt(localStorage.getItem('mc_contador_r') || '0');
   let contadorM      = parseInt(localStorage.getItem('mc_contador_m') || '0');
   let editandoId     = null;
   let editandoMesaId = null;
 
-  function nextIdR(){ contadorR++; localStorage.setItem('mc_contador_r', contadorR); return contadorR; }
+  // El id de reserva ya NO se guarda en un contador aparte (localStorage
+  // se desincronizaba: si borrabas todas las reservas, el contador seguía
+  // subiendo y el siguiente id no volvía a 01). Ahora se calcula siempre
+  // a partir de las reservas que existen en ese momento, así el resultado
+  // es consistente sin importar lo que haya quedado guardado antes.
+  localStorage.removeItem('mc_contador_r');
+  function nextIdR(){ return reservas.length ? Math.max(...reservas.map(r=>r.id||0)) + 1 : 1; }
   function nextIdM(){ contadorM++; localStorage.setItem('mc_contador_m', contadorM); return contadorM; }
 
   function save(){
     localStorage.setItem('mc_reservas',   JSON.stringify(reservas));
     localStorage.setItem('mc_mesas',      JSON.stringify(mesas));
-    localStorage.setItem('mc_contador_r', contadorR);
     localStorage.setItem('mc_contador_m', contadorM);
   }
 
@@ -626,8 +630,7 @@
     window.print();
   };
 
-  if(reservas.length) contadorR = Math.max(contadorR, ...reservas.map(r=>r.id||0));
-  if(mesas.length)    contadorM = Math.max(contadorM, ...mesas.map(m=>m.id||0));
+  if(mesas.length) contadorM = Math.max(contadorM, ...mesas.map(m=>m.id||0));
 
   function fijarFechaMin(){
     const input = document.getElementById('mc-c-fecha');
