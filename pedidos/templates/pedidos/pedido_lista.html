@@ -74,37 +74,35 @@
     </div>
   </div>
 
-  <!-- Filtros de búsqueda -->
-  <form method="get" class="pm-card" style="padding:1rem 1.5rem;margin-bottom:1rem;">
-    <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;">
-      <input type="text" name="q" value="{{ q }}" placeholder="Buscar por cliente o descripción..."
-             class="pm-input" style="flex:1;min-width:200px;">
-      <select name="estado" class="pm-input" style="max-width:200px;">
-        <option value="">Todos los estados</option>
-        {% for valor, etiqueta in estados %}
-        <option value="{{ valor }}" {% if estado_sel == valor %}selected{% endif %}>{{ etiqueta }}</option>
-        {% endfor %}
-      </select>
-      <button type="submit" class="pm-btn pm-btn-primary">Filtrar</button>
-      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light">Limpiar</a>
-    </div>
-  </form>
-
   <!-- Contenedor del Listado -->
   <div class="pm-card">
     <div class="pm-card-header">
-  <h3>Pedidos</h3>
-  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
-    <a href="{% url 'pedidos:pedido_exportar_pdf' %}?q={{ q }}&estado={{ estado_sel }}"
-       class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
-    <a href="{% url 'pedidos:pedido_exportar_excel' %}?q={{ q }}&estado={{ estado_sel }}"
-       class="pm-btn pm-btn-success pm-btn-sm">⬇ Excel</a>
-    <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm">🖨 Imprimir</button>
-    <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo pedido</a>
-  </div>
-</div>
+      <h3>Pedidos</h3>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+        <a href="{% url 'pedidos:pedido_exportar_pdf' %}?q={{ q }}&estado={{ estado_sel }}"
+           class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
+        <a href="{% url 'pedidos:pedido_exportar_excel' %}?q={{ q }}&estado={{ estado_sel }}"
+           class="pm-btn pm-btn-success pm-btn-sm">⬇ Excel</a>
+        <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm">🖨 Imprimir</button>
+        <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo pedido</a>
+      </div>
+    </div>
 
     <div class="pm-card-body">
+      <!-- Buscador dentro de la tarjeta (igual que Órdenes) -->
+      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem;">
+        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
+               type="text" name="q" value="{{ q }}" placeholder="Buscar por cliente o descripción…">
+        <select name="estado" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
+          <option value="">Todos los estados</option>
+          {% for valor, etiqueta in estados %}
+          <option value="{{ valor }}" {% if estado_sel == valor %}selected{% endif %}>{{ etiqueta }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
+        <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light pm-btn-sm">Limpiar</a>
+      </form>
+
       {% for grupo in pedidos_por_fecha %}
       <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 mt-4 border-bottom pb-2">
         <span class="badge text-crema px-3 py-2 rounded-pill fs-7 text-uppercase fw-bold" style="background-color: #C0392B;">
