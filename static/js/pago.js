@@ -1,11 +1,22 @@
-// ── Tabs ────────────────────────────────────────────────────
+/**
+ * Muestra una pestaña específica en la interfaz ocultando las demás secciones.
+ *
+ * @param {string} name - Nombre identificador de la pestaña a mostrar.
+ */
 function showTab(name) {
   document.querySelectorAll('.pg-section').forEach(s => s.classList.remove('active'));
   var section = document.getElementById('tab-' + name);
   if (section) section.classList.add('active');
 }
 
-// ── Registrar pago ──────────────────────────────────────────
+/**
+ * Prepara el formulario para registrar un pago asociado a una orden y activa la pestaña correspondiente.
+ *
+ * @param {string} numeroOrden - Número identificador visible de la orden.
+ * @param {number} ordenId - ID interno de la orden en la base de datos.
+ * @param {string} cliente - Nombre del cliente asociado a la orden.
+ * @param {number|string} total - Monto total a pagar.
+ */
 function registrarPago(numeroOrden, ordenId, cliente, total) {
   const ordenSelect = document.querySelector('[name="pedido"]');
   if (ordenSelect) ordenSelect.value = ordenId;
