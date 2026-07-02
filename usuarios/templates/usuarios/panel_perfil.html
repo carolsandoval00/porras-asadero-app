@@ -286,7 +286,7 @@
                 <input type="file" id="foto-input" name="foto" accept="image/*">
                 <div class="perfil-avatar" onclick="document.getElementById('foto-input').click()">
                     {% if usuario.foto %}
-                        <img id="avatar-img" src="{{ usuario.foto.url }}" alt="Foto de {{ usuario.first_name }}">
+                        <img id="avatar-img" src="{{ usuario.foto.url }}" alt="Foto de {{ usuario.first_name }}" loading="lazy">
                     {% else %}
                         <span id="avatar-iniciales">{{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}</span>
                     {% endif %}
@@ -425,6 +425,18 @@
 </div>
 
 <script>
+
+    <script>
+    /**
+     * Gestiona la selección de una nueva foto de perfil.
+     *
+     * Cuando el usuario selecciona una imagen:
+     * 1. Genera una vista previa utilizando FileReader.
+     * 2. Reemplaza la imagen o las iniciales del avatar.
+     * 3. Envía automáticamente el formulario para actualizar la foto.
+     *
+     * @param {Event} event Evento generado al cambiar el input de tipo file.
+     */
     document.getElementById('foto-input').addEventListener('change', function() {
         if (this.files && this.files[0]) {
             // Preview instantáneo
