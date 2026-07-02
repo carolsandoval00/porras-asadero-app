@@ -53,12 +53,10 @@
     if(id==='crear' && !editandoId){ mcLimpiar(); mcPoblarMesas(); }
   };
 
-  function toast(msg, tipo){
-    const t = document.getElementById('mc-toast');
-    t.textContent = msg;
-    t.style.background = tipo === 'error' ? '#C0392B' : '#1A1008';
-    t.classList.add('show');
-    setTimeout(()=> t.classList.remove('show'), 2800);
+ function toast(msg, tipo){
+    document.getElementById('mc-msg-title').textContent = tipo === 'error' ? 'Atención' : '¡Listo!';
+    document.getElementById('mc-msg-text').textContent  = msg;
+    document.getElementById('mc-msg-overlay').classList.add('open');
   }
 
   window.mcCloseConfirm = function(){ document.getElementById('mc-confirm-overlay').classList.remove('open'); };
@@ -146,12 +144,15 @@
     mcPoblarMesas(); fijarFechaMin();
   };
 
-  window.mcRenderTabla = function(){
+  // Devuelve la lista de reservas aplicando los mismos filtros de la tabla
+  // (buscar, estado, fecha). La usan tanto mcRenderTabla como los reportes,
+  // así el PDF/Excel/impresión siempre coinciden con lo que se ve en pantalla.
+  function mcListaFiltrada(){
     const buscar = document.getElementById('mc-buscar').value.toLowerCase();
     const estado = document.getElementById('mc-filtro-estado').value;
     const fecha  = document.getElementById('mc-filtro-fecha').value;
     const h = hoy();
-    let lista = reservas.filter(r=>{
+    return reservas.filter(r=>{
       const mb = r.nombre.toLowerCase().includes(buscar)||r.telefono.includes(buscar);
       const me = !estado||r.estado===estado;
       let mf=true;
@@ -160,6 +161,10 @@
       if(fecha==='pasadas') mf=r.fecha<h;
       return mb&&me&&mf;
     }).sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+  }
+
+  window.mcRenderTabla = function(){
+    let lista = mcListaFiltrada();
     const tb = document.getElementById('mc-tbody-reservas');
     if(!lista.length){
       tb.innerHTML=`<tr><td colspan="8"><div class="mc-empty">
@@ -243,6 +248,109 @@
       ()=>{ reservas=reservas.filter(x=>x.id!==id); save(); mcRenderTabla(); toast('Reserva eliminada'); });
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // REPORTES: PDF / EXCEL / IMPRIMIR
+  // Los tres usan mcListaFiltrada(), o sea que respetan la búsqueda
+  // y los filtros de estado/fecha que estén activos en ese momento.
+  // ─────────────────────────────────────────────────────────────
+  window.mcExportarPDF = function(){
+    const lista = mcListaFiltrada();
+    if(!lista.length){ toast('No hay reservas para exportar','error'); return; }
+    if(!window.jspdf){ toast('No se pudo cargar la librería de PDF','error'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text('Asadero Porras — Reporte de Reservas', 14, 16);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + lista.length + ' reserva(s)', 14, 22);
+
+    const filas = lista.map(r => [
+      '#' + String(r.id).padStart(2, '0'),
+      r.nombre,
+      r.telefono,
+      getMesaLabel(r.mesaId),
+      r.fecha,
+      r.hora,
+      String(r.personas),
+      r.estado,
+    ]);
+
+    doc.autoTable({
+      head: [['ID', 'Cliente', 'Teléfono', 'Mesa', 'Fecha', 'Hora', 'Personas', 'Estado']],
+      body: filas,
+      startY: 28,
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [192, 57, 43], textColor: 255 },
+      alternateRowStyles: { fillColor: [245, 236, 215] },
+    });
+
+    doc.save('reservas_' + hoy() + '.pdf');
+    toast('Reporte PDF generado');
+  };
+
+  window.mcExportarExcel = function(){
+    const lista = mcListaFiltrada();
+    if(!lista.length){ toast('No hay reservas para exportar','error'); return; }
+    if(!window.XLSX){ toast('No se pudo cargar la librería de Excel','error'); return; }
+
+    const datos = lista.map(r => ({
+      'ID':       '#' + String(r.id).padStart(2, '0'),
+      'Cliente':  r.nombre,
+      'Teléfono': r.telefono,
+      'Correo':   r.email || '',
+      'Mesa':     getMesaLabel(r.mesaId),
+      'Fecha':    r.fecha,
+      'Hora':     r.hora,
+      'Personas': r.personas,
+      'Ocasión':  r.ocasion || '',
+      'Estado':   r.estado,
+      'Notas':    r.notas || '',
+    }));
+
+    const hoja = XLSX.utils.json_to_sheet(datos);
+    hoja['!cols'] = [
+      { wch: 8 }, { wch: 22 }, { wch: 13 }, { wch: 24 }, { wch: 22 },
+      { wch: 11 }, { wch: 9 }, { wch: 9 }, { wch: 18 }, { wch: 12 }, { wch: 32 },
+    ];
+
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Reservas');
+    XLSX.writeFile(libro, 'reservas_' + hoy() + '.xlsx');
+    toast('Reporte Excel generado');
+  };
+
+  window.mcImprimir = function(){
+    const lista = mcListaFiltrada();
+    if(!lista.length){ toast('No hay reservas para imprimir','error'); return; }
+
+    const filas = lista.map(r => `<tr>
+        <td>#${String(r.id).padStart(2,'0')}</td>
+        <td>${r.nombre}</td>
+        <td>${r.telefono}</td>
+        <td>${getMesaLabel(r.mesaId)}</td>
+        <td>${r.fecha}</td>
+        <td>${r.hora}</td>
+        <td>${r.personas}</td>
+        <td>${r.estado}</td>
+      </tr>`).join('');
+
+    document.getElementById('mc-print-area').innerHTML = `
+      <h2>Asadero Porras — Reporte de Reservas</h2>
+      <p>Generado el ${new Date().toLocaleString('es-CO')} — ${lista.length} reserva(s)</p>
+      <table>
+        <thead><tr>
+          <th>ID</th><th>Cliente</th><th>Teléfono</th><th>Mesa</th>
+          <th>Fecha</th><th>Hora</th><th>Personas</th><th>Estado</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+
+    window.print();
+  };
+
   window.mcCrearMesa = function(){
     const num = parseInt(document.getElementById('mc-m-numero').value);
     const cap = parseInt(document.getElementById('mc-m-capacidad').value);
@@ -286,16 +394,20 @@
     editandoMesaId = null;
   };
 
-  window.mcRenderTablaMesas = function(){
+  function mcListaMesasFiltrada(){
     const buscar    = document.getElementById('mc-buscar-mesa')?.value.toLowerCase() || '';
     const ubicacion = document.getElementById('mc-filtro-ubicacion')?.value || '';
     const capacidad = document.getElementById('mc-filtro-capacidad')?.value || '';
-    const tb = document.getElementById('mc-tbody-mesas');
-    let lista = mesas.filter(m =>
+    return mesas.filter(m =>
       String(m.numero).includes(buscar) &&
       (!ubicacion || m.ubicacion===ubicacion) &&
       (!capacidad || m.capacidad==capacidad)
     );
+  }
+
+  window.mcRenderTablaMesas = function(){
+    const tb = document.getElementById('mc-tbody-mesas');
+    let lista = mcListaMesasFiltrada();
     if(!lista.length){
       tb.innerHTML = `<tr><td colspan="5"><div class="mc-empty"><p>No se encontraron mesas</p></div></td></tr>`;
       return;
@@ -428,6 +540,90 @@
           .catch(e => console.error('Error eliminando mesa:', e));
         save(); mcRenderTablaMesas(); mcRenderDiagrama(); toast('Mesa eliminada');
       });
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // REPORTES DE MESAS: PDF / EXCEL / IMPRIMIR
+  // Igual que en reservas, usan mcListaMesasFiltrada() para respetar
+  // la búsqueda y los filtros de ubicación/capacidad activos.
+  // ─────────────────────────────────────────────────────────────
+  window.mcExportarMesasPDF = function(){
+    const lista = mcListaMesasFiltrada();
+    if(!lista.length){ toast('No hay mesas para exportar','error'); return; }
+    if(!window.jspdf){ toast('No se pudo cargar la librería de PDF','error'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(16);
+    doc.text('Asadero Porras — Reporte de Mesas', 14, 16);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + lista.length + ' mesa(s)', 14, 22);
+
+    const filas = lista.map(m => [
+      'Mesa ' + m.numero,
+      String(m.capacidad) + ' pers.',
+      m.ubicacion,
+      m.estado,
+    ]);
+
+    doc.autoTable({
+      head: [['Mesa', 'Capacidad', 'Ubicación', 'Estado']],
+      body: filas,
+      startY: 28,
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [192, 57, 43], textColor: 255 },
+      alternateRowStyles: { fillColor: [245, 236, 215] },
+    });
+
+    doc.save('mesas_' + hoy() + '.pdf');
+    toast('Reporte PDF generado');
+  };
+
+  window.mcExportarMesasExcel = function(){
+    const lista = mcListaMesasFiltrada();
+    if(!lista.length){ toast('No hay mesas para exportar','error'); return; }
+    if(!window.XLSX){ toast('No se pudo cargar la librería de Excel','error'); return; }
+
+    const datos = lista.map(m => ({
+      'Mesa':       'Mesa ' + m.numero,
+      'Capacidad':  m.capacidad,
+      'Ubicación':  m.ubicacion,
+      'Estado':     m.estado,
+    }));
+
+    const hoja = XLSX.utils.json_to_sheet(datos);
+    hoja['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }];
+
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Mesas');
+    XLSX.writeFile(libro, 'mesas_' + hoy() + '.xlsx');
+    toast('Reporte Excel generado');
+  };
+
+  window.mcImprimirMesas = function(){
+    const lista = mcListaMesasFiltrada();
+    if(!lista.length){ toast('No hay mesas para imprimir','error'); return; }
+
+    const filas = lista.map(m => `<tr>
+        <td>Mesa ${m.numero}</td>
+        <td>${m.capacidad} pers.</td>
+        <td>${m.ubicacion}</td>
+        <td>${m.estado}</td>
+      </tr>`).join('');
+
+    document.getElementById('mc-print-area').innerHTML = `
+      <h2>Asadero Porras — Reporte de Mesas</h2>
+      <p>Generado el ${new Date().toLocaleString('es-CO')} — ${lista.length} mesa(s)</p>
+      <table>
+        <thead><tr>
+          <th>Mesa</th><th>Capacidad</th><th>Ubicación</th><th>Estado</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+
+    window.print();
   };
 
   if(reservas.length) contadorR = Math.max(contadorR, ...reservas.map(r=>r.id||0));
