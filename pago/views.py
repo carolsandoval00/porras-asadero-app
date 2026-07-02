@@ -13,25 +13,23 @@ from pedidos.models import Pedido
 @login_required
 def pago_dashboard(request):
     """
-    Pantalla principal de pagos y caja.
+    Gestiona el panel principal del módulo de pagos y cajas.
 
-    Aquí pasan varias cosas según el botón que el usuario presione
-    en el formulario (esto se sabe por el campo 'action' que llega
-    en el POST):
+    Permite abrir, cerrar y editar cajas, registrar pagos asociados a
+    pedidos y mostrar la información general del dashboard, incluyendo
+    pedidos pendientes, historial de pagos y estadísticas del módulo.
 
-    - 'abrir_caja': abre una caja nueva para empezar a recibir pagos.
-    - 'cerrar_caja': cierra la caja que estaba abierta.
-    - 'editar_caja': cambia las observaciones de una caja (esto lo
-      hace por AJAX, o sea sin recargar la página).
-    - si no manda ninguna de esas acciones: se asume que el usuario
-      está registrando el pago de un pedido. Solo se puede registrar
-      un pago si hay una caja abierta en ese momento.
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+            En solicitudes GET carga la información del dashboard.
+            En solicitudes POST procesa la acción indicada mediante
+            el parámetro ``action``.
 
-    Cuando el usuario solo entra a la página (sin enviar nada),
-    se le muestra todo: los pedidos que faltan por pagar, el
-    historial de pagos agrupado por fecha, el total de dinero
-    recibido, y la lista de cajas.
+    Returns:
+        HttpResponse: Página principal del módulo de pagos o una
+        redirección al dashboard después de procesar una acción.
     """
+    
     form_apertura = CajaForm()
     form = PagoForm()
 
@@ -138,8 +136,18 @@ def pago_dashboard(request):
 @login_required
 def pago_editar(request, pk):
     """
-    Muestra el formulario para editar un pago ya registrado y
-    guarda los cambios cuando el usuario lo envía.
+    Permite editar la información de un pago registrado.
+
+    Carga el formulario con la información actual del pago y guarda
+    los cambios cuando los datos enviados son válidos.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+        pk (int): Identificador del pago que se desea editar.
+
+    Returns:
+        HttpResponse: Formulario de edición o redirección al
+        dashboard cuando la actualización se realiza correctamente.
     """
     pago = get_object_or_404(Pago, pk=pk)
     form = PagoForm(request.POST or None, instance=pago)
@@ -154,8 +162,18 @@ def pago_editar(request, pk):
 @login_required
 def pago_eliminar(request, pk):
     """
-    Borra un pago. Solo elimina si la petición es POST (por
-    seguridad, para que no se borre solo con entrar al link).
+    Elimina un pago registrado del sistema.
+
+    La eliminación solo se realiza cuando la solicitud es de tipo
+    POST para evitar eliminaciones accidentales mediante una
+    petición GET.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+        pk (int): Identificador del pago que se eliminará.
+
+    Returns:
+        HttpResponseRedirect: Redirección al dashboard de pagos.
     """
     pago = get_object_or_404(Pago, pk=pk)
     if request.method == 'POST':
@@ -167,15 +185,20 @@ def pago_eliminar(request, pk):
 @login_required
 def caja_detalle(request, pk):
     """
-    Muestra el detalle completo de una caja específica: cuánto
-    dinero tenía al abrir, todos los pagos que se recibieron
-    mientras estuvo abierta, y el saldo final (dinero inicial más
-    lo que entró).
+    Muestra el detalle de una caja registrada.
 
-    También le manda a la página la misma información general del
-    dashboard (pedidos sin pagar, historial de pagos, etc.) para
-    que el usuario pueda moverse entre pestañas sin perder el
-    contexto.
+    Obtiene la información de la caja seleccionada, los pagos
+    asociados, los ingresos generados y el saldo final. Además,
+    carga la información general del dashboard para mantener la
+    navegación entre pestañas.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+        pk (int): Identificador de la caja que se desea consultar.
+
+    Returns:
+        HttpResponse: Página del dashboard con el detalle de la
+        caja seleccionada.
     """
     caja_seleccionada = get_object_or_404(Caja, pk=pk)
     pagos_caja = Pago.objects.filter(caja=caja_seleccionada).select_related('pedido').order_by('-fecha_pago')
@@ -230,10 +253,15 @@ def caja_detalle(request, pk):
 
 def _pagos_reporte_queryset():
     """
-    Trae todos los pagos registrados, ordenados del más reciente
-    al más antiguo. La usan las tres funciones de reportes de
-    abajo (Excel, PDF e imprimir) para no repetir la misma consulta
-    tres veces.
+    Obtiene el conjunto de pagos utilizado en los reportes.
+
+    Centraliza la consulta para evitar duplicar código en la
+    generación de reportes en Excel, PDF y vista de impresión.
+
+    Returns:
+        QuerySet[Pago]: Pagos ordenados desde el más reciente hasta
+        el más antiguo, incluyendo las relaciones con el pedido y
+        el cliente.
     """
     return Pago.objects.select_related('pedido', 'pedido__cliente').order_by('-fecha_pago')
 
@@ -241,11 +269,16 @@ def _pagos_reporte_queryset():
 @login_required
 def pagos_exportar_excel(request):
     """
-    Genera un archivo Excel (.xlsx) con todos los pagos registrados
-    y lo manda como descarga al navegador del usuario.
+    Genera un reporte de pagos en formato Excel.
 
-    El archivo incluye: número de orden, cliente, método de pago,
-    monto, referencia, estado, fecha y hora de cada pago.
+    Crea un archivo XLSX con la información de todos los pagos
+    registrados y lo envía como descarga al navegador.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Archivo Excel (.xlsx) generado para descarga.
     """
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
@@ -290,11 +323,16 @@ def pagos_exportar_excel(request):
 @login_required
 def pagos_exportar_pdf(request):
     """
-    Genera un archivo PDF con todos los pagos registrados, en
-    formato de tabla, y lo manda como descarga al navegador.
+    Genera un reporte de pagos en formato PDF.
 
-    Incluye los mismos datos que el reporte de Excel, más una
-    fila al final con el total de dinero recibido.
+    Construye un documento PDF con el listado completo de pagos y
+    el total recaudado, enviándolo como descarga al navegador.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Archivo PDF generado para descarga.
     """
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import letter, landscape
@@ -356,9 +394,16 @@ def pagos_exportar_pdf(request):
 @login_required
 def pagos_imprimir(request):
     """
-    Muestra una versión simple en HTML de todos los pagos
-    registrados, pensada para imprimir directamente desde el
-    navegador (no descarga ningún archivo).
+    Genera una vista HTML para imprimir los pagos registrados.
+
+    Renderiza una plantilla optimizada para impresión con el
+    listado de pagos y el monto total recaudado.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Página HTML preparada para impresión.
     """
     pagos = _pagos_reporte_queryset()
     return render(request, 'pago/pagos_imprimir.html', {
