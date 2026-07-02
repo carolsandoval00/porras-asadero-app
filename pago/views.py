@@ -109,7 +109,7 @@ def pago_dashboard(request):
         'monto_total':      pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'nombre':           request.user.get_full_name() or request.user.username,
         'cajas':            Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
-        'tab_activo':       'pendientes',
+       'tab_activo':       request.GET.get('tab', 'pendientes'),
         'caja_activa':      caja_activa,
     }
     return render(request, 'pago/dashboard.html', context)
