@@ -21,6 +21,21 @@ def reserva_view(request):
 @require_POST
 @login_required
 def mesa_guardar(request):
+    """Guarda o actualiza la información de una mesa en la base de datos.
+
+    Lee los datos desde el cuerpo de la solicitud HTTP en formato JSON y utiliza
+    `update_or_create` para insertar una nueva mesa o actualizar una existente 
+    basada en su número de mesa.
+
+    Args:
+        request (HttpRequest): Objeto de solicitud HTTP de Django. Se espera que contenga 
+            un cuerpo JSON con las claves: 'numero_mesa', 'capacidad', 'ubicacion' y 'estado'.
+
+    Returns:
+        JsonResponse: Respuesta JSON con la clave 'ok' en True si el proceso fue exitoso, 
+            o 'ok' en False junto con el mensaje de 'error' y un código de estado HTTP 400 
+            si ocurre algún fallo.
+    """
     try:
         data = json.loads(request.body)
         Mesa.objects.update_or_create(
@@ -42,6 +57,15 @@ def mesa_guardar(request):
 @require_POST
 @login_required
 def eliminar_mesa_vista(request, mesa_id):
+    """_summary_
+
+    Args:
+        request (_type_): _description_
+        mesa_id (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     mesa = get_object_or_404(Mesa, numero_mesa=mesa_id)
     mesa.delete()
     messages.success(request, f'Mesa {mesa_id} eliminada correctamente.')
