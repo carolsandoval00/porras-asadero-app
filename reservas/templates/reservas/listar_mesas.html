@@ -25,7 +25,9 @@
 </div>
 
 <div class="mc-wrap">
-  <div class="mesa-list-card">
+
+  <div class="mc-card">
+    <div class="mc-card-title">Mesas registradas</div>
     <div class="mc-table-wrap">
       <table class="mc-table">
         <thead>
@@ -77,6 +79,21 @@
     </div>
   </div>
 </div>
+
+{% if messages %}
+<!-- ===== MODAL MENSAJE (éxito / error) ===== -->
+<div class="mc-confirm-overlay open" id="modal-mensaje">
+  <div class="mc-confirm-box">
+    {% for msg in messages %}
+      <h3>{% if msg.tags == 'error' %}Ocurrió un error{% else %}Listo{% endif %}</h3>
+      <p>{{ msg }}</p>
+    {% endfor %}
+    <div class="mc-confirm-btns">
+      <button class="mc-btn mc-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- ===== MODAL CONFIRMAR ELIMINAR ===== -->
 <div class="mc-confirm-overlay" id="confirm-eliminar">
