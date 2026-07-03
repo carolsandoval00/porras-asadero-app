@@ -210,6 +210,76 @@
     </div>
 </div>
 
+{% elif vista == "registro" %}
+<div class="auth-wrap">
+    <div class="auth-card" style="max-width:460px;">
+        <h1 class="auth-title"><i class="bi bi-fire"></i> Crear <span>usuario</span></h1>
+        <p class="auth-sub">Regístrate para ingresar al sistema</p>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} py-2">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'registro' %}">
+            {% csrf_token %}
+
+            <div class="form-row-2 mb-3">
+                <div>
+                    <label>Nombres <span class="text-danger">*</span></label>
+                    <input type="text" name="first_name" class="form-control" required value="{{ form_data.first_name|default:'' }}">
+                </div>
+                <div>
+                    <label>Apellidos <span class="text-danger">*</span></label>
+                    <input type="text" name="last_name" class="form-control" required value="{{ form_data.last_name|default:'' }}">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label>Correo electrónico <span class="text-danger">*</span></label>
+                <input type="email" name="email" class="form-control" required value="{{ form_data.email|default:'' }}">
+            </div>
+
+            <div class="mb-3">
+                <label>Nombre de usuario <span class="text-danger">*</span></label>
+                <input type="text" name="username" class="form-control" required value="{{ form_data.username|default:'' }}" autocomplete="username">
+            </div>
+
+            <div class="form-row-2 mb-3">
+                <div>
+                    <label>Contraseña <span class="text-danger">*</span></label>
+                    <input type="password" name="password" class="form-control" required autocomplete="new-password">
+                </div>
+                <div>
+                    <label>Confirmar contraseña <span class="text-danger">*</span></label>
+                    <input type="password" name="password2" class="form-control" required autocomplete="new-password">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label>¿Cuál va a ser tu rol? <span class="text-danger">*</span></label>
+                <div class="rol-grid">
+                    <div>
+                        <input type="radio" name="rol" id="rol_reg_mesero" value="MESERO" class="rol-opt" {% if form_data.rol == 'CAJERO' %}{% else %}checked{% endif %}>
+                        <label for="rol_reg_mesero" class="rol-label"><i class="bi bi-clipboard-check me-1"></i>Mesero</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="rol" id="rol_reg_cajero" value="CAJERO" class="rol-opt" {% if form_data.rol == 'CAJERO' %}checked{% endif %}>
+                        <label for="rol_reg_cajero" class="rol-label"><i class="bi bi-cash-coin me-1"></i>Cajero</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-auth">
+                <i class="bi bi-check-circle me-2"></i>Crear cuenta y entrar
+            </button>
+
+            <a href="{% url 'login' %}" class="btn-auth-outline">Ya tengo cuenta, iniciar sesión</a>
+        </form>
+    </div>
+</div>
+
 {% elif vista == "inicio" %}
 <div class="auth-wrap" style="align-items: flex-start; padding-top: 3rem; min-height: auto;">
     <div class="auth-card" style="max-width: 1100px;">
@@ -245,19 +315,23 @@
             </a>
             {% endif %}
 
+            {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.is_superuser %}
             <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
                <i class="bi bi-receipt"></i>
                <h3>Ver Pedidos</h3>
                </a>
+            <a href="{% url 'reserva_inicio' %}" class="dash-card">
+               <i class="bi bi-calendar-check"></i>
+               <h3>Reservas y Mesas</h3>
+               </a>
+            {% endif %}
+
+            {% if user.rol == 'ADMIN' or user.rol == 'CAJERO' or user.is_superuser %}
             <a href="{% url 'pago:dashboard' %}" class="dash-card">
                <i class="bi bi-credit-card"></i>
                <h3>Gestión de Pagos</h3>
                </a>
-
-            <a href="{% url 'reserva_inicio' %}" class="dash-card">
-               <i class="bi bi-calendar-check"></i>
-               <h3>Reservas y Mesas</h3>
-               </a>      
+            {% endif %}
         </div>
 
         <div class="mt-5">

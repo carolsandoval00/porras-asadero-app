@@ -12,6 +12,24 @@ from pedidos.models import Pedido
 
 @login_required
 def pago_dashboard(request):
+    """
+    Gestiona el panel principal del módulo de pagos y cajas.
+
+    Permite abrir, cerrar y editar cajas, registrar pagos asociados a
+    pedidos y mostrar la información general del dashboard, incluyendo
+    pedidos pendientes, historial de pagos y estadísticas del módulo.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+            En solicitudes GET carga la información del dashboard.
+            En solicitudes POST procesa la acción indicada mediante
+            el parámetro ``action``.
+
+    Returns:
+        HttpResponse: Página principal del módulo de pagos o una
+        redirección al dashboard después de procesar una acción.
+    """
+    
     form_apertura = CajaForm()
     form = PagoForm()
 
@@ -109,7 +127,7 @@ def pago_dashboard(request):
         'monto_total':      pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'nombre':           request.user.get_full_name() or request.user.username,
         'cajas':            Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
-       'tab_activo':       request.GET.get('tab', 'pendientes'),
+        'tab_activo':       request.GET.get('tab', 'pendientes'),
         'caja_activa':      caja_activa,
     }
     return render(request, 'pago/dashboard.html', context)
@@ -117,6 +135,20 @@ def pago_dashboard(request):
 
 @login_required
 def pago_editar(request, pk):
+    """
+    Permite editar la información de un pago registrado.
+
+    Carga el formulario con la información actual del pago y guarda
+    los cambios cuando los datos enviados son válidos.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+        pk (int): Identificador del pago que se desea editar.
+
+    Returns:
+        HttpResponse: Formulario de edición o redirección al
+        dashboard cuando la actualización se realiza correctamente.
+    """
     pago = get_object_or_404(Pago, pk=pk)
     form = PagoForm(request.POST or None, instance=pago)
     if form.is_valid():
@@ -129,6 +161,20 @@ def pago_editar(request, pk):
 
 @login_required
 def pago_eliminar(request, pk):
+    """
+    Elimina un pago registrado del sistema.
+
+    La eliminación solo se realiza cuando la solicitud es de tipo
+    POST para evitar eliminaciones accidentales mediante una
+    petición GET.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+        pk (int): Identificador del pago que se eliminará.
+
+    Returns:
+        HttpResponseRedirect: Redirección al dashboard de pagos.
+    """
     pago = get_object_or_404(Pago, pk=pk)
     if request.method == 'POST':
         pago.delete()
@@ -138,6 +184,22 @@ def pago_eliminar(request, pk):
 
 @login_required
 def caja_detalle(request, pk):
+    """
+    Muestra el detalle de una caja registrada.
+
+    Obtiene la información de la caja seleccionada, los pagos
+    asociados, los ingresos generados y el saldo final. Además,
+    carga la información general del dashboard para mantener la
+    navegación entre pestañas.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+        pk (int): Identificador de la caja que se desea consultar.
+
+    Returns:
+        HttpResponse: Página del dashboard con el detalle de la
+        caja seleccionada.
+    """
     caja_seleccionada = get_object_or_404(Caja, pk=pk)
     pagos_caja = Pago.objects.filter(caja=caja_seleccionada).select_related('pedido').order_by('-fecha_pago')
 
@@ -188,12 +250,34 @@ def caja_detalle(request, pk):
 # ──────────────────────────────────────────────
 
 def _pagos_reporte_queryset():
-    """Pagos registrados, ordenados igual que en el listado."""
+    """
+    Obtiene el conjunto de pagos utilizado en los reportes.
+
+    Centraliza la consulta para evitar duplicar código en la
+    generación de reportes en Excel, PDF y vista de impresión.
+
+    Returns:
+        QuerySet[Pago]: Pagos ordenados desde el más reciente hasta
+        el más antiguo, incluyendo las relaciones con el pedido y
+        el cliente.
+    """
     return Pago.objects.select_related('pedido', 'pedido__cliente').order_by('-fecha_pago')
 
 
 @login_required
 def pagos_exportar_excel(request):
+    """
+    Genera un reporte de pagos en formato Excel.
+
+    Crea un archivo XLSX con la información de todos los pagos
+    registrados y lo envía como descarga al navegador.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Archivo Excel (.xlsx) generado para descarga.
+    """
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
 
@@ -236,6 +320,18 @@ def pagos_exportar_excel(request):
 
 @login_required
 def pagos_exportar_pdf(request):
+    """
+    Genera un reporte de pagos en formato PDF.
+
+    Construye un documento PDF con el listado completo de pagos y
+    el total recaudado, enviándolo como descarga al navegador.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Archivo PDF generado para descarga.
+    """
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import letter, landscape
     from reportlab.lib.units import cm
@@ -295,10 +391,21 @@ def pagos_exportar_pdf(request):
 
 @login_required
 def pagos_imprimir(request):
+    """
+    Genera una vista HTML para imprimir los pagos registrados.
+
+    Renderiza una plantilla optimizada para impresión con el
+    listado de pagos y el monto total recaudado.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Página HTML preparada para impresión.
+    """
     pagos = _pagos_reporte_queryset()
     return render(request, 'pago/pagos_imprimir.html', {
         'pagos': pagos,
         'ahora': timezone.now(),
         'total': pagos.aggregate(t=Sum('monto'))['t'] or 0,
     })
-    return render(request, 'pago/dashboard.html', context)

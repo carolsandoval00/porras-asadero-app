@@ -35,7 +35,7 @@
     dashboardUrl: "{% url 'pago:dashboard' %}"
   };
 </script>
-<script src="{%static 'js/pago.js'%}"></script>
+<script src="{%static 'js/pago.js'%}" defer></script>
 
 {% if messages %}
   {% for msg in messages %}

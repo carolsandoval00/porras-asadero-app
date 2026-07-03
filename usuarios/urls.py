@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     # AUTENTICACIÓN
     path('login/',       views.login_view,            name='login'),
+    path('registro/',    views.registro_view,          name='registro'),
     path('logout/',      views.logout_view,            name='logout'),
     path('acceder/',     views.acceder_sistema,        name='acceder_sistema'),
     path('redireccion/', views.redireccion_post_login, name='redireccion'),
@@ -14,6 +15,7 @@ urlpatterns = [
     path('perfil/',            views.panel_perfil,      name='panel_perfil'),
     path('inactivar/',         views.inactivar_usuario, name='inactivar_usuario'),
     path('eliminar/<int:id>/', views.eliminar_usuario,  name='eliminar_usuario'),
+    path('sin-permisos/',      views.validar_permisos,  name='validar_permisos'),
 
     # ENDPOINTS JSON
     path('crear/',              views.crear_usuario,       name='crear_usuario'),
