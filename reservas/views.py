@@ -168,7 +168,10 @@ def actualizar_mesa(request, mesa_id):
     de la mesa indicada. En POST, guarda los cambios enviados. Si el
     usuario cambia de mesa en el selector del formulario sin haber
     guardado aún, la vista redirige a editar esa otra mesa en lugar
-    de sobrescribir por error los datos de la mesa anterior.
+    de sobrescribir por error los datos de la mesa anterior. Tras
+    guardar los cambios exitosamente, redirige al listado de mesas
+    (``listar_mesas``) mostrando el mensaje de éxito, igual que el
+    resto de acciones del módulo (eliminar mesa, eliminar reserva).
 
     Args:
         request (HttpRequest): Petición GET o POST. En POST puede
@@ -186,9 +189,10 @@ def actualizar_mesa(request, mesa_id):
         HttpResponse: En GET, renderiza
             ``reservas/actualizar_mesa.html`` con el contexto
             ``{'mesa': <Mesa>, 'mesas': <QuerySet de Mesa>}``.
-        HttpResponseRedirect: En POST, redirige nuevamente a
-            ``actualizar_mesa`` (ya sea porque cambió de mesa en el
-            selector, o tras guardar los cambios exitosamente).
+        HttpResponseRedirect: En POST, redirige a ``actualizar_mesa``
+            si el usuario solo cambió de mesa en el selector (sin
+            guardar), o a ``listar_mesas`` tras guardar los cambios
+            exitosamente.
 
     Raises:
         Http404: Si no existe ninguna mesa con ese ``numero_mesa``
@@ -208,7 +212,7 @@ def actualizar_mesa(request, mesa_id):
         mesa.estado    = request.POST.get('estado')
         mesa.save()
         messages.success(request, f'Mesa {mesa.numero_mesa} actualizada correctamente.')
-        return redirect('actualizar_mesa', mesa_id=mesa.numero_mesa)
+        return redirect('listar_mesas')
 
     context = { 'mesa': mesa, 'mesas': mesas, }
     return render(request, 'reservas/actualizar_mesa.html', context)
