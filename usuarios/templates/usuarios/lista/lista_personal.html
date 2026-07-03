@@ -413,13 +413,23 @@ const bRol = (r) => {
 const bEst = (e) => `<span class="bdg ${e==='activo'?'b-activo':'b-inactivo'}">${e}</span>`;
 
 const avSm = (u, idx) => u.foto
-    ? `<img src="${u.foto}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+    const avSm = (u, idx) => u.foto
+    ? `<img src="${u.foto}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" loading="lazy">`
     : `<div class="av" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
 
 const avLg = (u, idx) => u.foto
-    ? `<img src="${u.foto}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid #FDF7EC;">`
+    ? `<img src="${u.foto}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid #FDF7EC;" loading="lazy">`
     : `<div class="av-lg" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
 
+/**
+ * Cambia entre las diferentes secciones del módulo de usuarios.
+ * Activa la pestaña correspondiente y ejecuta las acciones necesarias
+ * según la vista seleccionada.
+ *
+ * @function nav
+ * @param {string} id - Identificador de la sección (lista, perfil o crear).
+ * @returns {void}
+ */
 window.nav = function(id) {
     document.querySelectorAll('.usr-sec').forEach(s => s.classList.remove('activa'));
     document.getElementById('sec-' + id).classList.add('activa');
@@ -432,6 +442,14 @@ window.nav = function(id) {
     if (id === 'crear' && !editId) { limpiar(); }
 };
 
+/**
+ * Muestra una notificación temporal en pantalla.
+ *
+ * @function toast
+ * @param {string} msg - Mensaje que se mostrará.
+ * @param {string} [tipo] - Tipo de notificación (ok o err).
+ * @returns {void}
+ */
 function toast(msg, tipo) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.className = 'toast show ' + (tipo || '');
@@ -439,6 +457,17 @@ function toast(msg, tipo) {
 }
 
 window.cConfirm = () => document.getElementById('cf-bg').classList.remove('open');
+
+/**
+ * Abre el cuadro de confirmación antes de ejecutar
+ * una acción irreversible.
+ *
+ * @function confirm2
+ * @param {string} tit - Título de la ventana.
+ * @param {string} msg - Mensaje de confirmación.
+ * @param {Function} cb - Función que se ejecutará al confirmar.
+ * @returns {void}
+ */
 function confirm2(tit, msg, cb) {
     document.getElementById('cf-tit').textContent = tit;
     document.getElementById('cf-msg').textContent = msg;
@@ -447,6 +476,13 @@ function confirm2(tit, msg, cb) {
 }
 window.cModal = id => document.getElementById(id).classList.remove('open');
 
+/**
+ * Calcula y actualiza las estadísticas generales de usuarios,
+ * incluyendo el total, activos, inactivos y administradores.
+ *
+ * @function stats
+ * @returns {void}
+ */
 function stats() {
     const t  = uList.length,
           a  = uList.filter(u => u.e === 'activo').length,
@@ -459,6 +495,15 @@ function stats() {
          <div class="stat-box"><div class="stat-num">${ad}</div><div class="stat-lbl"><span class="s-dot" style="background:#D4A017"></span>Admins</div></div>`;
 }
 
+/**
+ * Genera dinámicamente la tabla de usuarios aplicando los filtros
+ * de búsqueda, rol y estado.
+ *
+ * También actualiza las estadísticas mostradas en la parte superior.
+ *
+ * @function renderTabla
+ * @returns {void}
+ */
 window.renderTabla = function() {
     stats();
     const q = document.getElementById('f-buscar').value.toLowerCase();
@@ -490,6 +535,13 @@ window.renderTabla = function() {
         </tr>`).join('');
 };
 
+/**
+ * Muestra toda la información de un usuario en la vista de perfil.
+ *
+ * @function verPerfil
+ * @param {number} id - Identificador del usuario.
+ * @returns {void}
+ */
 window.verPerfil = function(id) {
     const u = uList.find(x => x.id === id); if (!u) return;
     const idx = uList.indexOf(u);
@@ -543,6 +595,14 @@ window.verPerfil = function(id) {
     nav('perfil');
 };
 
+/**
+ * Carga la información de un usuario dentro del formulario
+ * para permitir su edición.
+ *
+ * @function editar
+ * @param {number} id - Identificador del usuario a editar.
+ * @returns {void}
+ */
 window.editar = function(id) {
     const u = uList.find(x => x.id === id); if (!u) return;
     editId = id; nav('crear');
@@ -569,6 +629,16 @@ window.editar = function(id) {
     }, 30);
 };
 
+/**
+ * Valida la información del formulario y registra o actualiza
+ * un usuario mediante una petición al servidor.
+ *
+ * Si el usuario ya existe, se actualizan sus datos; de lo contrario,
+ * se crea un nuevo registro.
+ *
+ * @function guardar
+ * @returns {void}
+ */
 window.guardar = function() {
     const nom = document.getElementById('u-nom').value.trim();
     const ape = document.getElementById('u-ape').value.trim();
@@ -644,6 +714,13 @@ window.guardar = function() {
     .catch(() => toast('Error de conexión', 'err'));
 };
 
+/**
+ * Restablece todos los campos del formulario y deja
+ * la interfaz preparada para registrar un nuevo usuario.
+ *
+ * @function limpiar
+ * @returns {void}
+ */
 window.limpiar = function() {
     editId = null;
     ['u-nom','u-ape','u-email','u-tel','u-doc','u-user','u-dir','u-notas','u-pw','u-pw2']
@@ -659,12 +736,28 @@ window.limpiar = function() {
     renderPermsForm([]);
 };
 
+/**
+ * Construye dinámicamente la lista de permisos disponibles
+ * y marca aquellos que ya tiene asignados el usuario.
+ *
+ * @function renderPermsForm
+ * @param {string[]} activos - Lista de permisos activos.
+ * @returns {void}
+ */
 function renderPermsForm(activos) {
     document.getElementById('perm-form').innerHTML =
         PERMS.map(p => `<div class="perm-it ${activos.includes(p)?'on':''}" data-p="${p}"
             onclick="this.classList.toggle('on')"><div class="perm-dot"></div>${p}</div>`).join('');
 }
 
+/**
+ * Solicita la confirmación para eliminar un usuario y,
+ * si se confirma, envía la petición al servidor.
+ *
+ * @function pedirDel
+ * @param {number} id - Identificador del usuario.
+ * @returns {void}
+ */
 window.pedirDel = function(id) {
     const u = uList.find(x => x.id === id); if (!u) return;
     confirm2(
@@ -705,17 +798,40 @@ window.pedirDel = function(id) {
     );
 };
 
+/**
+ * Alterna la visibilidad de un campo de contraseña.
+ *
+ * @function tPw
+ * @param {string} id - Identificador del input de contraseña.
+ * @param {HTMLButtonElement} btn - Botón que cambia entre "Ver" y "Ocultar".
+ * @returns {void}
+ */
 window.tPw = function(id, btn) {
     const el = document.getElementById(id);
     const h  = el.type === 'password';
     el.type  = h ? 'text' : 'password';
     btn.textContent = h ? 'Ocultar' : 'Ver';
 };
+
+/**
+ * Muestra u oculta los campos para cambiar la contraseña
+ * cuando el usuario activa la opción correspondiente.
+ *
+ * @function tPwEdit
+ * @returns {void}
+ */
 window.tPwEdit = function() {
     document.getElementById('pw-edit-campos').style.display =
         document.getElementById('cb-pw').checked ? '' : 'none';
 };
 
+/**
+ * Inicializa datos de ejemplo cuando no existen usuarios
+ * registrados en el almacenamiento local.
+ *
+ * @function initDemo
+ * @returns {void}
+ */
 function initDemo() {
     if (uList.length) return;
     uList = [
