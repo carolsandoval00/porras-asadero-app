@@ -85,9 +85,7 @@ class PagoModelTest(TestCase):
         )
         # AJUSTA estos campos según los campos reales de tu modelo Pedido
         self.pedido = Pedido.objects.create(
-            # mesa=1,
-            # estado='PENDIENTE',
-            # total=Decimal('25000.00'),
+            mesero=self.cajero
         )
 
     def test_crear_pago_con_valores_por_defecto(self):
@@ -163,7 +161,9 @@ class CajaPagoIntegracionTest(TestCase):
             monto_inicial=Decimal('100000.00'),
             cajero=self.cajero
         )
-        self.pedido = Pedido.objects.create()  # ajusta campos obligatorios
+        self.pedido = Pedido.objects.create(
+            mesero=self.cajero
+        )
 
     def test_suma_de_pagos_registrados_en_caja(self):
         Pago.objects.create(pedido=self.pedido, caja=self.caja, monto=Decimal('20000'))

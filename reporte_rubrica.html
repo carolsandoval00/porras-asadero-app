@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Reporte de Auditoria de Calidad - Proyecto Monagua</title>
+    <title>Reporte de Auditoria de Calidad - Proyecto porras-asadero-app</title>
     <style>
         @page {
             size: letter;
@@ -133,19 +133,19 @@
 <body>
     <div class="header">
         <div class="title">REPORTE DE AUDITORIA TECNICA</div>
-        <div class="subtitle">Evaluacion de Calidad - Proyecto Monagua</div>
+        <div class="subtitle">Evaluacion de Calidad - Proyecto porras-asadero-app</div>
     </div>
     
     <div class="summary-box">
         <table class="summary-table">
             <tr>
                 <td width="35%">
-                    <div class="score-large">86 / 100</div>
+                    <div class="score-large">97 / 100</div>
                     <div style="text-align: center; color: #64748b; font-size: 9pt;">PUNTUACION GLOBAL</div>
                 </td>
                 <td width="65%">
-                    <div class="status-badge status-YELLOW">
-                        ESTADO: ACEPTABLE CON DETALLES POR CORREGIR
+                    <div class="status-badge status-GREEN">
+                        ESTADO: EXCELENTE / LISTO PARA ENTREGA
                     </div>
                     <div style="margin-top: 10px; font-size: 9.5pt;">
                         Este reporte autoevalua el cumplimiento del proyecto frente a los 12 puntos de control de la rubrica tecnica de desarrollo (Frontend y Backend).
@@ -165,7 +165,7 @@
             </tr>
         </table>
         <div class="point-desc">Excelente. La arquitectura de Django Templates usa herencia de plantillas de forma modular.</div>
-        <ul class="metrics-list"><li>Total de plantillas HTML detectadas: 39</li><li>Plantillas que heredan ({% extends %}): 23</li><li>Plantillas con fragmentos reusables ({% include %}): 4</li><li>Bloques definidos ({% block %}): 25</li><li>Uso de static ({% load static %}): 19</li></ul>
+        <ul class="metrics-list"><li>Total de plantillas HTML detectadas: 39</li><li>Plantillas que heredan ({% extends %}): 23</li><li>Plantillas con fragmentos reusables ({% include %}): 4</li><li>Bloques definidos ({% block %}): 25</li><li>Uso de static ({% load static %}): 20</li></ul>
     </div>
 
     <div class="point-card">
@@ -194,11 +194,11 @@
         <table class="point-header-table">
             <tr>
                 <td class="point-title" width="80%">4. 4. Estilos y metodologías CSS (BEM / Atómico)</td>
-                <td class="point-score score-val-GREEN" width="20%">70 / 100</td>
+                <td class="point-score score-val-RED" width="20%">70 / 100</td>
             </tr>
         </table>
         <div class="point-desc">Diseño atómico basado en Bootstrap 5 / metodología BEM aplicado de forma general.</div>
-        <ul class="metrics-list"><li>Archivos CSS en la carpeta estática: 4</li><li>Selectores con estructura BEM (__ o --) detectados: 0</li><li>Estructuras de diseño atómico (clases utilitarias Bootstrap): 766</li><li>Estilos en línea (style='...') en HTML: 284 (se sugiere minimizarlos)</li></ul>
+        <ul class="metrics-list"><li>Archivos CSS en la carpeta estática: 4</li><li>Selectores con estructura BEM (__ o --) detectados: 0</li><li>Estructuras de diseño atómico (clases utilitarias Bootstrap): 777</li><li>Estilos en línea (style='...') en HTML: 257 (se sugiere minimizarlos)</li><li>Estilos en línea detectados por archivo:</li><li>  - pedidos\templates\pedidos\categoria_lista.html: líneas 37, 81, 92, 93, 107, 108, 115</li><li>  - pedidos\templates\pedidos\cliente_lista.html: líneas 37, 81, 92, 93, 109, 110, 117</li><li>  - pedidos\templates\pedidos\dashboard.html: líneas 77, 81, 85, 89, 93, 126</li><li>  - pedidos\templates\pedidos\orden_detalle.html: líneas 59, 88, 102, 103, 110, 111, 112, 120, 121, 122, 123, 126, 131, 132, 135, 136, 139, 140, 154, 155, 175, 185, 187</li><li>  - pedidos\templates\pedidos\orden_lista.html: líneas 37, 84, 85, 94, 116, 128</li><li>  - pedidos\templates\pedidos\pedido_form.html: líneas 83, 87, 110, 112, 134, 135, 138, 141, 145, 146, 147, 148, 153, 154, 155, 228, 230, 233, 234</li><li>  - pedidos\templates\pedidos\pedido_lista.html: líneas 37, 78, 79, 81, 82, 97, 110, 141</li><li>  - pedidos\templates\pedidos\producto_lista.html: líneas 37, 81, 92, 93, 95, 115, 123, 130</li><li>  - reservas\templates\reserva_inicio.html: líneas 11, 12, 13, 15, 16, 19, 81, 83, 84</li><li>  - reservas\templates\reservas\actualizar_mesa.html: líneas 9, 10, 11, 12</li><li>  - reservas\templates\reservas\diagrama_mesas.html: líneas 17, 22</li><li>  - reservas\templates\reservas\eliminar_detalle.html: líneas 8, 9, 11, 12, 15, 34, 36, 38, 43, 59, 68, 69, 70, 84, 85, 87, 88, 130, 131, 135</li><li>  - reservas\templates\reservas\gestion_mesas.html: líneas 12, 17, 22, 30, 39, 40, 47, 48, 49, 54</li><li>  - reservas\templates\reservas\lista_reservas.html: líneas 45</li><li>  - reservas\templates\reservas\listar_mesas.html: líneas 10, 11, 13, 14, 17, 56, 88</li><li>  - templates\administrador\index.html: líneas 20, 27, 43, 59, 75, 117, 140</li><li>  - templates\base 2.html: líneas 33, 35, 41</li><li>  - templates\base.html: líneas 14</li><li>  - templates\partials\aside.html: líneas 16, 18, 21, 26, 34, 42, 44, 49, 59, 67, 69, 74, 79, 84, 89, 94, 105, 113, 115, 120, 125, 130, 140, 148, 150, 155, 160, 169, 172, 186, 188, 191, 192, 198, 199, 200, 206, 211, 219, 227, 229, 234, 244, 252, 254, 259, 264, 269, 274, 279, 291, 298, 302, 309, 316, 323, 330, 337, 344, 346</li><li>  - templates\partials\footer.html: líneas 2, 3, 4</li><li>  - templates\partials\nav.html: líneas 3, 6, 12, 13, 14</li><li>  - usuarios\templates\usuarios\lista\lista_personal.html: líneas 193, 221, 236, 237, 239, 240, 248, 249, 251, 252, 311, 312, 315, 364, 416, 417, 420, 421, 456, 457, 458, 459, 478, 482, 485, 514, 517, 526, 527, 538, 539</li><li>  - usuarios\templates\usuarios\login.html: líneas 182, 214, 215, 265, 273, 274, 377, 378</li></ul>
     </div>
 
     <div class="point-card">
@@ -220,18 +220,18 @@
             </tr>
         </table>
         <div class="point-desc">Cumplido. Se realizan validaciones robustas tanto en backend (Django Forms) como en frontend.</div>
-        <ul class="metrics-list"><li>Formularios de Django estructurados (forms.py): 4</li><li>Llamadas a validación segura en vistas (.is_valid()): 14</li><li>Atributos de validación HTML5 en plantillas frontend: 25</li><li>  - .\pago\forms.py</li><li>  - .\pedidos\forms.py</li><li>  - .\reservas\forms.py</li><li>  - .\usuarios\forms.py</li></ul>
+        <ul class="metrics-list"><li>Formularios de Django estructurados (forms.py): 4</li><li>Llamadas a validación segura en vistas (.is_valid()): 15</li><li>Atributos de validación HTML5 en plantillas frontend: 25</li><li>  - .\pago\forms.py</li><li>  - .\pedidos\forms.py</li><li>  - .\reservas\forms.py</li><li>  - .\usuarios\forms.py</li></ul>
     </div>
 
     <div class="point-card">
         <table class="point-header-table">
             <tr>
                 <td class="point-title" width="80%">7. 7. Configuración limpia por Variables de Entorno</td>
-                <td class="point-score score-val-RED" width="20%">10 / 100</td>
+                <td class="point-score score-val-GREEN" width="20%">100 / 100</td>
             </tr>
         </table>
-        <div class="point-desc">Datos sensibles expuestos críticamente en el repositorio. Falta el uso de variables de entorno.</div>
-        <ul class="metrics-list"><li>Archivo .env o .env.example presente: No</li><li>Llamadas a variables de entorno en código (os.getenv/decouple): 5</li><li>  [ALERTA] Credencial expuesta: SECRET_KEY expuesta en settings.py</li></ul>
+        <div class="point-desc">Perfecto. Configuración limpia basada en variables de entorno sin datos sensibles expuestos.</div>
+        <ul class="metrics-list"><li>Archivo .env o .env.example presente: No (pero se detectó configuración de dotenv en código)</li><li>Llamadas a variables de entorno en código (os.getenv/decouple): 6</li></ul>
     </div>
 
     <div class="point-card">
@@ -260,22 +260,22 @@
         <table class="point-header-table">
             <tr>
                 <td class="point-title" width="80%">10. 10. Optimización de carga (Lazy loading / split)</td>
-                <td class="point-score score-val-YELLOW" width="20%">75 / 100</td>
+                <td class="point-score score-val-GREEN" width="20%">100 / 100</td>
             </tr>
         </table>
-        <div class="point-desc">Optimización parcial. Añade loading='lazy' en imágenes pesadas de tus catálogos o galerías.</div>
-        <ul class="metrics-list"><li>Imágenes o recursos con carga diferida (loading='lazy'): 1</li><li>Uso de scripts asíncronos o diferidos (async/defer): 0</li></ul>
+        <div class="point-desc">Técnicas de carga diferida (lazy loading) e importación asíncrona de recursos implementadas correctamente.</div>
+        <ul class="metrics-list"><li>Imágenes o recursos con carga diferida (loading='lazy'): 1</li><li>Uso de scripts asíncronos o diferidos (async/defer): 8</li></ul>
     </div>
 
     <div class="point-card">
         <table class="point-header-table">
             <tr>
                 <td class="point-title" width="80%">11. 11. Documentación (JSDoc / Comentarios)</td>
-                <td class="point-score score-val-YELLOW" width="20%">80 / 100</td>
+                <td class="point-score score-val-GREEN" width="20%">100 / 100</td>
             </tr>
         </table>
-        <div class="point-desc">Nivel de documentación adecuado, pero se recomienda documentar clases y funciones complejas.</div>
-        <ul class="metrics-list"><li>Archivos de código escaneados: 42 Python, 3 JavaScript</li><li>Docstrings de documentación en Python: 40</li><li>Comentarios estilo JSDoc en JavaScript: 0</li></ul>
+        <div class="point-desc">Código fuente ampliamente documentado con estándares JSDoc y Docstrings descriptivos.</div>
+        <ul class="metrics-list"><li>Archivos de código escaneados: 42 Python, 3 JavaScript</li><li>Docstrings de documentación en Python: 44</li><li>Comentarios estilo JSDoc en JavaScript: 2</li></ul>
     </div>
 
     <div class="point-card">
@@ -289,18 +289,17 @@
         <ul class="metrics-list"><li>Media Queries detectadas en hojas de estilo CSS: 5</li><li>Uso de contenedores y rejillas responsivas (Bootstrap Grid/Flexbox): 87</li></ul>
     </div>
 
+    
     <div class="sugerencias-box">
         <div class="sugerencias-title">RECOMENDACIONES CLAVE PARA MEJORA:</div>
         <ul style="margin: 0; padding-left: 20px; font-size: 9pt; color: #78350f;">
-            <li>Migrar las variables SECRET_KEY y EMAIL_HOST_PASSWORD a variables de entorno (.env).</li>
             <li>Reducir el uso de estilos en linea (style="...") en las plantillas HTML (trasladar a CSS).</li>
-            <li>Añadir loading="lazy" a imagenes y async/defer a scripts.</li>
-            <li>Mejorar documentacion de metodos complejos del frontend usando estandar JSDoc.</li>
         </ul>
     </div>
+
     
     <div id="footer_content" class="footer">
-        Reporte generado automaticamente - Proyecto Monagua &bull; Pagina <pdf:pagenumber> de <pdf:pagecount>
+        Reporte generado automaticamente - Proyecto porras-asadero-app &bull; Pagina <pdf:pagenumber> de <pdf:pagecount>
     </div>
 </body>
 </html>

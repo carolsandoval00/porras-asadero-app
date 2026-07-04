@@ -25,6 +25,17 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 # ── HELPERS PRIVADOS ────────────────────────────────────────────────
 
 def _productos_disponibles():
+    """
+    Obtiene los productos disponibles para la creación y edición de
+    pedidos.
+
+    Los productos se ordenan por categoría y nombre para facilitar
+    su visualización en el formulario.
+
+    Returns:
+        QuerySet: Productos disponibles ordenados por categoría y
+        nombre.
+    """
     return (
         Producto.objects
         .filter(disponible=True)
@@ -34,6 +45,20 @@ def _productos_disponibles():
 
 
 def _parse_items_from_post(request):
+    """
+    Procesa los productos enviados desde el formulario de pedidos.
+
+    Recorre los datos enviados en la petición HTTP, valida que cada
+    producto exista y esté disponible, y construye una lista con los
+    productos y cantidades seleccionadas.
+
+    Args:
+        request (HttpRequest): Petición HTTP que contiene los datos
+            enviados por el formulario.
+
+    Returns:
+        list[dict]: Lista de productos seleccionados con su cantidad.
+    """
     items_data = []
     i = 0
     while True:
@@ -52,6 +77,18 @@ def _parse_items_from_post(request):
 
 
 def _items_as_json(pedido):
+    """
+    Convierte los productos de un pedido al formato JSON.
+
+    Genera una representación de los productos asociados al pedido
+    para reutilizarla en el formulario de edición.
+
+    Args:
+        pedido (Pedido): Pedido cuyos productos serán convertidos.
+
+    Returns:
+        str: Cadena en formato JSON con los productos del pedido.
+    """
     items = [
         {
             'id': str(item.producto.pk),
@@ -65,8 +102,19 @@ def _items_as_json(pedido):
 
 
 def _pedidos_filtrados(request):
-    """Retorna el queryset de pedidos aplicando los filtros q y estado del GET.
-    Orden ASCENDENTE por fecha de creación, así el PED-00001 siempre aparece primero."""
+    """
+    Obtiene los pedidos aplicando los filtros enviados en la petición.
+
+    Permite filtrar los pedidos por texto y estado, ordenándolos por
+    fecha de creación.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+            Acepta los parámetros ``q`` y ``estado``.
+
+    Returns:
+        QuerySet: Pedidos filtrados.
+    """
     q = request.GET.get('q', '').strip()
     estado_sel = request.GET.get('estado', '').strip()
 
@@ -89,6 +137,18 @@ def _pedidos_filtrados(request):
 
 @login_required
 def dashboard(request):
+    """
+    Muestra el tablero principal del módulo de pedidos.
+
+    Calcula las estadísticas generales del sistema y obtiene los
+    pedidos más recientes para mostrarlos en el panel principal.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Página principal del módulo de pedidos.
+    """
     total_pedidos      = Pedido.objects.count()
     pedidos_pendientes = Pedido.objects.filter(estado='PREPARACION').count()
     total_productos    = Producto.objects.count()
@@ -119,6 +179,19 @@ def dashboard(request):
 
 @login_required
 def pedido_lista(request):
+    """
+    Muestra el listado de pedidos registrados.
+
+    Permite filtrar los pedidos por texto y estado, agrupándolos por
+    fecha para facilitar su visualización.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+            Acepta los parámetros ``q`` y ``estado``.
+
+    Returns:
+        HttpResponse: Página con el listado de pedidos.
+    """
     q         = request.GET.get('q', '').strip()
     estado_sel = request.GET.get('estado', '').strip()
 
@@ -142,7 +215,17 @@ def pedido_lista(request):
 
 @login_required
 def pedido_exportar_pdf(request):
-    """Exporta los pedidos filtrados a PDF."""
+    """
+    Genera un reporte de pedidos en formato PDF.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+            Acepta los mismos parámetros de filtro que
+            ``_pedidos_filtrados``.
+
+    Returns:
+        HttpResponse: Archivo PDF generado para descarga.
+    """
     pedidos_qs = _pedidos_filtrados(request)
 
     response = HttpResponse(content_type='application/pdf')
@@ -207,7 +290,17 @@ def pedido_exportar_pdf(request):
 
 @login_required
 def pedido_exportar_excel(request):
-    """Exporta los pedidos filtrados a CSV (compatible con Excel)."""
+    """
+    Genera un reporte de pedidos en formato CSV compatible con Excel.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+            Acepta los mismos parámetros de filtro que
+            ``_pedidos_filtrados``.
+
+    Returns:
+        HttpResponse: Archivo CSV generado para descarga.
+    """
     pedidos_qs = _pedidos_filtrados(request)
 
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
@@ -236,6 +329,20 @@ def pedido_exportar_excel(request):
 
 @login_required
 def pedido_crear(request):
+    """
+    Registra un nuevo pedido.
+
+    Valida la información del formulario, registra los productos
+    seleccionados, calcula el total del pedido y almacena la
+    información en la base de datos.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Formulario de creación o redirección al listado
+        de pedidos cuando el registro es exitoso.
+    """
     productos_disponibles = _productos_disponibles()
 
     if request.method == 'POST':
@@ -291,6 +398,23 @@ def pedido_crear(request):
 
 @login_required
 def pedido_editar(request, pk):
+    """
+    Edita la información de un pedido registrado.
+
+    Actualiza los datos generales del pedido y los productos
+    asociados, recalculando el valor total cuando sea necesario.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+        pk (int): Identificador del pedido que se desea editar.
+
+    Returns:
+        HttpResponse: Formulario de edición o redirección al listado
+        de pedidos cuando la actualización es exitosa.
+
+    Raises:
+        Http404: Si el pedido indicado no existe.
+    """
     pedido                = get_object_or_404(Pedido, pk=pk)
     productos_disponibles = _productos_disponibles()
 
@@ -339,6 +463,22 @@ def pedido_editar(request, pk):
 
 @login_required
 def pedido_eliminar(request, pk):
+    """
+    Elimina un pedido registrado.
+
+    La eliminación solo se realiza cuando la petición es de tipo
+    POST.
+
+    Args:
+        request (HttpRequest): Petición HTTP del usuario autenticado.
+        pk (int): Identificador del pedido que se desea eliminar.
+
+    Returns:
+        HttpResponseRedirect: Redirección al listado de pedidos.
+
+    Raises:
+        Http404: Si el pedido indicado no existe.
+    """
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
         pedido.delete()
@@ -350,6 +490,21 @@ def pedido_eliminar(request, pk):
 
 @login_required
 def orden_lista(request):
+    """
+    Muestra el listado de órdenes registradas en el sistema.
+
+    Permite filtrar las órdenes por número de orden o nombre del cliente
+    y las agrupa por fecha de creación.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP que puede incluir los
+            parámetros GET:
+                - q_orden (str): Número de orden o nombre del cliente.
+
+    Returns:
+        HttpResponse: Renderiza la plantilla
+            'pedidos/orden_lista.html' con el listado de órdenes.
+    """
     q_orden = request.GET.get('q_orden', '').strip()
 
     ordenes_qs = (
@@ -382,6 +537,20 @@ def orden_lista(request):
 
 @login_required
 def orden_detalle(request, pk):
+    """
+    Muestra la información detallada de una orden.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP.
+        pk (int): Identificador de la orden.
+
+    Returns:
+        HttpResponse: Renderiza la plantilla
+            'pedidos/orden_detalle.html' con la información de la orden.
+
+    Raises:
+        Http404: Si la orden no existe.
+    """
     orden = get_object_or_404(
         Pedido.objects.select_related('cliente', 'mesero', 'mesa').prefetch_related('pagos'),
         pk=pk,
@@ -394,6 +563,22 @@ def orden_detalle(request, pk):
 
 @login_required
 def orden_editar(request, pk):
+    """
+    Permite editar la información de una orden existente.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP.
+        pk (int): Identificador de la orden a editar.
+
+    Returns:
+        HttpResponse:
+            - Renderiza el formulario de edición.
+            - Redirecciona al listado de órdenes cuando la actualización
+              es exitosa.
+
+    Raises:
+        Http404: Si la orden no existe.
+    """
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
         form = PedidoForm(request.POST, instance=pedido)
@@ -417,6 +602,19 @@ def orden_editar(request, pk):
 
 @login_required
 def orden_eliminar(request, pk):
+    """
+    Elimina una orden del sistema.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP.
+        pk (int): Identificador de la orden a eliminar.
+
+    Returns:
+        HttpResponseRedirect: Redirecciona al listado de órdenes.
+
+    Raises:
+        Http404: Si la orden no existe.
+    """
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
         pedido.delete()
@@ -428,6 +626,21 @@ def orden_eliminar(request, pk):
 
 @login_required
 def producto_lista(request):
+    """
+    Muestra el listado de productos registrados.
+
+    Permite filtrar los productos por nombre y categoría.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP que puede incluir los
+            parámetros GET:
+                - q_prod (str): Nombre del producto.
+                - categoria (str): Identificador de la categoría.
+
+    Returns:
+        HttpResponse: Renderiza la plantilla
+            'pedidos/producto_lista.html' con el listado de productos.
+    """
     q_prod  = request.GET.get('q_prod', '').strip()
     cat_sel = request.GET.get('categoria', '').strip()
 
@@ -449,6 +662,19 @@ def producto_lista(request):
 
 @login_required
 def producto_crear(request):
+    """
+    Registra un nuevo producto en el sistema.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con la información del
+            formulario.
+
+    Returns:
+        HttpResponse:
+            - Renderiza el formulario de creación.
+            - Redirecciona al listado de productos cuando el registro
+              es exitoso.
+    """
     if request.method == 'POST':
         form = ProductoForm(request.POST)
         if form.is_valid():
@@ -470,6 +696,22 @@ def producto_crear(request):
 
 @login_required
 def producto_editar(request, pk):
+    """
+    Permite actualizar la información de un producto existente.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP.
+        pk (int): Identificador del producto a editar.
+
+    Returns:
+        HttpResponse:
+            - Renderiza el formulario de edición.
+            - Redirecciona al listado de productos cuando la actualización
+              es exitosa.
+
+    Raises:
+        Http404: Si el producto no existe.
+    """
     producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
         form = ProductoForm(request.POST, instance=producto)
@@ -493,6 +735,19 @@ def producto_editar(request, pk):
 
 @login_required
 def producto_eliminar(request, pk):
+    """
+    Elimina un producto del sistema.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP.
+        pk (int): Identificador del producto a eliminar.
+
+    Returns:
+        HttpResponseRedirect: Redirecciona al listado de productos.
+
+    Raises:
+        Http404: Si el producto no existe.
+    """
     producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
         producto.delete()
@@ -501,7 +756,20 @@ def producto_eliminar(request, pk):
 
 
 def _productos_filtrados(request):
-    """Retorna el queryset de productos aplicando los filtros q_prod y categoria del GET."""
+    """
+    Obtiene el listado de productos aplicando los filtros enviados
+    mediante parámetros GET.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP que puede incluir los
+            parámetros GET:
+                - q_prod (str): Nombre del producto.
+                - categoria (str): Identificador de la categoría.
+
+    Returns:
+        QuerySet[Producto]: Conjunto de productos filtrados según los
+        criterios proporcionados.
+    """
     q_prod  = request.GET.get('q_prod', '').strip()
     cat_sel = request.GET.get('categoria', '').strip()
 
@@ -515,7 +783,15 @@ def _productos_filtrados(request):
 
 @login_required
 def producto_exportar_pdf(request):
-    """Exporta los productos filtrados a PDF."""
+    """
+    Genera un reporte en formato PDF con los productos filtrados.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con los filtros de búsqueda.
+
+    Returns:
+        HttpResponse: Archivo PDF descargable con el listado de productos.
+    """
     productos_qs = _productos_filtrados(request)
 
     response = HttpResponse(content_type='application/pdf')
@@ -572,7 +848,16 @@ def producto_exportar_pdf(request):
 
 @login_required
 def producto_exportar_excel(request):
-    """Exporta los productos filtrados a CSV (compatible con Excel)."""
+    """
+    Genera un archivo CSV compatible con Excel que contiene los
+    productos filtrados.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con los filtros de búsqueda.
+
+    Returns:
+        HttpResponse: Archivo CSV descargable con el listado de productos.
+    """
     productos_qs = _productos_filtrados(request)
 
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
@@ -598,6 +883,20 @@ def producto_exportar_excel(request):
 
 @login_required
 def categoria_lista(request):
+    """
+    Lista las categorías registradas permitiendo buscarlas por nombre.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con el parámetro opcional
+            ``q_cat`` para filtrar categorías.
+
+    Returns:
+        HttpResponse: Renderiza la plantilla
+        ``pedidos/categoria_lista.html`` con las categorías encontradas.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     q_cat = request.GET.get('q_cat', '').strip()
 
     categorias_qs = Categoria.objects.all()
@@ -614,6 +913,20 @@ def categoria_lista(request):
 
 @login_required
 def categoria_crear(request):
+    """
+    Registra una nueva categoría.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP GET para mostrar el formulario
+            o POST con los datos de la nueva categoría.
+
+    Returns:
+        HttpResponse: Muestra el formulario o redirige al listado de
+        categorías cuando el registro es exitoso.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
         if form.is_valid():
@@ -635,6 +948,21 @@ def categoria_crear(request):
 
 @login_required
 def categoria_editar(request, pk):
+    """
+    Actualiza la información de una categoría existente.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP GET para mostrar el formulario
+            o POST con los datos actualizados.
+        pk (int): Identificador de la categoría.
+
+    Returns:
+        HttpResponse: Muestra el formulario de edición o redirige al listado
+        de categorías cuando la actualización es exitosa.
+
+    Raises:
+        Http404: Si la categoría indicada no existe.
+    """
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
         form = CategoriaForm(request.POST, instance=categoria)
@@ -658,6 +986,20 @@ def categoria_editar(request, pk):
 
 @login_required
 def categoria_eliminar(request, pk):
+    """
+    Elimina una categoría registrada.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP utilizada para confirmar la
+            eliminación.
+        pk (int): Identificador de la categoría.
+
+    Returns:
+        HttpResponseRedirect: Redirige al listado de categorías.
+
+    Raises:
+        Http404: Si la categoría indicada no existe.
+    """
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
         categoria.delete()
@@ -666,7 +1008,19 @@ def categoria_eliminar(request, pk):
 
 
 def _categorias_filtradas(request):
-    """Retorna el queryset de categorías aplicando el filtro q_cat del GET."""
+    """
+    Obtiene las categorías aplicando el filtro de búsqueda por nombre.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con el parámetro opcional
+            ``q_cat``.
+
+    Returns:
+        QuerySet: Conjunto de categorías filtradas.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     q_cat = request.GET.get('q_cat', '').strip()
 
     qs = Categoria.objects.all()
@@ -677,7 +1031,18 @@ def _categorias_filtradas(request):
 
 @login_required
 def categoria_exportar_pdf(request):
-    """Exporta las categorías filtradas a PDF."""
+    """
+    Genera un reporte PDF con las categorías filtradas.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con los filtros aplicados.
+
+    Returns:
+        HttpResponse: Archivo PDF descargable con el listado de categorías.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     categorias_qs = _categorias_filtradas(request)
 
     response = HttpResponse(content_type='application/pdf')
@@ -731,7 +1096,18 @@ def categoria_exportar_pdf(request):
 
 @login_required
 def categoria_exportar_excel(request):
-    """Exporta las categorías filtradas a CSV (compatible con Excel)."""
+    """
+    Exporta las categorías filtradas en formato CSV compatible con Excel.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con los filtros aplicados.
+
+    Returns:
+        HttpResponse: Archivo CSV descargable con el listado de categorías.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     categorias_qs = _categorias_filtradas(request)
 
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
@@ -754,6 +1130,21 @@ def categoria_exportar_excel(request):
 
 @login_required
 def cliente_lista(request):
+    """
+    Lista los clientes registrados permitiendo buscarlos por nombre o
+    documento.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con el parámetro opcional
+            ``q_cli``.
+
+    Returns:
+        HttpResponse: Renderiza la plantilla
+        ``pedidos/cliente_lista.html`` con los clientes encontrados.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     q_cli = request.GET.get('q_cli', '').strip()
 
     clientes_qs = Cliente.objects.all()
@@ -772,6 +1163,20 @@ def cliente_lista(request):
 
 @login_required
 def cliente_crear(request):
+    """
+    Registra un nuevo cliente.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP GET para mostrar el formulario
+            o POST con los datos del cliente.
+
+    Returns:
+        HttpResponse: Muestra el formulario o redirige al listado de clientes
+        cuando el registro es exitoso.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     if request.method == 'POST':
         form = ClienteForm(request.POST)
         if form.is_valid():
@@ -793,6 +1198,21 @@ def cliente_crear(request):
 
 @login_required
 def cliente_editar(request, pk):
+    """
+    Actualiza la información de un cliente registrado.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP GET para mostrar el formulario
+            o POST con los datos actualizados.
+        pk (int): Identificador del cliente.
+
+    Returns:
+        HttpResponse: Muestra el formulario de edición o redirige al listado
+        de clientes cuando la actualización es exitosa.
+
+    Raises:
+        Http404: Si el cliente indicado no existe.
+    """
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
         form = ClienteForm(request.POST, instance=cliente)
@@ -816,6 +1236,20 @@ def cliente_editar(request, pk):
 
 @login_required
 def cliente_eliminar(request, pk):
+    """
+    Elimina un cliente registrado.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP utilizada para confirmar la
+            eliminación.
+        pk (int): Identificador del cliente.
+
+    Returns:
+        HttpResponseRedirect: Redirige al listado de clientes.
+
+    Raises:
+        Http404: Si el cliente indicado no existe.
+    """
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
         cliente.delete()
@@ -824,7 +1258,19 @@ def cliente_eliminar(request, pk):
 
 
 def _clientes_filtrados(request):
-    """Retorna el queryset de clientes aplicando el filtro q_cli del GET."""
+    """
+    Obtiene los clientes aplicando el filtro de búsqueda.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con el parámetro opcional
+            ``q_cli``.
+
+    Returns:
+        QuerySet: Conjunto de clientes filtrados.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     q_cli = request.GET.get('q_cli', '').strip()
 
     qs = Cliente.objects.all()
@@ -837,7 +1283,18 @@ def _clientes_filtrados(request):
 
 @login_required
 def cliente_exportar_pdf(request):
-    """Exporta los clientes filtrados a PDF."""
+    """
+    Genera un reporte PDF con los clientes filtrados.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con los filtros aplicados.
+
+    Returns:
+        HttpResponse: Archivo PDF descargable con el listado de clientes.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     clientes_qs = _clientes_filtrados(request)
 
     response = HttpResponse(content_type='application/pdf')
@@ -893,7 +1350,18 @@ def cliente_exportar_pdf(request):
 
 @login_required
 def cliente_exportar_excel(request):
-    """Exporta los clientes filtrados a CSV (compatible con Excel)."""
+    """
+    Exporta los clientes filtrados en formato CSV compatible con Excel.
+
+    Args:
+        request (HttpRequest): Solicitud HTTP con los filtros aplicados.
+
+    Returns:
+        HttpResponse: Archivo CSV descargable con el listado de clientes.
+
+    Raises:
+        No genera excepciones de forma explícita.
+    """
     clientes_qs = _clientes_filtrados(request)
 
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')

@@ -37,6 +37,67 @@ def login_view(request):
     return render(request, TEMPLATE_LOGIN, context)
 
 
+def registro_view(request):
+    """
+    Registro público de usuarios: permite crear una cuenta nueva
+    directamente desde la pantalla de login (no requiere estar
+    autenticado ni pasar por el panel de gestión de personal).
+    """
+    if request.user.is_authenticated:
+        return redirect('inicio_usuarios')
+
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name', '').strip()
+        last_name  = request.POST.get('last_name', '').strip()
+        username   = request.POST.get('username', '').strip()
+        email      = request.POST.get('email', '').strip()
+        password   = request.POST.get('password', '')
+        password2  = request.POST.get('password2', '')
+        rol        = request.POST.get('rol', 'MESERO').strip()
+
+        # El registro público solo permite crear Mesero o Cajero.
+        # Cualquier otro valor (por ejemplo ADMIN) se ignora por seguridad.
+        ROLES_PERMITIDOS = ['MESERO', 'CAJERO']
+        if rol not in ROLES_PERMITIDOS:
+            rol = 'MESERO'
+
+        errores = []
+        if not first_name or not last_name or not username or not email or not password:
+            errores.append('Todos los campos son obligatorios.')
+        if password and password2 and password != password2:
+            errores.append('Las contraseñas no coinciden.')
+        if len(password) < 6:
+            errores.append('La contraseña debe tener al menos 6 caracteres.')
+        if username and Usuario.objects.filter(username=username).exists():
+            errores.append('Ese nombre de usuario ya está en uso.')
+        if email and Usuario.objects.filter(email=email).exists():
+            errores.append('Ese correo electrónico ya está registrado.')
+
+        if errores:
+            for e in errores:
+                messages.error(request, e)
+            context = {
+                'vista': 'registro',
+                'form_data': request.POST,
+            }
+            return render(request, TEMPLATE_LOGIN, context)
+
+        nuevo_usuario = Usuario.objects.create_user(
+            username   = username,
+            password   = password,
+            first_name = first_name,
+            last_name  = last_name,
+            email      = email,
+            rol        = rol,
+        )
+        login(request, nuevo_usuario)
+        messages.success(request, f'¡Bienvenido, {nuevo_usuario.first_name}! Tu cuenta fue creada correctamente.')
+        return redireccion_post_login(request)
+
+    context = {'vista': 'registro'}
+    return render(request, TEMPLATE_LOGIN, context)
+
+
 @login_required
 def redireccion_post_login(request):
     if request.user.is_superuser or request.user.rol == 'ADMIN':
