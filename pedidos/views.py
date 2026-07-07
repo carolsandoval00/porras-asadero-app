@@ -163,8 +163,16 @@ def dashboard(request):
         .order_by('-fecha_creacion')[:5]
     )[::-1]
 
-    context = { 'titulo': 'Módulo de Pedidos', 'total_pedidos': total_pedidos, 'pedidos_pendientes': pedidos_pendientes, 'total_ordenes': total_pedidos, 'total_productos': total_productos, 'total_categorias': total_categorias, 'total_clientes': total_clientes, 'ultimos_pedidos': ultimos_pedidos, }
-    return render(request, 'pedidos/dashboard.html', context)
+    return render(request, 'pedidos/dashboard.html', {
+        'titulo': 'Módulo de Pedidos',
+        'total_pedidos': total_pedidos,
+        'pedidos_pendientes': pedidos_pendientes,
+        'total_ordenes': total_pedidos,
+        'total_productos': total_productos,
+        'total_categorias': total_categorias,
+        'total_clientes': total_clientes,
+        'ultimos_pedidos': ultimos_pedidos,
+    })
 
 
 # ── GESTIÓN DE PEDIDOS ───────────────────────────────────────────────
@@ -195,8 +203,14 @@ def pedido_lista(request):
         items = list(grupo)
         pedidos_por_fecha.append({'fecha': fecha, 'pedidos': items, 'count': len(items)})
 
-    context = { 'titulo': 'Módulo de Pedidos', 'pedidos_por_fecha': pedidos_por_fecha, 'estados': Pedido.ESTADO_CHOICES, 'q': q, 'estado_sel': estado_sel, 'seccion_activa': 'pedido-lista', }
-    return render(request, 'pedidos/pedido_lista.html', context)
+    return render(request, 'pedidos/pedido_lista.html', {
+        'titulo': 'Módulo de Pedidos',
+        'pedidos_por_fecha': pedidos_por_fecha,
+        'estados': Pedido.ESTADO_CHOICES,
+        'q': q,
+        'estado_sel': estado_sel,
+        'seccion_activa': 'pedido-lista',
+    })
 
 
 @login_required
@@ -342,8 +356,11 @@ def pedido_crear(request):
             items_data = _parse_items_from_post(request)
             if not items_data:
                 messages.error(request, '❌ Agrega al menos un producto al pedido.')
-                context = { 'form': form, 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-crear', }
-                return render(request, 'pedidos/pedido_form.html', context)
+                return render(request, 'pedidos/pedido_form.html', {
+                    'form': form,
+                    'productos_disponibles': productos_disponibles,
+                    'seccion_activa': 'pedido-crear',
+                })
 
             total          = sum(it['producto'].precio * it['cantidad'] for it in items_data)
             pedido.total   = total
@@ -365,12 +382,18 @@ def pedido_crear(request):
             return redirect('pedidos:pedido_lista')
 
         messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
-        context = { 'form': form, 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-crear', }
-        return render(request, 'pedidos/pedido_form.html', context)
+        return render(request, 'pedidos/pedido_form.html', {
+            'form': form,
+            'productos_disponibles': productos_disponibles,
+            'seccion_activa': 'pedido-crear',
+        })
 
     form = PedidoForm()
-    context = { 'form': form, 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-crear', }
-    return render(request, 'pedidos/pedido_form.html', context)
+    return render(request, 'pedidos/pedido_form.html', {
+        'form': form,
+        'productos_disponibles': productos_disponibles,
+        'seccion_activa': 'pedido-crear',
+    })
 
 
 @login_required
@@ -420,12 +443,22 @@ def pedido_editar(request, pk):
             messages.success(request, ' Pedido actualizado correctamente.')
             return redirect('pedidos:pedido_lista')
 
-        context = { 'form': form, 'pedido': pedido, 'pedido_items_json': _items_as_json(pedido), 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-editar', }
-        return render(request, 'pedidos/pedido_form.html', context)
+        return render(request, 'pedidos/pedido_form.html', {
+            'form': form,
+            'pedido': pedido,
+            'pedido_items_json': _items_as_json(pedido),
+            'productos_disponibles': productos_disponibles,
+            'seccion_activa': 'pedido-editar',
+        })
 
     form = PedidoForm(instance=pedido)
-    context = { 'form': form, 'pedido': pedido, 'pedido_items_json': _items_as_json(pedido), 'productos_disponibles': productos_disponibles, 'seccion_activa': 'pedido-editar', }
-    return render(request, 'pedidos/pedido_form.html', context)
+    return render(request, 'pedidos/pedido_form.html', {
+        'form': form,
+        'pedido': pedido,
+        'pedido_items_json': _items_as_json(pedido),
+        'productos_disponibles': productos_disponibles,
+        'seccion_activa': 'pedido-editar',
+    })
 
 
 @login_required
@@ -494,8 +527,12 @@ def orden_lista(request):
         items = list(grupo)
         ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
 
-    context = { 'titulo': 'Módulo de Pedidos', 'ordenes_por_fecha': ordenes_por_fecha, 'q_orden': q_orden, 'seccion_activa': 'orden-lista', }
-    return render(request, 'pedidos/orden_lista.html', context)
+    return render(request, 'pedidos/orden_lista.html', {
+        'titulo': 'Módulo de Pedidos',
+        'ordenes_por_fecha': ordenes_por_fecha,
+        'q_orden': q_orden,
+        'seccion_activa': 'orden-lista',
+    })
 
 
 @login_required
@@ -518,11 +555,10 @@ def orden_detalle(request, pk):
         Pedido.objects.select_related('cliente', 'mesero', 'mesa').prefetch_related('pagos'),
         pk=pk,
     )
-    context = {
+    return render(request, 'pedidos/orden_detalle.html', {
         'titulo': f'Orden {orden.numero_orden}',
         'orden': orden,
-    }
-    return render(request, 'pedidos/orden_detalle.html', context)
+    })
 
 
 @login_required
@@ -550,12 +586,18 @@ def orden_editar(request, pk):
             form.save()
             messages.success(request, f' Pedido {pedido.numero_orden} actualizado.')
             return redirect('pedidos:orden_lista')
-        context = { 'form_orden': form, 'orden_editando': pedido, 'seccion_activa': 'orden-editar', }
-        return render(request, 'pedidos/orden_form.html', context)
+        return render(request, 'pedidos/orden_form.html', {
+            'form_orden': form,
+            'orden_editando': pedido,
+            'seccion_activa': 'orden-editar',
+        })
 
     form = PedidoForm(instance=pedido)
-    context = { 'form_orden': form, 'orden_editando': pedido, 'seccion_activa': 'orden-editar', }
-    return render(request, 'pedidos/orden_form.html', context)
+    return render(request, 'pedidos/orden_form.html', {
+        'form_orden': form,
+        'orden_editando': pedido,
+        'seccion_activa': 'orden-editar',
+    })
 
 
 @login_required
@@ -608,8 +650,14 @@ def producto_lista(request):
     if cat_sel:
         productos_qs = productos_qs.filter(categoria__id=cat_sel)
 
-    context = { 'titulo': 'Módulo de Pedidos', 'productos': productos_qs, 'categorias': Categoria.objects.all(), 'q_prod': q_prod, 'cat_sel': cat_sel, 'seccion_activa': 'producto-lista', }
-    return render(request, 'pedidos/producto_lista.html', context)
+    return render(request, 'pedidos/producto_lista.html', {
+        'titulo': 'Módulo de Pedidos',
+        'productos': productos_qs,
+        'categorias': Categoria.objects.all(),
+        'q_prod': q_prod,
+        'cat_sel': cat_sel,
+        'seccion_activa': 'producto-lista',
+    })
 
 
 @login_required
@@ -634,12 +682,16 @@ def producto_crear(request):
             messages.success(request, '✅ Producto creado correctamente.')
             return redirect('pedidos:producto_lista')
         messages.error(request, '❌ Corrige los errores en el formulario de producto.')
-        context = { 'form_producto': form, 'seccion_activa': 'producto-crear', }
-        return render(request, 'pedidos/producto_form.html', context)
+        return render(request, 'pedidos/producto_form.html', {
+            'form_producto': form,
+            'seccion_activa': 'producto-crear',
+        })
 
     form = ProductoForm()
-    context = { 'form_producto': form, 'seccion_activa': 'producto-crear', }
-    return render(request, 'pedidos/producto_form.html', context)
+    return render(request, 'pedidos/producto_form.html', {
+        'form_producto': form,
+        'seccion_activa': 'producto-crear',
+    })
 
 
 @login_required
@@ -667,12 +719,18 @@ def producto_editar(request, pk):
             form.save()
             messages.success(request, ' Producto actualizado correctamente.')
             return redirect('pedidos:producto_lista')
-        context = { 'form_producto': form, 'producto_editando': producto, 'seccion_activa': 'producto-editar', }
-        return render(request, 'pedidos/producto_form.html', context)
+        return render(request, 'pedidos/producto_form.html', {
+            'form_producto': form,
+            'producto_editando': producto,
+            'seccion_activa': 'producto-editar',
+        })
 
     form = ProductoForm(instance=producto)
-    context = { 'form_producto': form, 'producto_editando': producto, 'seccion_activa': 'producto-editar', }
-    return render(request, 'pedidos/producto_form.html', context)
+    return render(request, 'pedidos/producto_form.html', {
+        'form_producto': form,
+        'producto_editando': producto,
+        'seccion_activa': 'producto-editar',
+    })
 
 
 @login_required
@@ -845,8 +903,12 @@ def categoria_lista(request):
     if q_cat:
         categorias_qs = categorias_qs.filter(nombre__icontains=q_cat)
 
-    context = { 'titulo': 'Módulo de Pedidos', 'categorias': categorias_qs, 'q_cat': q_cat, 'seccion_activa': 'categoria-lista', }
-    return render(request, 'pedidos/categoria_lista.html', context)
+    return render(request, 'pedidos/categoria_lista.html', {
+        'titulo': 'Módulo de Pedidos',
+        'categorias': categorias_qs,
+        'q_cat': q_cat,
+        'seccion_activa': 'categoria-lista',
+    })
 
 
 @login_required
@@ -872,12 +934,16 @@ def categoria_crear(request):
             messages.success(request, '✅ Categoría creada correctamente.')
             return redirect('pedidos:categoria_lista')
         messages.error(request, '❌ Corrige los errores en el formulario.')
-        context = { 'form_categoria': form, 'seccion_activa': 'categoria-crear', }
-        return render(request, 'pedidos/categoria_form.html', context)
+        return render(request, 'pedidos/categoria_form.html', {
+            'form_categoria': form,
+            'seccion_activa': 'categoria-crear',
+        })
 
     form = CategoriaForm()
-    context = { 'form_categoria': form, 'seccion_activa': 'categoria-crear', }
-    return render(request, 'pedidos/categoria_form.html', context)
+    return render(request, 'pedidos/categoria_form.html', {
+        'form_categoria': form,
+        'seccion_activa': 'categoria-crear',
+    })
 
 
 @login_required
@@ -904,12 +970,18 @@ def categoria_editar(request, pk):
             form.save()
             messages.success(request, '✅ Categoría actualizada correctamente.')
             return redirect('pedidos:categoria_lista')
-        context = { 'form_categoria': form, 'categoria_editando': categoria, 'seccion_activa': 'categoria-editar', }
-        return render(request, 'pedidos/categoria_form.html', context)
+        return render(request, 'pedidos/categoria_form.html', {
+            'form_categoria': form,
+            'categoria_editando': categoria,
+            'seccion_activa': 'categoria-editar',
+        })
 
     form = CategoriaForm(instance=categoria)
-    context = { 'form_categoria': form, 'categoria_editando': categoria, 'seccion_activa': 'categoria-editar', }
-    return render(request, 'pedidos/categoria_form.html', context)
+    return render(request, 'pedidos/categoria_form.html', {
+        'form_categoria': form,
+        'categoria_editando': categoria,
+        'seccion_activa': 'categoria-editar',
+    })
 
 
 @login_required
@@ -1081,8 +1153,12 @@ def cliente_lista(request):
             Q(nombre_completo__icontains=q_cli) | Q(documento__icontains=q_cli)
         )
 
-    context = { 'titulo': 'Módulo de Pedidos', 'clientes': clientes_qs, 'q_cli': q_cli, 'seccion_activa': 'cliente-lista', }
-    return render(request, 'pedidos/cliente_lista.html', context)
+    return render(request, 'pedidos/cliente_lista.html', {
+        'titulo': 'Módulo de Pedidos',
+        'clientes': clientes_qs,
+        'q_cli': q_cli,
+        'seccion_activa': 'cliente-lista',
+    })
 
 
 @login_required
@@ -1108,12 +1184,16 @@ def cliente_crear(request):
             messages.success(request, '✅ Cliente registrado correctamente.')
             return redirect('pedidos:cliente_lista')
         messages.error(request, '❌ Corrige los errores en el formulario.')
-        context = { 'form_cliente': form, 'seccion_activa': 'cliente-crear', }
-        return render(request, 'pedidos/cliente_form.html', context)
+        return render(request, 'pedidos/cliente_form.html', {
+            'form_cliente': form,
+            'seccion_activa': 'cliente-crear',
+        })
 
     form = ClienteForm()
-    context = { 'form_cliente': form, 'seccion_activa': 'cliente-crear', }
-    return render(request, 'pedidos/cliente_form.html', context)
+    return render(request, 'pedidos/cliente_form.html', {
+        'form_cliente': form,
+        'seccion_activa': 'cliente-crear',
+    })
 
 
 @login_required
@@ -1140,12 +1220,18 @@ def cliente_editar(request, pk):
             form.save()
             messages.success(request, 'Cliente actualizado correctamente.')
             return redirect('pedidos:cliente_lista')
-        context = { 'form_cliente': form, 'cliente_editando': cliente, 'seccion_activa': 'cliente-editar', }
-        return render(request, 'pedidos/cliente_form.html', context)
+        return render(request, 'pedidos/cliente_form.html', {
+            'form_cliente': form,
+            'cliente_editando': cliente,
+            'seccion_activa': 'cliente-editar',
+        })
 
     form = ClienteForm(instance=cliente)
-    context = { 'form_cliente': form, 'cliente_editando': cliente, 'seccion_activa': 'cliente-editar', }
-    return render(request, 'pedidos/cliente_form.html', context)
+    return render(request, 'pedidos/cliente_form.html', {
+        'form_cliente': form,
+        'cliente_editando': cliente,
+        'seccion_activa': 'cliente-editar',
+    })
 
 
 @login_required
@@ -1292,6 +1378,122 @@ def cliente_exportar_excel(request):
             c.tipo_documento,
             c.documento,
             c.direccion or '—',
+        ])
+
+    return response
+
+
+# ── EXPORTACIÓN DE ÓRDENES ───────────────────────────────────────────
+
+def _ordenes_filtradas(request):
+    """Retorna el queryset de órdenes aplicando el filtro q_orden del GET."""
+    q_orden = request.GET.get('q_orden', '').strip()
+
+    qs = (
+        Pedido.objects
+        .select_related('cliente', 'mesero', 'mesa')
+        .prefetch_related('items__producto')
+        .order_by('fecha_creacion')
+    )
+    if q_orden:
+        clean_q = q_orden.replace('ORD-', '').lstrip('0')
+        if clean_q.isdigit():
+            qs = qs.filter(
+                Q(id=int(clean_q)) | Q(cliente__nombre_completo__icontains=q_orden)
+            )
+        else:
+            qs = qs.filter(cliente__nombre_completo__icontains=q_orden)
+    return qs
+
+
+@login_required
+def orden_exportar_pdf(request):
+    """Exporta las órdenes filtradas a PDF."""
+    ordenes_qs = _ordenes_filtradas(request)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="ordenes.pdf"'
+
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=landscape(A4),
+        leftMargin=1 * cm, rightMargin=1 * cm,
+        topMargin=1.5 * cm, bottomMargin=1.5 * cm,
+    )
+    styles   = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Reporte de Órdenes Comerciales", styles['Title']))
+    elements.append(Spacer(1, 0.5 * cm))
+
+    data = [['Número', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Subtotal', 'Impuesto', 'Total', 'Fecha']]
+
+    for o in ordenes_qs:
+        productos_str = ', '.join(
+            f"{it.cantidad}x {it.producto.nombre}" for it in o.items.all()
+        ) or '—'
+        data.append([
+            o.numero_orden,
+            str(o.cliente),
+            str(o.mesa) if o.mesa else '—',
+            Paragraph(productos_str, styles['Normal']),
+            o.get_estado_display(),
+            f"${o.subtotal:,.0f}",
+            f"${o.impuesto:,.0f}",
+            f"${o.total:,.0f}",
+            o.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
+        ])
+
+    tabla = Table(
+        data,
+        colWidths=[2.2*cm, 3.5*cm, 2*cm, 6*cm, 2.5*cm, 2.2*cm, 2.2*cm, 2.2*cm, 3.5*cm],
+        repeatRows=1,
+    )
+    tabla.setStyle(TableStyle([
+        ('BACKGROUND',    (0, 0), (-1, 0), colors.HexColor('#C0392B')),
+        ('TEXTCOLOR',     (0, 0), (-1, 0), colors.HexColor('#F5ECD7')),
+        ('FONTNAME',      (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE',      (0, 0), (-1, 0), 9),
+        ('FONTSIZE',      (0, 1), (-1, -1), 8),
+        ('ROWBACKGROUNDS',(0, 1), (-1, -1), [colors.HexColor('#FDF7EC'), colors.HexColor('#EDE3C8')]),
+        ('GRID',          (0, 0), (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
+        ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING',    (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING',   (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING',  (0, 0), (-1, -1), 5),
+    ]))
+
+    elements.append(tabla)
+    doc.build(elements)
+    return response
+
+
+@login_required
+def orden_exportar_excel(request):
+    """Exporta las órdenes filtradas a CSV (compatible con Excel)."""
+    ordenes_qs = _ordenes_filtradas(request)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="ordenes.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Número', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Subtotal', 'Impuesto', 'Total', 'Fecha'])
+
+    for o in ordenes_qs:
+        productos_str = ', '.join(
+            f"{it.cantidad}x {it.producto.nombre}" for it in o.items.all()
+        ) or '—'
+        writer.writerow([
+            o.numero_orden,
+            str(o.cliente),
+            str(o.mesa) if o.mesa else '—',
+            productos_str,
+            o.get_estado_display(),
+            o.subtotal,
+            o.impuesto,
+            o.total,
+            o.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
         ])
 
     return response

@@ -24,6 +24,9 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-clave-fija-para-desarrollo-12345')
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-7grlfzyd0wu80+!9vmzdzc66^1ajqqiiuzwdgyu85#%zgo_i%o')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -108,6 +111,9 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -131,7 +137,7 @@ STATICFILES_DIRS = [
 ]
 
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'inicio'
+LOGIN_REDIRECT_URL = 'inicio_usuarios'
 LOGOUT_REDIRECT_URL = '/usuarios/login/'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
