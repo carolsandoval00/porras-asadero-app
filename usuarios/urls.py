@@ -9,6 +9,7 @@ urlpatterns = [
     path('logout/',      views.logout_view,            name='logout'),
     path('acceder/',     views.acceder_sistema,        name='acceder_sistema'),
     path('redireccion/', views.redireccion_post_login, name='redireccion'),
+    path('inicio/',      views.inicio_usuarios,        name='inicio_usuarios'),  # ← AGREGADO
 
     # GESTIÓN DE PERSONAL
     path('lista/',             views.lista_personal,    name='lista_personal'),
@@ -18,11 +19,11 @@ urlpatterns = [
     path('sin-permisos/',      views.validar_permisos,  name='validar_permisos'),
 
     # ENDPOINTS JSON
-    path('crear/',              views.crear_usuario,       name='crear_usuario'),
-    path('editar/<int:id>/',    views.editar_usuario_json, name='editar_usuario_json'),
-    path('actualizar/<int:pk>/', views.actualizar_usuario, name='actualizar_usuarios'),
+    path('crear/',               views.crear_usuario,       name='crear_usuario'),
+    path('editar/<int:id>/',     views.editar_usuario_json, name='editar_usuario_json'),
+    path('actualizar/<int:pk>/', views.actualizar_usuario,  name='actualizar_usuarios'),
 
-    # ← NUEVA: foto de perfil
+    # FOTO DE PERFIL
     path('foto/<int:pk>/', views.actualizar_foto, name='actualizar_foto'),
 
     # RECUPERACIÓN DE CONTRASEÑA
