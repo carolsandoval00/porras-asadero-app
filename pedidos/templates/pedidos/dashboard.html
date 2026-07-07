@@ -4,26 +4,7 @@
 
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
 
-<style>
-  .pm-nav {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    background: var(--p-card) !important;
-    border: 1px solid var(--p-border) !important;
-    border-radius: 50px !important;
-    padding: .5rem .7rem !important;
-    overflow-x: auto !important;
-  }
-  .pm-nav-group {
-    flex-wrap: nowrap !important;
-    flex-shrink: 0 !important;
-  }
-  .pm-nav-group + .pm-nav-group {
-    padding-left: .4rem !important;
-    border-left: 1px solid var(--p-border) !important;
-  }
-</style>
+
 <div class="pm-wrapper">
   <!-- Cabecera -->
   <div class="pm-header">
@@ -123,7 +104,7 @@
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="6" style="text-align:center;color:var(--p-muted);padding:2rem">No hay pedidos aún.</td></tr>
+            <tr><td colspan="6" class="pm-table-empty">No hay pedidos aún.</td></tr>
             {% endfor %}
           </tbody>
         </table>

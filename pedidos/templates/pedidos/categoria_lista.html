@@ -3,26 +3,7 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
-<style>
-  .pm-nav {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    background: var(--p-card) !important;
-    border: 1px solid var(--p-border) !important;
-    border-radius: 50px !important;
-    padding: .5rem .7rem !important;
-    overflow-x: auto !important;
-  }
-  .pm-nav-group {
-    flex-wrap: nowrap !important;
-    flex-shrink: 0 !important;
-  }
-  .pm-nav-group + .pm-nav-group {
-    padding-left: .4rem !important;
-    border-left: 1px solid var(--p-border) !important;
-  }
-</style>
+
 <div class="pm-wrapper">
   <!-- Cabecera -->
   <div class="pm-header">
@@ -34,7 +15,7 @@
   <div id="modal-mensaje" class="pm-modal-overlay open">
     <div class="pm-modal-box">
       {% for msg in messages %}
-      <div class="pm-alert pm-alert-{{ msg.tags }}" style="margin-bottom:.6rem;">{{ msg }}</div>
+      <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
       {% endfor %}
       <div class="pm-modal-actions">
         <button class="pm-btn pm-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
@@ -78,7 +59,7 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Categorías del Menú</h3>
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+      <div class="pm-card-header-actions">
         <a href="{% url 'pedidos:categoria_exportar_pdf' %}?q_cat={{ q_cat }}"
            class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
         <a href="{% url 'pedidos:categoria_exportar_excel' %}?q_cat={{ q_cat }}"
@@ -89,9 +70,8 @@
     </div>
     <div class="pm-card-body">
       <!-- Buscador -->
-      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
-        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
-               type="text" name="q_cat" value="{{ q_cat }}" placeholder="Buscar categoría…">
+      <form method="get" action="" class="pm-search-form">
+        <input class="pm-input" type="text" name="q_cat" value="{{ q_cat }}" placeholder="Buscar categoría…">
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
       </form>
       <div class="pm-table-wrap">
@@ -104,15 +84,15 @@
             <tr>
               <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
               <td><strong>{{ cat.nombre }}</strong></td>
-              <td style="color:var(--p-muted)">{{ cat.descripcion|default:"—" }}</td>
-              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+              <td class="pm-muted">{{ cat.descripcion|default:"—" }}</td>
+              <td class="pm-td-actions">
                 <a href="{% url 'pedidos:categoria_editar' cat.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
                         onclick="confirmDelete('categoria',{{ cat.pk }},'{{ cat.nombre|escapejs }}')">Eliminar</button>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="4" style="text-align:center;color:var(--p-muted);padding:2rem">No hay categorías registradas.</td></tr>
+            <tr><td colspan="4" class="pm-table-empty">No hay categorías registradas.</td></tr>
             {% endfor %}
           </tbody>
         </table>

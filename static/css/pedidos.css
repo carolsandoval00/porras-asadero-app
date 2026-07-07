@@ -155,3 +155,205 @@
 @media(max-width:480px){
   .pm-stats       { grid-template-columns: 1fr; }
 }
+
+/* ── Overrides de navegación (antes en cada <style> de los templates) ── */
+.pm-nav {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  background: var(--p-card) !important;
+  border: 1px solid var(--p-border) !important;
+  border-radius: 50px !important;
+  padding: .5rem .7rem !important;
+  overflow-x: auto !important;
+}
+.pm-nav-group {
+  flex-wrap: nowrap !important;
+  flex-shrink: 0 !important;
+}
+.pm-nav-group + .pm-nav-group {
+  padding-left: .4rem !important;
+  border-left: 1px solid var(--p-border) !important;
+}
+
+/* ── Clases utilitarias reutilizables ── */
+
+/* Barra de herramientas del card-header (PDF, Excel, Imprimir, Nuevo) */
+.pm-card-header-actions { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+
+/* Formulario de búsqueda/filtro */
+.pm-search-form { display:flex; gap:.6rem; flex-wrap:wrap; margin-bottom:1rem; }
+
+/* Input de búsqueda genérico dentro de formularios de filtro */
+.pm-input {
+  flex: 1;
+  min-width: 180px;
+  padding: .45rem .8rem;
+  border: 1px solid var(--p-border);
+  border-radius: 8px;
+  font-size: .88rem;
+  background: var(--p-surface);
+  color: #1A1008;
+}
+.pm-input:focus { outline:none; border-color:#C0392B; box-shadow:0 0 0 3px rgba(192,57,43,.12); }
+
+/* Select de filtro (mismo estilo que pm-input pero sin flex:1) */
+.pm-select-filter {
+  padding: .45rem .8rem;
+  border: 1px solid var(--p-border);
+  border-radius: 8px;
+  font-size: .88rem;
+  background: var(--p-surface);
+  color: #1A1008;
+}
+
+/* Celda de tabla vacía / mensaje sin datos */
+.pm-table-empty { text-align:center; color:var(--p-muted); padding:2rem; }
+
+/* Celda de acciones en tabla (Editar / Eliminar) */
+.pm-td-actions { display:flex; gap:.3rem; flex-wrap:wrap; }
+
+/* Color apagado reutilizable */
+.pm-muted { color: var(--p-muted); }
+
+/* Alerta con margen inferior (dentro de modales de mensajes) */
+.pm-alert { margin-bottom: .6rem; }
+
+/* Contenedor "volver" con margen inferior */
+.pm-back-bar { margin-bottom: 1.2rem; }
+
+/* Pie de acciones con margen superior */
+.pm-bottom-actions { margin-top: 1rem; }
+
+/* Mensaje vacío en párrafo (lista de pedidos/órdenes sin resultados) */
+.pm-empty-msg { text-align:center; color:var(--p-muted); padding:2rem; }
+
+/* ── Estilos específicos de orden_detalle ── */
+.info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1.2rem; }
+.info-item .lbl { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--p-muted); margin-bottom:.3rem; }
+.info-item .val { font-size:.95rem; color:var(--p-text); font-weight:500; }
+.total-row td   { font-weight:800; font-size:1rem; background:var(--p-surface); }
+
+/* info-item a ancho completo (notas de la orden) */
+.info-item-full { grid-column: 1 / -1; }
+
+/* Celdas de totales en tabla de orden_detalle */
+.pm-td-right        { text-align: right; }
+.pm-td-center       { text-align: center; }
+.pm-td-total-label  { text-align:right; padding:.9rem 1rem; }
+.pm-td-total-value  { text-align:right; padding:.9rem 1rem; }
+.pm-td-grand-total  { text-align:right; padding:.9rem 1rem; font-size:1.1rem; color:#C0392B; }
+
+/* Cuerpo del card sin padding (para tablas a borde completo) */
+.pm-card-body-flush { padding: 0; }
+
+/* Wrapper de tabla overflow */
+.pm-overflow-x { overflow-x: auto; }
+
+/* ── Estilos específicos de pedido_form ── */
+
+/* Visualización de estado "En Preparación" (solo lectura) */
+.pm-estado-display {
+  padding: .55rem .85rem;
+  border: 1px solid #D4C4A0;
+  border-radius: 8px;
+  background: #FDF7EC;
+  color: #1A1008;
+  font-weight: 600;
+}
+
+/* Select de producto en el formulario de pedido */
+.pm-select-producto {
+  flex: 1;
+  min-width: 200px;
+  padding: .55rem .85rem;
+  border: 1px solid var(--p-border);
+  border-radius: 8px;
+  font-size: .9rem;
+  color: var(--p-text);
+  background: var(--p-surface);
+}
+
+/* Fila de agregar producto */
+.pm-add-product-row { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+
+/* Label de sección productos dentro del form */
+.pm-section-label {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--p-muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* Contenedor de la sección de productos del pedido */
+.pm-platos-section { margin-bottom: 1.4rem; }
+
+/* Mensaje vacío de la tabla de platos */
+.pm-platos-vacio {
+  padding: 1rem;
+  text-align: center;
+  color: var(--p-muted);
+  font-size: .88rem;
+  background: var(--p-surface);
+  border-radius: 8px;
+  margin-top: .4rem;
+}
+
+/* Margen superior de la tabla de platos */
+.pm-platos-table { margin-top: .4rem; }
+
+/* Fila del total en tfoot de platos */
+.pm-tfoot-total { background: var(--p-surface); }
+
+/* Celda del span de cantidad en la tabla de platos */
+.pm-qty-span { font-weight: 700; min-width: 20px; }
+
+/* Contenedor inline de botones de cantidad */
+.pm-qty-controls { display:flex; align-items:center; justify-content:center; gap:.5rem; }
+
+/* Form de pedido sin max-width (ancho completo) */
+.pm-form-full { max-width: 100%; }
+
+/* Margen en pm-form-grid para separar secciones */
+.pm-form-grid-mb { margin-bottom: 1.2rem; }
+
+/* Filtros de búsqueda en pedido_lista (card con padding reducido) */
+.pm-filter-card { padding: 1rem 1.5rem; margin-bottom: 1rem; }
+.pm-filter-row  { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+
+/* Badge de fecha en pedido_lista / orden_lista */
+.pm-fecha-badge {
+  background-color: #C0392B;
+  color: #F5ECD7;
+  padding: .3rem .9rem;
+  border-radius: 50px;
+  font-size: .78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+/* Fila de encabezado de fecha agrupada */
+.pm-fecha-group-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-bottom: .75rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid var(--p-border);
+  padding-bottom: .5rem;
+}
+
+/* Conteo de órdenes/pedidos por fecha */
+.pm-fecha-count { color: var(--p-muted); font-weight: 700; font-size: .85rem; }
+
+/* Badge de estado procesando (usado en orden_detalle) */
+.pm-badge-procesando { background:#FAEEDA; color:#8B4000; }
+
+/* Enlace/botón de volver con margen derecho */
+.pm-btn-ml { margin-left: .5rem; }
+
