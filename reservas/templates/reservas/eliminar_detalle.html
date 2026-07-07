@@ -5,14 +5,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
-<div style="padding:1.5rem 1.5rem 0;max-width:100%;">
-  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1rem;display:flex;align-items:center;gap:16px;">
+<div class="mc-banner-wrap">
+  <div class="mc-banner-box">
     <div>
-      <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:600;margin:0 0 4px;color:#F5ECD7;">Eliminar Reserva</h1>
-      <p style="font-size:20px;color:#A09070;margin:0;">Selecciona la reserva que deseas eliminar</p>
+      <h1 class="mc-banner-title">Eliminar Reserva</h1>
+      <p class="mc-banner-sub">Selecciona la reserva que deseas eliminar</p>
     </div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;padding:0 0.2rem;">
+  <div class="mc-nav-row">
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Reservas</a>
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva reserva</a>
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Diagrama de mesas</a>
@@ -31,16 +31,16 @@
   {% endif %}
 
   <!-- Estado: sin reservas -->
-  <div class="mc-card" id="ed-empty" style="display:none;">
+  <div class="mc-card mc-hidden" id="ed-empty">
     <div class="mc-empty">
-      <div style="font-size:40px;margin-bottom:12px">📋</div>
+      <div class="mc-empty-emoji">📋</div>
       <p>No hay reservas registradas.</p>
-      <a href="{% url 'reserva_inicio' %}" style="display:inline-block;margin-top:12px;font-size:13px;color:#C0392B">← Volver al panel</a>
+      <a href="{% url 'reserva_inicio' %}" class="mc-back-link">← Volver al panel</a>
     </div>
   </div>
 
   <!-- Tabla de reservas -->
-  <div class="mc-card" id="ed-tabla" style="display:none;">
+  <div class="mc-card mc-hidden" id="ed-tabla">
     <div class="mc-card-title">Reservas registradas</div>
     <div class="mc-table-wrap">
       <table class="mc-table">
@@ -56,7 +56,7 @@
   </div>
 
   <!-- Selector + botón eliminar -->
-  <div class="mc-card" id="ed-form" style="display:none;">
+  <div class="mc-card mc-hidden" id="ed-form">
     <div class="mc-card-title">Seleccionar reserva a eliminar</div>
 
     <label class="mc-label">Reserva *</label>
@@ -65,9 +65,9 @@
     </select>
 
     <!-- Confirmación -->
-    <div id="ed-confirm-box" style="display:none;margin-top:1rem;padding:1rem;background:#fff3f3;border:1px solid #f5c6c6;border-radius:8px;">
-      <p style="margin:0 0 10px;font-size:14px;color:#C0392B;font-weight:500;">⚠️ ¿Estás segura de que deseas eliminar esta reserva?</p>
-      <p id="ed-confirm-texto" style="margin:0 0 14px;font-size:13px;color:#555;"></p>
+    <div id="ed-confirm-box" class="mc-confirm-inline">
+      <p class="mc-confirm-warn">⚠️ ¿Estás segura de que deseas eliminar esta reserva?</p>
+      <p id="ed-confirm-texto" class="mc-confirm-detail"></p>
       <div class="mc-btn-row">
         <button class="mc-btn mc-btn-secondary" onclick="edCancelar()">Cancelar</button>
         <button class="mc-btn mc-btn-danger" onclick="edConfirmarEliminar()">Sí, eliminar</button>
@@ -81,11 +81,10 @@
   </div>
 
   <!-- Modal éxito -->
-  <div id="ed-modal-ok" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
-    <div style="background:#fff;border-radius:12px;padding:2rem;max-width:380px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
-      
-      <h3 style="font-family:'Playfair Display',serif;font-size:20px;margin:0 0 8px;color:#1A1008;">Reserva eliminada</h3>
-      <p id="ed-modal-ok-texto" style="font-size:13px;color:#777;margin:0 0 1.5rem;"></p>
+  <div id="ed-modal-ok" class="mc-modal-ok-overlay">
+    <div class="mc-modal-ok-box">
+      <h3 class="mc-modal-ok-title">Reserva eliminada</h3>
+      <p id="ed-modal-ok-texto" class="mc-modal-ok-text"></p>
       <button class="mc-btn mc-btn-primary" onclick="edCerrarModal()">Aceptar</button>
     </div>
   </div>
@@ -127,12 +126,12 @@
     const tbody = document.getElementById('ed-tbody');
     tbody.innerHTML = reservas.map(r => `
       <tr>
-        <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).padStart(2,'0')}</td>
-        <td style="font-weight:500">${r.nombre}</td>
+        <td class="mc-id-cell">#${String(r.id).padStart(2,'0')}</td>
+        <td class="mc-cell-name">${r.nombre}</td>
         <td>${getMesaLabel(r.mesaId)}</td>
         <td>${r.fecha}</td>
         <td>${r.hora}</td>
-        <td style="text-align:center">${r.personas}</td>
+        <td class="mc-cell-center">${r.personas}</td>
         <td><span class="mc-badge ${badgeClass(r.estado)}">${r.estado}</span></td>
       </tr>
     `).join('');
