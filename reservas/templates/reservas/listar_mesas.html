@@ -7,14 +7,14 @@
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
 <!-- ===== BANNER + NAV ===== -->
-<div style="padding:1.5rem 1.5rem 0;max-width:100%;">
-  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1rem;display:flex;align-items:center;gap:16px;">
+<div class="mc-banner-wrap">
+  <div class="mc-banner-box">
     <div>
-      <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:600;margin:0 0 4px;color:#F5ECD7;">Editar Mesas</h1>
-      <p style="font-size:20px;color:#A09070;margin:0;">Selecciona una mesa para editar su información</p>
+      <h1 class="mc-banner-title">Editar Mesas</h1>
+      <p class="mc-banner-sub">Selecciona una mesa para editar su información</p>
     </div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;padding:0 0.2rem;">
+  <div class="mc-nav-row">
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Reservas</a>
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva reserva</a>
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Diagrama de mesas</a>
@@ -55,7 +55,7 @@
               {% endif %}
             </td>
             <td>
-              <div style="display:flex;gap:5px;">
+              <div class="mc-action-btns">
                 <a href="{% url 'actualizar_mesa' mesa.numero_mesa %}" class="mc-icon-btn edit">
                   <i class="bi bi-pencil-fill"></i> Editar
                 </a>

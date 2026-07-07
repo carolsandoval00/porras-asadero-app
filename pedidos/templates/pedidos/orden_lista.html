@@ -3,26 +3,7 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
-<style>
-  .pm-nav {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    background: var(--p-card) !important;
-    border: 1px solid var(--p-border) !important;
-    border-radius: 50px !important;
-    padding: .5rem .7rem !important;
-    overflow-x: auto !important;
-  }
-  .pm-nav-group {
-    flex-wrap: nowrap !important;
-    flex-shrink: 0 !important;
-  }
-  .pm-nav-group + .pm-nav-group {
-    padding-left: .4rem !important;
-    border-left: 1px solid var(--p-border) !important;
-  }
-</style>
+
 <div class="pm-wrapper">
   <!-- Cabecera -->
   <div class="pm-header">
@@ -34,7 +15,7 @@
   <div id="modal-mensaje" class="pm-modal-overlay open">
     <div class="pm-modal-box">
       {% for msg in messages %}
-      <div class="pm-alert pm-alert-{{ msg.tags }}" style="margin-bottom:.6rem;">{{ msg }}</div>
+      <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
       {% endfor %}
       <div class="pm-modal-actions">
         <button class="pm-btn pm-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
@@ -81,20 +62,19 @@
     </div>
     <div class="pm-card-body">
       <!-- Buscador -->
-      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem;">
-        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
-               type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o cliente…">
+      <form method="get" action="" class="pm-search-form" style="margin-bottom:1.2rem;">
+        <input class="pm-input" type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o cliente…">
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
       </form>
 
       {% if ordenes_por_fecha %}
         {% for grupo in ordenes_por_fecha %}
         <div class="fecha-grupo">
-          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 mt-4 border-bottom pb-2">
-            <span class="badge text-crema px-3 py-2 rounded-pill fs-7 text-uppercase fw-bold" style="background-color: #C0392B;">
+          <div class="pm-fecha-group-header">
+            <span class="pm-fecha-badge">
               {{ grupo.fecha|date:"l d \d\e F \d\e Y" }}
             </span>
-            <span class="text-muted fw-bold small">
+            <span class="pm-fecha-count">
               {{ grupo.count }} orden{{ grupo.count|pluralize:"es" }}
             </span>
           </div>
@@ -113,7 +93,7 @@
                   <td>${{ o.impuesto|floatformat:0 }}</td>
                   <td><strong>${{ o.total|floatformat:0 }}</strong></td>
                   <td>{{ o.fecha_creacion|date:"H:i" }}</td>
-                  <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+                  <td class="pm-td-actions">
                     <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
                     <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">Ver detalle</a>
                   </td>
@@ -125,7 +105,7 @@
         </div>
         {% endfor %}
       {% else %}
-        <p style="text-align:center;color:var(--p-muted);padding:2rem">No hay órdenes registradas.</p>
+        <p class="pm-empty-msg">No hay órdenes registradas.</p>
       {% endif %}
     </div>
   </div>
