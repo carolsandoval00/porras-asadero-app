@@ -320,11 +320,14 @@
             </a>
             {% endif %}
 
-            {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.is_superuser %}
+            {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.rol == 'CAJERO' or user.is_superuser %}
             <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
                <i class="bi bi-receipt"></i>
                <h3>Ver Pedidos</h3>
                </a>
+            {% endif %}
+
+            {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.is_superuser %}
             <a href="{% url 'reserva_inicio' %}" class="dash-card">
                <i class="bi bi-calendar-check"></i>
                <h3>Reservas y Mesas</h3>
