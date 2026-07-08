@@ -5,11 +5,9 @@
   let editandoId     = null;
   let editandoMesaId = null;
 
-  // El id de reserva ya NO se guarda en un contador aparte (localStorage
-  // se desincronizaba: si borrabas todas las reservas, el contador seguía
-  // subiendo y el siguiente id no volvía a 01). Ahora se calcula siempre
-  // a partir de las reservas que existen en ese momento, así el resultado
-  // es consistente sin importar lo que haya quedado guardado antes.
+  // Helper de permisos — lee el div que Django pone solo si el usuario es cajero
+  const esCajero = () => !!document.getElementById('mc-es-cajero');
+
   localStorage.removeItem('mc_contador_r');
   function nextIdR(){ return reservas.length ? Math.max(...reservas.map(r=>r.id||0)) + 1 : 1; }
   function nextIdM(){ contadorM++; localStorage.setItem('mc_contador_m', contadorM); return contadorM; }
@@ -44,9 +42,15 @@
   }
 
   window.mcShow = function(id){
+    // Bloquear secciones de edición para cajero
+    if(esCajero() && (id==='crear' || id==='crear-mesa')){
+      toast('No tienes permisos para realizar esta acción', 'error');
+      return;
+    }
     document.querySelectorAll('.mc-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.mc-nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('mc-' + id).classList.add('active');
+    const sec = document.getElementById('mc-' + id);
+    if(sec) sec.classList.add('active');
     document.querySelectorAll('.mc-nav-btn').forEach(b => {
       if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'"))
         b.classList.add('active');
@@ -57,7 +61,7 @@
     if(id==='crear' && !editandoId){ mcLimpiar(); mcPoblarMesas(); }
   };
 
- function toast(msg, tipo){
+  function toast(msg, tipo){
     document.getElementById('mc-msg-title').textContent = tipo === 'error' ? 'Atención' : '¡Listo!';
     document.getElementById('mc-msg-text').textContent  = msg;
     document.getElementById('mc-msg-overlay').classList.add('open');
@@ -81,7 +85,8 @@
   }
 
   function mcPoblarMesas(){
-    const sel   = document.getElementById('mc-c-mesa');
+    const sel = document.getElementById('mc-c-mesa');
+    if(!sel) return;
     const fecha = document.getElementById('mc-c-fecha').value;
     const hora  = document.getElementById('mc-c-hora').value;
     const r     = editandoId ? reservas.find(x => x.id === editandoId) : null;
@@ -100,6 +105,7 @@
   }
 
   window.mcGuardarReserva = function(){
+    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
     const nom = document.getElementById('mc-c-nombre').value.trim();
     const tel = document.getElementById('mc-c-telefono').value.trim();
     const per = document.getElementById('mc-c-personas').value;
@@ -138,7 +144,7 @@
   window.mcLimpiar = function(){
     editandoId = null;
     ['mc-c-nombre','mc-c-telefono','mc-c-email','mc-c-personas','mc-c-fecha','mc-c-hora','mc-c-notas']
-      .forEach(id=>{ document.getElementById(id).value=''; });
+      .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('mc-c-ocasion').value = '';
     document.getElementById('mc-c-estado').value  = 'confirmada';
     document.getElementById('mc-c-mesa').value    = '';
@@ -148,9 +154,6 @@
     mcPoblarMesas(); fijarFechaMin();
   };
 
-  // Devuelve la lista de reservas aplicando los mismos filtros de la tabla
-  // (buscar, estado, fecha). La usan tanto mcRenderTabla como los reportes,
-  // así el PDF/Excel/impresión siempre coinciden con lo que se ve en pantalla.
   function mcListaFiltrada(){
     const buscar = document.getElementById('mc-buscar').value.toLowerCase();
     const estado = document.getElementById('mc-filtro-estado').value;
@@ -186,8 +189,10 @@
       <td><span class="mc-badge ${badgeClass(r.estado)}">${r.estado}</span></td>
       <td><div class="mc-action-btns">
         <button class="mc-icon-btn" onclick="mcVerReserva(${r.id})">Ver</button>
-        <button class="mc-icon-btn edit" onclick="mcEditarReserva(${r.id})">Editar</button>
-        <button class="mc-icon-btn del" onclick="mcPedirEliminarReserva(${r.id})">Borrar</button>
+        ${!esCajero() ? `
+          <button class="mc-icon-btn edit" onclick="mcEditarReserva(${r.id})">Editar</button>
+          <button class="mc-icon-btn del" onclick="mcPedirEliminarReserva(${r.id})">Borrar</button>
+        ` : ''}
       </div></td>
     </tr>`).join('');
   };
@@ -219,12 +224,13 @@
       </div>
       <div class="mc-btn-row">
         <button class="mc-btn mc-btn-secondary" onclick="mcCloseModal('mc-modal-reserva')">Cerrar</button>
-        <button class="mc-btn mc-btn-primary" onclick="mcCloseModal('mc-modal-reserva');mcEditarReserva(${r.id})">Editar reserva</button>
+        ${!esCajero() ? `<button class="mc-btn mc-btn-primary" onclick="mcCloseModal('mc-modal-reserva');mcEditarReserva(${r.id})">Editar reserva</button>` : ''}
       </div>`;
     document.getElementById('mc-modal-reserva').classList.add('open');
   };
 
   window.mcEditarReserva = function(id){
+    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
     const r = reservas.find(x=>x.id===id); if(!r) return;
     editandoId = id; mcPoblarMesas(); mcShow('crear');
     setTimeout(()=>{
@@ -246,51 +252,36 @@
   };
 
   window.mcPedirEliminarReserva = function(id){
+    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
     const r = reservas.find(x=>x.id===id); if(!r) return;
     mcConfirm('Eliminar reserva',
       `¿Eliminar la reserva de ${r.nombre} del ${r.fecha}? Esta acción no se puede deshacer.`,
       ()=>{ reservas=reservas.filter(x=>x.id!==id); save(); mcRenderTabla(); toast('Reserva eliminada'); });
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // REPORTES: PDF / EXCEL / IMPRIMIR
-  // Los tres usan mcListaFiltrada(), o sea que respetan la búsqueda
-  // y los filtros de estado/fecha que estén activos en ese momento.
-  // ─────────────────────────────────────────────────────────────
   window.mcExportarPDF = function(){
     const lista = mcListaFiltrada();
     if(!lista.length){ toast('No hay reservas para exportar','error'); return; }
     if(!window.jspdf){ toast('No se pudo cargar la librería de PDF','error'); return; }
-
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-
     doc.setFontSize(16);
     doc.text('Asadero Porras — Reporte de Reservas', 14, 16);
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + lista.length + ' reserva(s)', 14, 22);
-
     const filas = lista.map(r => [
       '#' + String(r.id).padStart(2, '0'),
-      r.nombre,
-      r.telefono,
-      getMesaLabel(r.mesaId),
-      r.fecha,
-      r.hora,
-      String(r.personas),
-      r.estado,
+      r.nombre, r.telefono, getMesaLabel(r.mesaId),
+      r.fecha, r.hora, String(r.personas), r.estado,
     ]);
-
     doc.autoTable({
       head: [['ID', 'Cliente', 'Teléfono', 'Mesa', 'Fecha', 'Hora', 'Personas', 'Estado']],
-      body: filas,
-      startY: 28,
+      body: filas, startY: 28,
       styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [192, 57, 43], textColor: 255 },
       alternateRowStyles: { fillColor: [245, 236, 215] },
     });
-
     doc.save('reservas_' + hoy() + '.pdf');
     toast('Reporte PDF generado');
   };
@@ -299,27 +290,18 @@
     const lista = mcListaFiltrada();
     if(!lista.length){ toast('No hay reservas para exportar','error'); return; }
     if(!window.XLSX){ toast('No se pudo cargar la librería de Excel','error'); return; }
-
     const datos = lista.map(r => ({
-      'ID':       '#' + String(r.id).padStart(2, '0'),
-      'Cliente':  r.nombre,
-      'Teléfono': r.telefono,
-      'Correo':   r.email || '',
-      'Mesa':     getMesaLabel(r.mesaId),
-      'Fecha':    r.fecha,
-      'Hora':     r.hora,
-      'Personas': r.personas,
-      'Ocasión':  r.ocasion || '',
-      'Estado':   r.estado,
-      'Notas':    r.notas || '',
+      'ID': '#' + String(r.id).padStart(2, '0'),
+      'Cliente': r.nombre, 'Teléfono': r.telefono, 'Correo': r.email || '',
+      'Mesa': getMesaLabel(r.mesaId), 'Fecha': r.fecha, 'Hora': r.hora,
+      'Personas': r.personas, 'Ocasión': r.ocasion || '',
+      'Estado': r.estado, 'Notas': r.notas || '',
     }));
-
     const hoja = XLSX.utils.json_to_sheet(datos);
     hoja['!cols'] = [
       { wch: 8 }, { wch: 22 }, { wch: 13 }, { wch: 24 }, { wch: 22 },
       { wch: 11 }, { wch: 9 }, { wch: 9 }, { wch: 18 }, { wch: 12 }, { wch: 32 },
     ];
-
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Reservas');
     XLSX.writeFile(libro, 'reservas_' + hoy() + '.xlsx');
@@ -329,18 +311,13 @@
   window.mcImprimir = function(){
     const lista = mcListaFiltrada();
     if(!lista.length){ toast('No hay reservas para imprimir','error'); return; }
-
     const filas = lista.map(r => `<tr>
         <td>#${String(r.id).padStart(2,'0')}</td>
-        <td>${r.nombre}</td>
-        <td>${r.telefono}</td>
+        <td>${r.nombre}</td><td>${r.telefono}</td>
         <td>${getMesaLabel(r.mesaId)}</td>
-        <td>${r.fecha}</td>
-        <td>${r.hora}</td>
-        <td>${r.personas}</td>
-        <td>${r.estado}</td>
+        <td>${r.fecha}</td><td>${r.hora}</td>
+        <td>${r.personas}</td><td>${r.estado}</td>
       </tr>`).join('');
-
     document.getElementById('mc-print-area').innerHTML = `
       <h2>Asadero Porras — Reporte de Reservas</h2>
       <p>Generado el ${new Date().toLocaleString('es-CO')} — ${lista.length} reserva(s)</p>
@@ -351,18 +328,16 @@
         </tr></thead>
         <tbody>${filas}</tbody>
       </table>`;
-
     window.print();
   };
 
   window.mcCrearMesa = function(){
+    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
     const num = parseInt(document.getElementById('mc-m-numero').value);
     const cap = parseInt(document.getElementById('mc-m-capacidad').value);
     const ubi = document.getElementById('mc-m-ubicacion').value;
     const est = document.getElementById('mc-m-estado').value;
-
     if(!num || !cap){ toast('Ingresa número y capacidad','error'); return; }
-
     if(editandoMesaId){
       if(mesas.find(m => m.numero===num && m.id!==editandoMesaId)){
         toast('Ya existe una mesa con ese número','error'); return;
@@ -385,9 +360,7 @@
         .catch(e => console.error('Error guardando mesa:', e));
       toast('Mesa '+num+' agregada');
     }
-
     save(); mcRenderTablaMesas(); mcRenderDiagrama();
-
     document.getElementById('mc-m-numero').value='';
     document.getElementById('mc-m-capacidad').value='';
     document.getElementById('mc-m-ubicacion').value='Salón principal';
@@ -411,6 +384,7 @@
 
   window.mcRenderTablaMesas = function(){
     const tb = document.getElementById('mc-tbody-mesas');
+    if(!tb) return;
     let lista = mcListaMesasFiltrada();
     if(!lista.length){
       tb.innerHTML = `<tr><td colspan="5"><div class="mc-empty"><p>No se encontraron mesas</p></div></td></tr>`;
@@ -423,13 +397,16 @@
       <td><span class="mc-badge ${m.estado==='disponible'?'mc-badge-ok':m.estado==='reservada'?'mc-badge-warn':'mc-badge-danger'}">${m.estado}</span></td>
       <td><div class="mc-action-btns">
         <button class="mc-icon-btn" onclick="mcVerMesa(${m.id})">Ver</button>
-        <button class="mc-icon-btn edit" onclick="mcEditarMesa(${m.id})">Editar</button>
-        <button class="mc-icon-btn del" onclick="mcPedirEliminarMesa(${m.id})">Borrar</button>
+        ${!esCajero() ? `
+          <button class="mc-icon-btn edit" onclick="mcEditarMesa(${m.id})">Editar</button>
+          <button class="mc-icon-btn del" onclick="mcPedirEliminarMesa(${m.id})">Borrar</button>
+        ` : ''}
       </div></td>
     </tr>`).join('');
   };
 
   window.mcEditarMesa = function(id){
+    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
     const m = mesas.find(x=>x.id===id); if(!m) return;
     editandoMesaId = id;
     mcShow('crear-mesa');
@@ -501,6 +478,7 @@
           <span class="mc-badge ${badgeClass(r.estado)}">${r.estado}</span>
         </div>`).join('')}`
         :`<p style="font-size:13px;color:var(--muted);margin:12px 0">Sin reservas activas en esta mesa.</p>`}
+      ${!esCajero() ? `
       <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)">
         <label class="mc-label" style="display:block;margin-bottom:7px">Cambiar estado</label>
         <div style="display:flex;gap:8px;align-items:center">
@@ -511,7 +489,7 @@
           </select>
           <button class="mc-btn mc-btn-primary" onclick="mcCambiarEstadoMesa(${m.id},${m.numero})">Actualizar</button>
         </div>
-      </div>
+      </div>` : ''}
       <div class="mc-btn-row">
         <button class="mc-btn mc-btn-secondary" onclick="mcCloseModal('mc-modal-mesa')">Cerrar</button>
       </div>`;
@@ -519,21 +497,21 @@
   };
 
   window.mcCambiarEstadoMesa = function(id, numeroMesa){
+    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
     const est = document.getElementById('mc-nuevo-estado').value;
     const mesa = mesas.find(m=>m.id===id);
     mesas = mesas.map(m=>m.id===id?{...m,estado:est}:m);
     if(mesa){
       djangoPost('/reservas/mesa/guardar/', {
-        numero_mesa: numeroMesa,
-        capacidad:   mesa.capacidad,
-        ubicacion:   mesa.ubicacion,
-        estado:      est,
+        numero_mesa: numeroMesa, capacidad: mesa.capacidad,
+        ubicacion: mesa.ubicacion, estado: est,
       }).catch(e => console.error('Error actualizando estado:', e));
     }
     save(); mcCloseModal('mc-modal-mesa'); mcRenderDiagrama(); mcRenderTablaMesas(); toast('Estado actualizado');
   };
 
   window.mcPedirEliminarMesa = function(id){
+    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
     const m=mesas.find(x=>x.id===id); if(!m) return;
     mcConfirm('Eliminar mesa',
       `¿Eliminar la Mesa ${m.numero}? También se perderán sus reservas asociadas.`,
@@ -546,41 +524,23 @@
       });
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // REPORTES DE MESAS: PDF / EXCEL / IMPRIMIR
-  // Igual que en reservas, usan mcListaMesasFiltrada() para respetar
-  // la búsqueda y los filtros de ubicación/capacidad activos.
-  // ─────────────────────────────────────────────────────────────
   window.mcExportarMesasPDF = function(){
     const lista = mcListaMesasFiltrada();
     if(!lista.length){ toast('No hay mesas para exportar','error'); return; }
     if(!window.jspdf){ toast('No se pudo cargar la librería de PDF','error'); return; }
-
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-
     doc.setFontSize(16);
     doc.text('Asadero Porras — Reporte de Mesas', 14, 16);
-    doc.setFontSize(10);
-    doc.setTextColor(100);
+    doc.setFontSize(10); doc.setTextColor(100);
     doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + lista.length + ' mesa(s)', 14, 22);
-
-    const filas = lista.map(m => [
-      'Mesa ' + m.numero,
-      String(m.capacidad) + ' pers.',
-      m.ubicacion,
-      m.estado,
-    ]);
-
+    const filas = lista.map(m => ['Mesa ' + m.numero, String(m.capacidad) + ' pers.', m.ubicacion, m.estado]);
     doc.autoTable({
-      head: [['Mesa', 'Capacidad', 'Ubicación', 'Estado']],
-      body: filas,
-      startY: 28,
+      head: [['Mesa', 'Capacidad', 'Ubicación', 'Estado']], body: filas, startY: 28,
       styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [192, 57, 43], textColor: 255 },
       alternateRowStyles: { fillColor: [245, 236, 215] },
     });
-
     doc.save('mesas_' + hoy() + '.pdf');
     toast('Reporte PDF generado');
   };
@@ -589,17 +549,12 @@
     const lista = mcListaMesasFiltrada();
     if(!lista.length){ toast('No hay mesas para exportar','error'); return; }
     if(!window.XLSX){ toast('No se pudo cargar la librería de Excel','error'); return; }
-
     const datos = lista.map(m => ({
-      'Mesa':       'Mesa ' + m.numero,
-      'Capacidad':  m.capacidad,
-      'Ubicación':  m.ubicacion,
-      'Estado':     m.estado,
+      'Mesa': 'Mesa ' + m.numero, 'Capacidad': m.capacidad,
+      'Ubicación': m.ubicacion, 'Estado': m.estado,
     }));
-
     const hoja = XLSX.utils.json_to_sheet(datos);
     hoja['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }];
-
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Mesas');
     XLSX.writeFile(libro, 'mesas_' + hoy() + '.xlsx');
@@ -609,24 +564,17 @@
   window.mcImprimirMesas = function(){
     const lista = mcListaMesasFiltrada();
     if(!lista.length){ toast('No hay mesas para imprimir','error'); return; }
-
     const filas = lista.map(m => `<tr>
-        <td>Mesa ${m.numero}</td>
-        <td>${m.capacidad} pers.</td>
-        <td>${m.ubicacion}</td>
-        <td>${m.estado}</td>
+        <td>Mesa ${m.numero}</td><td>${m.capacidad} pers.</td>
+        <td>${m.ubicacion}</td><td>${m.estado}</td>
       </tr>`).join('');
-
     document.getElementById('mc-print-area').innerHTML = `
       <h2>Asadero Porras — Reporte de Mesas</h2>
       <p>Generado el ${new Date().toLocaleString('es-CO')} — ${lista.length} mesa(s)</p>
       <table>
-        <thead><tr>
-          <th>Mesa</th><th>Capacidad</th><th>Ubicación</th><th>Estado</th>
-        </tr></thead>
+        <thead><tr><th>Mesa</th><th>Capacidad</th><th>Ubicación</th><th>Estado</th></tr></thead>
         <tbody>${filas}</tbody>
       </table>`;
-
     window.print();
   };
 
