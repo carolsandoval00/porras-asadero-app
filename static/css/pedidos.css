@@ -207,6 +207,18 @@
   color: #1A1008;
 }
 
+/* Modificador de margen inferior mayor (búsqueda en pedido_lista) */
+.pm-mb-lg { margin-bottom: 1.2rem; }
+
+/* Celda de descripción truncada (producto_lista) */
+.pm-td-desc-truncate {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--p-muted);
+}
+
 /* Celda de tabla vacía / mensaje sin datos */
 .pm-table-empty { text-align:center; color:var(--p-muted); padding:2rem; }
 
@@ -356,4 +368,3 @@
 
 /* Enlace/botón de volver con margen derecho */
 .pm-btn-ml { margin-left: .5rem; }
-
