@@ -59,7 +59,7 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Órdenes Comerciales</h3>
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+      <div class="pm-card-header-actions">
         <a href="{% url 'pedidos:orden_exportar_pdf' %}?q_orden={{ q_orden }}"
            class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
         <a href="{% url 'pedidos:orden_exportar_excel' %}?q_orden={{ q_orden }}"
@@ -69,7 +69,7 @@
     </div>
     <div class="pm-card-body">
       <!-- Buscador -->
-      <form method="get" action="" class="pm-search-form" style="margin-bottom:1.2rem;">
+      <form method="get" action="" class="pm-search-form pm-mb-lg">
         <input class="pm-input" type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o cliente…">
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
       </form>

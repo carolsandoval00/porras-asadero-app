@@ -207,7 +207,7 @@
   color: #1A1008;
 }
 
-/* Modificador de margen inferior mayor (búsqueda en pedido_lista) */
+/* Modificador de margen inferior mayor (búsqueda en pedido_lista / orden_lista) */
 .pm-mb-lg { margin-bottom: 1.2rem; }
 
 /* Celda de descripción truncada (producto_lista) */
@@ -368,3 +368,18 @@
 
 /* Enlace/botón de volver con margen derecho */
 .pm-btn-ml { margin-left: .5rem; }
+
+/* ── Estilos específicos de dashboard (tarjetas de estadísticas) ── */
+.pm-stat-warning { border-left-color:#D4A017; }
+.pm-stat-info    { border-left-color:#A07810; }
+.pm-stat-danger  { border-left-color:#C0392B; }
+.pm-stat-accent  { border-left-color:#E8651A; }
+.pm-stat-success { border-left-color:#27AE60; }
+
+/* ── Estilos específicos de pedido_form (tabla de platos) ── */
+.pm-th-qty        { width:130px; text-align:center; }
+.pm-th-price      { width:120px; text-align:right; }
+.pm-th-action-col { width:50px; }
+.pm-hidden        { display:none; }
+.pm-td-plato-total-label { font-weight:700; padding:.75rem 1rem; }
+.pm-td-plato-total-value { font-weight:800; font-size:1.1rem; color:#C0392B; padding:.75rem 1rem; }

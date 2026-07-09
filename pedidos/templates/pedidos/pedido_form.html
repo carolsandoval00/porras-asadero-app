@@ -126,21 +126,21 @@
           <div id="platos-vacio" class="pm-platos-vacio">
             Aún no has agregado productos.
           </div>
-          <table id="tabla-platos" class="pm-table pm-platos-table" style="display:none;">
+          <table id="tabla-platos" class="pm-table pm-platos-table pm-hidden">
             <thead>
               <tr>
                 <th>Producto</th>
-                <th style="width:130px;text-align:center;">Cantidad</th>
-                <th style="width:120px;text-align:right;">Precio unit.</th>
-                <th style="width:120px;text-align:right;">Subtotal</th>
-                <th style="width:50px;"></th>
+                <th class="pm-th-qty">Cantidad</th>
+                <th class="pm-th-price">Precio unit.</th>
+                <th class="pm-th-price">Subtotal</th>
+                <th class="pm-th-action-col"></th>
               </tr>
             </thead>
             <tbody id="tbody-platos"></tbody>
             <tfoot>
               <tr class="pm-tfoot-total">
-                <td colspan="3" class="pm-td-right" style="font-weight:700;padding:.75rem 1rem;">TOTAL</td>
-                <td class="pm-td-right" style="font-weight:800;font-size:1.1rem;color:#C0392B;padding:.75rem 1rem;" id="total-display">$0</td>
+                <td colspan="3" class="pm-td-right pm-td-plato-total-label">TOTAL</td>
+                <td class="pm-td-right pm-td-plato-total-value" id="total-display">$0</td>
                 <td></td>
               </tr>
             </tfoot>
@@ -213,13 +213,13 @@ function renderPlatos() {
     var sub = p.precio * p.cantidad; total += sub;
     tbody.innerHTML += '<tr>' +
       '<td><strong>' + p.nombre + '</strong></td>' +
-      '<td style="text-align:center;"><div style="display:flex;align-items:center;justify-content:center;gap:.5rem;">' +
+      '<td class="pm-td-center"><div class="pm-qty-controls">' +
         '<button type="button" class="qty-btn" onclick="cambiarCantidad(' + i + ',-1)">-</button>' +
-        '<span style="font-weight:700;min-width:20px;">' + p.cantidad + '</span>' +
+        '<span class="pm-qty-span">' + p.cantidad + '</span>' +
         '<button type="button" class="qty-btn" onclick="cambiarCantidad(' + i + ',1)">+</button>' +
       '</div></td>' +
-      '<td style="text-align:right;">$' + p.precio.toLocaleString('es-CO') + '</td>' +
-      '<td style="text-align:right;"><strong>$' + sub.toLocaleString('es-CO') + '</strong></td>' +
+      '<td class="pm-td-right">$' + p.precio.toLocaleString('es-CO') + '</td>' +
+      '<td class="pm-td-right"><strong>$' + sub.toLocaleString('es-CO') + '</strong></td>' +
       '<td><button type="button" class="pm-btn pm-btn-danger pm-btn-sm" ' +
               'onclick="eliminarPlato(' + i + ')">×</button></td>' +
     '</tr>';
