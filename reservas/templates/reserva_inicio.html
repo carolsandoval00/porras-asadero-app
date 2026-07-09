@@ -10,15 +10,15 @@
 <script>window.MC_ROL = "{{ request.user.rol }}";</script>
 
 <!-- ===== BANNER + NAV ===== -->
-<div style="padding:1.5rem 1.5rem 0;max-width:100%;">
-  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1rem;display:flex;align-items:center;gap:16px;">
-    <div style="font-size:28px;line-height:1;"></div>
+<div class="mc-banner-wrap">
+  <div class="mc-banner-box">
+    <div class="mc-banner-icon"></div>
     <div>
-      <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:600;margin:0 0 4px;color:#F5ECD7;">Módulo de Reservas</h1>
-      <p style="font-size:20px;color:#A09070;margin:0;">Bienvenido, {{ nombre }}</p>
+      <h1 class="mc-banner-title">Módulo de Reservas</h1>
+      <p class="mc-banner-sub">Bienvenido, {{ nombre }}</p>
     </div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;padding:0 0.2rem;">
+  <div class="mc-nav-row">
     <button class="mc-nav-btn active" onclick="mcShow('reservas')">Reservas</button>
     <button class="mc-nav-btn" onclick="mcShow('crear')">+ Nueva reserva</button>
     <button class="mc-nav-btn" onclick="mcShow('mesas')">Diagrama de mesas</button>
@@ -73,10 +73,10 @@
 
 <!-- ===== MODAL MENSAJE ===== -->
 <div class="mc-confirm-overlay" id="mc-msg-overlay">
-  <div class="mc-confirm-box" style="text-align:center">
+  <div class="mc-confirm-box mc-text-center">
     <h3 id="mc-msg-title">¡Listo!</h3>
-    <p id="mc-msg-text" style="margin-bottom:1.3rem"></p>
-    <div class="mc-confirm-btns" style="justify-content:center">
+    <p id="mc-msg-text" class="mc-mb-13"></p>
+    <div class="mc-confirm-btns mc-justify-center">
       <button class="mc-btn mc-btn-primary" onclick="document.getElementById('mc-msg-overlay').classList.remove('open')">Aceptar</button>
     </div>
   </div>

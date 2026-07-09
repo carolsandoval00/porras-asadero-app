@@ -102,7 +102,7 @@
     <p id="confirm-msg">¿Eliminar la Mesa? También se perderán sus reservas asociadas.</p>
     <div class="mc-confirm-btns">
       <button class="mc-btn mc-btn-secondary" onclick="cerrarConfirm()">Cancelar</button>
-      <form method="post" id="confirm-form" style="display:inline;">
+      <form method="post" id="confirm-form" class="mc-inline">
         {% csrf_token %}
         <button type="submit" class="mc-btn mc-btn-danger">Eliminar</button>
       </form>

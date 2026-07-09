@@ -195,6 +195,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
+
 /* ── Utilidades para inline styles migrados (eliminar_detalle / listar_mesas / reserva_inicio / actualizar_mesa / diagrama_mesas / gestion_mesas / lista_reservas) ── */
 
 .mc-banner-wrap { padding:1.5rem 1.5rem 0; max-width:100%; }
@@ -262,3 +263,6 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
 .mc-card-subheader { padding:1rem 1.25rem; border-bottom:1px solid var(--border); }
 .mc-card-title-reset { margin:0; border:none; padding:0; }
 .mc-filter-bar-pad { padding:10px 15px; }
+
+/* Form inline dentro de confirm-btns (listar_mesas) */
+.mc-inline { display: inline; }
