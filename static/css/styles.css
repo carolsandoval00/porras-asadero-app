@@ -1,5 +1,4 @@
-
-        :root {
+:root {
             --naranja: #E8651A;
             --dorado:  #D4A017;
             --negro:   #1A1008;
@@ -344,4 +343,103 @@
     min-height: 350px;
     border: 1px solid rgba(212, 160, 23, 0.15);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================
+   Panel Administrativo (base 2.html)
+   ============================================ */
+.admin-body-shell {
+    overflow-x: hidden;
+    background-color: var(--crema);
+}
+.admin-shell {
+    overflow-x: hidden;
+    min-height: 100vh;
+    background-color: var(--crema);
+}
+.admin-main {
+    background: var(--crema);
+    min-width: 0;
+}
+html.admin-html, body.admin-body-shell {
+    background-color: var(--crema) !important;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+@media (min-width: 992px) {
+    html.admin-html, body.admin-body-shell {
+        height: 100vh;
+        overflow: hidden;
+    }
+    .admin-main {
+        height: 100vh;
+        overflow-y: auto;
+    }
+}
+
+/* ============================================
+   Sidebar / Panel Lateral Administrativo (partials/aside.html)
+   ============================================ */
+.active-custom {
+    background-color: #C0392B !important;
+    color: var(--crema) !important;
+}
+.sidebar-desktop,
+.sidebar-mobile-header,
+.sidebar-offcanvas {
+    background-color: var(--negro);
+    color: var(--crema);
+}
+.sidebar-desktop .nav-link:hover,
+.sidebar-offcanvas .nav-link:hover {
+    background-color: rgba(232, 101, 26, 0.1);
+    color: var(--naranja) !important;
+}
+.sidebar-desktop .nav-link,
+.sidebar-desktop a,
+.sidebar-offcanvas .nav-link,
+.sidebar-offcanvas a,
+.sidebar-mobile-header a {
+    color: var(--crema);
+}
+.sidebar-desktop {
+    width: 260px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+.sidebar-mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    height: 60px;
+}
+.sidebar-offcanvas {
+    width: 280px;
+}
+.sidebar-offcanvas-body {
+    height: calc(100vh - 65px);
+    overflow-y: auto;
+}
+.sidebar-logo {
+    height: 150px;
+}
+.sidebar-logo-mobile {
+    height: 45px;
+}
+.sidebar-toggle-btn {
+    border-color: rgba(245, 236, 215, 0.25);
+}
+.sidebar-divider {
+    border-color: #3a2a18;
+}
+.sidebar-divider-strong {
+    border-color: #3a2a18 !important;
+}
+.sidebar-submenu {
+    font-size: 0.88rem;
+    border-left: 1px solid rgba(245, 236, 215, 0.15);
+    padding-left: 0.5rem;
 }
