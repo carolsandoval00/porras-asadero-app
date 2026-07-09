@@ -15,9 +15,11 @@
         <button class="usr-tab usr-tab-oculto" onclick="nav('perfil')" id="tab-perfil">
             <i class="bi bi-person-circle"></i> <span id="tab-perfil-txt">Perfil</span>
         </button>
+        {% if request.user.rol == 'ADMIN' or request.user.is_superuser %}
         <button class="usr-tab tab-nuevo" onclick="nav('crear')">
             <i class="bi bi-person-plus"></i> Nuevo usuario
         </button>
+        {% endif %}
     </div>
 
     <!-- ══ LISTA ══ -->
@@ -116,7 +118,6 @@
                     <select class="f-sel" id="u-est"><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select>
                 </div>
             </div>
-
             <div id="pw-nuevo">
                 <div class="fg2">
                     <div>
@@ -129,7 +130,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="pw-edit" class="usr-tab-oculto">
                 <label class="pw-edit-label">
                     <input type="checkbox" id="cb-pw" onchange="tPwEdit()"> Cambiar contraseña
@@ -159,7 +159,7 @@
             <textarea class="f-ta" id="u-notas" placeholder="Información adicional sobre este usuario…"></textarea>
             <div class="btn-row">
                 <button class="btn btn-out" onclick="limpiar()">Limpiar</button>
-                <button class="btn btn-ok"  onclick="guardar()" id="btn-grd">
+                <button class="btn btn-ok" onclick="guardar()" id="btn-grd">
                     <i class="bi bi-person-check"></i> Crear usuario
                 </button>
             </div>
@@ -192,15 +192,17 @@
 
 <div class="toast" id="toast"></div>
 
+<div id="django-es-admin" data-admin="{% if request.user.rol == 'ADMIN' or request.user.is_superuser %}1{% else %}0{% endif %}" style="display:none"></div>
+
 <script>
 (function(){
+
+const ES_ADMIN = document.getElementById('django-es-admin').dataset.admin === '1';
 
 const PERMS=['Ver reservas','Crear reservas','Editar reservas','Eliminar reservas',
              'Ver mesas','Gestionar mesas','Ver reportes','Gestionar pagos',
              'Ver usuarios','Gestionar usuarios','Configuración','Acceso total'];
 const COLS=['#1A1008','#C0392B','#E8651A','#8B2000','#D4A017','#633806','#C0502A'];
-
-
 
 let djangoData = [];
 try {
@@ -226,6 +228,7 @@ function getCookie(name) {
     return val;
 }
 
+const col = (i) => COLS[i % COLS.length];
 const ini = (n, a) => ((n||'?')[0] + (a||'?')[0]).toUpperCase();
 const bRol = (r) => {
     const m = {Administrador:'b-admin', Mesero:'b-mesero', Cajero:'b-cajero', Cocina:'b-cocina'};
@@ -233,17 +236,16 @@ const bRol = (r) => {
 };
 const bEst = (e) => `<span class="bdg ${e==='activo'?'b-activo':'b-inactivo'}">${e}</span>`;
 
-const colClass = (i) => 'av-bg-' + (i % COLS.length);
-
 const avSm = (u, idx) => u.foto
-    ? `<img src="${u.foto}" class="av-foto" loading="lazy">`
-    : `<div class="av ${colClass(idx)}">${ini(u.nom, u.ape)}</div>`;
+    ? `<img src="${u.foto}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" loading="lazy">`
+    : `<div class="av" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
 
 const avLg = (u, idx) => u.foto
-    ? `<img src="${u.foto}" class="av-foto-lg" loading="lazy">`
-    : `<div class="av-lg ${colClass(idx)}">${ini(u.nom, u.ape)}</div>`;
+    ? `<img src="${u.foto}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid #FDF7EC;" loading="lazy">`
+    : `<div class="av-lg" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
 
 window.nav = function(id) {
+    if (id === 'crear' && !ES_ADMIN) { toast('No tienes permisos para crear usuarios', 'err'); return; }
     document.querySelectorAll('.usr-sec').forEach(s => s.classList.remove('activa'));
     document.getElementById('sec-' + id).classList.add('activa');
     document.querySelectorAll('.usr-tab').forEach(t => t.classList.remove('activo'));
@@ -277,10 +279,10 @@ function stats() {
           i  = uList.filter(u => u.e === 'inactivo').length,
           ad = uList.filter(u => u.rol === 'Administrador').length;
     document.getElementById('stats-ctn').innerHTML =
-        `<div class="stat-box"><div class="stat-num">${t}</div><div class="stat-lbl"><span class="s-dot s-dot-total"></span>Total</div></div>
-         <div class="stat-box"><div class="stat-num">${a}</div><div class="stat-lbl"><span class="s-dot s-dot-activos"></span>Activos</div></div>
-         <div class="stat-box"><div class="stat-num">${i}</div><div class="stat-lbl"><span class="s-dot s-dot-inactivos"></span>Inactivos</div></div>
-         <div class="stat-box"><div class="stat-num">${ad}</div><div class="stat-lbl"><span class="s-dot s-dot-admins"></span>Admins</div></div>`;
+        `<div class="stat-box"><div class="stat-num">${t}</div><div class="stat-lbl"><span class="s-dot" style="background:#1A1008"></span>Total</div></div>
+         <div class="stat-box"><div class="stat-num">${a}</div><div class="stat-lbl"><span class="s-dot" style="background:#E8651A"></span>Activos</div></div>
+         <div class="stat-box"><div class="stat-num">${i}</div><div class="stat-lbl"><span class="s-dot" style="background:#C0392B"></span>Inactivos</div></div>
+         <div class="stat-box"><div class="stat-num">${ad}</div><div class="stat-lbl"><span class="s-dot" style="background:#D4A017"></span>Admins</div></div>`;
 }
 
 window.renderTabla = function() {
@@ -299,17 +301,17 @@ window.renderTabla = function() {
     }
     tb.innerHTML = li.map(u => `
         <tr id="fila-${u.id}">
-          <td><div class="row-inline">
+          <td><div style="display:flex;align-items:center;gap:9px">
               ${avSm(u, uList.indexOf(u))}
               <strong>@${u.user}</strong></div></td>
           <td>${u.nom} ${u.ape}</td>
-          <td class="td-muted">${u.email}</td>
+          <td style="font-size:.83rem;color:var(--muted)">${u.email}</td>
           <td>${bRol(u.rol)}</td>
           <td>${bEst(u.e)}</td>
-          <td><div class="row-actions">
-              <button class="btn-ac btn-ver"  onclick="verPerfil(${u.id})">Ver perfil</button>
-              <button class="btn-ac btn-edit" onclick="editar(${u.id})">Editar</button>
-              <button class="btn-ac btn-del"  onclick="pedirDel(${u.id})">Eliminar</button>
+          <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+              <button class="btn-ac btn-ver" onclick="verPerfil(${u.id})">Ver perfil</button>
+              ${ES_ADMIN ? `<button class="btn-ac btn-edit" onclick="editar(${u.id})">Editar</button>
+              <button class="btn-ac btn-del" onclick="pedirDel(${u.id})">Eliminar</button>` : ''}
           </div></td>
         </tr>`).join('');
 };
@@ -335,10 +337,10 @@ window.verPerfil = function(id) {
             <div class="c-label">Información personal</div>
             <div class="det-g">
                 <div class="det-it"><div class="det-k">Nombre completo</div><div class="det-v">${u.nom} ${u.ape}</div></div>
-                <div class="det-it"><div class="det-k">Correo</div><div class="det-v det-v-light-sm">${u.email}</div></div>
+                <div class="det-it"><div class="det-k">Correo</div><div class="det-v" style="font-weight:400;font-size:.85rem">${u.email}</div></div>
                 <div class="det-it"><div class="det-k">Teléfono</div><div class="det-v">${u.tel||'—'}</div></div>
                 <div class="det-it"><div class="det-k">Documento</div><div class="det-v">${u.tdoc?u.tdoc+' '+u.doc:u.doc||'—'}</div></div>
-                <div class="det-it det-it-full"><div class="det-k">Dirección</div><div class="det-v det-v-light">${u.dir||'—'}</div></div>
+                <div class="det-it" style="grid-column:1/-1"><div class="det-k">Dirección</div><div class="det-v" style="font-weight:400">${u.dir||'—'}</div></div>
             </div>
         </div>
         <div class="usr-card">
@@ -347,8 +349,8 @@ window.verPerfil = function(id) {
                 <div class="det-it"><div class="det-k">Usuario</div><div class="det-v">@${u.user}</div></div>
                 <div class="det-it"><div class="det-k">Rol</div><div class="det-v">${bRol(u.rol)}</div></div>
                 <div class="det-it"><div class="det-k">Estado</div><div class="det-v">${bEst(u.e)}</div></div>
-                <div class="det-it"><div class="det-k">Último acceso</div><div class="det-v det-v-light-sm">${u.acc||'—'}</div></div>
-                <div class="det-it"><div class="det-k">Registro</div><div class="det-v det-v-light-sm">${new Date(u.cr).toLocaleString('es-CO')}</div></div>
+                <div class="det-it"><div class="det-k">Último acceso</div><div class="det-v" style="font-weight:400;font-size:.85rem">${u.acc||'—'}</div></div>
+                <div class="det-it"><div class="det-k">Registro</div><div class="det-v" style="font-weight:400;font-size:.85rem">${new Date(u.cr).toLocaleString('es-CO')}</div></div>
             </div>
         </div>
         <div class="usr-card">
@@ -358,16 +360,18 @@ window.verPerfil = function(id) {
                     <div class="perm-dot"></div>${p}</div>`).join('')}
             </div>
         </div>
-      
-        ${u.notas ? `<div class="usr-card"><div class="c-label">Notas internas</div><p class="notas-txt">${u.notas}</p></div>` : ''}
-        <div class="perfil-acciones">
+        ${u.notas ? `<div class="usr-card"><div class="c-label">Notas internas</div><p style="font-size:.88rem;color:#6B5A3E;line-height:1.6">${u.notas}</p></div>` : ''}
+        <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.5rem">
+            ${ES_ADMIN ? `
             <button class="btn btn-ok" onclick="editar(${u.id})"><i class="bi bi-pencil"></i> Editar</button>
             <button class="btn btn-del2" onclick="nav('lista');pedirDel(${u.id})"><i class="bi bi-trash"></i> Eliminar</button>
+            ` : ''}
         </div>`;
     nav('perfil');
 };
 
 window.editar = function(id) {
+    if (!ES_ADMIN) { toast('No tienes permisos para editar usuarios', 'err'); return; }
     const u = uList.find(x => x.id === id); if (!u) return;
     editId = id; nav('crear');
     setTimeout(() => {
@@ -394,13 +398,13 @@ window.editar = function(id) {
 };
 
 window.guardar = function() {
+    if (!ES_ADMIN) { toast('No tienes permisos para guardar usuarios', 'err'); return; }
     const nom = document.getElementById('u-nom').value.trim();
     const ape = document.getElementById('u-ape').value.trim();
     const ema = document.getElementById('u-email').value.trim();
     const usr = document.getElementById('u-user').value.trim();
     const rol = document.getElementById('u-rol').value;
     const tel = document.getElementById('u-tel').value.trim();
-
     if (!nom || !ape || !ema || !usr || !rol) { toast('Completa los campos obligatorios (*)', 'err'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ema)) { toast('El correo electrónico no es válido', 'err'); return; }
     if (tel) {
@@ -409,8 +413,8 @@ window.guardar = function() {
     }
     const doc = document.getElementById('u-doc').value.trim();
     if (doc) {
-        if (!/^\d+$/.test(doc))           { toast('El documento solo debe contener números', 'err'); return; }
-        if (doc.length < 6 || doc.length > 10) { toast('El documento debe tener entre 6 y 10 dígitos', 'err'); return; }
+        if (!/^\d+$/.test(doc))                    { toast('El documento solo debe contener números', 'err'); return; }
+        if (doc.length < 6 || doc.length > 10)     { toast('El documento debe tener entre 6 y 10 dígitos', 'err'); return; }
     }
     if (!editId) {
         const pw  = document.getElementById('u-pw').value;
@@ -443,23 +447,15 @@ window.guardar = function() {
     const url = editId ? `/usuarios/editar/${editId}/` : `/usuarios/crear/`;
     fetch(url, {
         method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json',
-        },
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
         body: JSON.stringify(obj),
     })
     .then(res => res.json())
     .then(data => {
         if (data.ok) {
             if (!editId && data.id) obj.id = data.id;
-            if (editId) {
-                uList = uList.map(u => u.id === editId ? obj : u);
-                toast('Usuario actualizado', 'ok');
-            } else {
-                uList.push(obj);
-                toast('Usuario creado', 'ok');
-            }
+            if (editId) { uList = uList.map(u => u.id === editId ? obj : u); toast('Usuario actualizado', 'ok'); }
+            else        { uList.push(obj); toast('Usuario creado', 'ok'); }
             save(); limpiar(); nav('lista');
         } else {
             toast(data.error || 'Error al guardar', 'err');
@@ -490,41 +486,27 @@ function renderPermsForm(activos) {
 }
 
 window.pedirDel = function(id) {
+    if (!ES_ADMIN) { toast('No tienes permisos para eliminar usuarios', 'err'); return; }
     const u = uList.find(x => x.id === id); if (!u) return;
     confirm2(
         'Eliminar usuario',
         `¿Eliminar a ${u.nom} ${u.ape} (@${u.user})? Esta acción no se puede deshacer.`,
         () => {
             const fila = document.getElementById('fila-' + id);
-            if (fila) {
-                fila.style.transition = 'opacity .3s, transform .3s';
-                fila.style.opacity    = '0';
-                fila.style.transform  = 'translateX(20px)';
-            }
+            if (fila) { fila.style.transition = 'opacity .3s, transform .3s'; fila.style.opacity = '0'; fila.style.transform = 'translateX(20px)'; }
             fetch(`/usuarios/eliminar/${id}/`, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
             })
             .then(res => {
                 if (res.ok || res.redirected) {
-                    setTimeout(() => {
-                        uList = uList.filter(x => x.id !== id);
-                        save();
-                        renderTabla();
-                        toast('Usuario eliminado correctamente', 'err');
-                    }, 300);
+                    setTimeout(() => { uList = uList.filter(x => x.id !== id); save(); renderTabla(); toast('Usuario eliminado correctamente', 'err'); }, 300);
                 } else {
                     if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; }
                     toast('Error al eliminar el usuario', 'err');
                 }
             })
-            .catch(() => {
-                if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; }
-                toast('Error de conexión', 'err');
-            });
+            .catch(() => { if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; } toast('Error de conexión', 'err'); });
         }
     );
 };
