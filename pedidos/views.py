@@ -116,7 +116,7 @@ def dashboard(request):
     )[::-1]
 
     return render(request, 'pedidos/dashboard.html', {
-        'titulo': 'Módulo de Pedidos',
+        'titulo': 'Pedidos',
         'total_pedidos': total_pedidos,
         'pedidos_pendientes': pedidos_pendientes,
         'total_ordenes': total_pedidos,
@@ -140,7 +140,7 @@ def pedido_lista(request):
         items = list(grupo)
         pedidos_por_fecha.append({'fecha': fecha, 'pedidos': items, 'count': len(items)})
     return render(request, 'pedidos/pedido_lista.html', {
-        'titulo': 'Módulo de Pedidos',
+        'titulo': 'Pedidos',
         'pedidos_por_fecha': pedidos_por_fecha,
         'estados': Pedido.ESTADO_CHOICES,
         'q': q,
@@ -307,7 +307,7 @@ def orden_lista(request):
         items = list(grupo)
         ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
     return render(request, 'pedidos/orden_lista.html', {
-        'titulo': 'Módulo de Pedidos', 'ordenes_por_fecha': ordenes_por_fecha,
+        'titulo': 'Pedidos', 'ordenes_por_fecha': ordenes_por_fecha,
         'q_orden': q_orden, 'seccion_activa': 'orden-lista'})
 
 
@@ -364,7 +364,7 @@ def producto_lista(request):
     if cat_sel:
         productos_qs = productos_qs.filter(categoria__id=cat_sel)
     return render(request, 'pedidos/producto_lista.html', {
-        'titulo': 'Módulo de Pedidos', 'productos': productos_qs,
+        'titulo': 'Pedidos', 'productos': productos_qs,
         'categorias': Categoria.objects.all(), 'q_prod': q_prod,
         'cat_sel': cat_sel, 'seccion_activa': 'producto-lista'})
 
@@ -488,7 +488,7 @@ def categoria_lista(request):
     if q_cat:
         categorias_qs = categorias_qs.filter(nombre__icontains=q_cat)
     return render(request, 'pedidos/categoria_lista.html', {
-        'titulo': 'Módulo de Pedidos', 'categorias': categorias_qs,
+        'titulo': 'Pedidos', 'categorias': categorias_qs,
         'q_cat': q_cat, 'seccion_activa': 'categoria-lista'})
 
 
@@ -606,7 +606,7 @@ def cliente_lista(request):
         clientes_qs = clientes_qs.filter(
             Q(nombre_completo__icontains=q_cli) | Q(documento__icontains=q_cli))
     return render(request, 'pedidos/cliente_lista.html', {
-        'titulo': 'Módulo de Pedidos', 'clientes': clientes_qs,
+        'titulo': 'Pedidos', 'clientes': clientes_qs,
         'q_cli': q_cli, 'seccion_activa': 'cliente-lista'})
 
 
