@@ -58,6 +58,7 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Pedidos</h3>
+      {% if request.user.rol == 'ADMIN' or request.user.is_superuser %}
       <div class="pm-card-header-actions">
         <a href="{% url 'pedidos:pedido_exportar_pdf' %}?q={{ q }}&estado={{ estado_sel }}"
            class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
@@ -66,6 +67,7 @@
         <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm">🖨 Imprimir</button>
         <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo pedido</a>
       </div>
+      {% endif %}
     </div>
 
     <div class="pm-card-body">
