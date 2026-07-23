@@ -443,6 +443,21 @@ html.admin-html, body.admin-body-shell {
     border-left: 1px solid rgba(245, 236, 215, 0.15);
     padding-left: 0.5rem;
 }
+
+/* ── Corrección de tamaño de fuente del menú lateral ──
+   Antes heredaba el font-size: 18px del body (Crimson Text),
+   por eso se veía más grande de lo debido. Se fija un tamaño
+   propio, consistente con el resto del panel admin. */
+.sidebar-desktop .nav-link,
+.sidebar-offcanvas .nav-link {
+    font-size: 0.95rem;
+    font-family: 'Crimson Text', serif;
+}
+.sidebar-desktop .nav-link i,
+.sidebar-offcanvas .nav-link i {
+    font-size: 1rem;
+}
+
 /* ── Utilidades migradas desde inline styles (base.html, nav.html, footer.html, administrador/index.html) ── */
 
 .body-no-overflow-x { overflow-x: hidden; }
