@@ -405,10 +405,25 @@ html.admin-html, body.admin-body-shell {
 }
 .sidebar-desktop {
     width: 260px;
-    height: 100vh;
+    height: 100vh !important;
+    max-height: 100vh !important;
     position: sticky;
     top: 0;
     z-index: 1020;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 101, 26, 0.4) transparent;
+}
+.sidebar-desktop::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar-desktop::-webkit-scrollbar-thumb {
+    background-color: rgba(232, 101, 26, 0.4);
+    border-radius: 10px;
+}
+.sidebar-desktop::-webkit-scrollbar-track {
+    background: transparent;
 }
 .sidebar-mobile-header {
     position: sticky;
@@ -421,7 +436,10 @@ html.admin-html, body.admin-body-shell {
 }
 .sidebar-offcanvas-body {
     height: calc(100vh - 65px);
-    overflow-y: auto;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 .sidebar-logo {
     height: 150px;

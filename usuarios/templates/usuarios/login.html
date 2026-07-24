@@ -200,6 +200,19 @@
     .dash-card h3 { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--carbon); }
 
     .auth-card .alert { border-radius: 10px; font-size: .88rem; }
+
+    /* ── Responsive: evita que las tarjetas del dashboard se desborden ── */
+    @media (max-width: 768px) {
+        .auth-card { padding: 1.6rem 1.4rem; }
+        .dash-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .dash-card { padding: 1.1rem .8rem; min-height: 120px; }
+        .dash-card i { font-size: 2rem; margin-bottom: 6px; }
+        .dash-card h3 { font-size: .95rem; }
+    }
+    @media (max-width: 480px) {
+        .dash-grid { grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+        .auth-card { padding: 1.2rem 1rem; }
+    }
 </style>
 
 {% if vista == "login" or vista == "acceder" or not vista %}
