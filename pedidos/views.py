@@ -88,7 +88,7 @@ def _pedidos_filtrados(request):
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
         .prefetch_related('items__producto')
-        .order_by('fecha_creacion')
+        .order_by('-fecha_creacion')
     )
     if q:
         qs = qs.filter(
