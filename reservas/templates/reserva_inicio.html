@@ -4,43 +4,40 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
+<!-- ROL del usuario para el JS -->
+<script>window.MC_ROL = "{{ request.user.rol }}";</script>
+
 <!-- ===== BANNER + NAV ===== -->
-<div style="padding:1.5rem 1.5rem 0;max-width:100%;">
-  <div style="background:#1A1008;color:#F5ECD7;padding:1.6rem 2rem;border-radius:12px;margin-bottom:1rem;display:flex;align-items:center;gap:16px;">
-    <div style="font-size:28px;line-height:1;"></div>
+<div class="mc-banner-wrap">
+  <div class="mc-banner-box">
+    <div class="mc-banner-icon"></div>
     <div>
       <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:600;margin:0 0 4px;color:#F5ECD7;">Reservas y Mesas</h1>
       <p style="font-size:20px;color:#A09070;margin:0;">Bienvenido, {{ nombre }}</p>
+      <h1 class="mc-banner-title">Módulo de Reservas</h1>
+      <p class="mc-banner-sub">Bienvenido, {{ nombre }}</p>
     </div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;padding:0 0.2rem;">
+  <div class="mc-nav-row">
     <button class="mc-nav-btn active" onclick="mcShow('reservas')">Reservas</button>
     <button class="mc-nav-btn" onclick="mcShow('crear')">+ Nueva reserva</button>
     <button class="mc-nav-btn" onclick="mcShow('mesas')">Diagrama de mesas</button>
+    {% if request.user.rol != 'CAJERO' %}
     <button class="mc-nav-btn" onclick="mcShow('crear-mesa')">+ Nueva mesa</button>
     <a href="{% url 'listar_mesas' %}" class="mc-nav-btn">Editar mesa</a>
     <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn">Eliminar reserva</a>
+    {% endif %}
   </div>
 </div>
 
 <div class="mc-wrap">
-
-  <!-- ===== LISTA RESERVAS ===== -->
   {% include "reservas/lista_reservas.html" %}
-
-  <!-- ===== CREAR / EDITAR RESERVA ===== -->
-   {% include "reservas/crear_reserva.html" %}
-
-  <!-- ===== DIAGRAMA DE MESAS ===== -->
+  {% include "reservas/crear_reserva.html" %}
   {% include "reservas/diagrama_mesas.html" %}
-
-  <!-- ===== GESTIÓN DE MESAS ===== -->
   {% include "reservas/gestion_mesas.html" %}
-
-</div><!-- /.mc-wrap -->
+</div>
 
 <!-- ===== MODAL DETALLE RESERVA ===== -->
 <div class="mc-modal-overlay" id="mc-modal-reserva">
@@ -76,29 +73,24 @@
   </div>
 </div>
 
-<!-- ===== MODAL MENSAJE (reemplaza al toast) ===== -->
+<!-- ===== MODAL MENSAJE ===== -->
 <div class="mc-confirm-overlay" id="mc-msg-overlay">
-  <div class="mc-confirm-box" style="text-align:center">
+  <div class="mc-confirm-box mc-text-center">
     <h3 id="mc-msg-title">¡Listo!</h3>
-    <p id="mc-msg-text" style="margin-bottom:1.3rem"></p>
-    <div class="mc-confirm-btns" style="justify-content:center">
+    <p id="mc-msg-text" class="mc-mb-13"></p>
+    <div class="mc-confirm-btns mc-justify-center">
       <button class="mc-btn mc-btn-primary" onclick="document.getElementById('mc-msg-overlay').classList.remove('open')">Aceptar</button>
     </div>
   </div>
 </div>
 
 <div class="mc-toast" id="mc-toast"></div>
-
-<!-- ===== ÁREA DE IMPRESIÓN (solo visible al imprimir) ===== -->
 <div class="mc-print-only" id="mc-print-area"></div>
 
-<!-- ===== LIBRERÍAS PARA REPORTES (PDF y Excel) ===== -->
+<!-- Librerías reportes -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
-
-  <script src="{% static 'js/reservas.js' %}" defer></script>
-
-  <script src="{% static 'js/reservas.js' %}" defer></script>
+<script src="{% static 'js/reservas.js' %}" defer></script>
 
 {% endblock %}

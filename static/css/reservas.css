@@ -199,3 +199,74 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
+
+/* ── Utilidades para inline styles migrados (eliminar_detalle / listar_mesas / reserva_inicio / actualizar_mesa / diagrama_mesas / gestion_mesas / lista_reservas) ── */
+
+.mc-banner-wrap { padding:1.5rem 1.5rem 0; max-width:100%; }
+
+.mc-banner-box {
+  background:#1A1008; color:#F5ECD7; padding:1.6rem 2rem; border-radius:12px;
+  margin-bottom:1rem; display:flex; align-items:center; gap:16px;
+}
+.mc-banner-box-simple {
+  background:#1A1008; color:#F5ECD7; padding:1.6rem 2rem; border-radius:12px;
+  margin-bottom:1.5rem;
+}
+.mc-banner-icon { font-size:28px; line-height:1; }
+
+.mc-banner-title {
+  font-family:'Playfair Display',serif; font-size:26px; font-weight:600;
+  margin:0 0 4px; color:#F5ECD7;
+}
+.mc-banner-title-light {
+  font-family:'Playfair Display',serif; font-size:26px; font-weight:500;
+  margin:0 0 4px; color:#F5ECD7;
+}
+.mc-banner-sub { font-size:20px; color:#A09070; margin:0; }
+.mc-banner-sub-sm { font-size:13px; color:#A09070; margin:0; }
+
+.mc-nav-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1.5rem; padding:0 0.2rem; }
+
+.mc-hidden { display:none; }
+
+.mc-empty-emoji { font-size:40px; margin-bottom:12px; }
+.mc-back-link { display:inline-block; margin-top:12px; font-size:13px; color:#C0392B; }
+
+.mc-confirm-inline {
+  display:none; margin-top:1rem; padding:1rem; background:#fff3f3;
+  border:1px solid #f5c6c6; border-radius:8px;
+}
+.mc-confirm-warn { margin:0 0 10px; font-size:14px; color:#C0392B; font-weight:500; }
+.mc-confirm-detail { margin:0 0 14px; font-size:13px; color:#555; }
+
+.mc-modal-ok-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+  z-index:9999; align-items:center; justify-content:center;
+}
+.mc-modal-ok-box {
+  background:#fff; border-radius:12px; padding:2rem; max-width:380px; width:90%;
+  text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.2);
+}
+.mc-modal-ok-title { font-family:'Playfair Display',serif; font-size:20px; margin:0 0 8px; color:#1A1008; }
+.mc-modal-ok-text { font-size:13px; color:#777; margin:0 0 1.5rem; }
+
+.mc-id-cell { font-family:monospace; font-size:11px; color:var(--hint); }
+.mc-cell-name { font-weight:500; }
+.mc-cell-center { text-align:center; }
+
+.mc-text-center { text-align:center; }
+.mc-mb-13 { margin-bottom:1.3rem; }
+.mc-justify-center { justify-content:center; }
+.mc-muted-sm { font-size:12px; color:var(--muted); }
+
+.mc-mb-12 { margin-bottom:12px; }
+.mc-justify-stretch { justify-content:stretch; }
+.mc-flex-1 { flex:1; }
+
+.mc-card-flush { padding:0; overflow:hidden; }
+.mc-card-subheader { padding:1rem 1.25rem; border-bottom:1px solid var(--border); }
+.mc-card-title-reset { margin:0; border:none; padding:0; }
+.mc-filter-bar-pad { padding:10px 15px; }
+
+/* Form inline dentro de confirm-btns (listar_mesas) */
+.mc-inline { display: inline; }
