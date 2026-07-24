@@ -1,5 +1,4 @@
-
-        :root {
+:root {
             --naranja: #E8651A;
             --dorado:  #D4A017;
             --negro:   #1A1008;
@@ -208,10 +207,28 @@
 
 
 /* controla el logo sin dañar lo demás */
-.navbar-brand img {
-    height: 200px;
+.nav-logo-img {
+    height: 70px;
     width: auto;
     display: block;
+    transition: height .25s ease;
+}
+
+@media (min-width: 768px) {
+    .nav-logo-img {
+        height: 130px;
+    }
+}
+
+/* Evita que el nav fijo tape el subtítulo del hero, sobre todo en móvil */
+#inicio {
+    padding-top: 90px;
+}
+
+@media (min-width: 768px) {
+    #inicio {
+        padding-top: 0;
+    }
 }
 
 /* WhatsApp premium custom styles */
