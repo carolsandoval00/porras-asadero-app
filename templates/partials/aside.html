@@ -138,7 +138,22 @@
                         </a>
                     </li>
                     <li>
-                       <a href="{% url 'listar_mesas' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' %}text-warning fw-bold{% endif %}">
+                        <a href="{% url 'reserva_inicio' %}?tab=crear" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' and request.GET.tab == 'crear' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-calendar-plus me-2"></i>Nueva Reserva
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'reserva_inicio' %}?tab=mesas" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' and request.GET.tab == 'mesas' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-diagram-3 me-2"></i>Diagrama Mesas
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'reserva_inicio' %}?tab=crear-mesa" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' and request.GET.tab == 'crear-mesa' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
+                            <i class="bi bi-plus-square me-2"></i>Nueva Mesa
+                        </a>
+                    </li>
+                    <li>
+                       <a href="{% url 'listar_mesas' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
     <i class="bi bi-gear-fill me-2"></i>Editar Mesas
 </a>
                     </li>

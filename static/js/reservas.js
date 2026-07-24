@@ -154,16 +154,6 @@
     mcPoblarMesas(); fijarFechaMin();
   };
 
-  window.mcToggleFiltroFecha = function(){
-    const val = document.getElementById('mc-filtro-fecha').value;
-    document.getElementById('mc-filtro-fecha-dia').style.display = val==='dia' ? 'inline-flex' : 'none';
-    document.getElementById('mc-filtro-fecha-mes').style.display = val==='mes' ? 'inline-flex' : 'none';
-    mcRenderTabla();
-  };
-
-  // Devuelve la lista de reservas aplicando los mismos filtros de la tabla
-  // (buscar, estado, fecha). La usan tanto mcRenderTabla como los reportes,
-  // así el PDF/Excel/impresión siempre coinciden con lo que se ve en pantalla.
   function mcListaFiltrada(){
     const buscar = document.getElementById('mc-buscar').value.toLowerCase();
     const estado = document.getElementById('mc-filtro-estado').value;
