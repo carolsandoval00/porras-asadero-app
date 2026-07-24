@@ -27,13 +27,31 @@
     <select
       class="mc-select"
       id="mc-filtro-fecha"
-      onchange="mcRenderTabla()"
+      onchange="mcToggleFiltroFecha()"
     >
       <option value="">Todas las fechas</option>
       <option value="hoy">Hoy</option>
       <option value="futuras">Próximas</option>
       <option value="pasadas">Pasadas</option>
+      <option value="dia">Día específico</option>
+      <option value="mes">Mes específico</option>
     </select>
+
+    <input
+      type="date"
+      class="mc-input"
+      id="mc-filtro-fecha-dia"
+      style="display:none;max-width:170px"
+      onchange="mcRenderTabla()"
+    >
+
+    <input
+      type="month"
+      class="mc-input"
+      id="mc-filtro-fecha-mes"
+      style="display:none;max-width:170px"
+      onchange="mcRenderTabla()"
+    >
 
     <div class="mc-report-bar">
       <button class="mc-btn-report mc-btn-report-pdf" onclick="mcExportarPDF()" title="Descargar PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>

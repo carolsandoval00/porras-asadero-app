@@ -148,6 +148,13 @@
     mcPoblarMesas(); fijarFechaMin();
   };
 
+  window.mcToggleFiltroFecha = function(){
+    const val = document.getElementById('mc-filtro-fecha').value;
+    document.getElementById('mc-filtro-fecha-dia').style.display = val==='dia' ? 'inline-flex' : 'none';
+    document.getElementById('mc-filtro-fecha-mes').style.display = val==='mes' ? 'inline-flex' : 'none';
+    mcRenderTabla();
+  };
+
   // Devuelve la lista de reservas aplicando los mismos filtros de la tabla
   // (buscar, estado, fecha). La usan tanto mcRenderTabla como los reportes,
   // así el PDF/Excel/impresión siempre coinciden con lo que se ve en pantalla.
@@ -155,6 +162,8 @@
     const buscar = document.getElementById('mc-buscar').value.toLowerCase();
     const estado = document.getElementById('mc-filtro-estado').value;
     const fecha  = document.getElementById('mc-filtro-fecha').value;
+    const dia    = document.getElementById('mc-filtro-fecha-dia').value;
+    const mes    = document.getElementById('mc-filtro-fecha-mes').value;
     const h = hoy();
     return reservas.filter(r=>{
       const mb = r.nombre.toLowerCase().includes(buscar)||r.telefono.includes(buscar);
@@ -163,6 +172,8 @@
       if(fecha==='hoy')     mf=r.fecha===h;
       if(fecha==='futuras') mf=r.fecha>=h;
       if(fecha==='pasadas') mf=r.fecha<h;
+      if(fecha==='dia')     mf=!dia || r.fecha===dia;
+      if(fecha==='mes')     mf=!mes || r.fecha.slice(0,7)===mes;
       return mb&&me&&mf;
     }).sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
   }
