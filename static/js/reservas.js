@@ -652,4 +652,11 @@
   fijarFechaMin();
   mcPoblarMesas();
   mcRenderTabla();
+
+  // Si la URL trae ?tab=crear / mesas / crear-mesa (enlaces del sidebar),
+  // abrimos esa pestaña automáticamente al cargar la página.
+  const tabInicial = new URLSearchParams(window.location.search).get('tab');
+  if (tabInicial && document.getElementById('mc-' + tabInicial)) {
+    mcShow(tabInicial);
+  }
 })();
