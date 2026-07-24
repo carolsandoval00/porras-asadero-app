@@ -82,6 +82,31 @@
         display: block;
     }
 
+    /* Toggle de mostrar/ocultar contraseña */
+    .pwd-wrap {
+        position: relative;
+    }
+    .pwd-wrap .form-control {
+        padding-right: 2.6rem;
+    }
+    .pwd-toggle {
+        position: absolute;
+        top: 50%;
+        right: .7rem;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        transition: color .2s;
+    }
+    .pwd-toggle:hover {
+        color: var(--verde-dk);
+    }
+
     .btn-auth {
         background: var(--carbon);
         color: #F5ECD7;
@@ -199,7 +224,12 @@
             </div>
             <div class="mb-3">
                 <label>Contraseña</label>
-                <input type="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                <div class="pwd-wrap">
+                    <input type="password" name="password" id="password-login" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                    <button type="button" class="pwd-toggle" onclick="togglePassword('password-login', this)">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="btn-auth">
@@ -320,11 +350,14 @@
             </a>
             {% endif %}
 
-            {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.is_superuser %}
+            {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.rol == 'CAJERO' or user.is_superuser %}
             <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
                <i class="bi bi-receipt"></i>
                <h3>Ver Pedidos</h3>
                </a>
+            {% endif %}
+
+            {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.is_superuser %}
             <a href="{% url 'reserva_inicio' %}" class="dash-card">
                <i class="bi bi-calendar-check"></i>
                <h3>Reservas y Mesas</h3>
@@ -461,5 +494,21 @@
     </div>
 </div>
 {% endif %}
+
+<script>
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon  = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+    }
+}
+</script>
 
 {% endblock %}

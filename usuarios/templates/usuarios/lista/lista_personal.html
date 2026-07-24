@@ -1,187 +1,9 @@
 {% extends 'base 2.html' %}
+{% load static %}
 
 {% block content %}
 
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@300;400;700&display=swap');
-
-    :root {
-        --verde:      #E8651A;
-        --verde-dk:   #C0502A;
-        --verde-lt:   rgba(232,101,26,.10);
-        --carbon:     #1A1008;
-        --gris-suave: #EDE3C8;
-        --gris-borde: #D4C4A0;
-        --rojo:       #C0392B;
-        --rojo-lt:    rgba(192,57,43,.10);
-        --amarillo:   #D4A017;
-        --amarillo-lt:rgba(212,160,23,.10);
-        --azul:       #A07810;
-        --azul-lt:    rgba(160,120,16,.10);
-        --blanco:     #FDF7EC;
-        --crema:      #F5ECD7;
-        --muted:      #6B5A3E;
-    }
-
-    .usr-page {
-        font-family: 'Lato', sans-serif;
-        background: #F5ECD7;
-        min-height: 90vh;
-        padding: 2rem 1.2rem 3rem;
-    }
-
-    .panel-container {
-        background: #FDF7EC;
-        border-radius: 18px;
-        padding: 2rem 2.2rem 2.5rem;
-        border: 1px solid #E8DFC8;
-    }
-
-    .usr-tabs {
-        display:flex; gap:.5rem; flex-wrap:wrap;
-        margin-bottom:1.8rem; border-bottom:2px solid var(--gris-borde);
-        padding-bottom:.8rem; align-items:center;
-    }
-    .usr-tab {
-        font-family:'Lato',sans-serif; font-size:.82rem; font-weight:700;
-        letter-spacing:.06em; text-transform:uppercase;
-        padding:.5rem 1.1rem; border-radius:8px;
-        border:1.5px solid transparent; background:transparent;
-        color:var(--muted); cursor:pointer; transition:all .2s; text-decoration:none;
-        display:inline-flex; align-items:center; gap:5px;
-    }
-    .usr-tab:hover  { background:var(--verde-lt); color:var(--verde-dk); border-color:var(--verde); }
-    .usr-tab.activo { background:var(--carbon); color:#F5ECD7; border-color:var(--carbon); }
-    .usr-tab.tab-nuevo { background:var(--rojo-lt); color:var(--rojo); border-color:var(--rojo); }
-    .usr-tab.tab-nuevo:hover,.usr-tab.tab-nuevo.activo { background:var(--rojo); color:#F5ECD7; border-color:var(--rojo); }
-
-    .usr-sec { display:none; animation:fadeUp .3s ease both; }
-    .usr-sec.activa { display:block; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-
-    .sec-hdr { margin-bottom:1.4rem; }
-    .sec-hdr h2 { font-family:'Playfair Display',serif; font-size:1.6rem; color:var(--carbon); margin-bottom:.2rem; }
-    .sec-hdr h2 span { color:#C0392B; }
-    .sec-hdr p { font-size:.87rem; color:var(--muted); }
-
-    .usr-card { background:var(--crema); border-radius:14px; box-shadow:0 2px 16px rgba(26,16,8,.08); padding:1.5rem 1.6rem; margin-bottom:1.2rem; border:1px solid rgba(212,196,160,.6); }
-    .c-label { font-size:.72rem; font-weight:700; letter-spacing:.09em; color:#A09070; text-transform:uppercase; padding-bottom:.75rem; border-bottom:1px solid var(--gris-borde); margin-bottom:1rem; }
-
-    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.9rem; margin-bottom:1.5rem; }
-    .stat-box { background:var(--crema); border-radius:12px; border:1px solid rgba(212,196,160,.7); padding:1rem 1.1rem; }
-    .stat-num { font-family:'Playfair Display',serif; font-size:2rem; line-height:1; color:var(--carbon); }
-    .stat-lbl { font-size:.78rem; color:var(--muted); margin-top:.3rem; font-weight:700; letter-spacing:.04em; }
-    .s-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
-
-    .tbl-wrap { overflow-x:auto; border-radius:12px; }
-    .usr-tbl { width:100%; border-collapse:collapse; font-size:.88rem; }
-    .usr-tbl thead th { font-size:.72rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#A09070; padding:.75rem 1rem; text-align:left; background:var(--gris-suave); border-bottom:1px solid var(--gris-borde); }
-    .usr-tbl tbody td { padding:1rem; border-bottom:1px solid #E8DFC8; vertical-align:middle; }
-    .usr-tbl tbody tr:last-child td { border-bottom:none; }
-    .usr-tbl tbody tr:hover td { background:rgba(232,101,26,.04); transition:background .15s; }
-
-    .av { width:38px; height:38px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:14px; font-weight:700; color:#F5ECD7; flex-shrink:0; }
-    .av-lg { width:72px; height:72px; font-size:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-weight:700; color:#F5ECD7; flex-shrink:0; }
-
-    .bdg { display:inline-block; padding:.25rem .75rem; border-radius:20px; font-size:.74rem; font-weight:700; letter-spacing:.04em; }
-    .b-activo   { background:var(--verde-lt);       color:var(--verde-dk); }
-    .b-inactivo { background:var(--rojo-lt);        color:var(--rojo); }
-    .b-admin    { background:rgba(26,16,8,.08);     color:var(--carbon); }
-    .b-mesero   { background:var(--verde-lt);       color:var(--verde-dk); }
-    .b-cajero   { background:var(--amarillo-lt);    color:var(--amarillo); }
-    .b-cocina   { background:var(--rojo-lt);        color:var(--rojo); }
-
-    .btn-ac { font-family:'Lato',sans-serif; font-size:.76rem; font-weight:700; padding:.32rem .8rem; border-radius:7px; border:1.5px solid var(--gris-borde); background:transparent; color:var(--muted); cursor:pointer; transition:all .15s; margin-right:3px; }
-    .btn-ac:hover     { background:var(--gris-suave); color:var(--carbon); }
-    .btn-ver:hover    { border-color:var(--verde);    color:var(--verde-dk);  background:var(--verde-lt); }
-    .btn-edit:hover   { border-color:var(--amarillo); color:var(--amarillo);  background:var(--amarillo-lt); }
-    .btn-del:hover    { border-color:var(--rojo);     color:var(--rojo);      background:var(--rojo-lt); }
-
-    .filtros { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin-bottom:1.2rem; }
-    .filtros input,.filtros select { font-family:'Lato',sans-serif; border:1.5px solid var(--gris-borde); border-radius:9px; padding:.5rem .9rem; font-size:.87rem; background:var(--blanco); color:var(--carbon); transition:border-color .2s; flex:1; min-width:160px; max-width:240px; }
-    .filtros input:focus,.filtros select:focus { outline:none; border-color:#C0392B; box-shadow:0 0 0 3px rgba(192,57,43,.14); }
-
-    .fg2 { display:grid; grid-template-columns:1fr 1fr;     gap:1rem; margin-bottom:1rem; }
-    .fg3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1rem; }
-    .f-label { font-size:.78rem; font-weight:700; letter-spacing:.05em; color:#6B5A3E; text-transform:uppercase; margin-bottom:.3rem; display:block; }
-    .f-inp,.f-sel,.f-ta { font-family:'Lato',sans-serif; font-size:.92rem; padding:.6rem .95rem; border:1.5px solid var(--gris-borde); border-radius:10px; background:var(--blanco); color:var(--carbon); width:100%; transition:border-color .2s,box-shadow .2s; }
-    .f-inp:focus,.f-sel:focus,.f-ta:focus { outline:none; border-color:#C0392B; box-shadow:0 0 0 3px rgba(192,57,43,.15); }
-    .f-inp::placeholder { color:#C0AD84; }
-    .f-ta { resize:vertical; min-height:70px; line-height:1.55; }
-    .pw-wrap { position:relative; }
-    .pw-wrap .f-inp { padding-right:54px; }
-    .pw-tog { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:.76rem; font-weight:700; color:#A09070; font-family:'Lato',sans-serif; transition:color .15s; }
-    .pw-tog:hover { color:var(--verde-dk); }
-
-    .btn { font-family:'Lato',sans-serif; font-weight:700; letter-spacing:.06em; font-size:.88rem; padding:.7rem 1.4rem; border-radius:10px; border:1.5px solid transparent; cursor:pointer; transition:all .18s; }
-    .btn-ok  { background:#C0392B; color:#F5ECD7; border-color:#C0392B; }
-    .btn-ok:hover  { background:#9B2D21; border-color:#9B2D21; transform:translateY(-1px); }
-    .btn-out { background:transparent; color:var(--carbon); border-color:var(--gris-borde); }
-    .btn-out:hover { border-color:var(--carbon); background:var(--gris-suave); }
-    .btn-del2 { background:var(--rojo-lt); color:var(--rojo); border-color:var(--rojo); }
-    .btn-del2:hover { background:var(--rojo); color:#F5ECD7; }
-    .btn-row { display:flex; gap:.7rem; justify-content:flex-end; margin-top:1.2rem; flex-wrap:wrap; }
-
-    .p-hero { display:flex; align-items:center; gap:1.4rem; background:var(--crema); border-radius:16px; border:1px solid rgba(212,196,160,.7); padding:1.6rem; margin-bottom:1.2rem; }
-    .p-hero-info h3 { font-family:'Playfair Display',serif; font-size:1.4rem; color:var(--carbon); margin-bottom:3px; }
-    .p-hero-info .sub { font-size:.84rem; color:var(--muted); margin-bottom:.6rem; }
-    .p-meta { display:flex; gap:.5rem; flex-wrap:wrap; }
-
-    .det-g { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin-bottom:.8rem; }
-    .det-it { padding:.85rem 1rem; background:var(--gris-suave); border-radius:10px; }
-    .det-k  { font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; color:#A09070; font-weight:700; margin-bottom:4px; }
-    .det-v  { font-size:.92rem; font-weight:700; color:var(--carbon); }
-
-    .perm-g { display:grid; grid-template-columns:1fr 1fr; gap:.55rem; }
-    .perm-it { display:flex; align-items:center; gap:8px; padding:.6rem .85rem; border-radius:9px; border:1.5px solid var(--gris-borde); font-size:.83rem; cursor:pointer; transition:all .15s; user-select:none; color:#6B5A3E; }
-    .perm-it:hover { background:var(--verde-lt); border-color:var(--verde); color:var(--verde-dk); }
-    .perm-it.on { background:var(--verde-lt); border-color:var(--verde); color:var(--verde-dk); font-weight:700; }
-    .perm-dot { width:8px; height:8px; border-radius:50%; border:2px solid #C0AD84; flex-shrink:0; transition:all .15s; }
-    .perm-it.on .perm-dot { background:var(--verde-dk); border-color:var(--verde-dk); }
-
-    .z-peligro { border:1.5px solid var(--rojo); border-radius:12px; padding:1.2rem 1.4rem; background:var(--rojo-lt); margin-top:1rem; }
-    .z-peligro h4 { font-family:'Playfair Display',serif; color:var(--rojo); font-size:1.05rem; margin-bottom:.4rem; }
-    .z-peligro p  { font-size:.84rem; color:var(--rojo); opacity:.85; margin-bottom:1rem; line-height:1.5; }
-
-    .m-bg { display:none; position:fixed; inset:0; background:rgba(26,16,8,.5); z-index:999; align-items:center; justify-content:center; padding:1rem; }
-    .m-bg.open { display:flex; }
-    .m-box { background:var(--blanco); border-radius:16px; padding:1.7rem; width:100%; max-width:560px; max-height:88vh; overflow-y:auto; box-shadow:0 12px 50px rgba(26,16,8,.2); animation:fadeUp .25s ease both; }
-    .m-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:.85rem; border-bottom:1px solid var(--gris-borde); }
-    .m-hdr h3 { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--carbon); }
-    .m-cls { background:none; border:none; font-size:1.4rem; cursor:pointer; color:#A09070; line-height:1; padding:2px 8px; border-radius:7px; transition:all .12s; }
-    .m-cls:hover { background:var(--gris-suave); color:var(--carbon); }
-
-    .cf-bg { display:none; position:fixed; inset:0; background:rgba(26,16,8,.55); z-index:1100; align-items:center; justify-content:center; }
-    .cf-bg.open { display:flex; }
-    .cf-box { background:var(--blanco); border-radius:14px; padding:1.6rem; max-width:370px; width:100%; box-shadow:0 10px 40px rgba(26,16,8,.18); border:1px solid rgba(212,196,160,.6); animation:fadeUp .2s ease both; }
-    .cf-box h3 { font-family:'Playfair Display',serif; font-size:1.1rem; margin-bottom:.5rem; color:var(--carbon); }
-    .cf-box p  { font-size:.86rem; color:var(--muted); margin-bottom:1.3rem; line-height:1.55; }
-
-    .toast { position:fixed; bottom:26px; right:26px; background:var(--carbon); color:#F5ECD7; padding:.65rem 1.3rem; border-radius:10px; font-size:.85rem; font-family:'Lato',sans-serif; font-weight:700; opacity:0; transform:translateY(8px); transition:all .22s; z-index:2000; pointer-events:none; box-shadow:0 4px 20px rgba(26,16,8,.22); }
-    .toast.show { opacity:1; transform:translateY(0); }
-    .toast.ok   { background:var(--verde-dk); }
-    .toast.err  { background:var(--rojo); }
-
-    .vacio { text-align:center; padding:3rem 1.5rem; color:#C0AD84; }
-    .v-ic  { width:54px; height:54px; border-radius:14px; background:var(--gris-suave); display:flex; align-items:center; justify-content:center; margin:0 auto .9rem; font-size:22px; }
-
-    .rol-g { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; }
-    .rol-op { display:none; }
-    .rol-lb { border:1.5px solid var(--gris-borde); border-radius:10px; padding:.55rem .4rem; text-align:center; cursor:pointer; font-family:'Lato',sans-serif; font-size:.82rem; font-weight:700; color:#6B5A3E; transition:all .2s; user-select:none; display:block; }
-    .rol-op:checked + .rol-lb { border-color:#C0392B; background:var(--rojo-lt); color:var(--rojo); }
-
-    @media(max-width:700px){
-        .stats-grid,.fg3 { grid-template-columns:1fr 1fr; }
-        .fg2 { grid-template-columns:1fr; }
-        .det-g,.perm-g { grid-template-columns:1fr; }
-        .p-hero { flex-direction:column; text-align:center; }
-        .p-meta { justify-content:center; }
-    }
-    @media(max-width:460px){
-        .stats-grid { grid-template-columns:1fr 1fr; }
-        .usr-tab { font-size:.72rem; padding:.4rem .75rem; }
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}">
 
 <div class="usr-page">
   <div class="panel-container">
@@ -190,12 +12,14 @@
         <button class="usr-tab activo" onclick="nav('lista')">
             <i class="bi bi-people"></i> Usuarios
         </button>
-        <button class="usr-tab" onclick="nav('perfil')" id="tab-perfil" style="display:none">
+        <button class="usr-tab usr-tab-oculto" onclick="nav('perfil')" id="tab-perfil">
             <i class="bi bi-person-circle"></i> <span id="tab-perfil-txt">Perfil</span>
         </button>
+        {% if request.user.rol == 'ADMIN' or request.user.is_superuser %}
         <button class="usr-tab tab-nuevo" onclick="nav('crear')">
             <i class="bi bi-person-plus"></i> Nuevo usuario
         </button>
+        {% endif %}
     </div>
 
     <!-- ══ LISTA ══ -->
@@ -218,7 +42,7 @@
                 <option value="inactivo">Inactivo</option>
             </select>
         </div>
-        <div class="usr-card" style="padding:0;overflow:hidden">
+        <div class="usr-card usr-card-flush">
             <div class="tbl-wrap">
                 <table class="usr-tbl">
                     <thead><tr>
@@ -233,11 +57,11 @@
 
     <!-- ══ PERFIL ══ -->
     <div id="sec-perfil" class="usr-sec">
-        <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1.5rem">
-            <button class="btn btn-out" style="font-size:.8rem" onclick="nav('lista')">← Volver</button>
+        <div class="sec-back-row">
+            <button class="btn btn-out btn-out-sm" onclick="nav('lista')">← Volver</button>
             <div>
-                <h2 id="p-titulo" style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--carbon)">Perfil</h2>
-                <p id="p-sub" style="font-size:.84rem;color:var(--muted)">Información completa</p>
+                <h2 id="p-titulo" class="sec-title">Perfil</h2>
+                <p id="p-sub" class="sec-subtitle">Información completa</p>
             </div>
         </div>
         <div id="perfil-ctn"></div>
@@ -245,11 +69,11 @@
 
     <!-- ══ CREAR/EDITAR ══ -->
     <div id="sec-crear" class="usr-sec">
-        <div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1.5rem">
-            <button class="btn btn-out" style="font-size:.8rem" onclick="nav('lista')">← Volver</button>
+        <div class="sec-back-row">
+            <button class="btn btn-out btn-out-sm" onclick="nav('lista')">← Volver</button>
             <div>
-                <h2 id="cr-titulo" style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--carbon)">Nuevo usuario</h2>
-                <p id="cr-sub" style="font-size:.84rem;color:var(--muted)">Completa los datos del nuevo integrante</p>
+                <h2 id="cr-titulo" class="sec-title">Nuevo usuario</h2>
+                <p id="cr-sub" class="sec-subtitle">Completa los datos del nuevo integrante</p>
             </div>
         </div>
 
@@ -294,7 +118,6 @@
                     <select class="f-sel" id="u-est"><option value="activo">Activo</option><option value="inactivo">Inactivo</option></select>
                 </div>
             </div>
-
             <div id="pw-nuevo">
                 <div class="fg2">
                     <div>
@@ -307,12 +130,11 @@
                     </div>
                 </div>
             </div>
-
-            <div id="pw-edit" style="display:none">
-                <label style="display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;color:var(--muted);margin-bottom:.8rem">
+            <div id="pw-edit" class="usr-tab-oculto">
+                <label class="pw-edit-label">
                     <input type="checkbox" id="cb-pw" onchange="tPwEdit()"> Cambiar contraseña
                 </label>
-                <div id="pw-edit-campos" style="display:none">
+                <div id="pw-edit-campos" class="usr-tab-oculto">
                     <div class="fg2">
                         <div>
                             <label class="f-label">Nueva contraseña</label>
@@ -337,7 +159,7 @@
             <textarea class="f-ta" id="u-notas" placeholder="Información adicional sobre este usuario…"></textarea>
             <div class="btn-row">
                 <button class="btn btn-out" onclick="limpiar()">Limpiar</button>
-                <button class="btn btn-ok"  onclick="guardar()" id="btn-grd">
+                <button class="btn btn-ok" onclick="guardar()" id="btn-grd">
                     <i class="bi bi-person-check"></i> Crear usuario
                 </button>
             </div>
@@ -361,7 +183,7 @@
     <div class="cf-box">
         <h3 id="cf-tit">¿Estás seguro?</h3>
         <p id="cf-msg">Esta acción no se puede deshacer.</p>
-        <div style="display:flex;gap:.7rem;justify-content:flex-end">
+        <div class="cf-actions">
             <button class="btn btn-out" onclick="cConfirm()">Cancelar</button>
             <button class="btn btn-del2" id="cf-ok">Eliminar</button>
         </div>
@@ -370,15 +192,17 @@
 
 <div class="toast" id="toast"></div>
 
+<div id="django-es-admin" data-admin="{% if request.user.rol == 'ADMIN' or request.user.is_superuser %}1{% else %}0{% endif %}" style="display:none"></div>
+
 <script>
 (function(){
+
+const ES_ADMIN = document.getElementById('django-es-admin').dataset.admin === '1';
 
 const PERMS=['Ver reservas','Crear reservas','Editar reservas','Eliminar reservas',
              'Ver mesas','Gestionar mesas','Ver reportes','Gestionar pagos',
              'Ver usuarios','Gestionar usuarios','Configuración','Acceso total'];
 const COLS=['#1A1008','#C0392B','#E8651A','#8B2000','#D4A017','#633806','#C0502A'];
-
-
 
 let djangoData = [];
 try {
@@ -420,16 +244,8 @@ const avLg = (u, idx) => u.foto
     ? `<img src="${u.foto}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:3px solid #FDF7EC;" loading="lazy">`
     : `<div class="av-lg" style="background:${col(idx)}">${ini(u.nom, u.ape)}</div>`;
 
-/**
- * Cambia entre las diferentes secciones del módulo de usuarios.
- * Activa la pestaña correspondiente y ejecuta las acciones necesarias
- * según la vista seleccionada.
- *
- * @function nav
- * @param {string} id - Identificador de la sección (lista, perfil o crear).
- * @returns {void}
- */
 window.nav = function(id) {
+    if (id === 'crear' && !ES_ADMIN) { toast('No tienes permisos para crear usuarios', 'err'); return; }
     document.querySelectorAll('.usr-sec').forEach(s => s.classList.remove('activa'));
     document.getElementById('sec-' + id).classList.add('activa');
     document.querySelectorAll('.usr-tab').forEach(t => t.classList.remove('activo'));
@@ -441,14 +257,6 @@ window.nav = function(id) {
     if (id === 'crear' && !editId) { limpiar(); }
 };
 
-/**
- * Muestra una notificación temporal en pantalla.
- *
- * @function toast
- * @param {string} msg - Mensaje que se mostrará.
- * @param {string} [tipo] - Tipo de notificación (ok o err).
- * @returns {void}
- */
 function toast(msg, tipo) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.className = 'toast show ' + (tipo || '');
@@ -457,16 +265,6 @@ function toast(msg, tipo) {
 
 window.cConfirm = () => document.getElementById('cf-bg').classList.remove('open');
 
-/**
- * Abre el cuadro de confirmación antes de ejecutar
- * una acción irreversible.
- *
- * @function confirm2
- * @param {string} tit - Título de la ventana.
- * @param {string} msg - Mensaje de confirmación.
- * @param {Function} cb - Función que se ejecutará al confirmar.
- * @returns {void}
- */
 function confirm2(tit, msg, cb) {
     document.getElementById('cf-tit').textContent = tit;
     document.getElementById('cf-msg').textContent = msg;
@@ -475,13 +273,6 @@ function confirm2(tit, msg, cb) {
 }
 window.cModal = id => document.getElementById(id).classList.remove('open');
 
-/**
- * Calcula y actualiza las estadísticas generales de usuarios,
- * incluyendo el total, activos, inactivos y administradores.
- *
- * @function stats
- * @returns {void}
- */
 function stats() {
     const t  = uList.length,
           a  = uList.filter(u => u.e === 'activo').length,
@@ -494,15 +285,6 @@ function stats() {
          <div class="stat-box"><div class="stat-num">${ad}</div><div class="stat-lbl"><span class="s-dot" style="background:#D4A017"></span>Admins</div></div>`;
 }
 
-/**
- * Genera dinámicamente la tabla de usuarios aplicando los filtros
- * de búsqueda, rol y estado.
- *
- * También actualiza las estadísticas mostradas en la parte superior.
- *
- * @function renderTabla
- * @returns {void}
- */
 window.renderTabla = function() {
     stats();
     const q = document.getElementById('f-buscar').value.toLowerCase();
@@ -527,20 +309,13 @@ window.renderTabla = function() {
           <td>${bRol(u.rol)}</td>
           <td>${bEst(u.e)}</td>
           <td><div style="display:flex;gap:4px;flex-wrap:wrap">
-              <button class="btn-ac btn-ver"  onclick="verPerfil(${u.id})">Ver perfil</button>
-              <button class="btn-ac btn-edit" onclick="editar(${u.id})">Editar</button>
-              <button class="btn-ac btn-del"  onclick="pedirDel(${u.id})">Eliminar</button>
+              <button class="btn-ac btn-ver" onclick="verPerfil(${u.id})">Ver perfil</button>
+              ${ES_ADMIN ? `<button class="btn-ac btn-edit" onclick="editar(${u.id})">Editar</button>
+              <button class="btn-ac btn-del" onclick="pedirDel(${u.id})">Eliminar</button>` : ''}
           </div></td>
         </tr>`).join('');
 };
 
-/**
- * Muestra toda la información de un usuario en la vista de perfil.
- *
- * @function verPerfil
- * @param {number} id - Identificador del usuario.
- * @returns {void}
- */
 window.verPerfil = function(id) {
     const u = uList.find(x => x.id === id); if (!u) return;
     const idx = uList.indexOf(u);
@@ -585,24 +360,18 @@ window.verPerfil = function(id) {
                     <div class="perm-dot"></div>${p}</div>`).join('')}
             </div>
         </div>
-      
         ${u.notas ? `<div class="usr-card"><div class="c-label">Notas internas</div><p style="font-size:.88rem;color:#6B5A3E;line-height:1.6">${u.notas}</p></div>` : ''}
         <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.5rem">
+            ${ES_ADMIN ? `
             <button class="btn btn-ok" onclick="editar(${u.id})"><i class="bi bi-pencil"></i> Editar</button>
             <button class="btn btn-del2" onclick="nav('lista');pedirDel(${u.id})"><i class="bi bi-trash"></i> Eliminar</button>
+            ` : ''}
         </div>`;
     nav('perfil');
 };
 
-/**
- * Carga la información de un usuario dentro del formulario
- * para permitir su edición.
- *
- * @function editar
- * @param {number} id - Identificador del usuario a editar.
- * @returns {void}
- */
 window.editar = function(id) {
+    if (!ES_ADMIN) { toast('No tienes permisos para editar usuarios', 'err'); return; }
     const u = uList.find(x => x.id === id); if (!u) return;
     editId = id; nav('crear');
     setTimeout(() => {
@@ -628,24 +397,14 @@ window.editar = function(id) {
     }, 30);
 };
 
-/**
- * Valida la información del formulario y registra o actualiza
- * un usuario mediante una petición al servidor.
- *
- * Si el usuario ya existe, se actualizan sus datos; de lo contrario,
- * se crea un nuevo registro.
- *
- * @function guardar
- * @returns {void}
- */
 window.guardar = function() {
+    if (!ES_ADMIN) { toast('No tienes permisos para guardar usuarios', 'err'); return; }
     const nom = document.getElementById('u-nom').value.trim();
     const ape = document.getElementById('u-ape').value.trim();
     const ema = document.getElementById('u-email').value.trim();
     const usr = document.getElementById('u-user').value.trim();
     const rol = document.getElementById('u-rol').value;
     const tel = document.getElementById('u-tel').value.trim();
-
     if (!nom || !ape || !ema || !usr || !rol) { toast('Completa los campos obligatorios (*)', 'err'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ema)) { toast('El correo electrónico no es válido', 'err'); return; }
     if (tel) {
@@ -654,8 +413,8 @@ window.guardar = function() {
     }
     const doc = document.getElementById('u-doc').value.trim();
     if (doc) {
-        if (!/^\d+$/.test(doc))           { toast('El documento solo debe contener números', 'err'); return; }
-        if (doc.length < 6 || doc.length > 10) { toast('El documento debe tener entre 6 y 10 dígitos', 'err'); return; }
+        if (!/^\d+$/.test(doc))                    { toast('El documento solo debe contener números', 'err'); return; }
+        if (doc.length < 6 || doc.length > 10)     { toast('El documento debe tener entre 6 y 10 dígitos', 'err'); return; }
     }
     if (!editId) {
         const pw  = document.getElementById('u-pw').value;
@@ -688,23 +447,15 @@ window.guardar = function() {
     const url = editId ? `/usuarios/editar/${editId}/` : `/usuarios/crear/`;
     fetch(url, {
         method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/json',
-        },
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
         body: JSON.stringify(obj),
     })
     .then(res => res.json())
     .then(data => {
         if (data.ok) {
             if (!editId && data.id) obj.id = data.id;
-            if (editId) {
-                uList = uList.map(u => u.id === editId ? obj : u);
-                toast('Usuario actualizado', 'ok');
-            } else {
-                uList.push(obj);
-                toast('Usuario creado', 'ok');
-            }
+            if (editId) { uList = uList.map(u => u.id === editId ? obj : u); toast('Usuario actualizado', 'ok'); }
+            else        { uList.push(obj); toast('Usuario creado', 'ok'); }
             save(); limpiar(); nav('lista');
         } else {
             toast(data.error || 'Error al guardar', 'err');
@@ -713,13 +464,6 @@ window.guardar = function() {
     .catch(() => toast('Error de conexión', 'err'));
 };
 
-/**
- * Restablece todos los campos del formulario y deja
- * la interfaz preparada para registrar un nuevo usuario.
- *
- * @function limpiar
- * @returns {void}
- */
 window.limpiar = function() {
     editId = null;
     ['u-nom','u-ape','u-email','u-tel','u-doc','u-user','u-dir','u-notas','u-pw','u-pw2']
@@ -735,76 +479,38 @@ window.limpiar = function() {
     renderPermsForm([]);
 };
 
-/**
- * Construye dinámicamente la lista de permisos disponibles
- * y marca aquellos que ya tiene asignados el usuario.
- *
- * @function renderPermsForm
- * @param {string[]} activos - Lista de permisos activos.
- * @returns {void}
- */
 function renderPermsForm(activos) {
     document.getElementById('perm-form').innerHTML =
         PERMS.map(p => `<div class="perm-it ${activos.includes(p)?'on':''}" data-p="${p}"
             onclick="this.classList.toggle('on')"><div class="perm-dot"></div>${p}</div>`).join('');
 }
 
-/**
- * Solicita la confirmación para eliminar un usuario y,
- * si se confirma, envía la petición al servidor.
- *
- * @function pedirDel
- * @param {number} id - Identificador del usuario.
- * @returns {void}
- */
 window.pedirDel = function(id) {
+    if (!ES_ADMIN) { toast('No tienes permisos para eliminar usuarios', 'err'); return; }
     const u = uList.find(x => x.id === id); if (!u) return;
     confirm2(
         'Eliminar usuario',
         `¿Eliminar a ${u.nom} ${u.ape} (@${u.user})? Esta acción no se puede deshacer.`,
         () => {
             const fila = document.getElementById('fila-' + id);
-            if (fila) {
-                fila.style.transition = 'opacity .3s, transform .3s';
-                fila.style.opacity    = '0';
-                fila.style.transform  = 'translateX(20px)';
-            }
+            if (fila) { fila.style.transition = 'opacity .3s, transform .3s'; fila.style.opacity = '0'; fila.style.transform = 'translateX(20px)'; }
             fetch(`/usuarios/eliminar/${id}/`, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken'),
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
             })
             .then(res => {
                 if (res.ok || res.redirected) {
-                    setTimeout(() => {
-                        uList = uList.filter(x => x.id !== id);
-                        save();
-                        renderTabla();
-                        toast('Usuario eliminado correctamente', 'err');
-                    }, 300);
+                    setTimeout(() => { uList = uList.filter(x => x.id !== id); save(); renderTabla(); toast('Usuario eliminado correctamente', 'err'); }, 300);
                 } else {
                     if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; }
                     toast('Error al eliminar el usuario', 'err');
                 }
             })
-            .catch(() => {
-                if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; }
-                toast('Error de conexión', 'err');
-            });
+            .catch(() => { if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; } toast('Error de conexión', 'err'); });
         }
     );
 };
 
-/**
- * Alterna la visibilidad de un campo de contraseña.
- *
- * @function tPw
- * @param {string} id - Identificador del input de contraseña.
- * @param {HTMLButtonElement} btn - Botón que cambia entre "Ver" y "Ocultar".
- * @returns {void}
- */
 window.tPw = function(id, btn) {
     const el = document.getElementById(id);
     const h  = el.type === 'password';
@@ -812,25 +518,11 @@ window.tPw = function(id, btn) {
     btn.textContent = h ? 'Ocultar' : 'Ver';
 };
 
-/**
- * Muestra u oculta los campos para cambiar la contraseña
- * cuando el usuario activa la opción correspondiente.
- *
- * @function tPwEdit
- * @returns {void}
- */
 window.tPwEdit = function() {
     document.getElementById('pw-edit-campos').style.display =
         document.getElementById('cb-pw').checked ? '' : 'none';
 };
 
-/**
- * Inicializa datos de ejemplo cuando no existen usuarios
- * registrados en el almacenamiento local.
- *
- * @function initDemo
- * @returns {void}
- */
 function initDemo() {
     if (uList.length) return;
     uList = [

@@ -3,26 +3,6 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
-<style>
-  .pm-nav {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    background: var(--p-card) !important;
-    border: 1px solid var(--p-border) !important;
-    border-radius: 50px !important;
-    padding: .5rem .7rem !important;
-    overflow-x: auto !important;
-  }
-  .pm-nav-group {
-    flex-wrap: nowrap !important;
-    flex-shrink: 0 !important;
-  }
-  .pm-nav-group + .pm-nav-group {
-    padding-left: .4rem !important;
-    border-left: 1px solid var(--p-border) !important;
-  }
-</style>
 <div class="pm-wrapper">
   <!-- Cabecera -->
   <div class="pm-header">
@@ -34,7 +14,7 @@
   <div id="modal-mensaje" class="pm-modal-overlay open">
     <div class="pm-modal-box">
       {% for msg in messages %}
-      <div class="pm-alert pm-alert-{{ msg.tags }}" style="margin-bottom:.6rem;">{{ msg }}</div>
+      <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
       {% endfor %}
       <div class="pm-modal-actions">
         <button class="pm-btn pm-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
@@ -78,7 +58,7 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Productos</h3>
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+      <div class="pm-card-header-actions">
         <a href="{% url 'pedidos:producto_exportar_pdf' %}?q_prod={{ q_prod }}&categoria={{ cat_sel }}"
            class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
         <a href="{% url 'pedidos:producto_exportar_excel' %}?q_prod={{ q_prod }}&categoria={{ cat_sel }}"
@@ -89,10 +69,10 @@
     </div>
     <div class="pm-card-body">
       <!-- Buscador -->
-      <form method="get" action="" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;">
-        <input style="flex:1;min-width:180px;padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;"
+      <form method="get" action="" class="pm-search-form">
+        <input class="pm-input"
                type="text" name="q_prod" value="{{ q_prod }}" placeholder="Buscar producto…">
-        <select name="categoria" style="padding:.45rem .8rem;border:1px solid var(--p-border);border-radius:8px;font-size:.88rem;background:var(--p-surface);color:#1A1008;">
+        <select name="categoria" class="pm-select-filter">
           <option value="">Todas las categorías</option>
           {% for cat in categorias %}
           <option value="{{ cat.id }}" {% if cat_sel == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.nombre }}</option>
@@ -112,7 +92,7 @@
               <td><strong>{{ prod.nombre }}</strong></td>
               <td>{{ prod.categoria.nombre }}</td>
               <td>${{ prod.precio|floatformat:0 }}</td>
-              <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--p-muted)">{{ prod.descripcion|default:"—" }}</td>
+              <td class="pm-td-desc-truncate">{{ prod.descripcion|default:"—" }}</td>
               <td>
                 {% if prod.disponible %}
                   <span class="pm-badge pm-badge-completado">Sí</span>
@@ -120,14 +100,14 @@
                   <span class="pm-badge pm-badge-cancelado">No</span>
                 {% endif %}
               </td>
-              <td style="display:flex;gap:.3rem;flex-wrap:wrap">
+              <td class="pm-td-actions">
                 <a href="{% url 'pedidos:producto_editar' prod.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm"
                         onclick="confirmDelete('producto',{{ prod.pk }},'{{ prod.nombre|escapejs }}')">Eliminar</button>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" style="text-align:center;color:var(--p-muted);padding:2rem">No hay productos registrados.</td></tr>
+            <tr><td colspan="7" class="pm-table-empty">No hay productos registrados.</td></tr>
             {% endfor %}
           </tbody>
         </table>

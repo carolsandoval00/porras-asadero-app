@@ -19,20 +19,21 @@ def login_view(request):
     if request.user.is_authenticated and vista == 'login':
         return redirect('inicio_usuarios')
     if request.method == 'POST':
-        if vista in ['login', 'acceder', None]:
-            usuario_input  = request.POST.get('username')
-            password_input = request.POST.get('password')
-            user = authenticate(request, username=usuario_input, password=password_input)
-            if user is not None:
-                login(request, user)
-                next_url = request.POST.get('next') or request.GET.get('next')
-                if next_url:
-                    return redirect(next_url)
-                return redireccion_post_login(request)
-            else:
-                messages.error(request, 'Usuario o contraseña incorrectos.')
-                context = {'vista': 'login'}
-                return render(request, TEMPLATE_LOGIN, context)
+        usuario_input  = request.POST.get('username')
+        password_input = request.POST.get('password')
+        print(">>> USERNAME:", usuario_input)
+        print(">>> PASSWORD:", password_input)
+        user = authenticate(request, username=usuario_input, password=password_input)
+        print(">>> USER:", user)
+        if user is not None:
+            login(request, user)
+            next_url = request.POST.get('next') or request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redireccion_post_login(request)
+        else:
+            messages.error(request, 'Usuario o contraseña incorrectos.')
+            return render(request, TEMPLATE_LOGIN, {'vista': 'login'})
     context = {'vista': vista}
     return render(request, TEMPLATE_LOGIN, context)
 

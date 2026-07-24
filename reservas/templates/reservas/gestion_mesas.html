@@ -9,17 +9,17 @@
       <div class="mc-card">
         <div class="mc-card-title">Agregar mesa</div>
 
-        <div class="mc-form-group" style="margin-bottom:12px">
+        <div class="mc-form-group mc-mb-12">
           <label class="mc-label">Número de mesa *</label>
           <input type="number" class="mc-input" id="mc-m-numero" min="1" placeholder="Ej: 7">
         </div>
 
-        <div class="mc-form-group" style="margin-bottom:12px">
+        <div class="mc-form-group mc-mb-12">
           <label class="mc-label">Capacidad (personas) *</label>
           <input type="number" class="mc-input" id="mc-m-capacidad" min="1" max="30" placeholder="Ej: 4">
         </div>
 
-        <div class="mc-form-group" style="margin-bottom:12px">
+        <div class="mc-form-group mc-mb-12">
           <label class="mc-label">Ubicación</label>
           <select class="mc-select" id="mc-m-ubicacion">
             <option>Salón principal</option>
@@ -27,7 +27,7 @@
           </select>
         </div>
 
-        <div class="mc-form-group" style="margin-bottom:12px">
+        <div class="mc-form-group mc-mb-12">
           <label class="mc-label">Estado inicial</label>
           <select class="mc-select" id="mc-m-estado">
             <option value="disponible">Disponible</option>
@@ -36,22 +36,22 @@
           </select>
         </div>
 
-        <div class="mc-btn-row" style="justify-content:stretch">
-          <button class="mc-btn mc-btn-primary" style="flex:1" onclick="mcCrearMesa()">
+        <div class="mc-btn-row mc-justify-stretch">
+          <button class="mc-btn mc-btn-primary mc-flex-1" onclick="mcCrearMesa()">
             Agregar mesa
           </button>
         </div>
       </div>
     </div>
 
-    <div class="mc-card" style="padding:0;overflow:hidden">
-      <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border)">
-        <div class="mc-card-title" style="margin:0;border:none;padding:0">
+    <div class="mc-card mc-card-flush">
+      <div class="mc-card-subheader">
+        <div class="mc-card-title mc-card-title-reset">
           Mesas registradas
         </div>
       </div>
 
-      <div class="mc-filter-bar" style="padding:10px 15px;">
+      <div class="mc-filter-bar mc-filter-bar-pad">
         <input
           type="text"
           class="mc-input"
