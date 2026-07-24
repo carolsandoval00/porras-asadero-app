@@ -29,15 +29,22 @@ def pago_dashboard(request):
         action = request.POST.get('action', '')
 
         if action == 'abrir_caja':
+            if caja_activa:
+                messages.error(
+                    request,
+                    f'Ya hay una caja abierta (Caja #{caja_activa.pk} — {caja_activa.cajero}. '
+                    f'Debes cerrarla antes de abrir una nueva.'
+                )
+                return redirect('pago:dashboard')
             form_apertura = CajaForm(request.POST)
             if form_apertura.is_valid():
                 apertura = form_apertura.save(commit=False)
                 apertura.estado = 'ABIERTA'
                 apertura.save()
-                messages.success(request, '✅ Caja abierta correctamente.')
+                messages.success(request, ' Caja abierta correctamente.')
                 return redirect('pago:dashboard')
             else:
-                messages.error(request, '❌ Revisa los campos e intenta de nuevo.')
+                messages.error(request, ' Revisa los campos e intenta de nuevo.')
 
         elif action == 'cerrar_caja':
             caja_id = request.POST.get('caja_id')
@@ -46,9 +53,9 @@ def pago_dashboard(request):
                 caja.estado = 'CERRADA'
                 caja.fecha_cierre = timezone.now()
                 caja.save()
-                messages.success(request, '🔒 Caja cerrada correctamente.')
+                messages.success(request, ' Caja cerrada correctamente.')
             except Caja.DoesNotExist:
-                messages.error(request, '❌ No se encontró la caja o ya está cerrada.')
+                messages.error(request, ' No se encontró la caja o ya está cerrada.')
             return redirect('pago:dashboard')
 
         elif action == 'editar_caja':
@@ -84,7 +91,7 @@ def pago_dashboard(request):
                     pago.pedido.save()
                     messages.success(request, 'Pedido registrado correctamente.', extra_tags='modal-pago')
                 else:
-                    messages.error(request, '❌ No puedes registrar pagos sin una caja abierta.')
+                    messages.error(request, ' No puedes registrar pagos sin una caja abierta.')
                 return redirect('pago:dashboard')
 
     ordenes_sin_pago = Pedido.objects.exclude(estado='PAGADO').order_by('-fecha_creacion')
@@ -126,7 +133,7 @@ def pago_editar(request, pk):
     form = PagoForm(request.POST or None, instance=pago)
     if form.is_valid():
         form.save()
-        messages.success(request, '✅ Pago actualizado.')
+        messages.success(request, ' Pago actualizado.')
         return redirect('pago:dashboard')
     context = {
         'form':   form,
@@ -144,7 +151,7 @@ def pago_eliminar(request, pk):
     pago = get_object_or_404(Pago, pk=pk)
     if request.method == 'POST':
         pago.delete()
-        messages.success(request, '🗑️ Pago eliminado.')
+        messages.success(request, ' Pago eliminado.')
     return redirect('pago:dashboard')
 
 
