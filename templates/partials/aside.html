@@ -133,7 +133,7 @@
             <div class="collapse {% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' or request.resolver_match.url_name == 'eliminar_detalle' %}show{% endif %}" id="reservasSubmenu">
                 <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
                     <li>
-                        <a href="{% url 'reserva_inicio' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' %}text-warning fw-bold{% endif %}">
+                        <a href="{% url 'reserva_inicio' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' and not request.GET.tab %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
                             <i class="bi bi-grid-fill me-2"></i>Tablero Reservas
                         </a>
                     </li>
