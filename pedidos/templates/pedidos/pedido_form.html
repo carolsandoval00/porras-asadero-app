@@ -66,10 +66,14 @@
         <div id="items-hidden-container"></div>
 
         <div class="pm-form-grid pm-form-grid-mb">
+          {% if pedido %}
           <div class="full">
             <label>Cliente</label>
             {{ form.cliente }}
           </div>
+          {% else %}
+          <div style="display:none">{{ form.cliente }}</div>
+          {% endif %}
           <div>
             <label>Mesa</label>
             {{ form.mesa }}
