@@ -88,6 +88,10 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
 }
 .mc-btn-report i{font-size:14px;line-height:1}
 .mc-btn-report:hover{background:#C0392B;color:#F5ECD7}
+.mc-btn-report-pdf{border-color:#6B1E28;color:#6B1E28}
+.mc-btn-report-pdf:hover{background:#6B1E28;color:#F5ECD7}
+.mc-btn-report-excel{border-color:#1E7B34;color:#1E7B34}
+.mc-btn-report-excel:hover{background:#1E7B34;color:#F5ECD7}
 
 /* Área oculta que solo se muestra al imprimir */
 .mc-print-only{display:none}
