@@ -107,6 +107,33 @@
         color: var(--verde-dk);
     }
 
+    /* Indicador de fortaleza de contraseña */
+    .pwd-feedback {
+        font-family: 'Lato', sans-serif;
+        font-size: .78rem;
+        margin-top: .35rem;
+        min-height: 1.1rem;
+        font-weight: 600;
+        transition: color .2s;
+    }
+    .pwd-feedback.debil  { color: var(--rojo); }
+    .pwd-feedback.media  { color: #C08A2A; }
+    .pwd-feedback.fuerte { color: #2E7D32; }
+
+    .pwd-bar-wrap {
+        height: 5px;
+        background: var(--gris-borde);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: .4rem;
+    }
+    .pwd-bar {
+        height: 100%;
+        width: 0%;
+        background: var(--rojo);
+        transition: width .25s ease, background .25s ease;
+    }
+
     .btn-auth {
         background: var(--carbon);
         color: #F5ECD7;
@@ -257,7 +284,7 @@
             {% endfor %}
         {% endif %}
 
-        <form method="POST" action="{% url 'registro' %}">
+        <form method="POST" action="{% url 'registro' %}" id="form-registro">
             {% csrf_token %}
 
             <div class="form-row-2 mb-3">
@@ -284,11 +311,24 @@
             <div class="form-row-2 mb-3">
                 <div>
                     <label>Contraseña <span class="text-danger">*</span></label>
-                    <input type="password" name="password" class="form-control" required autocomplete="new-password">
+                    <div class="pwd-wrap">
+                        <input type="password" name="password" id="password-registro" class="form-control" required autocomplete="new-password" minlength="6" oninput="checkPasswordStrength('password-registro', 'pwd-feedback-registro', 'pwd-bar-registro')">
+                        <button type="button" class="pwd-toggle" onclick="togglePassword('password-registro', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="pwd-bar-wrap"><div class="pwd-bar" id="pwd-bar-registro"></div></div>
+                    <div class="pwd-feedback" id="pwd-feedback-registro"></div>
                 </div>
                 <div>
                     <label>Confirmar contraseña <span class="text-danger">*</span></label>
-                    <input type="password" name="password2" class="form-control" required autocomplete="new-password">
+                    <div class="pwd-wrap">
+                        <input type="password" name="password2" id="password2-registro" class="form-control" required autocomplete="new-password" oninput="checkPasswordMatch('password-registro', 'password2-registro', 'pwd-match-registro')">
+                        <button type="button" class="pwd-toggle" onclick="togglePassword('password2-registro', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="pwd-feedback" id="pwd-match-registro"></div>
                 </div>
             </div>
 
@@ -398,7 +438,7 @@
             {% endfor %}
         {% endif %}
 
-        <form method="POST" action="{% if vista == 'actualizar' %}{% url 'actualizar_usuarios' usuario.id %}{% else %}{% url 'registrar_personal' %}{% endif %}">
+        <form method="POST" action="{% if vista == 'actualizar' %}{% url 'actualizar_usuarios' usuario.id %}{% else %}{% url 'registrar_personal' %}{% endif %}" id="form-personal">
             {% csrf_token %}
 
             <p class="section-label">Datos personales</p>
@@ -448,7 +488,14 @@
                 </div>
                 <div>
                     <label>Contraseña <span class="text-danger">*</span></label>
-                    <input type="password" name="password" class="form-control" required>
+                    <div class="pwd-wrap">
+                        <input type="password" name="password" id="password-personal" class="form-control" required minlength="6" oninput="checkPasswordStrength('password-personal', 'pwd-feedback-personal', 'pwd-bar-personal')">
+                        <button type="button" class="pwd-toggle" onclick="togglePassword('password-personal', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="pwd-bar-wrap"><div class="pwd-bar" id="pwd-bar-personal"></div></div>
+                    <div class="pwd-feedback" id="pwd-feedback-personal"></div>
                 </div>
             </div>
             {% endif %}
@@ -507,6 +554,81 @@ function togglePassword(inputId, btn) {
         input.type = 'password';
         icon.classList.remove('bi-eye-slash');
         icon.classList.add('bi-eye');
+    }
+}
+
+/*
+  Valida la fortaleza de la contraseña en tiempo real.
+  Reglas para considerarla "fuerte":
+    - Mínimo 6 caracteres
+    - Al menos una mayúscula
+    - Al menos una minúscula
+    - Al menos un número
+*/
+function checkPasswordStrength(inputId, feedbackId, barId) {
+    const value = document.getElementById(inputId).value;
+    const feedback = document.getElementById(feedbackId);
+    const bar = document.getElementById(barId);
+
+    const tieneLongitud   = value.length >= 6;
+    const tieneMayuscula  = /[A-Z]/.test(value);
+    const tieneMinuscula  = /[a-z]/.test(value);
+    const tieneNumero     = /[0-9]/.test(value);
+
+    let puntos = [tieneLongitud, tieneMayuscula, tieneMinuscula, tieneNumero].filter(Boolean).length;
+
+    feedback.classList.remove('debil', 'media', 'fuerte');
+
+    if (value.length === 0) {
+        feedback.textContent = '';
+        bar.style.width = '0%';
+        bar.style.background = 'var(--gris-borde)';
+        return;
+    }
+
+    if (!tieneLongitud || puntos <= 1) {
+        feedback.textContent = 'Contraseña muy débil: se necesitan mínimo 6 caracteres, mayúsculas, minúsculas y números.';
+        feedback.classList.add('debil');
+        bar.style.width = '25%';
+        bar.style.background = 'var(--rojo)';
+    } else if (puntos === 2 || puntos === 3) {
+        let faltantes = [];
+        if (!tieneMayuscula) faltantes.push('una mayúscula');
+        if (!tieneMinuscula) faltantes.push('una minúscula');
+        if (!tieneNumero)    faltantes.push('un número');
+        feedback.textContent = faltantes.length > 0
+            ? 'Contraseña media: te falta incluir ' + faltantes.join(', ') + '.'
+            : 'Contraseña media.';
+        feedback.classList.add('media');
+        bar.style.width = '65%';
+        bar.style.background = '#C08A2A';
+    } else {
+        feedback.textContent = 'Contraseña fuerte.';
+        feedback.classList.add('fuerte');
+        bar.style.width = '100%';
+        bar.style.background = '#2E7D32';
+    }
+}
+
+/* Valida que la confirmación de contraseña coincida con la contraseña principal */
+function checkPasswordMatch(pwdId, pwd2Id, feedbackId) {
+    const pwd  = document.getElementById(pwdId).value;
+    const pwd2 = document.getElementById(pwd2Id).value;
+    const feedback = document.getElementById(feedbackId);
+
+    feedback.classList.remove('debil', 'media', 'fuerte');
+
+    if (pwd2.length === 0) {
+        feedback.textContent = '';
+        return;
+    }
+
+    if (pwd !== pwd2) {
+        feedback.textContent = 'Las contraseñas no coinciden.';
+        feedback.classList.add('debil');
+    } else {
+        feedback.textContent = 'Las contraseñas coinciden.';
+        feedback.classList.add('fuerte');
     }
 }
 </script>
