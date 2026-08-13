@@ -21,10 +21,7 @@ def login_view(request):
     if request.method == 'POST':
         usuario_input  = request.POST.get('username')
         password_input = request.POST.get('password')
-        print(">>> USERNAME:", usuario_input)
-        print(">>> PASSWORD:", password_input)
         user = authenticate(request, username=usuario_input, password=password_input)
-        print(">>> USER:", user)
         if user is not None:
             login(request, user)
             next_url = request.POST.get('next') or request.GET.get('next')
@@ -56,8 +53,6 @@ def registro_view(request):
         password2  = request.POST.get('password2', '')
         rol        = request.POST.get('rol', 'MESERO').strip()
 
-        # El registro público solo permite crear Mesero o Cajero.
-        # Cualquier otro valor (por ejemplo ADMIN) se ignora por seguridad.
         ROLES_PERMITIDOS = ['MESERO', 'CAJERO']
         if rol not in ROLES_PERMITIDOS:
             rol = 'MESERO'
@@ -266,7 +261,6 @@ def inactivar_usuario(request):
 def panel_perfil(request):
     context = {'usuario': request.user}
     return render(request, TEMPLATE_PERFIL, context)
-
 
 
 def validar_permisos(request):
