@@ -1,209 +1,209 @@
 :root {
-            --naranja: #E8651A;
-            --dorado:  #D4A017;
-            --negro:   #1A1008;
-            --humo:    #2C1A0E;
-            --crema:   #F5ECD7;
-        }
-        body { background: var(--negro); font-family: 'Crimson Text', serif; font-size: 18px; overflow-x: hidden; }
-        .text-naranja { color: var(--naranja) !important; }
-        .text-dorado  { color: var(--dorado)  !important; }
-        .text-crema   { color: var(--crema)   !important; }
-        
+    --naranja: #E8651A;
+    --dorado:  #D4A017;
+    --negro:   #1A1008;
+    --humo:    #2C1A0E;
+    --crema:   #F5ECD7;
+}
+body { background: var(--negro); font-family: 'Crimson Text', serif; font-size: 18px; overflow-x: hidden; }
+.text-naranja { color: var(--naranja) !important; }
+.text-dorado  { color: var(--dorado)  !important; }
+.text-crema   { color: var(--crema)   !important; }
 
-    
-        .bg-negro  { background: var(--negro) !important; }
-        .bg-humo   { background: var(--humo)  !important; }
-        .bg-naranja{ background: var(--naranja) !important; }
 
-       
-        .ff-playfair { font-family: 'Playfair Display', serif; }
-        .ff-oswald   { font-family: 'Oswald', sans-serif; }
-        .ff-crimson  { font-family: 'Crimson Text', serif; }
 
-       
-        .btn-parrilla {
-            clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-            border-radius: 0;
-            transition: background .3s, transform .2s;
-            letter-spacing: 4px;
-            font-size: 0.8rem;
-        }
-        .btn-parrilla:hover { background: var(--dorado) !important; transform: translateY(-2px); }
+.bg-negro  { background: var(--negro) !important; }
+.bg-humo   { background: var(--humo)  !important; }
+.bg-naranja{ background: var(--naranja) !important; }
 
-        .hero-subtitle {
-            font-size: 0.75rem;
-            letter-spacing: 6px;
-        }
-        .hero-title {
-            font-size: clamp(3.5rem, 10vw, 8rem);
-            text-shadow: 0 0 80px rgba(232, 101, 26, .3);
-        }
-        .hero-title span {
-            font-size: 0.7em;
-        }
 
-        .gold-line { width: 60px; height: 3px; background: var(--dorado); }
+.ff-playfair { font-family: 'Playfair Display', serif; }
+.ff-oswald   { font-family: 'Oswald', sans-serif; }
+.ff-crimson  { font-family: 'Crimson Text', serif; }
 
-        
-        .menu-card { transition: transform .3s; border-left: 3px solid transparent; }
-        .menu-card:hover { transform: translateY(-4px); border-left-color: var(--naranja); }
 
-        
-        #inicio {
-            position: relative;
-            overflow: hidden;
-            isolation: isolate;
-            background-color: var(--negro);
-        }
-        #inicio::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            bottom: -10px;
-            background-image: url('../img/fondos/carne.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            filter: blur(1.8px) brightness(0.42) contrast(1.1);
-            z-index: -2;
-            pointer-events: none;
-        }
-        #inicio::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(ellipse at 50% 80%, rgba(232, 101, 26, 0.28) 0%, transparent 65%),
-                radial-gradient(ellipse at 20% 30%, rgba(192, 57, 43, 0.18) 0%, transparent 55%),
-                linear-gradient(to bottom, rgba(26, 16, 8, 0.12) 0%, rgba(26, 16, 8, 0.5) 60%, var(--negro) 100%);
-            z-index: -1;
-            pointer-events: none;
-        }
+.btn-parrilla {
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    border-radius: 0;
+    transition: background .3s, transform .2s;
+    letter-spacing: 4px;
+    font-size: 0.8rem;
+}
+.btn-parrilla:hover { background: var(--dorado) !important; transform: translateY(-2px); }
 
-        /* Smooth, Seamless Section Transitions */
-        #menu {
-            background: linear-gradient(to bottom, var(--negro) 0%, var(--humo) 150px, var(--humo) calc(100% - 150px), var(--negro) 100%) !important;
-            position: relative;
-        }
-        #nosotros {
-            background: var(--negro) !important;
-            position: relative;
-        }
-        #contacto {
-            background: linear-gradient(to bottom, var(--negro) 0%, var(--humo) 150px, var(--humo) 100%) !important;
-            position: relative;
-        }
+.hero-subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 6px;
+}
+.hero-title {
+    font-size: clamp(3.5rem, 10vw, 8rem);
+    text-shadow: 0 0 80px rgba(232, 101, 26, .3);
+}
+.hero-title span {
+    font-size: 0.7em;
+}
 
-        /* Menu Card Image Zoom & Premium UI/UX */
-        .card-img-container {
-            border-radius: 0;
-            transition: border-color .3s, box-shadow .3s;
-            background: #110904;
-        }
-        .card-img-zoom {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform .5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .menu-card:hover .card-img-zoom {
-            transform: scale(1.08);
-        }
-        .menu-card:hover .card-img-container {
-            border-color: var(--naranja) !important;
-            box-shadow: 0 0 15px rgba(232, 101, 26, 0.2);
-        }
-        .flames { animation: flicker 1.5s ease-in-out infinite alternate; opacity: .25; filter: blur(2px); }
-        @keyframes flicker {
-            0%   { transform: translateX(-50%) scaleY(1);    opacity: .2; }
-            100% { transform: translateX(-50%) scaleY(1.15); opacity: .3; }
-        }
-        .fire-glow { animation: glow 2s ease-in-out infinite alternate; }
-        @keyframes glow {
-            from { filter: drop-shadow(0 0 20px rgba(232,101,26,.5)); }
-            to   { filter: drop-shadow(0 0 50px rgba(232,101,26,.9)); }
-        }
+.gold-line { width: 60px; height: 3px; background: var(--dorado); }
 
-        .fade-up-1 { animation: fadeUp 1s ease      both; }
-        .fade-up-2 { animation: fadeUp 1s ease .2s  both; }
-        .fade-up-3 { animation: fadeUp 1s ease .4s  both; }
-        .fade-up-4 { animation: fadeUp 1s ease .5s  both; }
-        .fade-up-5 { animation: fadeUp 1s ease .6s  both; }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
 
-        
-        .nav-links-custom a { position: relative; }
-        .nav-links-custom a::after {
-            content: ''; position: absolute; bottom: -4px; left: 0;
-            width: 0; height: 1px; background: var(--naranja); transition: width .3s;
-        }
-        .nav-links-custom a:hover::after { width: 100%; }
+.menu-card { transition: transform .3s; border-left: 3px solid transparent; }
+.menu-card:hover { transform: translateY(-4px); border-left-color: var(--naranja); }
 
-    
-        .form-control-brasa {
-            background: rgba(245,236,215,.05);
-            border: 1px solid rgba(245,236,215,.15);
-            color: var(--crema);
-            font-family: 'Crimson Text', serif;
-            font-size: 1rem;
-            transition: border-color .3s;
-            border-radius: 0;
-        }
-        .form-control-brasa:focus {
-            border-color: var(--naranja);
-            background: rgba(245,236,215,.07);
-            color: var(--crema);
-            box-shadow: none;
-        }
-        .form-control-brasa::placeholder { color: rgba(245,236,215,.3); }
 
-       
-        .hero-divider { 
-            width: 80px; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--naranja), transparent);
-        }
+#inicio {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    background-color: var(--negro);
+}
+#inicio::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background-image: url('../img/fondos/carne.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(1.8px) brightness(0.42) contrast(1.1);
+    z-index: -2;
+    pointer-events: none;
+}
+#inicio::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(ellipse at 50% 80%, rgba(232, 101, 26, 0.28) 0%, transparent 65%),
+        radial-gradient(ellipse at 20% 30%, rgba(192, 57, 43, 0.18) 0%, transparent 55%),
+        linear-gradient(to bottom, rgba(26, 16, 8, 0.12) 0%, rgba(26, 16, 8, 0.5) 60%, var(--negro) 100%);
+    z-index: -1;
+    pointer-events: none;
+}
 
-        .contacto-card {
-            transition: transform .3s ease, background .3s ease, border-top-color .3s ease, box-shadow .3s ease;
-            border-top: 3px solid transparent;
-        }
-        .contacto-card:hover {
-            background: #221406 !important;
-            transform: translateY(-4px);
-            border-top-color: var(--naranja) !important;
-            box-shadow: 0 8px 25px rgba(232, 101, 26, 0.15);
-        }
+/* Smooth, Seamless Section Transitions */
+#menu {
+    background: linear-gradient(to bottom, var(--negro) 0%, var(--humo) 150px, var(--humo) calc(100% - 150px), var(--negro) 100%) !important;
+    position: relative;
+}
+#nosotros {
+    background: var(--negro) !important;
+    position: relative;
+}
+#contacto {
+    background: linear-gradient(to bottom, var(--negro) 0%, var(--humo) 150px, var(--humo) 100%) !important;
+    position: relative;
+}
 
-        /* Stat items hover */
-        .stat-item {
-            transition: transform .3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .stat-item:hover {
-            transform: translateY(-5px);
-        }
-        .stat-item:hover .text-dorado {
-            text-shadow: 0 0 15px rgba(212, 160, 23, 0.45);
-        }
+/* Menu Card Image Zoom & Premium UI/UX */
+.card-img-container {
+    border-radius: 0;
+    transition: border-color .3s, box-shadow .3s;
+    background: #110904;
+}
+.card-img-zoom {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.menu-card:hover .card-img-zoom {
+    transform: scale(1.08);
+}
+.menu-card:hover .card-img-container {
+    border-color: var(--naranja) !important;
+    box-shadow: 0 0 15px rgba(232, 101, 26, 0.2);
+}
+.flames { animation: flicker 1.5s ease-in-out infinite alternate; opacity: .25; filter: blur(2px); }
+@keyframes flicker {
+    0%   { transform: translateX(-50%) scaleY(1);    opacity: .2; }
+    100% { transform: translateX(-50%) scaleY(1.15); opacity: .3; }
+}
+.fire-glow { animation: glow 2s ease-in-out infinite alternate; }
+@keyframes glow {
+    from { filter: drop-shadow(0 0 20px rgba(232,101,26,.5)); }
+    to   { filter: drop-shadow(0 0 50px rgba(232,101,26,.9)); }
+}
 
-        /* Nosotros Image Zoom */
-        .nosotros-img-zoom {
-            transition: transform .6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .nosotros-img-container:hover .nosotros-img-zoom {
-            transform: scale(1.06) rotate(1deg);
-        }
-    
-       /* AJUSTE SOLO PARA QUE LA NAVBAR NO TAPE CONTENIDO */
-  
+.fade-up-1 { animation: fadeUp 1s ease      both; }
+.fade-up-2 { animation: fadeUp 1s ease .2s  both; }
+.fade-up-3 { animation: fadeUp 1s ease .4s  both; }
+.fade-up-4 { animation: fadeUp 1s ease .5s  both; }
+.fade-up-5 { animation: fadeUp 1s ease .6s  both; }
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+
+.nav-links-custom a { position: relative; }
+.nav-links-custom a::after {
+    content: ''; position: absolute; bottom: -4px; left: 0;
+    width: 0; height: 1px; background: var(--naranja); transition: width .3s;
+}
+.nav-links-custom a:hover::after { width: 100%; }
+
+
+.form-control-brasa {
+    background: rgba(245,236,215,.05);
+    border: 1px solid rgba(245,236,215,.15);
+    color: var(--crema);
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    transition: border-color .3s;
+    border-radius: 0;
+}
+.form-control-brasa:focus {
+    border-color: var(--naranja);
+    background: rgba(245,236,215,.07);
+    color: var(--crema);
+    box-shadow: none;
+}
+.form-control-brasa::placeholder { color: rgba(245,236,215,.3); }
+
+
+.hero-divider {
+    width: 80px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--naranja), transparent);
+}
+
+.contacto-card {
+    transition: transform .3s ease, background .3s ease, border-top-color .3s ease, box-shadow .3s ease;
+    border-top: 3px solid transparent;
+}
+.contacto-card:hover {
+    background: #221406 !important;
+    transform: translateY(-4px);
+    border-top-color: var(--naranja) !important;
+    box-shadow: 0 8px 25px rgba(232, 101, 26, 0.15);
+}
+
+/* Stat items hover */
+.stat-item {
+    transition: transform .3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stat-item:hover {
+    transform: translateY(-5px);
+}
+.stat-item:hover .text-dorado {
+    text-shadow: 0 0 15px rgba(212, 160, 23, 0.45);
+}
+
+/* Nosotros Image Zoom */
+.nosotros-img-zoom {
+    transition: transform .6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nosotros-img-container:hover .nosotros-img-zoom {
+    transform: scale(1.06) rotate(1deg);
+}
+
+/* AJUSTE SOLO PARA QUE LA NAVBAR NO TAPE CONTENIDO */
+
 
 
 /* controla el logo sin dañar lo demás */
@@ -351,15 +351,20 @@
 .admin-body-shell {
     overflow-x: hidden;
     background-color: var(--crema);
+    font-family: Arial, Helvetica, sans-serif;
 }
 .admin-shell {
     overflow-x: hidden;
     min-height: 100vh;
     background-color: var(--crema);
+    font-family: Arial, Helvetica, sans-serif;
 }
 .admin-main {
     background: var(--crema);
     min-width: 0;
+    flex: 1 1 auto;
+    overflow-x: auto;
+    font-family: Arial, Helvetica, sans-serif;
 }
 html.admin-html, body.admin-body-shell {
     background-color: var(--crema) !important;
@@ -384,6 +389,7 @@ html.admin-html, body.admin-body-shell {
 .active-custom {
     background-color: #C0392B !important;
     color: var(--crema) !important;
+    font-weight: normal !important;
 }
 .sidebar-desktop,
 .sidebar-mobile-header,
@@ -405,6 +411,9 @@ html.admin-html, body.admin-body-shell {
 }
 .sidebar-desktop {
     width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    flex-shrink: 0;
     height: 100vh !important;
     max-height: 100vh !important;
     position: sticky;
@@ -465,15 +474,38 @@ html.admin-html, body.admin-body-shell {
 /* ── Corrección de tamaño de fuente del menú lateral ──
    Antes heredaba el font-size: 18px del body (Crimson Text),
    por eso se veía más grande de lo debido. Se fija un tamaño
-   propio, consistente con el resto del panel admin. */
+   propio, consistente con el resto del panel admin, y se usa
+   Arial en vez de Crimson Text. Todo con !important para que
+   ninguna otra hoja de estilos (o página específica) lo pueda
+   sobreescribir. */
+.sidebar-desktop .nav-link,
+.sidebar-offcanvas .nav-link,
+.sidebar-mobile-header a,
+.sidebar-desktop .dropdown-menu,
+.sidebar-offcanvas .dropdown-menu,
+.sidebar-desktop strong,
+.sidebar-offcanvas strong {
+    font-size: 0.95rem !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .sidebar-desktop .nav-link,
 .sidebar-offcanvas .nav-link {
-    font-size: 0.95rem;
-    font-family: 'Crimson Text', serif;
+    display: flex;
+    align-items: center;
 }
 .sidebar-desktop .nav-link i,
-.sidebar-offcanvas .nav-link i {
+.sidebar-offcanvas .nav-link i,
+.sidebar-desktop .nav-link .bi,
+.sidebar-offcanvas .nav-link .bi {
     font-size: 1rem;
+    flex-shrink: 0;
+}
+.sidebar-submenu .nav-link {
+    font-size: 0.88rem !important;
+    font-family: Arial, Helvetica, sans-serif !important;
 }
 
 /* ── Utilidades migradas desde inline styles (base.html, nav.html, footer.html, administrador/index.html) ── */

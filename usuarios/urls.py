@@ -9,7 +9,7 @@ urlpatterns = [
     path('logout/',      views.logout_view,            name='logout'),
     path('acceder/',     views.acceder_sistema,        name='acceder_sistema'),
     path('redireccion/', views.redireccion_post_login, name='redireccion'),
-    path('inicio/',      views.inicio_usuarios,        name='inicio_usuarios'),  # ← AGREGADO
+    path('inicio/',      views.inicio_usuarios,        name='inicio_usuarios'),
 
     # GESTIÓN DE PERSONAL
     path('lista/',             views.lista_personal,    name='lista_personal'),
