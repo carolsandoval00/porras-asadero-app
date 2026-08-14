@@ -3,7 +3,7 @@
 {% block content %}
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="{% static 'css/reserva_inicio_css2.css' %}" rel="stylesheet"> 
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
 <!-- ROL del usuario para el JS -->
@@ -86,9 +86,9 @@
 <div class="mc-print-only" id="mc-print-area"></div>
 
 <!-- Librerías reportes -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+ <script src="{% static 'js/reservas_inicio.js' %}" defer></script>
+ <script src="{% static 'js/inicio_reserva.js' %}" defer></script>
+ <script src="{% static 'js/reserva_inicioo.js' %}" defer></script>
 <script src="{% static 'js/reservas.js' %}" defer></script>
 
 {% endblock %}
