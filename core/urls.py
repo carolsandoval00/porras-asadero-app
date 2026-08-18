@@ -11,6 +11,7 @@ urlpatterns = [
     path('reservas/', include('reservas.urls')),
     path('pedidos/', include('pedidos.urls')),
     path('pagos/', include('pago.urls')), 
+    path('asistente/', include('asistente.urls')),
     
     path('', inicio, name='inicio'),
     

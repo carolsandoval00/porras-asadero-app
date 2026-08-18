@@ -31,6 +31,10 @@
 
     </div>
 
+    {% if request.user.is_authenticated %}
+        {% include "partials/asistente_ia.html" %}
+    {% endif %}
+
     <script src="{% static 'js/base2_bootstrap_bundle.js' %}" defer></script>
     <script src="{% static 'js/contacto.js' %}" defer></script>
 </body>
