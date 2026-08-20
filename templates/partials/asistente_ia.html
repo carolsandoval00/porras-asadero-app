@@ -1,0 +1,81 @@
+{% load static %}
+<!--
+  Widget del Asistente PIA — panel administrativo de Porras Asadero.
+  Se incluye solo para usuarios autenticados (ver "base 2.html").
+-->
+<link rel="stylesheet" href="{% static 'css/asistente.css' %}">
+
+<div id="pia-assistant-root">
+
+  <div class="pia-teaser" id="piaTeaser">
+    ¿Necesitas un resumen rápido del restaurante?
+  </div>
+
+  <button class="pia-fab" id="piaFab" aria-label="Abrir asistente PIA">
+    <span class="pia-fab-badge" id="piaFabBadge"></span>
+    <div class="pia-logo">
+      <div class="pia-logo-shape">
+        <span class="pia-logo-puff-l"></span>
+        <span class="pia-logo-puff-r"></span>
+        <span class="pia-logo-body"></span>
+      </div>
+      <span class="pia-logo-eyes"><span></span><span></span></span>
+      <span class="pia-logo-mouth"></span>
+      <span class="pia-logo-sparkle"></span>
+    </div>
+  </button>
+
+  <div class="pia-panel" id="piaPanel" role="dialog" aria-label="Asistente virtual PIA" aria-hidden="true">
+
+    <div class="pia-panel-header">
+      <div class="pia-panel-avatar">
+        <div class="pia-logo">
+          <div class="pia-logo-shape">
+            <span class="pia-logo-puff-l"></span>
+            <span class="pia-logo-puff-r"></span>
+            <span class="pia-logo-body"></span>
+          </div>
+          <span class="pia-logo-eyes"><span></span><span></span></span>
+          <span class="pia-logo-mouth"></span>
+          <span class="pia-logo-sparkle"></span>
+        </div>
+      </div>
+      <div class="pia-panel-title">
+        <strong>PIA</strong>
+        <div class="pia-panel-status"><span></span>En línea</div>
+      </div>
+      <button class="pia-panel-reset" id="piaReset" aria-label="Reiniciar conversación" title="Reiniciar conversación">
+        <svg viewBox="0 0 24 24"><path d="M12 4V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+      </button>
+      <button class="pia-panel-close" id="piaClose" aria-label="Cerrar asistente">
+        <svg viewBox="0 0 24 24"><path d="M18.3 5.71L12 12l6.3 6.29-1.42 1.42L10.59 13.4 4.3 19.71 2.88 18.3 9.17 12 2.88 5.71 4.3 4.29l6.29 6.3 6.3-6.3z"/></svg>
+      </button>
+    </div>
+
+    <div class="pia-messages" id="piaMessages" aria-live="polite">
+      <div class="pia-msg from-bot">
+        ¡Hola{% if request.user.first_name %} {{ request.user.first_name }}{% endif %}! Soy PIA, el asistente del panel de Porras Asadero. Pregúntame por mesas, reservas o pedidos.
+      </div>
+    </div>
+
+    <div class="pia-chips" id="piaChips">
+      <button class="pia-chip" data-prompt="Dame un resumen del restaurante ahora mismo">📋 Resumen de hoy</button>
+      <button class="pia-chip" data-prompt="¿Cuántas mesas están libres ahora mismo?">🍽️ Mesas libres</button>
+      <button class="pia-chip" data-prompt="¿Cuántas reservas hay para hoy?">📅 Reservas de hoy</button>
+    </div>
+
+    <div class="pia-input-bar">
+      <input type="text" id="piaInput" placeholder="Escribe tu mensaje" autocomplete="off" aria-label="Escribe tu mensaje" maxlength="1000">
+      <button class="pia-send-btn" id="piaSend" aria-label="Enviar mensaje">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+      </button>
+    </div>
+
+    <form style="display:none" aria-hidden="true">
+      {% csrf_token %}
+    </form>
+  </div>
+
+</div>
+
+<script src="{% static 'js/asistente.js' %}" defer></script>
