@@ -130,6 +130,12 @@
   function renderMarkdown(rawText) {
     var escaped = escapeHtml(rawText);
 
+    // A veces Gemini responde con etiquetas HTML crudas (<strong>, <b>, <em>, <i>)
+    // en vez de markdown (**negrita**). Como escapeHtml() ya las volvió texto
+    // literal (&lt;strong&gt;...), las "desescapamos" de vuelta solo para estas
+    // etiquetas seguras y de solo-texto (nunca <script>, <img>, etc.).
+    escaped = escaped.replace(/&lt;(\/?)(strong|b|em|i)&gt;/gi, "<$1$2>");
+
     escaped = escaped.replace(
       /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
