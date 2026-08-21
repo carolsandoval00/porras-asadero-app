@@ -1,25 +1,39 @@
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import PasswordResetView
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import send_mail
 from django.http import JsonResponse
-from django.urls import reverse_lazy
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.http import require_POST
+
 from .models import Usuario
 
+# Constantes de plantillas
 TEMPLATE_LOGIN = 'usuarios/login.html'
 TEMPLATE_LISTA = 'usuarios/lista/lista_personal.html'
 TEMPLATE_PERFIL = 'usuarios/panel_perfil.html'
 
+# Instancias para restablecimiento de contraseña
+token_generator = PasswordResetTokenGenerator()
+
+
+# ==========================================
+# VISTAS DE AUTENTICACIÓN Y REGISTRO
+# ==========================================
 
 def login_view(request):
     vista = request.GET.get('vista', 'login')
     if request.user.is_authenticated and vista == 'login':
         return redirect('inicio_usuarios')
     if request.method == 'POST':
-        usuario_input  = request.POST.get('username')
+        usuario_input = request.POST.get('username')
         password_input = request.POST.get('password')
         user = authenticate(request, username=usuario_input, password=password_input)
         if user is not None:
@@ -38,20 +52,19 @@ def login_view(request):
 def registro_view(request):
     """
     Registro público de usuarios: permite crear una cuenta nueva
-    directamente desde la pantalla de login (no requiere estar
-    autenticado ni pasar por el panel de gestión de personal).
+    directamente desde la pantalla de login.
     """
     if request.user.is_authenticated:
         return redirect('inicio_usuarios')
 
     if request.method == 'POST':
         first_name = request.POST.get('first_name', '').strip()
-        last_name  = request.POST.get('last_name', '').strip()
-        username   = request.POST.get('username', '').strip()
-        email      = request.POST.get('email', '').strip()
-        password   = request.POST.get('password', '')
-        password2  = request.POST.get('password2', '')
-        rol        = request.POST.get('rol', 'MESERO').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        password2 = request.POST.get('password2', '')
+        rol = request.POST.get('rol', 'MESERO').strip()
 
         ROLES_PERMITIDOS = ['MESERO', 'CAJERO']
         if rol not in ROLES_PERMITIDOS:
@@ -79,12 +92,12 @@ def registro_view(request):
             return render(request, TEMPLATE_LOGIN, context)
 
         nuevo_usuario = Usuario.objects.create_user(
-            username   = username,
-            password   = password,
-            first_name = first_name,
-            last_name  = last_name,
-            email      = email,
-            rol        = rol,
+            username=username,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            rol=rol,
         )
         login(request, nuevo_usuario)
         messages.success(request, f'¡Bienvenido, {nuevo_usuario.first_name}! Tu cuenta fue creada correctamente.')
@@ -107,6 +120,84 @@ def logout_view(request):
     return redirect('login')
 
 
+# ==========================================
+# VISTAS DE RECUPERACIÓN DE CONTRASEÑA
+# ==========================================
+
+def recuperar_password(request):
+    """
+    Vista GET: muestra el formulario para pedir el correo.
+    Vista POST: si el correo existe, envía el enlace de recuperación.
+    """
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        usuario = Usuario.objects.filter(email__iexact=email).first()
+
+        if usuario:
+            uid = urlsafe_base64_encode(force_bytes(usuario.pk))
+            token = token_generator.make_token(usuario)
+            dominio = get_current_site(request).domain
+            enlace = f"http://{dominio}{reverse('restablecer_password', kwargs={'uidb64': uid, 'token': token})}"
+
+            mensaje_html = render_to_string('usuarios/correo_recuperacion.html', {
+                'usuario': usuario,
+                'enlace': enlace,
+            })
+
+            send_mail(
+                subject="Recupera tu contraseña - Porras Asadero",
+                message="",
+                from_email=None,  # usa DEFAULT_FROM_EMAIL de settings.py
+                recipient_list=[usuario.email],
+                html_message=mensaje_html,
+            )
+
+        # Se muestra siempre el mismo mensaje para no revelar qué correos existen
+        return render(request, 'usuarios/recuperar_password.html', {'vista': 'enviado', 'email': email})
+
+    return render(request, 'usuarios/recuperar_password.html')
+
+
+def restablecer_password(request, uidb64, token):
+    """
+    Valida el enlace (uidb64 + token) y permite establecer la nueva contraseña.
+    """
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        usuario = Usuario.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, Usuario.DoesNotExist):
+        usuario = None
+
+    validlink = usuario is not None and token_generator.check_token(usuario, token)
+
+    if request.method == 'POST' and validlink:
+        password = request.POST.get('password')
+        password2 = request.POST.get('password2')
+
+        if password != password2:
+            messages.error(request, "Las contraseñas no coinciden.")
+        elif len(password) < 6:
+            messages.error(request, "La contraseña debe tener mínimo 6 caracteres.")
+        else:
+            usuario.set_password(password)
+            usuario.save()
+            return render(request, 'usuarios/restablecer_password.html', {
+                'vista': 'exitoso',
+                'validlink': True
+            })
+
+    return render(request, 'usuarios/restablecer_password.html', {
+        'vista': 'reset',  # Evita renderizar la plantilla con el menú lateral
+        'validlink': validlink,
+        'uidb64': uidb64,
+        'token': token,
+    })
+
+
+# ==========================================
+# VISTAS DE ADMINISTRACIÓN DE USUARIOS Y PERFIL
+# ==========================================
+
 @login_required
 def inicio_usuarios(request):
     usuarios = Usuario.objects.all()
@@ -126,22 +217,22 @@ def lista_personal(request):
 
     personal_json = json.dumps([
         {
-            'id':    u.id,
-            'nom':   u.first_name,
-            'ape':   u.last_name,
+            'id': u.id,
+            'nom': u.first_name,
+            'ape': u.last_name,
             'email': u.email,
-            'user':  u.username,
-            'rol':   u.rol,
-            'e':     'activo' if u.is_active else 'inactivo',
-            'tel':   getattr(u, 'telefono', '') or '',
-            'doc':   getattr(u, 'documento', '') or '',
-            'tdoc':  getattr(u, 'tipo_documento', '') or '',
-            'dir':   getattr(u, 'direccion', '') or '',
-            'foto':  u.foto.url if u.foto else '',
+            'user': u.username,
+            'rol': u.rol,
+            'e': 'activo' if u.is_active else 'inactivo',
+            'tel': getattr(u, 'telefono', '') or '',
+            'doc': getattr(u, 'documento', '') or '',
+            'tdoc': getattr(u, 'tipo_documento', '') or '',
+            'dir': getattr(u, 'direccion', '') or '',
+            'foto': u.foto.url if u.foto else '',
             'notas': '',
             'perms': [],
-            'acc':   '-',
-            'cr':    u.date_joined.isoformat() if hasattr(u, 'date_joined') else '',
+            'acc': '-',
+            'cr': u.date_joined.isoformat() if hasattr(u, 'date_joined') else '',
         }
         for u in personal
     ])
@@ -168,21 +259,21 @@ def crear_usuario(request):
             return JsonResponse({'ok': False, 'error': 'Ese nombre de usuario ya existe'}, status=400)
         ROL_MAP = {
             'Administrador': 'ADMIN',
-            'Mesero':        'MESERO',
-            'Cajero':        'CAJERO',
-            'Cocina':        'COCINA',
+            'Mesero': 'MESERO',
+            'Cajero': 'CAJERO',
+            'Cocina': 'COCINA',
         }
         nuevo = Usuario.objects.create_user(
-            username       = data['user'],
-            password       = data.get('pw', 'cambiar123'),
-            first_name     = data['nom'],
-            last_name      = data['ape'],
-            email          = data['email'],
-            telefono       = data.get('tel', ''),
-            tipo_documento = data.get('tdoc', ''),
-            documento      = data.get('doc', ''),
-            rol            = ROL_MAP.get(data['rol'], 'MESERO'),
-            is_active      = data.get('e', 'activo') == 'activo',
+            username=data['user'],
+            password=data.get('pw', 'cambiar123'),
+            first_name=data['nom'],
+            last_name=data['ape'],
+            email=data['email'],
+            telefono=data.get('tel', ''),
+            tipo_documento=data.get('tdoc', ''),
+            documento=data.get('doc', ''),
+            rol=ROL_MAP.get(data['rol'], 'MESERO'),
+            is_active=data.get('e', 'activo') == 'activo',
         )
         if hasattr(nuevo, 'direccion'):
             nuevo.direccion = data.get('dir', '')
@@ -198,21 +289,21 @@ def editar_usuario_json(request, id):
     if request.user.rol != 'ADMIN' and not request.user.is_superuser and request.user.id != id:
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
     try:
-        data    = json.loads(request.body)
+        data = json.loads(request.body)
         usuario = get_object_or_404(Usuario, pk=id)
         ROL_MAP = {
             'Administrador': 'ADMIN',
-            'Mesero':        'MESERO',
-            'Cajero':        'CAJERO',
-            'Cocina':        'COCINA',
+            'Mesero': 'MESERO',
+            'Cajero': 'CAJERO',
+            'Cocina': 'COCINA',
         }
-        usuario.first_name     = data.get('nom', usuario.first_name)
-        usuario.last_name      = data.get('ape', usuario.last_name)
-        usuario.email          = data.get('email', usuario.email)
-        usuario.telefono       = data.get('tel', '')
+        usuario.first_name = data.get('nom', usuario.first_name)
+        usuario.last_name = data.get('ape', usuario.last_name)
+        usuario.email = data.get('email', usuario.email)
+        usuario.telefono = data.get('tel', '')
         usuario.tipo_documento = data.get('tdoc', '')
-        usuario.documento      = data.get('doc', '')
-        usuario.is_active      = data.get('e', 'activo') == 'activo'
+        usuario.documento = data.get('doc', '')
+        usuario.is_active = data.get('e', 'activo') == 'activo'
         if request.user.rol == 'ADMIN' or request.user.is_superuser:
             usuario.rol = ROL_MAP.get(data.get('rol', ''), usuario.rol)
         if hasattr(usuario, 'direccion'):
@@ -279,24 +370,18 @@ def acceder_sistema(request):
     return redirect('login')
 
 
-class CustomPasswordResetView(PasswordResetView):
-    template_name = TEMPLATE_LOGIN
-    success_url   = reverse_lazy('password_reset_done')
-    extra_context = {'vista': 'recuperar'}
-
-
 @login_required
 def actualizar_usuario(request, pk):
     if request.user.id != pk and request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return redirect('validar_permisos')
     usuario = get_object_or_404(Usuario, pk=pk)
     if request.method == 'POST':
-        usuario.first_name     = request.POST.get('first_name', usuario.first_name)
-        usuario.last_name      = request.POST.get('last_name', usuario.last_name)
-        usuario.email          = request.POST.get('email', usuario.email)
-        usuario.telefono       = request.POST.get('telefono', '')
+        usuario.first_name = request.POST.get('first_name', usuario.first_name)
+        usuario.last_name = request.POST.get('last_name', usuario.last_name)
+        usuario.email = request.POST.get('email', usuario.email)
+        usuario.telefono = request.POST.get('telefono', '')
         usuario.tipo_documento = request.POST.get('tipo_documento', '')
-        usuario.documento      = request.POST.get('documento', '')
+        usuario.documento = request.POST.get('documento', '')
         if request.user.rol == 'ADMIN' or request.user.is_superuser:
             usuario.rol = request.POST.get('rol', usuario.rol)
         usuario.save()
