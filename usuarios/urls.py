@@ -2,6 +2,11 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 
+
+
+    
+
+
 urlpatterns = [
     # AUTENTICACIÓN
     path('login/',       views.login_view,            name='login'),
@@ -10,6 +15,8 @@ urlpatterns = [
     path('acceder/',     views.acceder_sistema,        name='acceder_sistema'),
     path('redireccion/', views.redireccion_post_login, name='redireccion'),
     path('inicio/',      views.inicio_usuarios,        name='inicio_usuarios'),
+    path('recuperar/', views.recuperar_password, name='recuperar_password'),
+    path('restablecer/<uidb64>/<token>/', views.restablecer_password, name='restablecer_password'),
 
     # GESTIÓN DE PERSONAL
     path('lista/',             views.lista_personal,    name='lista_personal'),

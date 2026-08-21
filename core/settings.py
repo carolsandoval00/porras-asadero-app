@@ -149,3 +149,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# Configuración de correo (Gmail SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'deisyvalentinamoramorales@gmail.com'
+EMAIL_HOST_PASSWORD = 'jvpl sroc trza lxib  '  # Coloca aquí los 16 caracteres
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
