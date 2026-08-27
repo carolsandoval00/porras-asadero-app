@@ -11,16 +11,18 @@
     <link href="{% static "css/base_css2.css"%}" rel="stylesheet">
     <link href="{% static "css/base_bootstrap.css"%}" rel="stylesheet">
     <link href="{% static "css/base_bootstrap_icons.css"%}" rel="stylesheet">
-    
+    <link rel="stylesheet" href="{% static 'css/accesibilidad.css' %}">
 
 </head>   
 <body class="body-no-overflow-x">
-    
+
+<a href="#main-content" class="a11y-skip-link">Saltar al contenido principal</a>
 
 {% include "partials/nav.html" %}
 
 
 
+<main id="main-content">
 <section id="inicio" class="min-vh-100 d-flex align-items-center justify-content-center text-center position-relative overflow-hidden">
     <div class="position-relative z-1 px-3">
         <p class="ff-oswald fw-light text-uppercase text-naranja mb-3 fade-up-1 hero-subtitle">Tradición · Carbón · Sabor</p>
@@ -37,11 +39,14 @@
 {% block content %}
 
 {% endblock content %}
+</main>
 
 
 
 {% include "partials/footer.html" %}
+{% include "partials/accesibilidad.html" %}
 <script src="{% static 'js/base_bootstrap_bundle.js' %}" defer></script>
 <script src="{% static "js/contacto.js" %}" defer></script>
+<script src="{% static "js/accesibilidad.js" %}" defer></script>
 </body>
 </html>

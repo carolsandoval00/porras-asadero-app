@@ -12,8 +12,11 @@
     <link href="{% static "css/base2_bootstrap.css"%}" rel="stylesheet">
     <link href="{% static "css/base2_bootstrap_icons.css"%}" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/accesibilidad.css' %}">
 </head>
 <body class="admin-body-shell">
+
+<a href="#main-content" class="a11y-skip-link">Saltar al contenido principal</a>
 
     <div class="d-flex flex-column flex-lg-row w-100 admin-shell">
 
@@ -21,7 +24,7 @@
             {% include "partials/aside.html" %}
         {% endif %}
 
-        <main class="flex-grow-1 d-flex flex-column admin-main">
+        <main id="main-content" class="flex-grow-1 d-flex flex-column admin-main">
             <section class="p-3 p-lg-5 flex-grow-1">
                 {% block content %}
                 {% endblock content %}
@@ -35,7 +38,10 @@
         {% include "partials/asistente_ia.html" %}
     {% endif %}
 
+    {% include "partials/accesibilidad.html" %}
+
     <script src="{% static 'js/base2_bootstrap_bundle.js' %}" defer></script>
     <script src="{% static 'js/contacto.js' %}" defer></script>
+    <script src="{% static 'js/accesibilidad.js' %}" defer></script>
 </body>
 </html>

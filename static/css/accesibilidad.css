@@ -1,0 +1,366 @@
+/* =====================================================
+   ACCESIBILIDAD - Porras Asadero
+   Widget flotante de ajustes de accesibilidad
+   ===================================================== */
+
+:root {
+    --a11y-font-scale: 1;
+    --a11y-font-family: inherit;
+}
+
+/* Botón flotante que abre el panel — apilado JUSTO ARRIBA del botón
+   del asistente PIA (.pia-fab: bottom 24px / right 24px / 58px alto),
+   dejando 12px de separación entre ambos */
+.a11y-toggle {
+    position: fixed;
+    bottom: 94px;
+    right: 24px;
+    z-index: 9997;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--naranja);
+    color: var(--negro);
+    border: 2px solid var(--dorado);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .45);
+    cursor: pointer;
+    transition: transform .2s ease, background .2s ease;
+}
+
+.a11y-toggle:hover,
+.a11y-toggle:focus-visible {
+    background: var(--dorado);
+    transform: translateY(-2px) scale(1.05);
+}
+
+.a11y-toggle:focus-visible {
+    outline: 3px solid var(--crema);
+    outline-offset: 3px;
+}
+
+/* Panel: se abre hacia arriba desde el botón, sin tapar a PIA */
+.a11y-panel {
+    position: fixed;
+    bottom: 162px;
+    right: 24px;
+    z-index: 9997;
+    width: min(320px, calc(100vw - 32px));
+    max-height: min(560px, calc(100vh - 190px));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--humo);
+    color: var(--crema);
+    border: 1px solid var(--gris-borde);
+    border-radius: 14px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .55);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    transform-origin: bottom right;
+    transform: scale(.95);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease, visibility .18s;
+}
+
+.a11y-panel.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+.a11y-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    padding: 18px 18px 10px;
+    border-bottom: 1px solid rgba(212, 196, 160, .3);
+}
+
+/* Zona con scroll: solo esto se desplaza, el header y el botón de
+   restablecer quedan siempre fijos y visibles */
+.a11y-panel__body {
+    overflow-y: auto;
+    padding: 14px 18px 4px;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.a11y-panel__title {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-size: 1rem;
+    color: var(--dorado);
+    margin: 0;
+}
+
+.a11y-panel__close {
+    background: transparent;
+    border: none;
+    color: var(--crema);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.a11y-panel__close:hover,
+.a11y-panel__close:focus-visible {
+    background: rgba(232, 101, 26, .25);
+    outline: none;
+}
+
+.a11y-group {
+    margin-bottom: 16px;
+}
+
+.a11y-group__label {
+    display: block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gris-borde);
+    margin-bottom: 8px;
+}
+
+/* ---------- Selects tipo "desplegable de Word" ---------- */
+.a11y-select {
+    width: 100%;
+    background: rgba(245, 236, 215, .06);
+    border: 1px solid var(--gris-borde);
+    color: var(--crema);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 0.9rem;
+    font-family: 'Lato', sans-serif;
+    cursor: pointer;
+}
+
+.a11y-select:focus-visible {
+    outline: 3px solid var(--dorado);
+    outline-offset: 1px;
+}
+
+.a11y-select option {
+    background: var(--humo);
+    color: var(--crema);
+    font-size: 0.9rem !important;
+}
+
+.a11y-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Botones tipo "chip" para toggles simples (enlaces subrayados, cursor, movimiento) */
+.a11y-btn {
+    flex: 1 1 auto;
+    min-width: 44px;
+    min-height: 40px;
+    background: rgba(245, 236, 215, .06);
+    border: 1px solid var(--gris-borde);
+    color: var(--crema);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: 'Lato', sans-serif;
+    cursor: pointer;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background .15s ease, border-color .15s ease;
+}
+
+.a11y-btn:hover,
+.a11y-btn:focus-visible {
+    background: rgba(232, 101, 26, .22);
+    border-color: var(--naranja);
+    outline: none;
+}
+
+.a11y-btn[aria-pressed="true"] {
+    background: var(--naranja);
+    border-color: var(--dorado);
+    color: var(--negro);
+    font-weight: 700;
+}
+
+.a11y-btn:focus-visible {
+    outline: 3px solid var(--dorado);
+    outline-offset: 2px;
+}
+
+.a11y-reset {
+    width: calc(100% - 36px);
+    flex-shrink: 0;
+    margin: 10px 18px 18px;
+    background: var(--humo);
+    border: 1px dashed var(--gris-borde);
+    color: var(--crema);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.a11y-reset:hover,
+.a11y-reset:focus-visible {
+    border-color: var(--rojo);
+    color: var(--rojo);
+    outline: none;
+}
+
+/* ============ EFECTOS APLICADOS AL SITIO ============ */
+
+/* El tamaño de texto ya NO se hace con "zoom" (eso agranda toda la
+   página: imágenes, espaciados, botones, como el zoom del navegador).
+   Ahora accesibilidad.js calcula y aplica el font-size real de cada
+   elemento de texto en píxeles, así que solo crece la letra. No hace
+   falta ninguna regla CSS aquí para eso. */
+
+/* Tipo de fuente elegido en el desplegable */
+html.a11y-font-family body,
+html.a11y-font-family body * {
+    font-family: var(--a11y-font-family) !important;
+}
+
+/* Subrayar todos los enlaces */
+html.a11y-underline-links a {
+    text-decoration: underline !important;
+    text-underline-offset: 3px;
+}
+
+/* Pausar animaciones y transiciones */
+html.a11y-no-motion *,
+html.a11y-no-motion *::before,
+html.a11y-no-motion *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+}
+
+/* Cursor grande */
+html.a11y-big-cursor,
+html.a11y-big-cursor * {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"><path fill="%23E8651A" stroke="%23000" stroke-width="1" d="M4 2l14 8-6 2-2 6z"/></svg>') 4 4, auto !important;
+}
+
+/* ---------- TEMAS (uno activo a la vez) ---------- */
+
+/* Oscuro: fondo homogéneo oscuro, útil si el usuario abre una vista clara */
+html.a11y-theme-oscuro body {
+    background: #0A0603 !important;
+}
+html.a11y-theme-oscuro body * {
+    background-color: #0A0603 !important;
+    color: #F5ECD7 !important;
+    border-color: #4A3A28 !important;
+}
+html.a11y-theme-oscuro a,
+html.a11y-theme-oscuro .btn,
+html.a11y-theme-oscuro button {
+    color: #E8A33C !important;
+}
+
+/* Alto contraste: blanco y negro puro para máxima legibilidad */
+html.a11y-theme-alto-contraste body {
+    background: #000 !important;
+}
+html.a11y-theme-alto-contraste body * {
+    background-color: #000 !important;
+    color: #FFF !important;
+    border-color: #FFF !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+html.a11y-theme-alto-contraste a,
+html.a11y-theme-alto-contraste .btn,
+html.a11y-theme-alto-contraste button {
+    color: #FFD700 !important;
+}
+html.a11y-theme-alto-contraste img,
+html.a11y-theme-alto-contraste video {
+    filter: grayscale(20%) contrast(1.1);
+}
+
+/* Escala de grises */
+html.a11y-theme-grises body {
+    filter: grayscale(100%);
+}
+
+/* Daltonismo: un único filtro SVG (definido en el partial), el más
+   representativo (deuteranopía, el tipo más común).
+   Se aplica a <body>, no a <html>: el filtro CSS sobre <html>
+   directamente no es confiable entre navegadores (Chrome/Firefox
+   a veces simplemente lo ignoran ahí). */
+html.a11y-theme-daltonismo body {
+    filter: url('#a11y-filter-daltonismo');
+}
+
+/* Resalte de foco visible reforzado (siempre útil, no depende de un toggle) */
+body :focus-visible {
+    outline: 3px solid var(--naranja) !important;
+    outline-offset: 2px !important;
+}
+
+/* Enlace "saltar al contenido" */
+.a11y-skip-link {
+    position: absolute;
+    top: -60px;
+    left: 12px;
+    z-index: 2147483647;
+    background: var(--dorado);
+    color: var(--negro);
+    padding: 10px 16px;
+    border-radius: 0 0 8px 8px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: top .2s ease;
+}
+
+.a11y-skip-link:focus {
+    top: 0;
+}
+
+@media (max-width: 480px) {
+    .a11y-panel {
+        right: 16px;
+        bottom: 148px;
+        max-height: min(500px, calc(100vh - 170px));
+    }
+    .a11y-toggle {
+        right: 16px;
+        bottom: 84px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.4rem;
+    }
+}
+
+.a11y-toggle,
+.a11y-panel,
+.a11y-panel * {
+    font-size: revert !important;
+}
+.a11y-toggle { font-size: 1.6rem !important; }
+.a11y-panel__title { font-size: 1rem !important; }
+.a11y-select,
+.a11y-btn,
+.a11y-reset { font-size: 0.85rem !important; }
+.a11y-group__label { font-size: 0.78rem !important; }

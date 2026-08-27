@@ -1,10 +1,10 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-<nav class="navbar navbar-expand-md navbar-dark fixed-top nav-gradient">
+<nav class="navbar navbar-expand-md navbar-dark fixed-top nav-gradient" aria-label="Navegación principal">
     <div class="container-fluid px-4 px-md-5">
        <a class="navbar-brand" href="#inicio">
     <img src="{% static 'img/logo.png' %}" alt="Porras Asadero" class="nav-logo-img"></a>
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Abrir menú de navegación">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse justify-content-end" id="navMain">
