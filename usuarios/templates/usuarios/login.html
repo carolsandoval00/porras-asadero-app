@@ -71,45 +71,63 @@
             <div class="form-row-2 mb-3">
                 <div>
                     <label>Nombres <span class="text-danger">*</span></label>
-                    <input type="text" name="first_name" class="form-control" required value="{{ form_data.first_name|default:'' }}">
+                    <input type="text" name="first_name" class="form-control" value="{{ form_data.first_name|default:'' }}">
+                    {% for error in form.first_name.errors %}
+                      <div class="pwd-feedback debil">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div>
                     <label>Apellidos <span class="text-danger">*</span></label>
-                    <input type="text" name="last_name" class="form-control" required value="{{ form_data.last_name|default:'' }}">
+                    <input type="text" name="last_name" class="form-control" value="{{ form_data.last_name|default:'' }}">
+                    {% for error in form.last_name.errors %}
+                      <div class="pwd-feedback debil">{{ error }}</div>
+                    {% endfor %}
                 </div>
             </div>
 
             <div class="mb-3">
                 <label>Correo electrónico <span class="text-danger">*</span></label>
-                <input type="email" name="email" class="form-control" required value="{{ form_data.email|default:'' }}">
+                <input type="email" name="email" class="form-control" value="{{ form_data.email|default:'' }}">
+                {% for error in form.email.errors %}
+                  <div class="pwd-feedback debil">{{ error }}</div>
+                {% endfor %}
             </div>
 
             <div class="mb-3">
                 <label>Nombre de usuario <span class="text-danger">*</span></label>
-                <input type="text" name="username" class="form-control" required value="{{ form_data.username|default:'' }}" autocomplete="username">
+                <input type="text" name="username" class="form-control" value="{{ form_data.username|default:'' }}" autocomplete="username">
+                {% for error in form.username.errors %}
+                  <div class="pwd-feedback debil">{{ error }}</div>
+                {% endfor %}
             </div>
 
             <div class="form-row-2 mb-3">
                 <div>
                     <label>Contraseña <span class="text-danger">*</span></label>
                     <div class="pwd-wrap">
-                        <input type="password" name="password" id="password-registro" class="form-control" required autocomplete="new-password" minlength="6" oninput="checkPasswordStrength('password-registro', 'pwd-feedback-registro', 'pwd-bar-registro')">
+                        <input type="password" name="password" id="password-registro" class="form-control" autocomplete="new-password" minlength="6" oninput="checkPasswordStrength('password-registro', 'pwd-feedback-registro', 'pwd-bar-registro')">
                         <button type="button" class="pwd-toggle" onclick="togglePassword('password-registro', this)">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
                     <div class="pwd-bar-wrap"><div class="pwd-bar" id="pwd-bar-registro"></div></div>
                     <div class="pwd-feedback" id="pwd-feedback-registro"></div>
+                    {% for error in form.password.errors %}
+                      <div class="pwd-feedback debil">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div>
                     <label>Confirmar contraseña <span class="text-danger">*</span></label>
                     <div class="pwd-wrap">
-                        <input type="password" name="password2" id="password2-registro" class="form-control" required autocomplete="new-password" oninput="checkPasswordMatch('password-registro', 'password2-registro', 'pwd-match-registro')">
+                        <input type="password" name="password2" id="password2-registro" class="form-control" autocomplete="new-password" oninput="checkPasswordMatch('password-registro', 'password2-registro', 'pwd-match-registro')">
                         <button type="button" class="pwd-toggle" onclick="togglePassword('password2-registro', this)">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
                     <div class="pwd-feedback" id="pwd-match-registro"></div>
+                    {% for error in form.password2.errors %}
+                      <div class="pwd-feedback debil">{{ error }}</div>
+                    {% endfor %}
                 </div>
             </div>
 

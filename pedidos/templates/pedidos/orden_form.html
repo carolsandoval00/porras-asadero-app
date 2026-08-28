@@ -58,14 +58,62 @@
       <form method="post" action="" class="pm-form">
         {% csrf_token %}
         <div class="pm-form-grid">
-          <div class="full"><label>Cliente</label>{{ form_orden.cliente }}</div>
-          <div class="full"><label>Mesa</label>{{ form_orden.mesa }}</div>
-          <div><label>Tipo de Pedido</label>{{ form_orden.tipo_pedido }}</div>
-          <div><label>Estado</label>{{ form_orden.estado }}</div>
-          <div><label>Subtotal ($)</label>{{ form_orden.subtotal }}</div>
-          <div><label>Impuestos ($)</label>{{ form_orden.impuestos }}</div>
-          <div><label>Total ($)</label>{{ form_orden.total }}</div>
-          <div class="full"><label>Notas</label>{{ form_orden.descripcion }}</div>
+          <div class="full">
+            <label>Cliente</label>
+            {{ form_orden.cliente }}
+            {% for error in form_orden.cliente.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="full">
+            <label>Mesa</label>
+            {{ form_orden.mesa }}
+            {% for error in form_orden.mesa.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Tipo de Pedido</label>
+            {{ form_orden.tipo_pedido }}
+            {% for error in form_orden.tipo_pedido.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Estado</label>
+            {{ form_orden.estado }}
+            {% for error in form_orden.estado.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Subtotal ($)</label>
+            {{ form_orden.subtotal }}
+            {% for error in form_orden.subtotal.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Impuestos ($)</label>
+            {{ form_orden.impuestos }}
+            {% for error in form_orden.impuestos.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Total ($)</label>
+            {{ form_orden.total }}
+            {% for error in form_orden.total.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div class="full">
+            <label>Notas</label>
+            {{ form_orden.descripcion }}
+            {% for error in form_orden.descripcion.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
         </div>
         <div class="pm-form-actions">
           <button type="submit" class="pm-btn pm-btn-primary">Actualizar Orden</button>

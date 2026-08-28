@@ -70,6 +70,9 @@
           <div class="full">
             <label>Cliente</label>
             {{ form.cliente }}
+            {% for error in form.cliente.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
           </div>
           {% else %}
           <div style="display:none">{{ form.cliente }}</div>
@@ -77,10 +80,16 @@
           <div>
             <label>Mesa</label>
             {{ form.mesa }}
+            {% for error in form.mesa.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
           </div>
           <div>
             <label>Tipo de Pedido</label>
             {{ form.tipo_pedido }}
+            {% for error in form.tipo_pedido.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
           </div>
           <div>
             {% if pedido %}
@@ -93,10 +102,16 @@
               </div>
               {{ form.estado }}
             {% endif %}
+            {% for error in form.estado.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
           </div>
           <div class="full">
             <label>Descripción / Nota adicional</label>
             {{ form.descripcion }}
+            {% for error in form.descripcion.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
           </div>
           <div class="full">
             <label>Agregar producto al pedido</label>
@@ -232,7 +247,6 @@ function renderPlatos() {
 }
 
 function prepararPedido() {
-  if (platos.length === 0) { alert('Agrega al menos un producto al pedido.'); return false; }
   var container = document.getElementById('items-hidden-container');
   container.innerHTML = '';
   platos.forEach(function(p, i) {

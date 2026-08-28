@@ -58,7 +58,13 @@
       <form method="post" action="" class="pm-form">
         {% csrf_token %}
         <div class="pm-form-grid">
-          <div class="full"><label>Nombre de la Categoría</label>{{ form_categoria.nombre }}</div>
+          <div class="full">
+            <label>Nombre de la Categoría</label>
+            {{ form_categoria.nombre }}
+            {% for error in form_categoria.nombre.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
           <div class="full"><label>Descripción</label>{{ form_categoria.descripcion }}</div>
         </div>
         <div class="pm-form-actions">

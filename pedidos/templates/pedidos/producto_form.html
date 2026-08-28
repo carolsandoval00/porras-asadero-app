@@ -57,9 +57,27 @@
       <form method="post" action="" class="pm-form">
         {% csrf_token %}
         <div class="pm-form-grid">
-          <div class="full"><label>Nombre del Producto</label>{{ form_producto.nombre }}</div>
-          <div><label>Categoría</label>{{ form_producto.categoria }}</div>
-          <div><label>Precio ($)</label>{{ form_producto.precio }}</div>
+          <div class="full">
+            <label>Nombre del Producto</label>
+            {{ form_producto.nombre }}
+            {% for error in form_producto.nombre.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Categoría</label>
+            {{ form_producto.categoria }}
+            {% for error in form_producto.categoria.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Precio ($)</label>
+            {{ form_producto.precio }}
+            {% for error in form_producto.precio.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
           <div class="full"><label>Descripción</label>{{ form_producto.descripcion }}</div>
           <div class="pm-check-row">
             {{ form_producto.disponible }}

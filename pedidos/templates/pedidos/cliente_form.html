@@ -58,10 +58,34 @@
       <form method="post" action="" class="pm-form">
         {% csrf_token %}
         <div class="pm-form-grid">
-          <div class="full"><label>Nombre Completo</label>{{ form_cliente.nombre_completo }}</div>
-          <div><label>Tipo de Documento</label>{{ form_cliente.tipo_documento }}</div>
-          <div><label>Número de Documento</label>{{ form_cliente.documento }}</div>
-          <div><label>Teléfono de Contacto</label>{{ form_cliente.telefono }}</div>
+          <div class="full">
+            <label>Nombre Completo</label>
+            {{ form_cliente.nombre_completo }}
+            {% for error in form_cliente.nombre_completo.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Tipo de Documento</label>
+            {{ form_cliente.tipo_documento }}
+            {% for error in form_cliente.tipo_documento.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Número de Documento</label>
+            {{ form_cliente.documento }}
+            {% for error in form_cliente.documento.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
+          <div>
+            <label>Teléfono de Contacto</label>
+            {{ form_cliente.telefono }}
+            {% for error in form_cliente.telefono.errors %}
+              <div class="pm-field-error">{{ error }}</div>
+            {% endfor %}
+          </div>
           <div class="full"><label>Dirección física (domicilios)</label>{{ form_cliente.direccion }}</div>
         </div>
         <div class="pm-form-actions">
@@ -74,49 +98,5 @@
     </div>
   </div>
 </div>
-
-<script>
-  function soloNumeros(input, maxLen) {
-    if (!input) return;
-    input.setAttribute('maxlength', maxLen);
-    input.setAttribute('inputmode', 'numeric');
-    input.addEventListener('input', function () {
-      this.value = this.value.replace(/[^0-9]/g, '').slice(0, maxLen);
-    });
-    input.addEventListener('keypress', function (e) {
-      if (!/[0-9]/.test(e.key)) {
-        e.preventDefault();
-      }
-    });
-    input.addEventListener('paste', function (e) {
-      e.preventDefault();
-      const texto = (e.clipboardData || window.clipboardData).getData('text');
-      const limpio = texto.replace(/[^0-9]/g, '').slice(0, maxLen);
-      this.value = limpio;
-    });
-  }
-
-  function soloLetras(input) {
-    if (!input) return;
-    const permitido = /[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/;
-    input.addEventListener('input', function () {
-      this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-    });
-    input.addEventListener('keypress', function (e) {
-      if (!permitido.test(e.key)) {
-        e.preventDefault();
-      }
-    });
-    input.addEventListener('paste', function (e) {
-      e.preventDefault();
-      const texto = (e.clipboardData || window.clipboardData).getData('text');
-      const limpio = texto.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-      this.value = limpio;
-    });
-  }
-  soloNumeros(document.getElementById('id_documento'), 10);
-  soloNumeros(document.getElementById('id_telefono'), 10);
-  soloLetras(document.getElementById('id_nombre_completo'));
-</script>
 
 {% endblock %}
