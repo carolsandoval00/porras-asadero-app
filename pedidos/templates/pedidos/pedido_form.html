@@ -26,31 +26,31 @@
   <!-- Navegación Compartida -->
   <div class="pm-nav">
     <div class="pm-nav-group">
-      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light">Inicio</a>
+      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light" data-tooltip="Ir al inicio">Inicio</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Pedidos</span>
-      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
-      <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn {% if not pedido %}pm-btn-primary{% else %}pm-btn-light{% endif %}">Crear</a>
+      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver todos los pedidos">Consultar</a>
+      <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn {% if not pedido %}pm-btn-primary{% else %}pm-btn-light{% endif %}" data-tooltip="Hacer un pedido nuevo">Crear</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Órdenes</span>
-      <a href="{% url 'pedidos:orden_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
+      <a href="{% url 'pedidos:orden_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver las órdenes">Consultar</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Productos</span>
-      <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
-      <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+      <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver los productos">Consultar</a>
+      <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar un producto">Crear</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Categorías</span>
-      <a href="{% url 'pedidos:categoria_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
-      <a href="{% url 'pedidos:categoria_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+      <a href="{% url 'pedidos:categoria_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver las categorías">Consultar</a>
+      <a href="{% url 'pedidos:categoria_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar una categoría">Crear</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Clientes</span>
-      <a href="{% url 'pedidos:cliente_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
-      <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+      <a href="{% url 'pedidos:cliente_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver los clientes">Consultar</a>
+      <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar un cliente">Crear</a>
     </div>
   </div>
 
@@ -58,7 +58,7 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>{% if pedido %}Editar Pedido #{{ pedido.pk|stringformat:"02d" }}{% else %}Crear Pedido{% endif %}</h3>
-      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light pm-btn-sm">← Volver</a>
+      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de pedidos">← Volver</a>
     </div>
     <div class="pm-card-body">
       <form method="post" action="" class="pm-form pm-form-full" id="form-pedido">
@@ -97,7 +97,7 @@
               {{ form.estado }}
             {% else %}
               <label>Estado</label>
-              <div class="pm-estado-display">
+              <div class="pm-estado-display" data-tooltip="Los pedidos nuevos siempre inician en este estado">
                 En Preparación
               </div>
               {{ form.estado }}
@@ -116,7 +116,7 @@
           <div class="full">
             <label>Agregar producto al pedido</label>
             <div class="pm-add-product-row">
-              <select id="menu-select" class="pm-select-producto">
+              <select id="menu-select" class="pm-select-producto" data-tooltip="Elige un producto del menú para agregarlo">
                 <option value="">— Selecciona un producto —</option>
                 {% regroup productos_disponibles by categoria.nombre as categorias_menu %}
                 {% for grupo in categorias_menu %}
@@ -133,7 +133,7 @@
                   <option disabled>No hay productos disponibles.</option>
                 {% endfor %}
               </select>
-              <button type="button" class="pm-btn pm-btn-accent" onclick="agregarProducto()">+ Agregar</button>
+              <button type="button" class="pm-btn pm-btn-accent" data-tooltip="Agregar el producto seleccionado al pedido" onclick="agregarProducto()">+ Agregar</button>
             </div>
           </div>
         </div>
@@ -167,10 +167,10 @@
         </div>
 
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-accent" onclick="return prepararPedido()">
+          <button type="submit" class="pm-btn pm-btn-accent" data-tooltip="Guardar este pedido" onclick="return prepararPedido()">
             {% if pedido %}Guardar Cambios{% else %}Crear Pedido{% endif %}
           </button>
-          <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light">Cancelar</a>
+          <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Descartar los cambios y volver">Cancelar</a>
         </div>
       </form>
     </div>
@@ -256,6 +256,69 @@ function prepararPedido() {
   });
   return true;
 }
+</script>
+
+<script>
+/**
+ * Tooltips flotantes para elementos dentro de .pm-nav.
+ * Se usan porque .pm-nav tiene overflow-x:auto, lo que
+ * recortaría un tooltip hecho con CSS puro (::after).
+ * Al crear el tooltip como un elemento aparte pegado al
+ * <body>, con position:fixed, se evita ese recorte y
+ * el tooltip aparece siempre arriba del botón (o abajo,
+ * si no hay espacio arriba).
+ */
+(function () {
+    let bubble = null;
+
+    function showTooltip(el) {
+        const text = el.getAttribute('data-tooltip');
+        if (!text) return;
+
+        bubble = document.createElement('div');
+        bubble.className = 'js-tooltip-bubble';
+        bubble.textContent = text;
+        document.body.appendChild(bubble);
+
+        const rect = el.getBoundingClientRect();
+        const bubbleRect = bubble.getBoundingClientRect();
+
+        let left = rect.left + rect.width / 2 - bubbleRect.width / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - bubbleRect.width - 8));
+
+        const espacioArriba = rect.top - bubbleRect.height - 10;
+        let top;
+        let abajo = false;
+        if (espacioArriba < 8) {
+            top = rect.bottom + 10;
+            abajo = true;
+        } else {
+            top = espacioArriba;
+        }
+
+        bubble.classList.toggle('abajo', abajo);
+        bubble.style.left = left + 'px';
+        bubble.style.top = top + 'px';
+
+        requestAnimationFrame(() => bubble.classList.add('show'));
+    }
+
+    function hideTooltip() {
+        if (bubble) {
+            bubble.remove();
+            bubble = null;
+        }
+    }
+
+    document.querySelectorAll('.pm-nav [data-tooltip]').forEach(function (el) {
+        el.addEventListener('mouseenter', function () { showTooltip(el); });
+        el.addEventListener('mouseleave', hideTooltip);
+        el.addEventListener('focus', function () { showTooltip(el); });
+        el.addEventListener('blur', hideTooltip);
+    });
+
+    window.addEventListener('scroll', hideTooltip, true);
+})();
 </script>
 
 {% endblock %}

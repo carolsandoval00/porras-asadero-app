@@ -159,52 +159,52 @@
     <div class="auth-card" style="max-width: 1100px;">
         <h1 class="auth-title">Panel de <span>Control</span></h1>
         <p class="auth-sub">Bienvenido, {{ user.first_name }} {{ user.last_name }}. ¿Qué deseas hacer hoy?</p>
-        
+
         <div class="dash-grid">
-            <a href="{% url 'panel_perfil' %}" class="dash-card">
+            <a href="{% url 'panel_perfil' %}" class="dash-card" data-tooltip="Ve y edita tu información personal, foto y datos de tu cuenta.">
                 <i class="bi bi-person-badge"></i>
                 <h3>Mi Perfil</h3>
             </a>
-            
+
             {% if user.rol == 'ADMIN' or user.is_superuser %}
-            <a href="{% url 'lista_personal' %}" class="dash-card">
+            <a href="{% url 'lista_personal' %}" class="dash-card" data-tooltip="Administra empleados: roles, permisos y datos del equipo de trabajo.">
                 <i class="bi bi-people"></i>
                 <h3>Gestionar Personal</h3>
             </a>
-            <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
+            <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card" data-tooltip="Crea una nueva cuenta de usuario y asígnale un rol dentro del sistema.">
                 <i class="bi bi-person-plus-fill"></i>
                 <h3>Nuevo Usuario</h3>
             </a>
-            <a href="{% url 'pedidos:producto_lista' %}" class="dash-card">
+            <a href="{% url 'pedidos:producto_lista' %}" class="dash-card" data-tooltip="Agrega, edita o elimina productos del catálogo, precios e inventario.">
                 <i class="bi bi-egg-fried"></i>
                 <h3>Gestionar Productos</h3>
             </a>
-            <a href="{% url 'pedidos:categoria_lista' %}" class="dash-card">
+            <a href="{% url 'pedidos:categoria_lista' %}" class="dash-card" data-tooltip="Organiza tus productos creando, editando o eliminando categorías.">
                 <i class="bi bi-tags"></i>
                 <h3>Gestionar Categorías</h3>
             </a>
-            <a href="{% url 'pedidos:cliente_lista' %}" class="dash-card">
+            <a href="{% url 'pedidos:cliente_lista' %}" class="dash-card" data-tooltip="Consulta y administra la información de tus clientes registrados.">
                 <i class="bi bi-person-lines-fill"></i>
                 <h3>Gestionar Clientes</h3>
             </a>
             {% endif %}
 
             {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.rol == 'CAJERO' or user.is_superuser %}
-            <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+            <a href="{% url 'pedidos:dashboard' %}" class="dash-card" data-tooltip="Revisa el historial y estado de todos los pedidos realizados.">
                <i class="bi bi-receipt"></i>
                <h3>Ver Pedidos</h3>
                </a>
             {% endif %}
 
             {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.is_superuser %}
-            <a href="{% url 'reserva_inicio' %}" class="dash-card">
+            <a href="{% url 'reserva_inicio' %}" class="dash-card" data-tooltip="Gestiona la disponibilidad de mesas y confirma reservaciones.">
                <i class="bi bi-calendar-check"></i>
                <h3>Reservas y Mesas</h3>
                </a>
             {% endif %}
 
             {% if user.rol == 'ADMIN' or user.rol == 'CAJERO' or user.is_superuser %}
-            <a href="{% url 'pago:dashboard' %}" class="dash-card">
+            <a href="{% url 'pago:dashboard' %}" class="dash-card" data-tooltip="Consulta transacciones, métodos de pago y estados de cuenta.">
                <i class="bi bi-credit-card"></i>
                <h3>Gestión de Pagos</h3>
                </a>
@@ -303,29 +303,29 @@
             <div class="rol-grid mb-3">
                 <div>
                     <input type="radio" name="rol" id="rol_mesero" value="MESERO" class="rol-opt" {% if usuario.rol == 'MESERO' or not usuario.rol %}checked{% endif %}>
-                    <label for="rol_mesero" class="rol-label">Mesero</label>
+                    <label for="rol_mesero" class="rol-label" data-tooltip="Toma pedidos y gestiona mesas">Mesero</label>
                 </div>
                 <div>
                     <input type="radio" name="rol" id="rol_cocina" value="COCINA" class="rol-opt" {% if usuario.rol == 'COCINA' %}checked{% endif %}>
-                    <label for="rol_cocina" class="rol-label">Cocina</label>
+                    <label for="rol_cocina" class="rol-label" data-tooltip="Ve y actualiza el estado de los pedidos">Cocina</label>
                 </div>
                 <div>
                     <input type="radio" name="rol" id="rol_caja" value="CAJA" class="rol-opt" {% if usuario.rol == 'CAJA' %}checked{% endif %}>
-                    <label for="rol_caja" class="rol-label">Cajero</label>
+                    <label for="rol_caja" class="rol-label" data-tooltip="Gestiona los pagos y reportes de caja">Cajero</label>
                 </div>
                 {% if user.is_superuser %}
                 <div>
                     <input type="radio" name="rol" id="rol_admin" value="ADMIN" class="rol-opt" {% if usuario.rol == 'ADMIN' %}checked{% endif %}>
-                    <label for="rol_admin" class="rol-label">Admin</label>
+                    <label for="rol_admin" class="rol-label" data-tooltip="Acceso completo a todo el sistema">Admin</label>
                 </div>
                 {% endif %}
             </div>
 
-            <button type="submit" class="btn-auth">
+            <button type="submit" class="btn-auth" data-tooltip="Guardar los datos de este usuario">
                 <i class="bi bi-check-circle me-2"></i>{% if vista == 'actualizar' %}Guardar Cambios{% else %}Registrar y Entrar{% endif %}
             </button>
             
-            <a href="{% url 'panel_perfil' %}" class="btn-auth-outline">Cancelar</a>
+            <a href="{% url 'panel_perfil' %}" class="btn-auth-outline" data-tooltip="Descartar los cambios y volver">Cancelar</a>
         </form>
     </div>
 </div>
