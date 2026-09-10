@@ -12,7 +12,7 @@
   </div>
 
   <div class="pm-back-bar">
-    <a href="{% url 'pedidos:dashboard' %}?seccion=orden-lista" class="pm-btn pm-btn-light">← Volver a Órdenes</a>
+    <a href="{% url 'pedidos:dashboard' %}?seccion=orden-lista" class="pm-btn pm-btn-light" data-tooltip="Volver a la lista de órdenes">← Volver a Órdenes</a>
   </div>
 
   <!-- Info general -->
@@ -138,8 +138,8 @@
   {% endif %}
 
   <div class="pm-bottom-actions">
-    <a href="{% url 'pedidos:orden_editar' orden.pk %}" class="pm-btn pm-btn-primary">Editar Orden</a>
-    <a href="{% url 'pedidos:dashboard' %}?seccion=orden-lista" class="pm-btn pm-btn-light pm-btn-ml">← Volver</a>
+    <a href="{% url 'pedidos:orden_editar' orden.pk %}" class="pm-btn pm-btn-primary" data-tooltip="Editar los datos de esta orden">Editar Orden</a>
+    <a href="{% url 'pedidos:dashboard' %}?seccion=orden-lista" class="pm-btn pm-btn-light pm-btn-ml" data-tooltip="Volver a la lista de órdenes">← Volver</a>
   </div>
 
 </div>

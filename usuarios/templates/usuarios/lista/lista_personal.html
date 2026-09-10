@@ -9,14 +9,14 @@
   <div class="panel-container">
 
     <div class="usr-tabs">
-        <button class="usr-tab activo" onclick="nav('lista')">
+        <button class="usr-tab activo" onclick="nav('lista')" data-tooltip="Ver la lista de todos los usuarios">
             <i class="bi bi-people"></i> Usuarios
         </button>
-        <button class="usr-tab usr-tab-oculto" onclick="nav('perfil')" id="tab-perfil">
+        <button class="usr-tab usr-tab-oculto" onclick="nav('perfil')" id="tab-perfil" data-tooltip="Ver el perfil completo de este usuario">
             <i class="bi bi-person-circle"></i> <span id="tab-perfil-txt">Perfil</span>
         </button>
         {% if request.user.rol == 'ADMIN' or request.user.is_superuser %}
-        <button class="usr-tab tab-nuevo" onclick="nav('crear')">
+        <button class="usr-tab tab-nuevo" onclick="nav('crear')" data-tooltip="Registrar un nuevo usuario">
             <i class="bi bi-person-plus"></i> Nuevo usuario
         </button>
         {% endif %}
@@ -30,13 +30,13 @@
         </div>
         <div class="stats-grid" id="stats-ctn"></div>
         <div class="filtros">
-            <input id="f-buscar" type="text" placeholder="🔍  Buscar nombre, usuario o correo…" oninput="renderTabla()">
-            <select id="f-rol" onchange="renderTabla()">
+            <input id="f-buscar" type="text" placeholder="🔍  Buscar nombre, usuario o correo…" oninput="renderTabla()" data-tooltip="Escribe para buscar">
+            <select id="f-rol" onchange="renderTabla()" data-tooltip="Filtra por rol">
                 <option value="">Todos los roles</option>
                 <option>Administrador</option>
                 <option>Mesero</option><option>Cajero</option><option>Cocina</option>
             </select>
-            <select id="f-est" onchange="renderTabla()">
+            <select id="f-est" onchange="renderTabla()" data-tooltip="Filtra por estado">
                 <option value="">Todos los estados</option>
                 <option value="activo">Activo</option>
                 <option value="inactivo">Inactivo</option>
@@ -58,7 +58,7 @@
     <!-- ══ PERFIL ══ -->
     <div id="sec-perfil" class="usr-sec">
         <div class="sec-back-row">
-            <button class="btn btn-out btn-out-sm" onclick="nav('lista')">← Volver</button>
+            <button class="btn btn-out btn-out-sm" onclick="nav('lista')" data-tooltip="Volver a la lista de usuarios">← Volver</button>
             <div>
                 <h2 id="p-titulo" class="sec-title">Perfil</h2>
                 <p id="p-sub" class="sec-subtitle">Información completa</p>
@@ -70,7 +70,7 @@
     <!-- ══ CREAR/EDITAR ══ -->
     <div id="sec-crear" class="usr-sec">
         <div class="sec-back-row">
-            <button class="btn btn-out btn-out-sm" onclick="nav('lista')">← Volver</button>
+            <button class="btn btn-out btn-out-sm" onclick="nav('lista')" data-tooltip="Volver a la lista de usuarios">← Volver</button>
             <div>
                 <h2 id="cr-titulo" class="sec-title">Nuevo usuario</h2>
                 <p id="cr-sub" class="sec-subtitle">Completa los datos del nuevo integrante</p>
@@ -158,8 +158,8 @@
             <div class="c-label">Notas internas</div>
             <textarea class="f-ta" id="u-notas" placeholder="Información adicional sobre este usuario…"></textarea>
             <div class="btn-row">
-                <button class="btn btn-out" onclick="limpiar()">Limpiar</button>
-                <button class="btn btn-ok" onclick="guardar()" id="btn-grd">
+                <button class="btn btn-out" onclick="limpiar()" data-tooltip="Borrar todo lo escrito en el formulario">Limpiar</button>
+                <button class="btn btn-ok" onclick="guardar()" id="btn-grd" data-tooltip="Guardar este usuario">
                     <i class="bi bi-person-check"></i> Crear usuario
                 </button>
             </div>
@@ -309,9 +309,9 @@ window.renderTabla = function() {
           <td>${bRol(u.rol)}</td>
           <td>${bEst(u.e)}</td>
           <td><div style="display:flex;gap:4px;flex-wrap:wrap">
-              <button class="btn-ac btn-ver" onclick="verPerfil(${u.id})">Ver perfil</button>
-              ${ES_ADMIN ? `<button class="btn-ac btn-edit" onclick="editar(${u.id})">Editar</button>
-              <button class="btn-ac btn-del" onclick="pedirDel(${u.id})">Eliminar</button>` : ''}
+              <button class="btn-ac btn-ver" data-tooltip="Ver el perfil completo" onclick="verPerfil(${u.id})">Ver perfil</button>
+              ${ES_ADMIN ? `<button class="btn-ac btn-edit" data-tooltip="Editar este usuario" onclick="editar(${u.id})">Editar</button>
+              <button class="btn-ac btn-del" data-tooltip="Eliminar este usuario" onclick="pedirDel(${u.id})">Eliminar</button>` : ''}
           </div></td>
         </tr>`).join('');
 };

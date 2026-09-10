@@ -16,7 +16,7 @@
             <form id="foto-form" method="POST" action="{% url 'actualizar_foto' usuario.id %}" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="file" id="foto-input" name="foto" accept="image/*">
-                <div class="perfil-avatar" onclick="document.getElementById('foto-input').click()">
+                <div class="perfil-avatar" onclick="document.getElementById('foto-input').click()" data-tooltip="Cambiar tu foto">
                     {% if usuario.foto %}
                         <img id="avatar-img" src="{{ usuario.foto.url }}" alt="Foto de {{ usuario.first_name }}" loading="lazy">
                     {% else %}
@@ -148,8 +148,8 @@
 
             <!-- FOOTER -->
             <div class="perfil-footer">
-                <a href="{% url 'login' %}?vista=inicio" class="btn-volver">← Volver</a>
-                <a href="{% url 'actualizar_usuarios' usuario.id %}" class="btn-editar">✎ Editar mis datos</a>
+                <a href="{% url 'login' %}?vista=inicio" class="btn-volver" data-tooltip="Volver al panel">← Volver</a>
+                <a href="{% url 'actualizar_usuarios' usuario.id %}" class="btn-editar" data-tooltip="Editar tus datos">✎ Editar mis datos</a>
             </div>
 
         </div>

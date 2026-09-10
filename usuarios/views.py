@@ -13,6 +13,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.http import require_POST
 
+from .forms import PersonalForm, RegistroForm, _validar_nombre
 from .models import Usuario
 
 # Constantes de plantillas
@@ -58,52 +59,40 @@ def registro_view(request):
         return redirect('inicio_usuarios')
 
     if request.method == 'POST':
-        first_name = request.POST.get('first_name', '').strip()
-        last_name = request.POST.get('last_name', '').strip()
-        username = request.POST.get('username', '').strip()
-        email = request.POST.get('email', '').strip()
-        password = request.POST.get('password', '')
-        password2 = request.POST.get('password2', '')
+        form = RegistroForm(request.POST)
         rol = request.POST.get('rol', 'MESERO').strip()
-
         ROLES_PERMITIDOS = ['MESERO', 'CAJERO']
         if rol not in ROLES_PERMITIDOS:
             rol = 'MESERO'
 
-        errores = []
-        if not first_name or not last_name or not username or not email or not password:
-            errores.append('Todos los campos son obligatorios.')
-        if password and password2 and password != password2:
-            errores.append('Las contraseñas no coinciden.')
-        if len(password) < 6:
-            errores.append('La contraseña debe tener al menos 6 caracteres.')
-        if username and Usuario.objects.filter(username=username).exists():
-            errores.append('Ese nombre de usuario ya está en uso.')
-        if email and Usuario.objects.filter(email=email).exists():
-            errores.append('Ese correo electrónico ya está registrado.')
+        if form.is_valid():
+            nuevo_usuario = Usuario.objects.create_user(
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password'],
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+                email=form.cleaned_data['email'],
+                rol=rol,
+            )
+            login(request, nuevo_usuario)
+            messages.success(
+                request,
+                f'¡Bienvenido, {nuevo_usuario.first_name}! Tu cuenta fue creada correctamente.'
+            )
+            return redireccion_post_login(request)
 
-        if errores:
-            for e in errores:
-                messages.error(request, e)
-            context = {
-                'vista': 'registro',
-                'form_data': request.POST,
-            }
-            return render(request, TEMPLATE_LOGIN, context)
+        for field, errores in form.errors.items():
+            for error in errores:
+                messages.error(request, f'{error}')
 
-        nuevo_usuario = Usuario.objects.create_user(
-            username=username,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            rol=rol,
-        )
-        login(request, nuevo_usuario)
-        messages.success(request, f'¡Bienvenido, {nuevo_usuario.first_name}! Tu cuenta fue creada correctamente.')
-        return redireccion_post_login(request)
+        context = {
+            'vista': 'registro',
+            'form': form,
+            'form_data': request.POST,
+        }
+        return render(request, TEMPLATE_LOGIN, context)
 
-    context = {'vista': 'registro'}
+    context = {'vista': 'registro', 'form': RegistroForm()}
     return render(request, TEMPLATE_LOGIN, context)
 
 
@@ -252,11 +241,20 @@ def crear_usuario(request):
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
     try:
         data = json.loads(request.body)
-        if not data.get('nom') or not data.get('ape') or not data.get('email') \
-                or not data.get('user') or not data.get('rol'):
-            return JsonResponse({'ok': False, 'error': 'Faltan campos obligatorios'}, status=400)
-        if Usuario.objects.filter(username=data['user']).exists():
-            return JsonResponse({'ok': False, 'error': 'Ese nombre de usuario ya existe'}, status=400)
+        form = PersonalForm({
+            'first_name': data.get('nom', ''),
+            'last_name': data.get('ape', ''),
+            'username': data.get('user', ''),
+            'email': data.get('email', ''),
+            'rol': 'ADMIN' if data.get('rol') == 'Administrador' else
+                   'CAJERO' if data.get('rol') == 'Cajero' else
+                   'COCINA' if data.get('rol') == 'Cocina' else 'MESERO',
+        })
+        if not form.is_valid():
+            return JsonResponse({
+                'ok': False,
+                'error': '; '.join(f'{campo}: {", ".join(errors)}' for campo, errors in form.errors.items())
+            }, status=400)
         ROL_MAP = {
             'Administrador': 'ADMIN',
             'Mesero': 'MESERO',
@@ -264,15 +262,15 @@ def crear_usuario(request):
             'Cocina': 'COCINA',
         }
         nuevo = Usuario.objects.create_user(
-            username=data['user'],
+            username=form.cleaned_data['username'],
             password=data.get('pw', 'cambiar123'),
-            first_name=data['nom'],
-            last_name=data['ape'],
-            email=data['email'],
+            first_name=form.cleaned_data['first_name'],
+            last_name=form.cleaned_data['last_name'],
+            email=form.cleaned_data['email'],
             telefono=data.get('tel', ''),
             tipo_documento=data.get('tdoc', ''),
             documento=data.get('doc', ''),
-            rol=ROL_MAP.get(data['rol'], 'MESERO'),
+            rol=ROL_MAP.get(data.get('rol', 'MESERO'), 'MESERO'),
             is_active=data.get('e', 'activo') == 'activo',
         )
         if hasattr(nuevo, 'direccion'):

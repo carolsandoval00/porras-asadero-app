@@ -71,45 +71,63 @@
             <div class="form-row-2 mb-3">
                 <div>
                     <label>Nombres <span class="text-danger">*</span></label>
-                    <input type="text" name="first_name" class="form-control" required value="{{ form_data.first_name|default:'' }}">
+                    <input type="text" name="first_name" class="form-control" value="{{ form_data.first_name|default:'' }}">
+                    {% for error in form.first_name.errors %}
+                      <div class="pwd-feedback debil">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div>
                     <label>Apellidos <span class="text-danger">*</span></label>
-                    <input type="text" name="last_name" class="form-control" required value="{{ form_data.last_name|default:'' }}">
+                    <input type="text" name="last_name" class="form-control" value="{{ form_data.last_name|default:'' }}">
+                    {% for error in form.last_name.errors %}
+                      <div class="pwd-feedback debil">{{ error }}</div>
+                    {% endfor %}
                 </div>
             </div>
 
             <div class="mb-3">
                 <label>Correo electrónico <span class="text-danger">*</span></label>
-                <input type="email" name="email" class="form-control" required value="{{ form_data.email|default:'' }}">
+                <input type="email" name="email" class="form-control" value="{{ form_data.email|default:'' }}">
+                {% for error in form.email.errors %}
+                  <div class="pwd-feedback debil">{{ error }}</div>
+                {% endfor %}
             </div>
 
             <div class="mb-3">
                 <label>Nombre de usuario <span class="text-danger">*</span></label>
-                <input type="text" name="username" class="form-control" required value="{{ form_data.username|default:'' }}" autocomplete="username">
+                <input type="text" name="username" class="form-control" value="{{ form_data.username|default:'' }}" autocomplete="username">
+                {% for error in form.username.errors %}
+                  <div class="pwd-feedback debil">{{ error }}</div>
+                {% endfor %}
             </div>
 
             <div class="form-row-2 mb-3">
                 <div>
                     <label>Contraseña <span class="text-danger">*</span></label>
                     <div class="pwd-wrap">
-                        <input type="password" name="password" id="password-registro" class="form-control" required autocomplete="new-password" minlength="6" oninput="checkPasswordStrength('password-registro', 'pwd-feedback-registro', 'pwd-bar-registro')">
+                        <input type="password" name="password" id="password-registro" class="form-control" autocomplete="new-password" minlength="6" oninput="checkPasswordStrength('password-registro', 'pwd-feedback-registro', 'pwd-bar-registro')">
                         <button type="button" class="pwd-toggle" onclick="togglePassword('password-registro', this)">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
                     <div class="pwd-bar-wrap"><div class="pwd-bar" id="pwd-bar-registro"></div></div>
                     <div class="pwd-feedback" id="pwd-feedback-registro"></div>
+                    {% for error in form.password.errors %}
+                      <div class="pwd-feedback debil">{{ error }}</div>
+                    {% endfor %}
                 </div>
                 <div>
                     <label>Confirmar contraseña <span class="text-danger">*</span></label>
                     <div class="pwd-wrap">
-                        <input type="password" name="password2" id="password2-registro" class="form-control" required autocomplete="new-password" oninput="checkPasswordMatch('password-registro', 'password2-registro', 'pwd-match-registro')">
+                        <input type="password" name="password2" id="password2-registro" class="form-control" autocomplete="new-password" oninput="checkPasswordMatch('password-registro', 'password2-registro', 'pwd-match-registro')">
                         <button type="button" class="pwd-toggle" onclick="togglePassword('password2-registro', this)">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
                     <div class="pwd-feedback" id="pwd-match-registro"></div>
+                    {% for error in form.password2.errors %}
+                      <div class="pwd-feedback debil">{{ error }}</div>
+                    {% endfor %}
                 </div>
             </div>
 
@@ -141,52 +159,52 @@
     <div class="auth-card" style="max-width: 1100px;">
         <h1 class="auth-title">Panel de <span>Control</span></h1>
         <p class="auth-sub">Bienvenido, {{ user.first_name }} {{ user.last_name }}. ¿Qué deseas hacer hoy?</p>
-        
+
         <div class="dash-grid">
-            <a href="{% url 'panel_perfil' %}" class="dash-card">
+            <a href="{% url 'panel_perfil' %}" class="dash-card" data-tooltip="Ve y edita tu información personal, foto y datos de tu cuenta.">
                 <i class="bi bi-person-badge"></i>
                 <h3>Mi Perfil</h3>
             </a>
-            
+
             {% if user.rol == 'ADMIN' or user.is_superuser %}
-            <a href="{% url 'lista_personal' %}" class="dash-card">
+            <a href="{% url 'lista_personal' %}" class="dash-card" data-tooltip="Administra empleados: roles, permisos y datos del equipo de trabajo.">
                 <i class="bi bi-people"></i>
                 <h3>Gestionar Personal</h3>
             </a>
-            <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card">
+            <a href="{% url 'lista_personal' %}?seccion=crear" class="dash-card" data-tooltip="Crea una nueva cuenta de usuario y asígnale un rol dentro del sistema.">
                 <i class="bi bi-person-plus-fill"></i>
                 <h3>Nuevo Usuario</h3>
             </a>
-            <a href="{% url 'pedidos:producto_lista' %}" class="dash-card">
+            <a href="{% url 'pedidos:producto_lista' %}" class="dash-card" data-tooltip="Agrega, edita o elimina productos del catálogo, precios e inventario.">
                 <i class="bi bi-egg-fried"></i>
                 <h3>Gestionar Productos</h3>
             </a>
-            <a href="{% url 'pedidos:categoria_lista' %}" class="dash-card">
+            <a href="{% url 'pedidos:categoria_lista' %}" class="dash-card" data-tooltip="Organiza tus productos creando, editando o eliminando categorías.">
                 <i class="bi bi-tags"></i>
                 <h3>Gestionar Categorías</h3>
             </a>
-            <a href="{% url 'pedidos:cliente_lista' %}" class="dash-card">
+            <a href="{% url 'pedidos:cliente_lista' %}" class="dash-card" data-tooltip="Consulta y administra la información de tus clientes registrados.">
                 <i class="bi bi-person-lines-fill"></i>
                 <h3>Gestionar Clientes</h3>
             </a>
             {% endif %}
 
             {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.rol == 'CAJERO' or user.is_superuser %}
-            <a href="{% url 'pedidos:dashboard' %}" class="dash-card">
+            <a href="{% url 'pedidos:dashboard' %}" class="dash-card" data-tooltip="Revisa el historial y estado de todos los pedidos realizados.">
                <i class="bi bi-receipt"></i>
                <h3>Ver Pedidos</h3>
                </a>
             {% endif %}
 
             {% if user.rol == 'ADMIN' or user.rol == 'MESERO' or user.is_superuser %}
-            <a href="{% url 'reserva_inicio' %}" class="dash-card">
+            <a href="{% url 'reserva_inicio' %}" class="dash-card" data-tooltip="Gestiona la disponibilidad de mesas y confirma reservaciones.">
                <i class="bi bi-calendar-check"></i>
                <h3>Reservas y Mesas</h3>
                </a>
             {% endif %}
 
             {% if user.rol == 'ADMIN' or user.rol == 'CAJERO' or user.is_superuser %}
-            <a href="{% url 'pago:dashboard' %}" class="dash-card">
+            <a href="{% url 'pago:dashboard' %}" class="dash-card" data-tooltip="Consulta transacciones, métodos de pago y estados de cuenta.">
                <i class="bi bi-credit-card"></i>
                <h3>Gestión de Pagos</h3>
                </a>
@@ -285,29 +303,29 @@
             <div class="rol-grid mb-3">
                 <div>
                     <input type="radio" name="rol" id="rol_mesero" value="MESERO" class="rol-opt" {% if usuario.rol == 'MESERO' or not usuario.rol %}checked{% endif %}>
-                    <label for="rol_mesero" class="rol-label">Mesero</label>
+                    <label for="rol_mesero" class="rol-label" data-tooltip="Toma pedidos y gestiona mesas">Mesero</label>
                 </div>
                 <div>
                     <input type="radio" name="rol" id="rol_cocina" value="COCINA" class="rol-opt" {% if usuario.rol == 'COCINA' %}checked{% endif %}>
-                    <label for="rol_cocina" class="rol-label">Cocina</label>
+                    <label for="rol_cocina" class="rol-label" data-tooltip="Ve y actualiza el estado de los pedidos">Cocina</label>
                 </div>
                 <div>
                     <input type="radio" name="rol" id="rol_caja" value="CAJA" class="rol-opt" {% if usuario.rol == 'CAJA' %}checked{% endif %}>
-                    <label for="rol_caja" class="rol-label">Cajero</label>
+                    <label for="rol_caja" class="rol-label" data-tooltip="Gestiona los pagos y reportes de caja">Cajero</label>
                 </div>
                 {% if user.is_superuser %}
                 <div>
                     <input type="radio" name="rol" id="rol_admin" value="ADMIN" class="rol-opt" {% if usuario.rol == 'ADMIN' %}checked{% endif %}>
-                    <label for="rol_admin" class="rol-label">Admin</label>
+                    <label for="rol_admin" class="rol-label" data-tooltip="Acceso completo a todo el sistema">Admin</label>
                 </div>
                 {% endif %}
             </div>
 
-            <button type="submit" class="btn-auth">
+            <button type="submit" class="btn-auth" data-tooltip="Guardar los datos de este usuario">
                 <i class="bi bi-check-circle me-2"></i>{% if vista == 'actualizar' %}Guardar Cambios{% else %}Registrar y Entrar{% endif %}
             </button>
             
-            <a href="{% url 'panel_perfil' %}" class="btn-auth-outline">Cancelar</a>
+            <a href="{% url 'panel_perfil' %}" class="btn-auth-outline" data-tooltip="Descartar los cambios y volver">Cancelar</a>
         </form>
     </div>
 </div>
