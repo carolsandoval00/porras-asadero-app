@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from .forms import MesaForm, ReservaForm
 from .models import Reserva, Mesa
 import json
 
@@ -40,15 +41,25 @@ def mesa_guardar(request):
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
     try:
         data = json.loads(request.body)
-        Mesa.objects.update_or_create(
-            numero_mesa=data['numero_mesa'],
-            defaults={
-                'capacidad': data['capacidad'],
-                'ubicacion': data['ubicacion'],
-                'estado':    data['estado'],
-            }
-        )
-        return JsonResponse({'ok': True})
+        form = MesaForm(data)
+        if form.is_valid():
+            numero = form.cleaned_data['numero_mesa']
+            Mesa.objects.update_or_create(
+                numero_mesa=numero,
+                defaults={
+                    'capacidad': form.cleaned_data['capacidad'],
+                    'ubicacion': form.cleaned_data['ubicacion'],
+                    'estado':    form.cleaned_data['estado'],
+                }
+            )
+            return JsonResponse({'ok': True})
+        return JsonResponse({
+            'ok': False,
+            'error': '; '.join(
+                f'{campo}: {", ".join(errors)}'
+                for campo, errors in form.errors.items()
+            )
+        }, status=400)
     except Exception as e:
         return JsonResponse({'ok': False, 'error': str(e)}, status=400)
 
@@ -125,13 +136,18 @@ def actualizar_mesa(request, mesa_id):
         nueva_mesa_id = request.POST.get('mesa_id')
         if nueva_mesa_id and str(nueva_mesa_id) != str(mesa.numero_mesa):
             return redirect('actualizar_mesa', mesa_id=nueva_mesa_id)
-        mesa.capacidad = request.POST.get('capacidad')
-        mesa.ubicacion = request.POST.get('ubicacion')
-        mesa.estado    = request.POST.get('estado')
-        mesa.save()
-        messages.success(request, f'Mesa {mesa.numero_mesa} actualizada correctamente.')
-        return redirect('listar_mesas')
-    return render(request, 'reservas/actualizar_mesa.html', {'mesa': mesa, 'mesas': mesas})
+        form = MesaForm(request.POST, instance=mesa)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Mesa {mesa.numero_mesa} actualizada correctamente.')
+            return redirect('listar_mesas')
+        for field, errores in form.errors.items():
+            for error in errores:
+                messages.error(request, f'{field}: {error}')
+        return render(request, 'reservas/actualizar_mesa.html', {
+            'mesa': mesa, 'mesas': mesas, 'form': form})
+    form = MesaForm(instance=mesa)
+    return render(request, 'reservas/actualizar_mesa.html', {'mesa': mesa, 'mesas': mesas, 'form': form})
 
 
 # ─────────────────────────────────────────────────────────────
