@@ -61,7 +61,8 @@ def registro_view(request):
     if request.method == 'POST':
         form = RegistroForm(request.POST)
         rol = request.POST.get('rol', 'MESERO').strip()
-        ROLES_PERMITIDOS = ['MESERO', 'CAJERO']
+
+        ROLES_PERMITIDOS = ['MESERO', 'CAJERO', 'COCINERA']
         if rol not in ROLES_PERMITIDOS:
             rol = 'MESERO'
 
@@ -189,6 +190,8 @@ def restablecer_password(request, uidb64, token):
 
 @login_required
 def inicio_usuarios(request):
+    if request.user.rol == 'COCINERA' and not request.user.is_superuser:
+        return redirect('pedidos:orden_lista')
     usuarios = Usuario.objects.all()
     context = {
         'vista': 'inicio',

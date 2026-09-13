@@ -135,12 +135,16 @@
                 <label>¿Cuál va a ser tu rol? <span class="text-danger">*</span></label>
                 <div class="rol-grid">
                     <div>
-                        <input type="radio" name="rol" id="rol_reg_mesero" value="MESERO" class="rol-opt" {% if form_data.rol == 'CAJERO' %}{% else %}checked{% endif %}>
+                        <input type="radio" name="rol" id="rol_reg_mesero" value="MESERO" class="rol-opt" {% if form_data.rol == 'CAJERO' or form_data.rol == 'COCINERA' %}{% else %}checked{% endif %}>
                         <label for="rol_reg_mesero" class="rol-label"><i class="bi bi-clipboard-check me-1"></i>Mesero</label>
                     </div>
                     <div>
                         <input type="radio" name="rol" id="rol_reg_cajero" value="CAJERO" class="rol-opt" {% if form_data.rol == 'CAJERO' %}checked{% endif %}>
                         <label for="rol_reg_cajero" class="rol-label"><i class="bi bi-cash-coin me-1"></i>Cajero</label>
+                    </div>
+                    <div>
+                        <input type="radio" name="rol" id="rol_reg_cocinera" value="COCINERA" class="rol-opt" {% if form_data.rol == 'COCINERA' %}checked{% endif %}>
+                        <label for="rol_reg_cocinera" class="rol-label"><i class="bi bi-egg-fried me-1"></i>Cocinera</label>
                     </div>
                 </div>
             </div>
