@@ -9,6 +9,7 @@ class Usuario(AbstractUser):
         ('ADMIN', 'Administrador'),
         ('CAJERO', 'Cajero'),
         ('MESERO', 'Mesero'),
+        ('COCINERA', 'Cocinera'),
     ]
 
     TIPO_DOCUMENTO_CHOICES = [

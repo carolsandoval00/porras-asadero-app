@@ -138,7 +138,18 @@
   {% endif %}
 
   <div class="pm-bottom-actions">
+    {% if request.user.rol == 'COCINERA' and not request.user.is_superuser %}
+      {% if orden.estado == 'PREPARACION' %}
+      <form method="post" action="{% url 'pedidos:pedido_marcar_listo' orden.pk %}" class="pm-inline-form">
+        {% csrf_token %}
+        <button type="submit" class="pm-btn pm-btn-success">✔ Marcar listo</button>
+      </form>
+      {% else %}
+      <span class="pm-badge pm-badge-{{ orden.estado }}">Ya enviado a caja</span>
+      {% endif %}
+    {% else %}
     <a href="{% url 'pedidos:orden_editar' orden.pk %}" class="pm-btn pm-btn-primary">Editar Orden</a>
+    {% endif %}
     <a href="{% url 'pedidos:dashboard' %}?seccion=orden-lista" class="pm-btn pm-btn-light pm-btn-ml">← Volver</a>
   </div>
 
