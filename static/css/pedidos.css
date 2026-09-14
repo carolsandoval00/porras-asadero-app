@@ -58,6 +58,7 @@
 .pm-btn-light   { background:var(--p-surface); color:var(--p-text);
                   border:1px solid var(--p-border); }
 .pm-btn-sm      { font-size:.76rem; padding:.3rem .7rem; }
+.pm-inline-form { display:inline-block; margin:0; }
 
 .pm-card         { background: var(--p-card); border:1px solid var(--p-border); box-shadow: var(--p-shadow);
                    border-radius:var(--p-radius); margin-bottom: 1.5rem; }
@@ -397,3 +398,73 @@
 .pm-hidden        { display:none; }
 .pm-td-plato-total-label { font-weight:700; padding:.75rem 1rem; }
 .pm-td-plato-total-value { font-weight:800; font-size:1.1rem; color:#C0392B; padding:.75rem 1rem; }
+
+/* ============================================
+   Tooltip JS para elementos dentro de .pm-nav
+   (o cualquier contenedor con overflow que recorte
+   un tooltip CSS puro). Se crea con JavaScript y se
+   pega directo al <body>, así no lo afecta el
+   overflow-x:auto de .pm-nav.
+   ============================================ */
+/* Dentro de .pm-nav el tooltip lo controla JavaScript (.js-tooltip-bubble),
+   así que se apaga aquí el tooltip CSS genérico de styles.css para que no
+   se dibujen los dos globos de texto al mismo tiempo. */
+.pm-nav [data-tooltip]::after,
+.pm-nav [data-tooltip]::before {
+    content: none !important;
+}
+
+.js-tooltip-bubble {
+    position: fixed;
+    background: #1A1008;
+    color: #F5ECD7;
+    font-family: 'Lato', sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #E8651A;
+    max-width: 200px;
+    text-align: left;
+    z-index: 99999;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .25);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+.js-tooltip-bubble.show { opacity: 1; }
+
+.js-tooltip-bubble::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 7px;
+    border-style: solid;
+    border-color: #E8651A transparent transparent transparent;
+}
+.js-tooltip-bubble::before {
+    content: "";
+    position: absolute;
+    top: calc(100% - 1px);
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #1A1008 transparent transparent transparent;
+}
+
+/* Cuando el tooltip se muestra ABAJO del botón (por falta de espacio
+   arriba), la flechita debe apuntar hacia arriba, no hacia abajo. */
+.js-tooltip-bubble.abajo::after {
+    top: auto;
+    bottom: 100%;
+    border-color: transparent transparent #E8651A transparent;
+}
+.js-tooltip-bubble.abajo::before {
+    top: auto;
+    bottom: calc(100% - 1px);
+    border-color: transparent transparent #1A1008 transparent;
+}

@@ -34,6 +34,10 @@ def _es_mesero(request):
     """El mesero solo puede ver/crear/editar pedidos y reservas."""
     return request.user.is_authenticated and request.user.rol == 'MESERO' and not request.user.is_superuser
 
+def _es_cocinera(request):
+    """La cocinera solo puede ver los pedidos y marcarlos como listos."""
+    return request.user.is_authenticated and request.user.rol == 'COCINERA' and not request.user.is_superuser
+
 def _solo_admin(request):
     """Solo admin puede ver productos, categorías, clientes y órdenes."""
     return not (request.user.rol == 'ADMIN' or request.user.is_superuser)
@@ -103,6 +107,10 @@ def _pedidos_filtrados(request):
 
 @login_required
 def dashboard(request):
+    # La cocinera no tiene un tablero propio: va directo a Ver Órdenes.
+    if _es_cocinera(request):
+        return redirect('pedidos:orden_lista')
+
     total_pedidos      = Pedido.objects.count()
     pedidos_pendientes = Pedido.objects.filter(estado='PREPARACION').count()
     total_productos    = Producto.objects.count()
@@ -131,6 +139,8 @@ def dashboard(request):
 
 @login_required
 def pedido_lista(request):
+    if _es_cocinera(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q          = request.GET.get('q', '').strip()
     estado_sel = request.GET.get('estado', '').strip()
     pedidos_qs = _pedidos_filtrados(request)
@@ -147,6 +157,25 @@ def pedido_lista(request):
         'estado_sel': estado_sel,
         'seccion_activa': 'pedido-lista',
     })
+
+
+@login_required
+def pedido_marcar_listo(request, pk):
+    """La cocinera (y el admin) marcan un pedido en preparación como listo,
+    quedando disponible para pago en 'Órdenes por pagar'."""
+    # Solo cocinera y admin pueden usar esta acción; cajero y mesero no.
+    if _es_cajero(request) or _es_mesero(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
+    pedido = get_object_or_404(Pedido, pk=pk)
+    if request.method == 'POST':
+        if pedido.estado == 'PREPARACION':
+            pedido.estado = 'SERVIDO'
+            pedido.save(update_fields=['estado'])
+            messages.success(request, f'✅ Pedido {pedido.numero_pedido} marcado como listo.')
+        else:
+            messages.error(request, '❌ Este pedido ya no está en preparación.')
+    return redirect('pedidos:orden_lista')
 
 
 @login_required
@@ -199,7 +228,7 @@ def pedido_exportar_excel(request):
 @login_required
 def pedido_crear(request):
     # Cajero NO puede crear pedidos
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
 
     productos_disponibles = _productos_disponibles()
@@ -238,7 +267,7 @@ def pedido_crear(request):
 @login_required
 def pedido_editar(request, pk):
     # Cajero NO puede editar pedidos
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
 
     pedido                = get_object_or_404(Pedido, pk=pk)
@@ -276,7 +305,7 @@ def pedido_editar(request, pk):
 @login_required
 def pedido_eliminar(request, pk):
     # Cajero NO puede eliminar pedidos
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
@@ -289,7 +318,7 @@ def pedido_eliminar(request, pk):
 
 @login_required
 def orden_lista(request):
-    # Cajero y Mesero NO pueden ver órdenes
+    # Cajero y Mesero NO pueden ver órdenes; la cocinera sí (es su pantalla de trabajo).
     if _es_cajero(request) or _es_mesero(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
 
@@ -323,7 +352,7 @@ def orden_detalle(request, pk):
 
 @login_required
 def orden_editar(request, pk):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
@@ -341,7 +370,7 @@ def orden_editar(request, pk):
 
 @login_required
 def orden_eliminar(request, pk):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
@@ -354,7 +383,7 @@ def orden_eliminar(request, pk):
 
 @login_required
 def producto_lista(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_prod  = request.GET.get('q_prod', '').strip()
     cat_sel = request.GET.get('categoria', '').strip()
@@ -371,7 +400,7 @@ def producto_lista(request):
 
 @login_required
 def producto_crear(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     if request.method == 'POST':
         form = ProductoForm(request.POST)
@@ -389,7 +418,7 @@ def producto_crear(request):
 
 @login_required
 def producto_editar(request, pk):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
@@ -409,7 +438,7 @@ def producto_editar(request, pk):
 
 @login_required
 def producto_eliminar(request, pk):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     producto = get_object_or_404(Producto, pk=pk)
     if request.method == 'POST':
@@ -431,7 +460,7 @@ def _productos_filtrados(request):
 
 @login_required
 def producto_exportar_pdf(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     productos_qs = _productos_filtrados(request)
     response = HttpResponse(content_type='application/pdf')
@@ -464,7 +493,7 @@ def producto_exportar_pdf(request):
 
 @login_required
 def producto_exportar_excel(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     productos_qs = _productos_filtrados(request)
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
@@ -481,7 +510,7 @@ def producto_exportar_excel(request):
 
 @login_required
 def categoria_lista(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cat = request.GET.get('q_cat', '').strip()
     categorias_qs = Categoria.objects.all()
@@ -494,7 +523,7 @@ def categoria_lista(request):
 
 @login_required
 def categoria_crear(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
@@ -512,7 +541,7 @@ def categoria_crear(request):
 
 @login_required
 def categoria_editar(request, pk):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
@@ -532,7 +561,7 @@ def categoria_editar(request, pk):
 
 @login_required
 def categoria_eliminar(request, pk):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
@@ -551,7 +580,7 @@ def _categorias_filtradas(request):
 
 @login_required
 def categoria_exportar_pdf(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     categorias_qs = _categorias_filtradas(request)
     response = HttpResponse(content_type='application/pdf')
@@ -582,7 +611,7 @@ def categoria_exportar_pdf(request):
 
 @login_required
 def categoria_exportar_excel(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     categorias_qs = _categorias_filtradas(request)
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
@@ -598,7 +627,7 @@ def categoria_exportar_excel(request):
 
 @login_required
 def cliente_lista(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cli = request.GET.get('q_cli', '').strip()
     clientes_qs = Cliente.objects.all()
@@ -612,7 +641,7 @@ def cliente_lista(request):
 
 @login_required
 def cliente_crear(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     if request.method == 'POST':
         form = ClienteForm(request.POST)
@@ -630,7 +659,7 @@ def cliente_crear(request):
 
 @login_required
 def cliente_editar(request, pk):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
@@ -650,7 +679,7 @@ def cliente_editar(request, pk):
 
 @login_required
 def cliente_eliminar(request, pk):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
@@ -669,7 +698,7 @@ def _clientes_filtrados(request):
 
 @login_required
 def cliente_exportar_pdf(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     clientes_qs = _clientes_filtrados(request)
     response = HttpResponse(content_type='application/pdf')
@@ -701,7 +730,7 @@ def cliente_exportar_pdf(request):
 
 @login_required
 def cliente_exportar_excel(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     clientes_qs = _clientes_filtrados(request)
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
@@ -731,7 +760,7 @@ def _ordenes_filtradas(request):
 
 @login_required
 def orden_exportar_pdf(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     ordenes_qs = _ordenes_filtradas(request)
     response = HttpResponse(content_type='application/pdf')
@@ -766,7 +795,7 @@ def orden_exportar_pdf(request):
 
 @login_required
 def orden_exportar_excel(request):
-    if _es_cajero(request) or _es_mesero(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     ordenes_qs = _ordenes_filtradas(request)
     response = HttpResponse(content_type='text/csv; charset=utf-8-sig')

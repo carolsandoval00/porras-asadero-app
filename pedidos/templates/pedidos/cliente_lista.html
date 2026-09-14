@@ -27,31 +27,31 @@
   <!-- Navegación Compartida -->
   <div class="pm-nav">
     <div class="pm-nav-group">
-      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light">Inicio</a>
+      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light" data-tooltip="Ir al inicio">Inicio</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Pedidos</span>
-      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
-      <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver todos los pedidos">Consultar</a>
+      <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Hacer un pedido nuevo">Crear</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Órdenes</span>
-      <a href="{% url 'pedidos:orden_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
+      <a href="{% url 'pedidos:orden_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver las órdenes">Consultar</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Productos</span>
-      <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
-      <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+      <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver los productos">Consultar</a>
+      <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar un producto">Crear</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Categorías</span>
-      <a href="{% url 'pedidos:categoria_lista' %}" class="pm-btn pm-btn-light">Consultar</a>
-      <a href="{% url 'pedidos:categoria_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+      <a href="{% url 'pedidos:categoria_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver las categorías">Consultar</a>
+      <a href="{% url 'pedidos:categoria_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar una categoría">Crear</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Clientes</span>
-      <a href="{% url 'pedidos:cliente_lista' %}" class="pm-btn pm-btn-primary">Consultar</a>
-      <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-light">Crear</a>
+      <a href="{% url 'pedidos:cliente_lista' %}" class="pm-btn pm-btn-primary" data-tooltip="Ver los clientes">Consultar</a>
+      <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar un cliente">Crear</a>
     </div>
   </div>
 
@@ -61,18 +61,18 @@
       <h3>Clientes Registrados</h3>
       <div class="pm-card-header-actions">
         <a href="{% url 'pedidos:cliente_exportar_pdf' %}?q_cli={{ q_cli }}"
-           class="pm-btn pm-btn-danger pm-btn-sm">⬇ PDF</a>
+           class="pm-btn pm-btn-danger pm-btn-sm" data-tooltip="Descargar en PDF">⬇ PDF</a>
         <a href="{% url 'pedidos:cliente_exportar_excel' %}?q_cli={{ q_cli }}"
-           class="pm-btn pm-btn-success pm-btn-sm">⬇ Excel</a>
-        <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm">🖨 Imprimir</button>
-        <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm">Nuevo cliente</a>
+           class="pm-btn pm-btn-success pm-btn-sm" data-tooltip="Descargar en Excel">⬇ Excel</a>
+        <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Imprimir esta lista">🖨 Imprimir</button>
+        <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm" data-tooltip="Agregar un cliente">Nuevo cliente</a>
       </div>
     </div>
     <div class="pm-card-body">
       <!-- Buscador -->
       <form method="get" action="" class="pm-search-form">
-        <input class="pm-input" type="text" name="q_cli" value="{{ q_cli }}" placeholder="Buscar cliente por nombre o documento…">
-        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm">Filtrar</button>
+        <input class="pm-input" type="text" name="q_cli" value="{{ q_cli }}" placeholder="Buscar cliente por nombre o documento…" data-tooltip="Escribe para buscar">
+        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Buscar">Filtrar</button>
       </form>
       <div class="pm-table-wrap">
         <table class="pm-table">
@@ -88,8 +88,8 @@
               <td><span class="pm-badge pm-badge-abierta">{{ cli.tipo_documento }} {{ cli.documento }}</span></td>
               <td class="pm-muted">{{ cli.direccion|default:"—" }}</td>
               <td class="pm-td-actions">
-                <a href="{% url 'pedidos:cliente_editar' cli.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
-                <button class="pm-btn pm-btn-danger pm-btn-sm"
+                <a href="{% url 'pedidos:cliente_editar' cli.pk %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Editar este cliente">Editar</a>
+                <button class="pm-btn pm-btn-danger pm-btn-sm" data-tooltip="Borrar este cliente"
                         onclick="confirmDelete('cliente',{{ cli.pk }},'{{ cli.nombre_completo|escapejs }}')">Eliminar</button>
               </td>
             </tr>
@@ -126,6 +126,71 @@ function confirmDelete(tipo, id, nombre) {
   modal.classList.add('open');
 }
 function closeModal() { document.getElementById('modal-delete').classList.remove('open'); }
+</script>
+
+<script>
+/**
+ * Tooltips flotantes para elementos dentro de .pm-nav.
+ * Se usan porque .pm-nav tiene overflow-x:auto, lo que
+ * recortaría un tooltip hecho con CSS puro (::after).
+ * Al crear el tooltip como un elemento aparte pegado al
+ * <body>, con position:fixed, se evita ese recorte y
+ * el tooltip aparece siempre arriba del botón.
+ */
+(function () {
+    let bubble = null;
+
+    function showTooltip(el) {
+        const text = el.getAttribute('data-tooltip');
+        if (!text) return;
+
+        bubble = document.createElement('div');
+        bubble.className = 'js-tooltip-bubble';
+        bubble.textContent = text;
+        document.body.appendChild(bubble);
+
+        const rect = el.getBoundingClientRect();
+        const bubbleRect = bubble.getBoundingClientRect();
+
+        let left = rect.left + rect.width / 2 - bubbleRect.width / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - bubbleRect.width - 8));
+
+        // Si no hay espacio suficiente arriba (por ejemplo, un header oscuro
+        // pegado justo encima), se muestra el tooltip abajo del botón en vez
+        // de arriba, para que no quede encimado ni se vea cortado.
+        const espacioArriba = rect.top - bubbleRect.height - 10;
+        let top;
+        let abajo = false;
+        if (espacioArriba < 8) {
+            top = rect.bottom + 10;
+            abajo = true;
+        } else {
+            top = espacioArriba;
+        }
+
+        bubble.classList.toggle('abajo', abajo);
+        bubble.style.left = left + 'px';
+        bubble.style.top = top + 'px';
+
+        requestAnimationFrame(() => bubble.classList.add('show'));
+    }
+
+    function hideTooltip() {
+        if (bubble) {
+            bubble.remove();
+            bubble = null;
+        }
+    }
+
+    document.querySelectorAll('.pm-nav [data-tooltip]').forEach(function (el) {
+        el.addEventListener('mouseenter', function () { showTooltip(el); });
+        el.addEventListener('mouseleave', hideTooltip);
+        el.addEventListener('focus', function () { showTooltip(el); });
+        el.addEventListener('blur', hideTooltip);
+    });
+
+    window.addEventListener('scroll', hideTooltip, true);
+})();
 </script>
 
 {% endblock %}

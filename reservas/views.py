@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from .forms import MesaForm, ReservaForm
 from .models import Reserva, Mesa
 import json
 
@@ -13,6 +14,9 @@ import json
 def _es_cajero(request):
     return request.user.is_authenticated and request.user.rol == 'CAJERO' and not request.user.is_superuser
 
+def _es_cocinera(request):
+    return request.user.is_authenticated and request.user.rol == 'COCINERA' and not request.user.is_superuser
+
 ACCESO_DENEGADO   = {'vista': 'sin_permisos'}
 TEMPLATE_PERMISOS = 'usuarios/login.html'
 
@@ -22,7 +26,7 @@ TEMPLATE_PERMISOS = 'usuarios/login.html'
 # ─────────────────────────────────────────────────────────────
 @login_required
 def reserva_view(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     return render(request, 'reserva_inicio.html')
 
@@ -33,19 +37,29 @@ def reserva_view(request):
 @require_POST
 @login_required
 def mesa_guardar(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
     try:
         data = json.loads(request.body)
-        Mesa.objects.update_or_create(
-            numero_mesa=data['numero_mesa'],
-            defaults={
-                'capacidad': data['capacidad'],
-                'ubicacion': data['ubicacion'],
-                'estado':    data['estado'],
-            }
-        )
-        return JsonResponse({'ok': True})
+        form = MesaForm(data)
+        if form.is_valid():
+            numero = form.cleaned_data['numero_mesa']
+            Mesa.objects.update_or_create(
+                numero_mesa=numero,
+                defaults={
+                    'capacidad': form.cleaned_data['capacidad'],
+                    'ubicacion': form.cleaned_data['ubicacion'],
+                    'estado':    form.cleaned_data['estado'],
+                }
+            )
+            return JsonResponse({'ok': True})
+        return JsonResponse({
+            'ok': False,
+            'error': '; '.join(
+                f'{campo}: {", ".join(errors)}'
+                for campo, errors in form.errors.items()
+            )
+        }, status=400)
     except Exception as e:
         return JsonResponse({'ok': False, 'error': str(e)}, status=400)
 
@@ -56,7 +70,7 @@ def mesa_guardar(request):
 @require_POST
 @login_required
 def eliminar_mesa_vista(request, mesa_id):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     mesa = get_object_or_404(Mesa, numero_mesa=mesa_id)
     mesa.delete()
@@ -69,7 +83,7 @@ def eliminar_mesa_vista(request, mesa_id):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def eliminar_detalle(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     detalles = Reserva.objects.all()
     if request.method == 'POST':
@@ -89,7 +103,7 @@ def eliminar_detalle(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def editar_reserva(request, pk):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     reserva = get_object_or_404(Reserva, pk=pk)
     mesas   = Mesa.objects.all().order_by('numero_mesa')
@@ -114,7 +128,7 @@ def editar_reserva(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def actualizar_mesa(request, mesa_id):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     mesas = Mesa.objects.all().order_by('numero_mesa')
     mesa  = get_object_or_404(Mesa, numero_mesa=mesa_id)
@@ -122,13 +136,18 @@ def actualizar_mesa(request, mesa_id):
         nueva_mesa_id = request.POST.get('mesa_id')
         if nueva_mesa_id and str(nueva_mesa_id) != str(mesa.numero_mesa):
             return redirect('actualizar_mesa', mesa_id=nueva_mesa_id)
-        mesa.capacidad = request.POST.get('capacidad')
-        mesa.ubicacion = request.POST.get('ubicacion')
-        mesa.estado    = request.POST.get('estado')
-        mesa.save()
-        messages.success(request, f'Mesa {mesa.numero_mesa} actualizada correctamente.')
-        return redirect('listar_mesas')
-    return render(request, 'reservas/actualizar_mesa.html', {'mesa': mesa, 'mesas': mesas})
+        form = MesaForm(request.POST, instance=mesa)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Mesa {mesa.numero_mesa} actualizada correctamente.')
+            return redirect('listar_mesas')
+        for field, errores in form.errors.items():
+            for error in errores:
+                messages.error(request, f'{field}: {error}')
+        return render(request, 'reservas/actualizar_mesa.html', {
+            'mesa': mesa, 'mesas': mesas, 'form': form})
+    form = MesaForm(instance=mesa)
+    return render(request, 'reservas/actualizar_mesa.html', {'mesa': mesa, 'mesas': mesas, 'form': form})
 
 
 # ─────────────────────────────────────────────────────────────
@@ -136,7 +155,7 @@ def actualizar_mesa(request, mesa_id):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def listar_mesas_vista(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     mesas = Mesa.objects.all().order_by('numero_mesa')
     return render(request, 'reservas/listar_mesas.html', {'mesas': mesas})
@@ -147,7 +166,7 @@ def listar_mesas_vista(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def crear_reserva(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     context = {
         'reservas': Reserva.objects.all().order_by('-id'),
@@ -161,7 +180,7 @@ def crear_reserva(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def diagrama_mesas(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     return render(request, 'reservas/diagrama_mesas.html', {
         'mesas': Mesa.objects.all().order_by('numero_mesa'),
@@ -173,7 +192,7 @@ def diagrama_mesas(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def gestion_mesas(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     return render(request, 'reservas/gestion_mesas.html', {
         'mesas': Mesa.objects.all().order_by('numero_mesa'),
