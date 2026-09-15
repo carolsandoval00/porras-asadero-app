@@ -25,6 +25,7 @@
   {% endif %}
 
   <!-- Navegación Compartida -->
+  {% if request.user.rol != 'COCINERA' or request.user.is_superuser %}
   <div class="pm-nav">
     <div class="pm-nav-group">
       <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light" data-tooltip="Ir al inicio">Inicio</a>
@@ -54,6 +55,7 @@
       <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar un cliente">Crear</a>
     </div>
   </div>
+  {% endif %}
 
   <!-- Contenedor del Listado -->
   <div class="pm-card">
@@ -101,8 +103,20 @@
                   <td><strong>${{ o.total|floatformat:0 }}</strong></td>
                   <td>{{ o.fecha_creacion|date:"H:i" }}</td>
                   <td class="pm-td-actions">
-                    <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Editar esta orden">Editar</a>
-                    <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Ver el detalle completo de la orden">Ver detalle</a>
+                    {% if request.user.rol == 'COCINERA' and not request.user.is_superuser %}
+                      {% if o.estado == 'PREPARACION' %}
+                      <form method="post" action="{% url 'pedidos:pedido_marcar_listo' o.pk %}" class="pm-inline-form">
+                        {% csrf_token %}
+                        <button type="submit" class="pm-btn pm-btn-success pm-btn-sm">✔ Marcar listo</button>
+                      </form>
+                      {% else %}
+                      <span class="pm-badge pm-badge-{{ o.estado }}">Ya enviado</span>
+                      {% endif %}
+                      <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">Ver detalle</a>
+                    {% else %}
+                    <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
+                    <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">Ver detalle</a>
+                    {% endif %}
                   </td>
                 </tr>
                 {% endfor %}

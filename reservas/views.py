@@ -14,6 +14,9 @@ import json
 def _es_cajero(request):
     return request.user.is_authenticated and request.user.rol == 'CAJERO' and not request.user.is_superuser
 
+def _es_cocinera(request):
+    return request.user.is_authenticated and request.user.rol == 'COCINERA' and not request.user.is_superuser
+
 ACCESO_DENEGADO   = {'vista': 'sin_permisos'}
 TEMPLATE_PERMISOS = 'usuarios/login.html'
 
@@ -23,7 +26,7 @@ TEMPLATE_PERMISOS = 'usuarios/login.html'
 # ─────────────────────────────────────────────────────────────
 @login_required
 def reserva_view(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     return render(request, 'reserva_inicio.html')
 
@@ -34,7 +37,7 @@ def reserva_view(request):
 @require_POST
 @login_required
 def mesa_guardar(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
     try:
         data = json.loads(request.body)
@@ -67,7 +70,7 @@ def mesa_guardar(request):
 @require_POST
 @login_required
 def eliminar_mesa_vista(request, mesa_id):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     mesa = get_object_or_404(Mesa, numero_mesa=mesa_id)
     mesa.delete()
@@ -80,7 +83,7 @@ def eliminar_mesa_vista(request, mesa_id):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def eliminar_detalle(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     detalles = Reserva.objects.all()
     if request.method == 'POST':
@@ -100,7 +103,7 @@ def eliminar_detalle(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def editar_reserva(request, pk):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     reserva = get_object_or_404(Reserva, pk=pk)
     mesas   = Mesa.objects.all().order_by('numero_mesa')
@@ -125,7 +128,7 @@ def editar_reserva(request, pk):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def actualizar_mesa(request, mesa_id):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     mesas = Mesa.objects.all().order_by('numero_mesa')
     mesa  = get_object_or_404(Mesa, numero_mesa=mesa_id)
@@ -152,7 +155,7 @@ def actualizar_mesa(request, mesa_id):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def listar_mesas_vista(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     mesas = Mesa.objects.all().order_by('numero_mesa')
     return render(request, 'reservas/listar_mesas.html', {'mesas': mesas})
@@ -163,7 +166,7 @@ def listar_mesas_vista(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def crear_reserva(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     context = {
         'reservas': Reserva.objects.all().order_by('-id'),
@@ -177,7 +180,7 @@ def crear_reserva(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def diagrama_mesas(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     return render(request, 'reservas/diagrama_mesas.html', {
         'mesas': Mesa.objects.all().order_by('numero_mesa'),
@@ -189,7 +192,7 @@ def diagrama_mesas(request):
 # ─────────────────────────────────────────────────────────────
 @login_required
 def gestion_mesas(request):
-    if _es_cajero(request):
+    if _es_cajero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     return render(request, 'reservas/gestion_mesas.html', {
         'mesas': Mesa.objects.all().order_by('numero_mesa'),

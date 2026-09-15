@@ -58,6 +58,7 @@
 .pm-btn-light   { background:var(--p-surface); color:var(--p-text);
                   border:1px solid var(--p-border); }
 .pm-btn-sm      { font-size:.76rem; padding:.3rem .7rem; }
+.pm-inline-form { display:inline-block; margin:0; }
 
 .pm-card         { background: var(--p-card); border:1px solid var(--p-border); box-shadow: var(--p-shadow);
                    border-radius:var(--p-radius); margin-bottom: 1.5rem; }

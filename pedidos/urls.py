@@ -13,6 +13,7 @@ urlpatterns = [
     path('pedidos/crear/',               views.pedido_crear,    name='pedido_crear'),
     path('pedidos/<int:pk>/editar/',     views.pedido_editar,   name='pedido_editar'),
     path('pedidos/<int:pk>/eliminar/',   views.pedido_eliminar, name='pedido_eliminar'),
+    path('pedidos/<int:pk>/marcar-listo/', views.pedido_marcar_listo, name='pedido_marcar_listo'),
     path('pedidos/exportar/pdf/',        views.pedido_exportar_pdf,   name='pedido_exportar_pdf'),
     path('pedidos/exportar/excel/',      views.pedido_exportar_excel, name='pedido_exportar_excel'),
 
