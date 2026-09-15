@@ -20,13 +20,14 @@
 
       <form id="modal-form" method="post">
         {% csrf_token %}
-        <button type="submit" class="pg-btn pg-btn-danger">
+        <button type="submit" class="pg-btn pg-btn-danger" data-tooltip="Esta acción no se puede deshacer">
           Sí, eliminar
         </button>
       </form>
 
       <button
         class="pg-btn pg-btn-light"
+        data-tooltip="Cerrar sin eliminar"
         onclick="cerrarModal()">
         Cancelar
       </button>
@@ -72,7 +73,8 @@
 
         <button
           type="submit"
-          class="pg-btn pg-btn-danger">
+          class="pg-btn pg-btn-danger"
+          data-tooltip="Esta acción no se puede deshacer">
           Sí, cerrar caja
         </button>
 
@@ -80,6 +82,7 @@
 
       <button
         class="pg-btn pg-btn-light"
+        data-tooltip="Cerrar sin confirmar"
         onclick="cerrarModalCierre()">
         Cancelar
       </button>
@@ -124,6 +127,7 @@
       <button
         id="btn-guardar-caja"
         class="pg-btn pg-btn-accent"
+        data-tooltip="Guardar los cambios"
         onclick="guardarEditarCaja()">
 
          Guardar cambios
@@ -132,6 +136,7 @@
 
       <button
         class="pg-btn pg-btn-light"
+        data-tooltip="Cerrar sin guardar"
         onclick="cerrarEditarCaja()">
 
         Cancelar

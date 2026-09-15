@@ -356,4 +356,63 @@
 .pg-modal-edit-title { margin-bottom: 1rem; font-size: .88rem; }
 .pg-modal-feedback { display: none; padding: .7rem 1rem; border-radius: 8px; font-size: .85rem; font-weight: 600; margin-bottom: 1rem; border-left: 4px solid transparent; }
 
+/* ============================================
+   Tooltip JS para elementos dentro de .pg-nav
+   (misma técnica usada en pedidos.css). Se crea
+   con JavaScript y se pega directo al <body>, así
+   no lo afecta ningún overflow de .pg-nav.
+   ============================================ */
+.js-tooltip-bubble {
+    position: fixed;
+    background: #1A1008;
+    color: #F5ECD7;
+    font-family: 'Lato', sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #E8651A;
+    max-width: 200px;
+    text-align: left;
+    z-index: 99999;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .25);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+.js-tooltip-bubble.show { opacity: 1; }
 
+.js-tooltip-bubble::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 7px;
+    border-style: solid;
+    border-color: #E8651A transparent transparent transparent;
+}
+.js-tooltip-bubble::before {
+    content: "";
+    position: absolute;
+    top: calc(100% - 1px);
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #1A1008 transparent transparent transparent;
+}
+
+/* Cuando el tooltip se muestra ABAJO del botón (por falta de espacio
+   arriba), la flechita apunta hacia arriba en vez de hacia abajo. */
+.js-tooltip-bubble.abajo::after {
+    top: auto;
+    bottom: 100%;
+    border-color: transparent transparent #E8651A transparent;
+}
+.js-tooltip-bubble.abajo::before {
+    top: auto;
+    bottom: calc(100% - 1px);
+    border-color: transparent transparent #1A1008 transparent;
+}

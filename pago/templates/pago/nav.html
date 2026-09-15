@@ -1,7 +1,7 @@
 <div class="pg-nav">
 
   <div class="pg-nav-group">
-    <button class="pg-btn pg-btn-light" onclick="showTab('pendientes')">
+    <button class="pg-btn pg-btn-light" onclick="showTab('pendientes')" data-tooltip="Ver las órdenes que faltan por pagar">
       Órdenes por pagar
       {% if ordenes_sin_pago %}
         <span class="pg-nav-badge">
@@ -13,13 +13,13 @@
 
   <div class="pg-nav-group">
     <span class="pg-nav-label">Pagos</span>
-    <button class="pg-btn pg-btn-light" onclick="showTab('lista')">Registrados</button>
+    <button class="pg-btn pg-btn-light" onclick="showTab('lista')" data-tooltip="Ver los pagos ya registrados">Registrados</button>
   </div>
 
   <div class="pg-nav-group">
     <span class="pg-nav-label">Caja</span>
-    <button class="pg-btn pg-btn-light" onclick="showTab('consultar-caja')">Consultar</button>
-    <button class="pg-btn pg-btn-accent" onclick="showTab('abrir-caja')">Abrir caja</button>
+    <button class="pg-btn pg-btn-light" onclick="showTab('consultar-caja')" data-tooltip="Consultar el estado de la caja">Consultar</button>
+    <button class="pg-btn pg-btn-accent" onclick="showTab('abrir-caja')" data-tooltip="Abrir una nueva caja">Abrir caja</button>
   </div>
 
 </div>

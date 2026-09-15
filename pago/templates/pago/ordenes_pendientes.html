@@ -47,7 +47,7 @@
               <td><strong class="pg-text-primary-lg">${{ o.total }}</strong></td>
               <td>{{ o.fecha_creacion|date:"d/m/Y h:i A" }}</td>
               <td>
-                <button class="pg-btn pg-btn-pago pg-btn-sm"
+                <button class="pg-btn pg-btn-pago pg-btn-sm" data-tooltip="Registrar el pago de esta orden"
                         onclick="registrarPago('{{ o.numero_orden }}',{{ o.pk }},'Mesa {{ o.mesa.numero_mesa|default:"Sin mesa" }}',{{ o.total }})">
                   Registrar pago
                 </button>
