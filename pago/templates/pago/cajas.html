@@ -3,7 +3,7 @@
   <div class="pg-card">
     <div class="pg-card-header">
       <h3>Cajas registradas</h3>
-      <button class="pg-btn pg-btn-accent pg-btn-sm" onclick="showTab('abrir-caja')">+ Abrir caja</button>
+      <button class="pg-btn pg-btn-accent pg-btn-sm" onclick="showTab('abrir-caja')" data-tooltip="Abrir una nueva caja">+ Abrir caja</button>
     </div>
     <div class="pg-card-body">
       <div class="pg-table-wrap">
@@ -31,15 +31,15 @@
                 {{ caja.observaciones|default:"—" }}
               </td>
               <td class="pg-flex-gap-sm">
-                <a href="{% url 'pago:caja_detalle' caja.pk %}" class="pg-btn pg-btn-light pg-btn-sm">
+                <a href="{% url 'pago:caja_detalle' caja.pk %}" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Ver el detalle completo de esta caja">
                    Ver detalle
                 </a>
-                <button class="pg-btn pg-btn-light pg-btn-sm"
+                <button class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Editar las observaciones de esta caja"
                         onclick="abrirEditarCaja({{ caja.pk }})">
                    Editar
                 </button>
                 {% if caja.estado == 'ABIERTA' %}
-                <button class="pg-btn pg-btn-danger pg-btn-sm"
+                <button class="pg-btn pg-btn-danger pg-btn-sm" data-tooltip="Cerrar esta caja"
                         onclick="confirmarCierreCaja({{ caja.pk }}, '{{ caja.cajero|escapejs }}')">
                    Cerrar
                 </button>
@@ -72,12 +72,12 @@
           {{ caja_seleccionada.get_estado_display }}
         </span>
         {% if caja_seleccionada.estado == 'ABIERTA' %}
-        <button class="pg-btn pg-btn-danger pg-btn-sm"
+        <button class="pg-btn pg-btn-danger pg-btn-sm" data-tooltip="Cerrar esta caja"
                 onclick="confirmarCierreCaja({{ caja_seleccionada.pk }}, '{{ caja_seleccionada.cajero|escapejs }}')">
            Cerrar caja
         </button>
         {% endif %}
-        <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('consultar-caja')">← Volver</button>
+        <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('consultar-caja')" data-tooltip="Volver a la lista de cajas">← Volver</button>
       </div>
     </div>
     <div class="pg-card-body">
@@ -208,7 +208,7 @@
   <div class="pg-card">
     <div class="pg-card-header">
       <h3>Abrir caja</h3>
-      <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('pendientes')">← Volver</button>
+      <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('pendientes')" data-tooltip="Cancelar y volver">← Volver</button>
     </div>
     <div class="pg-card-body">
       <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form">
@@ -225,7 +225,7 @@
           </div>
           <div>
             <label>Fecha y hora de apertura</label>
-            <input type="text" id="fecha-apertura-display" readonly>
+            <input type="text" id="fecha-apertura-display" readonly data-tooltip="Se registra automáticamente al abrir la caja">
           </div>
           <div>
             <label>Estado</label>
@@ -243,8 +243,8 @@
         <div class="pg-alert pg-alert-danger pg-mt-1"> Revisa los campos e intenta de nuevo.</div>
         {% endif %}
         <div class="pg-form-actions">
-          <button type="submit" class="pg-btn pg-btn-accent">Abrir caja</button>
-          <button type="button" class="pg-btn pg-btn-light" onclick="showTab('pendientes')">Cancelar</button>
+          <button type="submit" class="pg-btn pg-btn-accent" data-tooltip="Guardar la apertura de esta caja">Abrir caja</button>
+          <button type="button" class="pg-btn pg-btn-light" onclick="showTab('pendientes')" data-tooltip="Descartar y volver">Cancelar</button>
         </div>
       </form>
     </div>
