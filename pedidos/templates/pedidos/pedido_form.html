@@ -57,7 +57,7 @@
   <!-- Formulario -->
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>{% if pedido %}Editar Pedido #{{ pedido.pk|stringformat:"02d" }}{% else %}Crear Pedido{% endif %}</h3>
+      <h3>{% if pedido %}Editar Pedido #{{ pedido.posicion_secuencial|stringformat:"02d" }}{% else %}Crear Pedido{% endif %}</h3>
       <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de pedidos">← Volver</a>
     </div>
     <div class="pm-card-body">
