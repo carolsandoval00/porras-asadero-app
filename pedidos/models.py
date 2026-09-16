@@ -64,12 +64,22 @@ class Pedido(models.Model):
         verbose_name_plural = 'Pedidos'
 
     @property
+    def posicion_secuencial(self):
+        """
+        Posición consecutiva del pedido (1, 2, 3, ...) contando solo los
+        pedidos que existen actualmente, ordenados por id ascendente.
+        A diferencia de usar `self.id` directamente, esto evita que la
+        numeración muestre huecos cuando se elimina algún pedido.
+        """
+        return Pedido.objects.filter(id__lte=self.id).count()
+
+    @property
     def numero_orden(self):
-        return f"ORD-{self.id:05d}"
+        return f"{self.posicion_secuencial:02d}"
 
     @property
     def numero_pedido(self):
-        return f"PED-{self.id:05d}"
+        return f"{self.posicion_secuencial:02d}"
 
     @property
     def impuesto(self):

@@ -1,17 +1,10 @@
-"""Asistente virtual del panel administrativo (PIA para Porras Asadero).
-
-Adaptado de un widget original hecho para otro proyecto (Skyed, backend en
-PHP). Aquí reescribimos la lógica en Django/Python y el "cerebro" del
-asistente para que hable de Porras Asadero: mesas, reservas y pedidos,
-usando datos reales de la base de datos (solo conteos/resúmenes, nunca
-datos personales de clientes).
-"""
+"""Asistente virtual del panel administrativo (PIA para Porras Asadero)."""
 import json
 import os
-import urllib.request
-import urllib.error
 from datetime import date, datetime
 
+import httpx
+import ollama
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -19,13 +12,17 @@ from django.views.decorators.http import require_POST
 from reservas.models import Mesa, Reserva
 from pedidos.models import Pedido
 
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-3.5-flash-lite')
-GEMINI_URL = (
-    f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent'
-)
+OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '')
+OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'gpt-oss:20b-cloud')
 MAX_TOKENS = 1000
 MAX_HISTORIAL = 10  # solo los últimos N turnos, para no gastar tokens de más
+
+
+def _client_ollama():
+    return ollama.Client(
+        host='https://ollama.com',
+        headers={'Authorization': 'Bearer ' + OLLAMA_API_KEY},
+    )
 
 
 def _construir_contexto_admin():
@@ -135,51 +132,38 @@ personal de clientes):
 """
 
 
-def _llamar_gemini(system_prompt, historial, mensaje_usuario):
-    contents = []
+def _llamar_ollama(system_prompt, historial, mensaje_usuario):
+    messages = [{'role': 'system', 'content': system_prompt}]
+
     for turno in historial[-MAX_HISTORIAL:]:
         role = turno.get('role')
         content = turno.get('content')
         if not role or not content:
             continue
-        contents.append({
-            'role': 'model' if role == 'assistant' else 'user',
-            'parts': [{'text': str(content)}],
+        messages.append({
+            'role': 'assistant' if role == 'assistant' else 'user',
+            'content': str(content),
         })
 
-    contents.append({'role': 'user', 'parts': [{'text': mensaje_usuario}]})
+    messages.append({'role': 'user', 'content': mensaje_usuario})
 
-    payload = {
-        'contents': contents,
-        'systemInstruction': {'parts': [{'text': system_prompt}]},
-        'generationConfig': {'maxOutputTokens': MAX_TOKENS},
-    }
-
-    req = urllib.request.Request(
-        GEMINI_URL,
-        data=json.dumps(payload).encode('utf-8'),
-        headers={
-            'Content-Type': 'application/json',
-            'x-goog-api-key': GEMINI_API_KEY,
-        },
-        method='POST',
+    response = _client_ollama().chat(
+        model=OLLAMA_MODEL,
+        messages=messages,
+        options={'num_predict': MAX_TOKENS},
     )
 
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        data = json.loads(resp.read().decode('utf-8'))
-
-    partes = data.get('candidates', [{}])[0].get('content', {}).get('parts', [])
-    texto = ''.join(p.get('text', '') for p in partes)
+    texto = response.message.content
     return texto or 'No obtuve una respuesta clara, ¿puedes reformular tu pregunta?'
 
 
 @login_required
 @require_POST
 def chat_ia(request):
-    """Endpoint del panel admin: recibe un mensaje y responde con Gemini."""
-    if not GEMINI_API_KEY:
+    """Endpoint del panel admin: recibe un mensaje y responde con Ollama Cloud."""
+    if not OLLAMA_API_KEY:
         return JsonResponse(
-            {'error': 'Falta configurar GEMINI_API_KEY en el archivo .env del servidor.'},
+            {'error': 'Falta configurar OLLAMA_API_KEY en el archivo .env del servidor.'},
             status=500,
         )
 
@@ -201,16 +185,19 @@ def chat_ia(request):
     system_prompt = _construir_system_prompt(nombre_usuario)
 
     try:
-        respuesta = _llamar_gemini(system_prompt, historial, mensaje)
-    except urllib.error.HTTPError as e:
-        detalle = e.read().decode('utf-8', errors='replace')
+        respuesta = _llamar_ollama(system_prompt, historial, mensaje)
+    except ollama.ResponseError as e:
+        detalle = getattr(e, 'error', str(e))
         return JsonResponse(
             {'error': 'La IA no respondió correctamente.', 'detail': detalle}, status=502
         )
-    except urllib.error.URLError as e:
+    except httpx.ConnectError as e:
         return JsonResponse(
-            {'error': 'No se pudo conectar con el asistente.', 'detail': str(e.reason)},
-            status=502,
+            {'error': 'No se pudo conectar con Ollama Cloud.', 'detail': str(e)}, status=502
+        )
+    except httpx.TimeoutException:
+        return JsonResponse(
+            {'error': 'El asistente tardó demasiado en responder.'}, status=504
         )
 
     return JsonResponse({'reply': respuesta})

@@ -121,7 +121,7 @@ def dashboard(request):
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
         .order_by('-fecha_creacion')[:5]
-    )[::-1]
+    )
 
     return render(request, 'pedidos/dashboard.html', {
         'titulo': 'Pedidos',
@@ -323,7 +323,7 @@ def orden_lista(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
 
     q_orden = request.GET.get('q_orden', '').strip()
-    ordenes_qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa').order_by('fecha_creacion'))
+    ordenes_qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa').order_by('-fecha_creacion'))
     if q_orden:
         clean_q = q_orden.replace('ORD-', '').lstrip('0')
         if clean_q.isdigit():
@@ -748,7 +748,7 @@ def cliente_exportar_excel(request):
 def _ordenes_filtradas(request):
     q_orden = request.GET.get('q_orden', '').strip()
     qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa')
-        .prefetch_related('items__producto').order_by('fecha_creacion'))
+        .prefetch_related('items__producto').order_by('-fecha_creacion'))
     if q_orden:
         clean_q = q_orden.replace('ORD-', '').lstrip('0')
         if clean_q.isdigit():
