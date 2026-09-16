@@ -33,7 +33,7 @@ def login_view(request):
     vista = request.GET.get('vista', 'login')
     if request.user.is_authenticated and vista == 'login':
         return redirect('inicio_usuarios')
-        
+         
     if request.method == 'POST':
         usuario_input = request.POST.get('username')
         password_input = request.POST.get('password')
