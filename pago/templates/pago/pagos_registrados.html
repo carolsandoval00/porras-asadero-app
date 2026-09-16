@@ -4,13 +4,13 @@
     <div class="pg-card-header">
   <h3>Pagos registrados</h3>
   <div class="pg-reportes">
-    <a href="{% url 'pago:pagos_pdf' %}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank">
+    <a href="{% url 'pago:pagos_pdf' %}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank" data-tooltip="Descargar en PDF">
       <i class="bi bi-file-earmark-arrow-down"></i> PDF
     </a>
-    <a href="{% url 'pago:pagos_excel' %}" class="pg-btn pg-btn-excel pg-btn-sm">
+    <a href="{% url 'pago:pagos_excel' %}" class="pg-btn pg-btn-excel pg-btn-sm" data-tooltip="Descargar en Excel">
       <i class="bi bi-file-earmark-arrow-down"></i> Excel
     </a>
-    <a href="{% url 'pago:pagos_imprimir' %}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank">
+    <a href="{% url 'pago:pagos_imprimir' %}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank" data-tooltip="Imprimir esta lista">
       <i class="bi bi-printer"></i> Imprimir
     </a>
   </div>
@@ -20,14 +20,14 @@
       <div class="pg-search-bar">
         <input type="text" id="buscador-pagos"
                placeholder="Buscar por orden, cliente o referencia…"
-               oninput="filtrarPagos()">
-        <select id="filtro-metodo">
+               oninput="filtrarPagos()" data-tooltip="Escribe para buscar">
+        <select id="filtro-metodo" data-tooltip="Filtra por método de pago">
           <option value="">Todos los métodos</option>
           <option value="EFECTIVO">Efectivo</option>
           <option value="TARJETA">Tarjeta</option>
           <option value="TRANSFERENCIA">Transferencia</option>
         </select>
-        <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()">Filtrar</button>
+        <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()" data-tooltip="Buscar">Filtrar</button>
       </div>
 
       {% if pagos_por_fecha %}
@@ -90,7 +90,7 @@
   <div class="pg-card">
     <div class="pg-card-header">
       <h3 id="form-titulo">Registrar Pago</h3>
-      <button class="pg-btn pg-btn-light pg-btn-sm" onclick="cancelarPago()">← Volver</button>
+      <button class="pg-btn pg-btn-light pg-btn-sm" onclick="cancelarPago()" data-tooltip="Volver a la lista de pagos">← Volver</button>
     </div>
     <div class="pg-card-body">
 
@@ -117,8 +117,8 @@
         <div class="pg-alert pg-alert-danger pg-mt-1"> Revisa los campos e intenta de nuevo.</div>
         {% endif %}
         <div class="pg-form-actions">
-          <button type="submit" class="pg-btn pg-btn-accent">Registrar Pago</button>
-          <button type="button" class="pg-btn pg-btn-light" onclick="cancelarPago()">Cancelar</button>
+          <button type="submit" class="pg-btn pg-btn-accent" data-tooltip="Guardar este pago">Registrar Pago</button>
+          <button type="button" class="pg-btn pg-btn-light" onclick="cancelarPago()" data-tooltip="Descartar y volver">Cancelar</button>
         </div>
       </form>
 
