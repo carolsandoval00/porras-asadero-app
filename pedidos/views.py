@@ -346,6 +346,13 @@ def orden_lista(request):
     q_orden = request.GET.get('q_orden', '').strip()
     fecha_desde, fecha_hasta = _fechas_filtro_clampeadas(request)
     ordenes_qs = _ordenes_filtradas(request)
+    ordenes_qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa').order_by('-fecha_creacion'))
+    if q_orden:
+        clean_q = q_orden.replace('ORD-', '').lstrip('0')
+        if clean_q.isdigit():
+            ordenes_qs = ordenes_qs.filter(Q(id=int(clean_q)) | Q(cliente__nombre_completo__icontains=q_orden))
+        else:
+            ordenes_qs = ordenes_qs.filter(cliente__nombre_completo__icontains=q_orden)
     ordenes_lista_data = list(ordenes_qs)
     ordenes_por_fecha  = []
     for fecha, grupo in groupby(ordenes_lista_data, key=lambda o: o.fecha_creacion.date()):
