@@ -33,10 +33,18 @@ def login_view(request):
     vista = request.GET.get('vista', 'login')
     if request.user.is_authenticated and vista == 'login':
         return redirect('inicio_usuarios')
+         
     if request.method == 'POST':
         usuario_input = request.POST.get('username')
         password_input = request.POST.get('password')
+
+        if '@' in usuario_input:
+            usuario_obj = Usuario.objects.filter(email__iexact=usuario_input).first()
+            if usuario_obj:
+                usuario_input = usuario_obj.username
+  
         user = authenticate(request, username=usuario_input, password=password_input)
+        
         if user is not None:
             login(request, user)
             next_url = request.POST.get('next') or request.GET.get('next')
@@ -46,6 +54,7 @@ def login_view(request):
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
             return render(request, TEMPLATE_LOGIN, {'vista': 'login'})
+            
     context = {'vista': vista}
     return render(request, TEMPLATE_LOGIN, context)
 
