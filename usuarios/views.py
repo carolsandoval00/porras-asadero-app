@@ -33,7 +33,7 @@ def login_view(request):
     vista = request.GET.get('vista', 'login')
     if request.user.is_authenticated and vista == 'login':
         return redirect('inicio_usuarios')
-        
+         
     if request.method == 'POST':
         usuario_input = request.POST.get('username')
         password_input = request.POST.get('password')
@@ -42,7 +42,7 @@ def login_view(request):
             usuario_obj = Usuario.objects.filter(email__iexact=usuario_input).first()
             if usuario_obj:
                 usuario_input = usuario_obj.username
- 
+  
         user = authenticate(request, username=usuario_input, password=password_input)
         
         if user is not None:
