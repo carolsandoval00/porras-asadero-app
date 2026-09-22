@@ -8,21 +8,21 @@
       <div class="mc-form-row">
         <div class="mc-form-group">
           <label class="mc-label">Nombre completo *</label>
-          <input type="text" class="mc-input" id="mc-c-nombre" placeholder="Ej: María García">
+          <input type="text" class="mc-input" id="mc-c-nombre" placeholder="Ej: María García" data-tooltip="Nombre del cliente que reserva">
         </div>
         <div class="mc-form-group">
           <label class="mc-label">Teléfono * (10 dígitos)</label>
-          <input type="tel" class="mc-input" id="mc-c-telefono" placeholder="3001234567" maxlength="10" pattern="[0-9]*" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+          <input type="tel" class="mc-input" id="mc-c-telefono" placeholder="3001234567" maxlength="10" pattern="[0-9]*" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')" data-tooltip="Teléfono de contacto, 10 dígitos">
         </div>
       </div>
       <div class="mc-form-row">
         <div class="mc-form-group">
           <label class="mc-label">Correo electrónico</label>
-          <input type="email" class="mc-input" id="mc-c-email" placeholder="correo@ejemplo.com">
+          <input type="email" class="mc-input" id="mc-c-email" placeholder="correo@ejemplo.com" data-tooltip="Correo del cliente (opcional)">
         </div>
         <div class="mc-form-group">
           <label class="mc-label">N.° de personas *</label>
-          <input type="number" class="mc-input" id="mc-c-personas" min="1" max="30" placeholder="2">
+          <input type="number" class="mc-input" id="mc-c-personas" min="1" max="30" placeholder="2" data-tooltip="Cuántas personas asistirán">
         </div>
       </div>
     </div>
@@ -31,21 +31,21 @@
       <div class="mc-form-row three">
         <div class="mc-form-group">
           <label class="mc-label">Fecha *</label>
-          <input type="date" class="mc-input" id="mc-c-fecha" onchange="mcPoblarMesas()">
+          <input type="date" class="mc-input" id="mc-c-fecha" onchange="mcPoblarMesas()" data-tooltip="Fecha de la reserva">
         </div>
         <div class="mc-form-group">
           <label class="mc-label">Hora *</label>
-          <input type="time" class="mc-input" id="mc-c-hora" step="1800" onchange="mcPoblarMesas()">
+          <input type="time" class="mc-input" id="mc-c-hora" step="1800" onchange="mcPoblarMesas()" data-tooltip="Hora de la reserva">
         </div>
         <div class="mc-form-group">
           <label class="mc-label">Mesa *</label>
-          <select class="mc-select" id="mc-c-mesa"><option value="">— Seleccionar mesa —</option></select>
+          <select class="mc-select" id="mc-c-mesa" data-tooltip="Elige una mesa disponible"><option value="">— Seleccionar mesa —</option></select>
         </div>
       </div>
       <div class="mc-form-row">
         <div class="mc-form-group">
           <label class="mc-label">Ocasión especial</label>
-          <select class="mc-select" id="mc-c-ocasion">
+          <select class="mc-select" id="mc-c-ocasion" data-tooltip="Motivo de la reserva, si aplica">
             <option value="">Sin ocasión especial</option>
             <option>Cumpleaños</option><option>Aniversario</option>
             <option>Reunión de negocios</option><option>Cena romántica</option>
@@ -54,7 +54,7 @@
         </div>
         <div class="mc-form-group">
           <label class="mc-label">Estado</label>
-          <select class="mc-select" id="mc-c-estado">
+          <select class="mc-select" id="mc-c-estado" data-tooltip="Estado actual de la reserva">
             <option value="confirmada">Confirmada</option>
             <option value="pendiente">Pendiente</option>
             <option value="cancelada">Cancelada</option>
@@ -63,12 +63,12 @@
       </div>
       <div class="mc-form-group full">
         <label class="mc-label">Notas adicionales</label>
-        <textarea class="mc-textarea" id="mc-c-notas" placeholder="Alergias, preferencias, solicitudes especiales..."></textarea>
+        <textarea class="mc-textarea" id="mc-c-notas" placeholder="Alergias, preferencias, solicitudes especiales..." data-tooltip="Detalles extra sobre la reserva"></textarea>
       </div>
       <div class="mc-btn-row">
-        <button class="mc-btn mc-btn-secondary" onclick="mcLimpiar();mcShow('reservas')">← Volver</button>
-        <button class="mc-btn mc-btn-secondary" onclick="mcLimpiar()">Limpiar</button>
-        <button class="mc-btn mc-btn-primary" onclick="mcGuardarReserva()" id="mc-btn-guardar">Guardar reserva</button>
+        <button class="mc-btn mc-btn-secondary" onclick="mcLimpiar();mcShow('reservas')" data-tooltip="Volver sin guardar">← Volver</button>
+        <button class="mc-btn mc-btn-secondary" onclick="mcLimpiar()" data-tooltip="Borrar lo escrito en el formulario">Limpiar</button>
+        <button class="mc-btn mc-btn-primary" onclick="mcGuardarReserva()" id="mc-btn-guardar" data-tooltip="Guardar esta reserva">Guardar reserva</button>
       </div>
     </div>
   </div>

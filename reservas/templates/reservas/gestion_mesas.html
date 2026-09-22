@@ -37,7 +37,7 @@
         </div>
 
         <div class="mc-btn-row mc-justify-stretch">
-          <button class="mc-btn mc-btn-primary mc-flex-1" onclick="mcCrearMesa()">
+          <button class="mc-btn mc-btn-primary mc-flex-1" onclick="mcCrearMesa()" data-tooltip="Guardar esta mesa nueva">
             Agregar mesa
           </button>
         </div>
@@ -58,12 +58,14 @@
           id="mc-buscar-mesa"
           placeholder="Buscar por número..."
           oninput="mcRenderTablaMesas()"
+          data-tooltip="Escribe para buscar"
         >
 
         <select
           class="mc-select"
           id="mc-filtro-ubicacion"
           onchange="mcRenderTablaMesas()"
+          data-tooltip="Filtra por ubicación"
         >
           <option value="">Todas las ubicaciones</option>
           <option>Salón principal</option>
@@ -74,6 +76,7 @@
           class="mc-select"
           id="mc-filtro-capacidad"
           onchange="mcRenderTablaMesas()"
+          data-tooltip="Filtra por capacidad"
         >
           <option value="">Todas las capacidades</option>
           <option value="2">2 personas</option>
@@ -83,9 +86,9 @@
         </select>
 
         <div class="mc-report-bar">
-          <button class="mc-btn-report mc-btn-report-pdf" onclick="mcExportarMesasPDF()" title="Descargar PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
-          <button class="mc-btn-report mc-btn-report-excel" onclick="mcExportarMesasExcel()" title="Descargar Excel"><i class="bi bi-file-earmark-excel"></i> Excel</button>
-          <button class="mc-btn-report" onclick="mcImprimirMesas()" title="Imprimir"><i class="bi bi-printer"></i> Imprimir</button>
+          <button class="mc-btn-report mc-btn-report-pdf" onclick="mcExportarMesasPDF()" data-tooltip="Descargar en PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+          <button class="mc-btn-report mc-btn-report-excel" onclick="mcExportarMesasExcel()" data-tooltip="Descargar en Excel"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+          <button class="mc-btn-report" onclick="mcImprimirMesas()" data-tooltip="Imprimir esta lista"><i class="bi bi-printer"></i> Imprimir</button>
         </div>
       </div>
 
