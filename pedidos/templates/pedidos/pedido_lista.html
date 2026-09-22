@@ -75,12 +75,7 @@
       <form method="get" action="" class="pm-search-form pm-mb-lg">
         <input class="pm-input"
                type="text" name="q" value="{{ q }}" placeholder="Buscar por cliente o descripción…" data-tooltip="Escribe para buscar">
-        <select name="estado" class="pm-select-filter" data-tooltip="Filtra los pedidos por su estado">
-          <option value="">Todos los estados</option>
-          {% for valor, etiqueta in estados %}
-          <option value="{{ valor }}" {% if estado_sel == valor %}selected{% endif %}>{{ etiqueta }}</option>
-          {% endfor %}
-        </select>
+  
         <input class="pm-input" type="date" name="fecha_desde" value="{{ fecha_desde }}" max="{% now 'Y-m-d' %}" data-tooltip="Desde esta fecha">
         <input class="pm-input" type="date" name="fecha_hasta" value="{{ fecha_hasta }}" max="{% now 'Y-m-d' %}" data-tooltip="Hasta esta fecha">
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Buscar">Filtrar</button>

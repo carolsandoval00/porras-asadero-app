@@ -424,7 +424,6 @@
     line-height: 1.35;
     padding: 8px 12px;
     border-radius: 8px;
-    border: 1px solid #E8651A;
     max-width: 200px;
     text-align: left;
     z-index: 99999;
@@ -443,16 +442,6 @@
     transform: translateX(-50%);
     border-width: 7px;
     border-style: solid;
-    border-color: #E8651A transparent transparent transparent;
-}
-.js-tooltip-bubble::before {
-    content: "";
-    position: absolute;
-    top: calc(100% - 1px);
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 6px;
-    border-style: solid;
     border-color: #1A1008 transparent transparent transparent;
 }
 
@@ -461,10 +450,5 @@
 .js-tooltip-bubble.abajo::after {
     top: auto;
     bottom: 100%;
-    border-color: transparent transparent #E8651A transparent;
-}
-.js-tooltip-bubble.abajo::before {
-    top: auto;
-    bottom: calc(100% - 1px);
     border-color: transparent transparent #1A1008 transparent;
 }

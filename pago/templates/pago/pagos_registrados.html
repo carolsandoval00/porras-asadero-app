@@ -4,29 +4,33 @@
     <div class="pg-card-header">
   <h3>Pagos registrados</h3>
   <div class="pg-reportes">
-    <a href="{% url 'pago:pagos_pdf' %}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank" data-tooltip="Descargar en PDF">
+    <a href="{% url 'pago:pagos_pdf' %}{% if filtro_pagos_qs %}?{{ filtro_pagos_qs }}{% endif %}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank" data-tooltip="Descargar en PDF">
       <i class="bi bi-file-earmark-arrow-down"></i> PDF
     </a>
-    <a href="{% url 'pago:pagos_excel' %}" class="pg-btn pg-btn-excel pg-btn-sm" data-tooltip="Descargar en Excel">
+    <a href="{% url 'pago:pagos_excel' %}{% if filtro_pagos_qs %}?{{ filtro_pagos_qs }}{% endif %}" class="pg-btn pg-btn-excel pg-btn-sm" data-tooltip="Descargar en Excel">
       <i class="bi bi-file-earmark-arrow-down"></i> Excel
     </a>
-    <a href="{% url 'pago:pagos_imprimir' %}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank" data-tooltip="Imprimir esta lista">
+    <a href="{% url 'pago:pagos_imprimir' %}{% if filtro_pagos_qs %}?{{ filtro_pagos_qs }}{% endif %}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank" data-tooltip="Imprimir esta lista">
       <i class="bi bi-printer"></i> Imprimir
     </a>
   </div>
 </div>
     <div class="pg-card-body">
 
+      <form method="get" action="{% url 'pago:dashboard' %}" class="pg-search-bar">
+        <input type="hidden" name="tab" value="lista">
+        <input type="date" name="p_desde" value="{{ p_desde }}" max="{{ hoy }}"
+               data-tooltip="Fecha inicial (no se pueden elegir fechas futuras)">
+        <input type="date" name="p_hasta" value="{{ p_hasta }}" max="{{ hoy }}"
+               data-tooltip="Fecha final (no se pueden elegir fechas futuras)">
+        <button type="submit" class="pg-btn pg-btn-accent pg-btn-sm" data-tooltip="Aplicar el filtro de fechas">Filtrar</button>
+        <a href="{% url 'pago:dashboard' %}?tab=lista" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Quitar el filtro de fechas">Limpiar</a>
+      </form>
+
       <div class="pg-search-bar">
         <input type="text" id="buscador-pagos"
                placeholder="Buscar por orden, cliente o referencia…"
                oninput="filtrarPagos()" data-tooltip="Escribe para buscar">
-        <select id="filtro-metodo" data-tooltip="Filtra por método de pago">
-          <option value="">Todos los métodos</option>
-          <option value="EFECTIVO">Efectivo</option>
-          <option value="TARJETA">Tarjeta</option>
-          <option value="TRANSFERENCIA">Transferencia</option>
-        </select>
         <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()" data-tooltip="Buscar">Filtrar</button>
       </div>
 
@@ -77,7 +81,7 @@
           No se encontraron pagos con ese criterio.
         </p>
       {% else %}
-        <p class="pg-no-pagos">No hay pagos registrados aún.</p>
+        <p class="pg-no-pagos">No hay pagos registrados en ese rango.</p>
       {% endif %}
 
     </div>

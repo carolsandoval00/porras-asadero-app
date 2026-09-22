@@ -142,16 +142,18 @@
       {% if orden.estado == 'PREPARACION' %}
       <form method="post" action="{% url 'pedidos:pedido_marcar_listo' orden.pk %}" class="pm-inline-form">
         {% csrf_token %}
-        <button type="submit" class="pm-btn pm-btn-success">✔ Marcar listo</button>
+        <button type="submit" class="pm-btn pm-btn-success" data-tooltip="Marcar esta orden como lista">✔ Marcar listo</button>
       </form>
       {% else %}
       <span class="pm-badge pm-badge-{{ orden.estado }}">Ya enviado a caja</span>
       {% endif %}
     {% else %}
-    <a href="{% url 'pedidos:orden_editar' orden.pk %}" class="pm-btn pm-btn-primary">Editar Orden</a>
+    <a href="{% url 'pedidos:orden_editar' orden.pk %}" class="pm-btn pm-btn-primary" data-tooltip="Editar esta orden">Editar Orden</a>
     {% endif %}
-    <a href="{% url 'pedidos:dashboard' %}?seccion=orden-lista" class="pm-btn pm-btn-light pm-btn-ml">← Volver</a>
+    <a href="{% url 'pedidos:dashboard' %}?seccion=orden-lista" class="pm-btn pm-btn-light pm-btn-ml" data-tooltip="Regresar al listado">← Volver</a>
   </div>
 
 </div>
+
+
 {% endblock %}

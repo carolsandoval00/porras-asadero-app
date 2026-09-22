@@ -15,12 +15,12 @@
     </div>
   </div>
   <div class="mc-nav-row">
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Reservas</a>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva reserva</a>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Diagrama de mesas</a>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva mesa</a>
-    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn active">Editar mesa</a>
-    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn">Eliminar reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver todas las reservas">Reservas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Hacer una reserva nueva">+ Nueva reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver el mapa de mesas del restaurante">Diagrama de mesas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Agregar una mesa nueva">+ Nueva mesa</a>
+    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn active" data-tooltip="Ver y editar las mesas existentes">Editar mesa</a>
+    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn" data-tooltip="Borrar una reserva">Eliminar reserva</a>
   </div>
 </div>
 
@@ -56,10 +56,10 @@
             </td>
             <td>
               <div class="mc-action-btns">
-                <a href="{% url 'actualizar_mesa' mesa.numero_mesa %}" class="mc-icon-btn edit">
+                <a href="{% url 'actualizar_mesa' mesa.numero_mesa %}" class="mc-icon-btn edit" data-tooltip="Editar esta mesa">
                   <i class="bi bi-pencil-fill"></i> Editar
                 </a>
-                <button type="button" class="mc-icon-btn del"
+                <button type="button" class="mc-icon-btn del" data-tooltip="Borrar esta mesa"
                         onclick="abrirConfirm({{ mesa.numero_mesa }})">
                   <i class="bi bi-trash-fill"></i> Eliminar
                 </button>
@@ -101,10 +101,10 @@
     <h3>Eliminar mesa</h3>
     <p id="confirm-msg">¿Eliminar la Mesa? También se perderán sus reservas asociadas.</p>
     <div class="mc-confirm-btns">
-      <button class="mc-btn mc-btn-secondary" onclick="cerrarConfirm()">Cancelar</button>
+      <button class="mc-btn mc-btn-secondary" onclick="cerrarConfirm()" data-tooltip="Cerrar sin eliminar">Cancelar</button>
       <form method="post" id="confirm-form" class="mc-inline">
         {% csrf_token %}
-        <button type="submit" class="mc-btn mc-btn-danger">Eliminar</button>
+        <button type="submit" class="mc-btn mc-btn-danger" data-tooltip="Esta acción no se puede deshacer">Eliminar</button>
       </form>
     </div>
   </div>

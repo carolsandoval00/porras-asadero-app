@@ -13,12 +13,12 @@
     </div>
   </div>
   <div class="mc-nav-row">
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Reservas</a>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva reserva</a>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Diagrama de mesas</a>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva mesa</a>
-    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn">Editar mesa</a>
-    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn active">Eliminar reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver el panel de reservas">Reservas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Crear una reserva nueva">+ Nueva reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver el mapa de mesas">Diagrama de mesas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Agregar una mesa nueva">+ Nueva mesa</a>
+    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn" data-tooltip="Editar una mesa existente">Editar mesa</a>
+    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn active" data-tooltip="Borrar una reserva">Eliminar reserva</a>
   </div>
 </div>
 
@@ -60,7 +60,7 @@
     <div class="mc-card-title">Seleccionar reserva a eliminar</div>
 
     <label class="mc-label">Reserva *</label>
-    <select class="mc-select" id="ed-select">
+    <select class="mc-select" id="ed-select" data-tooltip="Elige la reserva que quieres borrar">
       <option value="">— Seleccionar —</option>
     </select>
 
@@ -69,14 +69,14 @@
       <p class="mc-confirm-warn">⚠️ ¿Estás segura de que deseas eliminar esta reserva?</p>
       <p id="ed-confirm-texto" class="mc-confirm-detail"></p>
       <div class="mc-btn-row">
-        <button class="mc-btn mc-btn-secondary" onclick="edCancelar()">Cancelar</button>
-        <button class="mc-btn mc-btn-danger" onclick="edConfirmarEliminar()">Sí, eliminar</button>
+        <button class="mc-btn mc-btn-secondary" onclick="edCancelar()" data-tooltip="No borrar, volver atrás">Cancelar</button>
+        <button class="mc-btn mc-btn-danger" onclick="edConfirmarEliminar()" data-tooltip="Confirmar y borrar la reserva">Sí, eliminar</button>
       </div>
     </div>
 
     <div class="mc-btn-row" id="ed-btn-row">
-      <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
-      <button class="mc-btn mc-btn-primary" onclick="edPedirConfirmacion()">Eliminar reserva</button>
+      <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary" data-tooltip="Volver al panel de reservas">← Volver</a>
+      <button class="mc-btn mc-btn-primary" onclick="edPedirConfirmacion()" data-tooltip="Borrar la reserva seleccionada">Eliminar reserva</button>
     </div>
   </div>
 

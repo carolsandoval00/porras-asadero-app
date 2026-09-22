@@ -31,7 +31,7 @@
       <div class="mc-form-group">
         <label class="mc-label">Mesa actual</label>
        
-<select class="mc-select" name="mesa_id" onchange="this.form.submit()">
+<select class="mc-select" name="mesa_id" onchange="this.form.submit()" data-tooltip="Cambia de mesa a editar">
   {% for m in mesas %}
     <option value="{{ m.numero_mesa }}" {% if m.numero_mesa == mesa.numero_mesa %}selected{% endif %}>
       Mesa {{ m.numero_mesa }}
@@ -41,26 +41,26 @@
       </div>
       <div class="mc-form-group">
         <label class="mc-label">Capacidad (personas) *</label>
-        <input type="number" class="mc-input" name="capacidad" value="{{ mesa.capacidad }}" min="1" max="30" required>
+        <input type="number" class="mc-input" name="capacidad" value="{{ mesa.capacidad }}" min="1" max="30" required data-tooltip="Cuántas personas caben en la mesa">
       </div>
       <div class="mc-form-group">
         <label class="mc-label">Ubicación</label>
-        <select class="mc-select" name="ubicacion">
+        <select class="mc-select" name="ubicacion" data-tooltip="Zona del restaurante donde está la mesa">
           <option value="Salón principal"   {% if mesa.ubicacion == "Salón principal"   %}selected{% endif %}>Salón principal</option>
           <option value="Salón secundario"  {% if mesa.ubicacion == "Salón secundario"  %}selected{% endif %}>Salón secundario</option>
         </select>
       </div>
       <div class="mc-form-group">
         <label class="mc-label">Estado</label>
-        <select class="mc-select" name="estado">
+        <select class="mc-select" name="estado" data-tooltip="Estado actual de la mesa">
           <option value="disponible" {% if mesa.estado == "disponible" %}selected{% endif %}>Disponible</option>
           <option value="reservada"  {% if mesa.estado == "reservada"  %}selected{% endif %}>Reservada</option>
           <option value="ocupada"    {% if mesa.estado == "ocupada"    %}selected{% endif %}>Ocupada</option>
         </select>
       </div>
       <div class="mc-btn-row">
-        <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
-        <button type="submit" class="mc-btn mc-btn-primary">Guardar cambios</button>
+        <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary" data-tooltip="Volver sin guardar">← Volver</a>
+        <button type="submit" class="mc-btn mc-btn-primary" data-tooltip="Guardar los cambios de esta mesa">Guardar cambios</button>
       </div>
     </form>
   </div>
