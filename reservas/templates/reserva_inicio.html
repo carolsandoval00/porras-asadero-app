@@ -3,11 +3,13 @@
 {% block content %}
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="{% static 'css/reserva_inicio_css2.css' %}" rel="stylesheet"> 
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
 <!-- ROL del usuario para el JS -->
-<script>window.MC_ROL = "{{ request.user.rol }}";</script>
+<script>
+  window.MC_ROL = "{{ request.user.rol }}";
+  window.MC_PUEDE_EDITAR = {{ puede_editar|yesno:"true,false" }};
+</script>
 
 <!-- ===== BANNER + NAV ===== -->
 <div class="mc-banner-wrap">
@@ -87,9 +89,9 @@
 <div class="mc-print-only" id="mc-print-area"></div>
 
 <!-- Librerías reportes -->
- <script src="{% static 'js/reservas_inicio.js' %}" defer></script>
- <script src="{% static 'js/inicio_reserva.js' %}" defer></script>
- <script src="{% static 'js/reserva_inicioo.js' %}" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <script src="{% static 'js/reservas.js' %}" defer></script>
 
 {% endblock %}

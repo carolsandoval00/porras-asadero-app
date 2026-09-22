@@ -1,21 +1,47 @@
-(function(){
-  let reservas       = JSON.parse(localStorage.getItem('mc_reservas') || '[]');
-  let mesas          = JSON.parse(localStorage.getItem('mc_mesas')    || '[]');
-  let contadorM      = parseInt(localStorage.getItem('mc_contador_m') || '0');
-  let editandoId     = null;
-  let editandoMesaId = null;
+/* ============================================================
+   Reservas y mesas — Asadero Porras
+   Todo el estado vive en la base de datos de Django.
+   Este archivo solo pinta la interfaz y llama a la API:
+     GET  /reservas/api/reservas/           (admite filtros)
+     POST /reservas/api/reservas/guardar/
+     POST /reservas/api/reservas/eliminar/
+     GET  /reservas/api/mesas/
+     POST /reservas/api/mesas/guardar/
+     POST /reservas/api/mesas/eliminar/
+   ============================================================ */
+(function () {
+  'use strict';
 
-  // Helper de permisos — lee el div que Django pone solo si el usuario es cajero
-  const esCajero = () => !!document.getElementById('mc-es-cajero');
+  const API = {
+    reservas:        '/reservas/api/reservas/',
+    reservaGuardar:  '/reservas/api/reservas/guardar/',
+    reservaEliminar: '/reservas/api/reservas/eliminar/',
+    mesas:           '/reservas/api/mesas/',
+    mesaGuardar:     '/reservas/api/mesas/guardar/',
+    mesaEliminar:    '/reservas/api/mesas/eliminar/',
+  };
 
-  localStorage.removeItem('mc_contador_r');
-  function nextIdR(){ return reservas.length ? Math.max(...reservas.map(r=>r.id||0)) + 1 : 1; }
-  function nextIdM(){ contadorM++; localStorage.setItem('mc_contador_m', contadorM); return contadorM; }
+  // Estado en memoria: copia de lo que devolvió el servidor.
+  let reservas = [];
+  let mesas = [];
+  let editandoId = null;          // id de reserva en edición
+  let editandoMesaNumero = null;  // número de mesa en edición
 
-  function save(){
-    localStorage.setItem('mc_reservas',   JSON.stringify(reservas));
-    localStorage.setItem('mc_mesas',      JSON.stringify(mesas));
-    localStorage.setItem('mc_contador_m', contadorM);
+  const soloLectura = () => window.MC_PUEDE_EDITAR === false;
+
+  // ─── Utilidades ───────────────────────────────────────────
+  function $(id) { return document.getElementById(id); }
+
+  function hoy() {
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      .toISOString().slice(0, 10);
+  }
+
+  function esc(valor) {
+    return String(valor == null ? '' : valor)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   function getCookie(name) {
@@ -23,177 +49,210 @@
     if (document.cookie) {
       document.cookie.split(';').forEach(c => {
         const cv = c.trim();
-        if (cv.startsWith(name + '='))
-          value = decodeURIComponent(cv.substring(name.length + 1));
+        if (cv.startsWith(name + '=')) value = decodeURIComponent(cv.substring(name.length + 1));
       });
     }
     return value;
   }
 
-  function djangoPost(url, data) {
-    return fetch(url, {
+  async function apiGet(url, params) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    const res = await fetch(url + qs, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Error al consultar el servidor');
+    return data;
+  }
+
+  async function apiPost(url, payload) {
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Error al guardar en el servidor');
+    return data;
   }
 
-  window.mcShow = function(id){
-    // Bloquear secciones de edición para cajero
-    if(esCajero() && (id==='crear' || id==='crear-mesa')){
+  // ─── Etiquetas y clases de estado ─────────────────────────
+  const ETIQUETA_RESERVA = { PENDIENTE: 'Pendiente', CONFIRMADA: 'Confirmada', CANCELADA: 'Cancelada' };
+  const ETIQUETA_MESA    = { LIBRE: 'Disponible', RESERVADA: 'Reservada', OCUPADA: 'Ocupada' };
+  const CLASE_MESA       = { LIBRE: 'disponible', RESERVADA: 'reservada', OCUPADA: 'ocupada' };
+
+  function badgeClass(estado) {
+    if (estado === 'CONFIRMADA' || estado === 'LIBRE') return 'mc-badge-ok';
+    if (estado === 'PENDIENTE' || estado === 'RESERVADA') return 'mc-badge-warn';
+    return 'mc-badge-danger';
+  }
+
+  function getMesa(numero)      { return mesas.find(m => m.numero === numero); }
+  function getMesaLabel(numero) { const m = getMesa(numero); return m ? 'Mesa ' + m.numero : '—'; }
+
+  // ─── Modales / avisos ─────────────────────────────────────
+  function toast(msg, tipo) {
+    const titulo = $('mc-msg-title'), texto = $('mc-msg-text'), overlay = $('mc-msg-overlay');
+    if (!overlay) { console.log(msg); return; }
+    titulo.textContent = tipo === 'error' ? 'Atención' : '¡Listo!';
+    texto.textContent = msg;
+    overlay.classList.add('open');
+  }
+
+  window.mcCloseConfirm = function () {
+    const el = $('mc-confirm-overlay');
+    if (el) el.classList.remove('open');
+  };
+
+  function mcConfirm(titulo, msg, cb) {
+    $('mc-confirm-title').textContent = titulo;
+    $('mc-confirm-msg').textContent = msg;
+    $('mc-confirm-ok').onclick = () => { mcCloseConfirm(); cb(); };
+    $('mc-confirm-overlay').classList.add('open');
+  }
+
+  window.mcCloseModal = function (id) {
+    const el = $(id);
+    if (el) el.classList.remove('open');
+  };
+
+  // ─── Navegación entre secciones ───────────────────────────
+  window.mcShow = function (id) {
+    if (soloLectura() && (id === 'crear' || id === 'crear-mesa')) {
       toast('No tienes permisos para realizar esta acción', 'error');
       return;
     }
     document.querySelectorAll('.mc-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.mc-nav-btn').forEach(b => b.classList.remove('active'));
-    const sec = document.getElementById('mc-' + id);
-    if(sec) sec.classList.add('active');
+    const sec = $('mc-' + id);
+    if (sec) sec.classList.add('active');
     document.querySelectorAll('.mc-nav-btn').forEach(b => {
-      if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'"))
-        b.classList.add('active');
+      const oc = b.getAttribute('onclick');
+      if (oc && oc.includes("'" + id + "'")) b.classList.add('active');
     });
-    if(id==='reservas')   mcRenderTabla();
-    if(id==='mesas')      mcRenderDiagrama();
-    if(id==='crear-mesa') mcRenderTablaMesas();
-    if(id==='crear' && !editandoId){ mcLimpiar(); mcPoblarMesas(); }
+
+    if (id === 'reservas')   mcRenderTabla();
+    if (id === 'mesas')      mcRenderDiagrama();
+    if (id === 'crear-mesa') mcRenderTablaMesas();
+    if (id === 'crear' && !editandoId) { mcLimpiar(); }
   };
 
-  function toast(msg, tipo){
-    document.getElementById('mc-msg-title').textContent = tipo === 'error' ? 'Atención' : '¡Listo!';
-    document.getElementById('mc-msg-text').textContent  = msg;
-    document.getElementById('mc-msg-overlay').classList.add('open');
+  // ─── Carga de datos desde el servidor ─────────────────────
+  function filtrosActuales() {
+    const filtros = {};
+    const buscar = $('mc-buscar');
+    const fecha  = $('mc-filtro-fecha');
+    const dia    = $('mc-filtro-fecha-dia');
+    const mes    = $('mc-filtro-fecha-mes');
+    const desde  = $('mc-filtro-desde');
+    const hasta  = $('mc-filtro-hasta');
+
+    if (buscar && buscar.value.trim()) filtros.q = buscar.value.trim();
+    if (fecha && fecha.value) {
+      filtros.fecha = fecha.value;
+      if (fecha.value === 'dia' && dia && dia.value) filtros.dia = dia.value;
+      if (fecha.value === 'mes' && mes && mes.value) filtros.mes = mes.value;
+      if (fecha.value === 'rango') {
+        if (desde && desde.value) filtros.desde = desde.value;
+        if (hasta && hasta.value) filtros.hasta = hasta.value;
+      }
+    }
+    return filtros;
   }
 
-  window.mcCloseConfirm = function(){ document.getElementById('mc-confirm-overlay').classList.remove('open'); };
-  function mcConfirm(titulo, msg, cb){
-    document.getElementById('mc-confirm-title').textContent = titulo;
-    document.getElementById('mc-confirm-msg').textContent   = msg;
-    document.getElementById('mc-confirm-ok').onclick = ()=>{ mcCloseConfirm(); cb(); };
-    document.getElementById('mc-confirm-overlay').classList.add('open');
+  async function cargarReservas() {
+    try {
+      const data = await apiGet(API.reservas, filtrosActuales());
+      reservas = data.reservas;
+      return true;
+    } catch (e) {
+      console.error(e);
+      toast('No se pudieron cargar las reservas: ' + e.message, 'error');
+      return false;
+    }
   }
 
-  window.mcCloseModal = function(id){ document.getElementById(id).classList.remove('open'); };
-
-  function getMesa(id)      { return mesas.find(m => m.id === id); }
-  function getMesaLabel(id) { const m = getMesa(id); return m ? 'Mesa '+m.numero : '—'; }
-  function hoy()            { return new Date().toISOString().slice(0,10); }
-  function badgeClass(estado){
-    return estado==='confirmada'?'mc-badge-ok':estado==='pendiente'?'mc-badge-warn':'mc-badge-danger';
+  async function cargarMesas() {
+    try {
+      const data = await apiGet(API.mesas);
+      mesas = data.mesas;
+      return true;
+    } catch (e) {
+      console.error(e);
+      toast('No se pudieron cargar las mesas: ' + e.message, 'error');
+      return false;
+    }
   }
 
-  function mcPoblarMesas(){
-    const sel = document.getElementById('mc-c-mesa');
-    if(!sel) return;
-    const fecha = document.getElementById('mc-c-fecha').value;
-    const hora  = document.getElementById('mc-c-hora').value;
-    const r     = editandoId ? reservas.find(x => x.id === editandoId) : null;
-    const mesasOcupadas = new Set(
-      reservas
-        .filter(x => x.fecha===fecha && x.hora===hora && x.estado!=='cancelada' && x.id!==editandoId)
-        .map(x => x.mesaId)
-    );
-    sel.innerHTML = '<option value="">— Seleccionar mesa —</option>';
-    mesas.forEach(m => {
-      const ocupada    = mesasOcupadas.has(m.id);
-      const esLaActual = r && r.mesaId === m.id;
-      if (!ocupada || esLaActual)
-        sel.innerHTML += `<option value="${m.id}">Mesa ${m.numero} — ${m.capacidad} pers. (${m.ubicacion})</option>`;
+  // ─── Filtro por fechas ────────────────────────────────────
+  // Muestra u oculta los campos según el modo elegido y recarga.
+  window.mcToggleFiltroFecha = function () {
+    const modo  = $('mc-filtro-fecha') ? $('mc-filtro-fecha').value : '';
+    const dia   = $('mc-filtro-fecha-dia');
+    const mes   = $('mc-filtro-fecha-mes');
+    const rango = $('mc-filtro-rango');
+
+    if (dia)   dia.style.display   = modo === 'dia'   ? 'block' : 'none';
+    if (mes)   mes.style.display   = modo === 'mes'   ? 'block' : 'none';
+    if (rango) rango.style.display = modo === 'rango' ? 'flex'  : 'none';
+
+    // Al salir de un modo se limpia su valor para no arrastrar filtros ocultos.
+    if (modo !== 'dia' && dia) dia.value = '';
+    if (modo !== 'mes' && mes) mes.value = '';
+    if (modo !== 'rango') {
+      if ($('mc-filtro-desde')) $('mc-filtro-desde').value = '';
+      if ($('mc-filtro-hasta')) $('mc-filtro-hasta').value = '';
+    }
+    mcRenderTabla();
+  };
+
+  window.mcLimpiarFiltros = function () {
+    ['mc-buscar', 'mc-filtro-fecha',
+     'mc-filtro-fecha-dia', 'mc-filtro-fecha-mes',
+     'mc-filtro-desde', 'mc-filtro-hasta'].forEach(id => {
+      const el = $(id);
+      if (el) el.value = '';
     });
-  }
-
-  window.mcGuardarReserva = function(){
-    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
-    const nom = document.getElementById('mc-c-nombre').value.trim();
-    const tel = document.getElementById('mc-c-telefono').value.trim();
-    const per = document.getElementById('mc-c-personas').value;
-    const fec = document.getElementById('mc-c-fecha').value;
-    const hor = document.getElementById('mc-c-hora').value;
-    const mes = document.getElementById('mc-c-mesa').value;
-
-    if(!nom||!tel||!per||!fec||!hor||!mes){ toast('Completa todos los campos obligatorios (*)','error'); return; }
-    if(tel.length !== 10){ toast('El teléfono debe tener exactamente 10 dígitos','error'); return; }
-    if(fec < hoy()){ toast('No se pueden crear reservas en fechas pasadas','error'); return; }
-    const emailVal = document.getElementById('mc-c-email').value.trim();
-    if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){ toast('El correo electrónico no es válido','error'); return; }
-    const conflicto = reservas.find(x =>
-      x.fecha===fec && x.hora===hor && x.mesaId===parseInt(mes) && x.estado!=='cancelada' && x.id!==editandoId
-    );
-    if(conflicto){ toast('Esa mesa ya está reservada para ese día y hora','error'); return; }
-
-    const obj = {
-      id:       editandoId || nextIdR(),
-      nombre:   nom, telefono: tel,
-      email:    document.getElementById('mc-c-email').value.trim(),
-      personas: parseInt(per), fecha:fec, hora:hor, mesaId:parseInt(mes),
-      ocasion:  document.getElementById('mc-c-ocasion').value,
-      estado:   document.getElementById('mc-c-estado').value,
-      notas:    document.getElementById('mc-c-notas').value.trim(),
-      creada:   editandoId
-                ? (reservas.find(r=>r.id===editandoId)||{}).creada||new Date().toISOString()
-                : new Date().toISOString()
-    };
-
-    if(editandoId){ reservas = reservas.map(r=>r.id===editandoId?obj:r); toast('Reserva actualizada'); }
-    else          { reservas.push(obj); toast('Reserva creada exitosamente'); }
-    save(); mcLimpiar(); mcShow('reservas');
+    mcToggleFiltroFecha();
   };
 
-  window.mcLimpiar = function(){
-    editandoId = null;
-    ['mc-c-nombre','mc-c-telefono','mc-c-email','mc-c-personas','mc-c-fecha','mc-c-hora','mc-c-notas']
-      .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-    document.getElementById('mc-c-ocasion').value = '';
-    document.getElementById('mc-c-estado').value  = 'confirmada';
-    document.getElementById('mc-c-mesa').value    = '';
-    document.getElementById('mc-crear-titulo').textContent = 'Nueva reserva';
-    document.getElementById('mc-crear-sub').textContent   = 'Completa los datos para registrar la reserva';
-    document.getElementById('mc-btn-guardar').textContent  = 'Guardar reserva';
-    mcPoblarMesas(); fijarFechaMin();
-  };
+  // ─── Tabla de reservas ────────────────────────────────────
+  window.mcRenderTabla = async function () {
+    const tb = $('mc-tbody-reservas');
+    if (!tb) return;
 
-  function mcListaFiltrada(){
-    const buscar = document.getElementById('mc-buscar').value.toLowerCase();
-    const estado = document.getElementById('mc-filtro-estado').value;
-    const fecha  = document.getElementById('mc-filtro-fecha').value;
-    const dia    = document.getElementById('mc-filtro-fecha-dia').value;
-    const mes    = document.getElementById('mc-filtro-fecha-mes').value;
-    const h = hoy();
-    return reservas.filter(r=>{
-      const mb = r.nombre.toLowerCase().includes(buscar)||r.telefono.includes(buscar);
-      const me = !estado||r.estado===estado;
-      let mf=true;
-      if(fecha==='hoy')     mf=r.fecha===h;
-      if(fecha==='futuras') mf=r.fecha>=h;
-      if(fecha==='pasadas') mf=r.fecha<h;
-      if(fecha==='dia')     mf=!dia || r.fecha===dia;
-      if(fecha==='mes')     mf=!mes || r.fecha.slice(0,7)===mes;
-      return mb&&me&&mf;
-    }).sort((a,b)=>(a.fecha+a.hora).localeCompare(b.fecha+b.hora));
-  }
+    tb.innerHTML = '<tr><td colspan="8"><div class="mc-empty"><p>Cargando…</p></div></td></tr>';
+    await cargarReservas();
 
-  window.mcRenderTabla = function(){
-    let lista = mcListaFiltrada();
-    const tb = document.getElementById('mc-tbody-reservas');
-    if(!lista.length){
-      tb.innerHTML=`<tr><td colspan="8"><div class="mc-empty">
+    const contador = $('mc-contador-reservas');
+    if (contador) {
+      contador.textContent = reservas.length + ' reserva' + (reservas.length !== 1 ? 's' : '');
+    }
+
+    if (!reservas.length) {
+      tb.innerHTML = `<tr><td colspan="8"><div class="mc-empty">
         <div class="mc-empty-icon">&#128467;</div>
         <p>No se encontraron reservas con los filtros actuales</p>
       </div></td></tr>`;
       return;
     }
-    tb.innerHTML = lista.map(r=>`<tr>
-      <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).padStart(2,'0')}</td>
-      <td><div style="font-weight:500">${r.nombre}</div><div style="font-size:12px;color:var(--muted)">${r.telefono}</div></td>
-      <td>${getMesaLabel(r.mesaId)}</td>
-      <td>${r.fecha}</td><td>${r.hora}</td>
-      <td style="text-align:center">${r.personas}</td>
-      <td><span class="mc-badge ${badgeClass(r.estado)}">${r.estado}</span></td>
+
+    tb.innerHTML = reservas.map(r => `<tr>
+      <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).padStart(2, '0')}</td>
+      <td>
+        <div style="font-weight:500">${esc(r.nombre)}</div>
+        <div style="font-size:12px;color:var(--muted)">${esc(r.telefono)}</div>
+      </td>
+      <td>${esc(getMesaLabel(r.mesa))}</td>
+      <td>${esc(r.fecha)}</td>
+      <td>${esc(r.hora)}</td>
+      <td style="text-align:center">${esc(r.personas)}</td>
+      <td><span class="mc-badge ${badgeClass(r.estado)}">${ETIQUETA_RESERVA[r.estado] || r.estado}</span></td>
       <td><div class="mc-action-btns">
         <button class="mc-icon-btn" onclick="mcVerReserva(${r.id})">Ver</button>
-        ${!esCajero() ? `
+        ${!soloLectura() ? `
           <button class="mc-icon-btn edit" onclick="mcEditarReserva(${r.id})">Editar</button>
           <button class="mc-icon-btn del" onclick="mcPedirEliminarReserva(${r.id})">Borrar</button>
         ` : ''}
@@ -201,83 +260,190 @@
     </tr>`).join('');
   };
 
-  window.mcVerReserva = function(id){
-    const r = reservas.find(x=>x.id===id); if(!r) return;
-    document.getElementById('mc-modal-r-title').textContent = 'Reserva — '+r.nombre;
-    document.getElementById('mc-modal-r-body').innerHTML = `
+  window.mcVerReserva = function (id) {
+    const r = reservas.find(x => x.id === id);
+    if (!r) return;
+    $('mc-modal-r-title').textContent = 'Reserva — ' + r.nombre;
+    $('mc-modal-r-body').innerHTML = `
       <div class="mc-detail-row">
-        <div class="mc-detail-item"><div class="mc-detail-key">Cliente</div><div class="mc-detail-val">${r.nombre}</div></div>
-        <div class="mc-detail-item"><div class="mc-detail-key">Teléfono</div><div class="mc-detail-val">${r.telefono}</div></div>
-      </div>
-      <div class="mc-detail-row">
-        <div class="mc-detail-item"><div class="mc-detail-key">Email</div><div class="mc-detail-val" style="font-weight:400">${r.email||'—'}</div></div>
-        <div class="mc-detail-item"><div class="mc-detail-key">Personas</div><div class="mc-detail-val">${r.personas}</div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Cliente</div><div class="mc-detail-val">${esc(r.nombre)}</div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Teléfono</div><div class="mc-detail-val">${esc(r.telefono)}</div></div>
       </div>
       <div class="mc-detail-row">
-        <div class="mc-detail-item"><div class="mc-detail-key">Fecha</div><div class="mc-detail-val">${r.fecha}</div></div>
-        <div class="mc-detail-item"><div class="mc-detail-key">Hora</div><div class="mc-detail-val">${r.hora}</div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Email</div><div class="mc-detail-val" style="font-weight:400">${esc(r.email) || '—'}</div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Personas</div><div class="mc-detail-val">${esc(r.personas)}</div></div>
       </div>
       <div class="mc-detail-row">
-        <div class="mc-detail-item"><div class="mc-detail-key">Mesa</div><div class="mc-detail-val">${getMesaLabel(r.mesaId)}</div></div>
-        <div class="mc-detail-item"><div class="mc-detail-key">Estado</div><div class="mc-detail-val"><span class="mc-badge ${badgeClass(r.estado)}">${r.estado}</span></div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Fecha</div><div class="mc-detail-val">${esc(r.fecha)}</div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Hora</div><div class="mc-detail-val">${esc(r.hora)}</div></div>
       </div>
-      ${r.ocasion?`<div class="mc-detail-item" style="margin-bottom:10px"><div class="mc-detail-key">Ocasión</div><div class="mc-detail-val">${r.ocasion}</div></div>`:''}
-      ${r.notas?`<div class="mc-detail-item" style="margin-bottom:10px"><div class="mc-detail-key">Notas</div><div class="mc-detail-val" style="font-weight:400;font-size:13px;line-height:1.5">${r.notas}</div></div>`:''}
-      <div style="font-size:11px;color:var(--hint);margin-bottom:1rem">
-        Creada el ${new Date(r.creada).toLocaleString('es-CO')}
+      <div class="mc-detail-row">
+        <div class="mc-detail-item"><div class="mc-detail-key">Mesa</div><div class="mc-detail-val">${esc(getMesaLabel(r.mesa))}</div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Estado</div><div class="mc-detail-val"><span class="mc-badge ${badgeClass(r.estado)}">${ETIQUETA_RESERVA[r.estado] || r.estado}</span></div></div>
       </div>
+      ${r.ocasion ? `<div class="mc-detail-item" style="margin-bottom:10px"><div class="mc-detail-key">Ocasión</div><div class="mc-detail-val">${esc(r.ocasion)}</div></div>` : ''}
+      ${r.notas ? `<div class="mc-detail-item" style="margin-bottom:10px"><div class="mc-detail-key">Notas</div><div class="mc-detail-val" style="font-weight:400;font-size:13px;line-height:1.5">${esc(r.notas)}</div></div>` : ''}
+      ${r.creada ? `<div style="font-size:11px;color:var(--hint);margin-bottom:1rem">Creada el ${new Date(r.creada).toLocaleString('es-CO')}</div>` : ''}
       <div class="mc-btn-row">
         <button class="mc-btn mc-btn-secondary" onclick="mcCloseModal('mc-modal-reserva')">Cerrar</button>
-        ${!esCajero() ? `<button class="mc-btn mc-btn-primary" onclick="mcCloseModal('mc-modal-reserva');mcEditarReserva(${r.id})">Editar reserva</button>` : ''}
+        ${!soloLectura() ? `<button class="mc-btn mc-btn-primary" onclick="mcCloseModal('mc-modal-reserva');mcEditarReserva(${r.id})">Editar reserva</button>` : ''}
       </div>`;
-    document.getElementById('mc-modal-reserva').classList.add('open');
+    $('mc-modal-reserva').classList.add('open');
   };
 
-  window.mcEditarReserva = function(id){
-    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
-    const r = reservas.find(x=>x.id===id); if(!r) return;
-    editandoId = id; mcPoblarMesas(); mcShow('crear');
-    setTimeout(()=>{
-      document.getElementById('mc-c-nombre').value   = r.nombre;
-      document.getElementById('mc-c-telefono').value = r.telefono;
-      document.getElementById('mc-c-email').value    = r.email||'';
-      document.getElementById('mc-c-personas').value = r.personas;
-      document.getElementById('mc-c-fecha').value    = r.fecha;
-      document.getElementById('mc-c-hora').value     = r.hora;
-      mcPoblarMesas();
-      document.getElementById('mc-c-mesa').value     = r.mesaId||'';
-      document.getElementById('mc-c-ocasion').value  = r.ocasion||'';
-      document.getElementById('mc-c-estado').value   = r.estado;
-      document.getElementById('mc-c-notas').value    = r.notas||'';
-      document.getElementById('mc-crear-titulo').textContent = 'Editar reserva';
-      document.getElementById('mc-crear-sub').textContent   = 'Modificando reserva de '+r.nombre;
-      document.getElementById('mc-btn-guardar').textContent  = 'Actualizar reserva';
-    },30);
+  // ─── Selector de mesas disponibles ────────────────────────
+  window.mcPoblarMesas = async function () {
+    const sel = $('mc-c-mesa');
+    if (!sel) return;
+
+    const fecha = $('mc-c-fecha') ? $('mc-c-fecha').value : '';
+    const hora  = $('mc-c-hora') ? $('mc-c-hora').value : '';
+    const seleccionActual = sel.value;
+
+    const ocupadas = new Set();
+    if (fecha) {
+      // Se le pregunta al servidor qué mesas ya están tomadas ese día.
+      try {
+        const data = await apiGet(API.reservas, { fecha: 'dia', dia: fecha });
+        data.reservas
+          .filter(r => r.estado !== 'CANCELADA' && r.id !== editandoId &&
+                       (!hora || r.hora.slice(0, 2) === hora.slice(0, 2)))
+          .forEach(r => ocupadas.add(r.mesa));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    sel.innerHTML = '<option value="">— Seleccionar mesa —</option>';
+    mesas.forEach(m => {
+      const libre = !ocupadas.has(m.numero);
+      if (libre || String(m.numero) === seleccionActual) {
+        sel.innerHTML += `<option value="${m.numero}">Mesa ${m.numero} — ${m.capacidad} pers. (${esc(m.ubicacion)})</option>`;
+      }
+    });
+    if (seleccionActual) sel.value = seleccionActual;
   };
 
-  window.mcPedirEliminarReserva = function(id){
-    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
-    const r = reservas.find(x=>x.id===id); if(!r) return;
+  // ─── Crear / actualizar reserva ───────────────────────────
+  window.mcGuardarReserva = async function () {
+    if (soloLectura()) { toast('No tienes permisos para realizar esta acción', 'error'); return; }
+
+    const payload = {
+      id:              editandoId,
+      nombre_cliente:  $('mc-c-nombre').value.trim(),
+      telefono:        $('mc-c-telefono').value.trim(),
+      email:           $('mc-c-email').value.trim(),
+      numero_personas: $('mc-c-personas').value,
+      fecha_reserva:   $('mc-c-fecha').value,
+      hora_reserva:    $('mc-c-hora').value,
+      numero_mesa:     $('mc-c-mesa').value,
+      ocasion:         $('mc-c-ocasion').value,
+      estado:          $('mc-c-estado').value,
+      notas:           $('mc-c-notas').value.trim(),
+    };
+
+    // Validación rápida en el navegador; el servidor vuelve a validar todo.
+    if (!payload.nombre_cliente || !payload.telefono || !payload.numero_personas ||
+        !payload.fecha_reserva || !payload.hora_reserva || !payload.numero_mesa) {
+      toast('Completa todos los campos obligatorios (*)', 'error');
+      return;
+    }
+
+    const btn = $('mc-btn-guardar');
+    const textoOriginal = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+    try {
+      await apiPost(API.reservaGuardar, payload);
+      toast(editandoId ? 'Reserva actualizada' : 'Reserva creada exitosamente');
+      editandoId = null;
+      await cargarMesas();
+      mcLimpiar();
+      mcShow('reservas');
+    } catch (e) {
+      toast(e.message, 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = textoOriginal; }
+    }
+  };
+
+  window.mcLimpiar = function () {
+    editandoId = null;
+    ['mc-c-nombre', 'mc-c-telefono', 'mc-c-email', 'mc-c-personas',
+     'mc-c-fecha', 'mc-c-hora', 'mc-c-notas'].forEach(id => {
+      const el = $(id);
+      if (el) el.value = '';
+    });
+    if ($('mc-c-ocasion')) $('mc-c-ocasion').value = '';
+    if ($('mc-c-estado'))  $('mc-c-estado').value  = 'CONFIRMADA';
+    if ($('mc-c-mesa'))    $('mc-c-mesa').value    = '';
+    if ($('mc-crear-titulo')) $('mc-crear-titulo').textContent = 'Nueva reserva';
+    if ($('mc-crear-sub'))    $('mc-crear-sub').textContent    = 'Completa los datos para registrar la reserva';
+    if ($('mc-btn-guardar'))  $('mc-btn-guardar').textContent  = 'Guardar reserva';
+    fijarFechaMin();
+    mcPoblarMesas();
+  };
+
+  window.mcEditarReserva = async function (id) {
+    if (soloLectura()) { toast('No tienes permisos para realizar esta acción', 'error'); return; }
+    const r = reservas.find(x => x.id === id);
+    if (!r) return;
+
+    editandoId = id;
+    mcShow('crear');
+
+    $('mc-c-nombre').value   = r.nombre;
+    $('mc-c-telefono').value = r.telefono;
+    $('mc-c-email').value    = r.email || '';
+    $('mc-c-personas').value = r.personas;
+    $('mc-c-fecha').value    = r.fecha;
+    $('mc-c-hora').value     = r.hora;
+    $('mc-c-ocasion').value  = r.ocasion || '';
+    $('mc-c-estado').value   = r.estado;
+    $('mc-c-notas').value    = r.notas || '';
+
+    await mcPoblarMesas();
+    $('mc-c-mesa').value = r.mesa || '';
+
+    $('mc-crear-titulo').textContent = 'Editar reserva';
+    $('mc-crear-sub').textContent    = 'Modificando reserva de ' + r.nombre;
+    $('mc-btn-guardar').textContent  = 'Actualizar reserva';
+  };
+
+  window.mcPedirEliminarReserva = function (id) {
+    if (soloLectura()) { toast('No tienes permisos para realizar esta acción', 'error'); return; }
+    const r = reservas.find(x => x.id === id);
+    if (!r) return;
     mcConfirm('Eliminar reserva',
       `¿Eliminar la reserva de ${r.nombre} del ${r.fecha}? Esta acción no se puede deshacer.`,
-      ()=>{ reservas=reservas.filter(x=>x.id!==id); save(); mcRenderTabla(); toast('Reserva eliminada'); });
+      async () => {
+        try {
+          await apiPost(API.reservaEliminar, { id });
+          await cargarMesas();
+          await mcRenderTabla();
+          mcRenderDiagrama();
+          toast('Reserva eliminada');
+        } catch (e) {
+          toast(e.message, 'error');
+        }
+      });
   };
 
-  window.mcExportarPDF = function(){
-    const lista = mcListaFiltrada();
-    if(!lista.length){ toast('No hay reservas para exportar','error'); return; }
-    if(!window.jspdf){ toast('No se pudo cargar la librería de PDF','error'); return; }
+  // ─── Reportes de reservas ─────────────────────────────────
+  window.mcExportarPDF = function () {
+    if (!reservas.length) { toast('No hay reservas para exportar', 'error'); return; }
+    if (!window.jspdf) { toast('No se pudo cargar la librería de PDF', 'error'); return; }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text('Asadero Porras — Reporte de Reservas', 14, 16);
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + lista.length + ' reserva(s)', 14, 22);
-    const filas = lista.map(r => [
+    doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + reservas.length + ' reserva(s)', 14, 22);
+    const filas = reservas.map(r => [
       '#' + String(r.id).padStart(2, '0'),
-      r.nombre, r.telefono, getMesaLabel(r.mesaId),
-      r.fecha, r.hora, String(r.personas), r.estado,
+      r.nombre, r.telefono, getMesaLabel(r.mesa),
+      r.fecha, r.hora, String(r.personas), ETIQUETA_RESERVA[r.estado] || r.estado,
     ]);
     doc.autoTable({
       head: [['ID', 'Cliente', 'Teléfono', 'Mesa', 'Fecha', 'Hora', 'Personas', 'Estado']],
@@ -290,16 +456,15 @@
     toast('Reporte PDF generado');
   };
 
-  window.mcExportarExcel = function(){
-    const lista = mcListaFiltrada();
-    if(!lista.length){ toast('No hay reservas para exportar','error'); return; }
-    if(!window.XLSX){ toast('No se pudo cargar la librería de Excel','error'); return; }
-    const datos = lista.map(r => ({
+  window.mcExportarExcel = function () {
+    if (!reservas.length) { toast('No hay reservas para exportar', 'error'); return; }
+    if (!window.XLSX) { toast('No se pudo cargar la librería de Excel', 'error'); return; }
+    const datos = reservas.map(r => ({
       'ID': '#' + String(r.id).padStart(2, '0'),
       'Cliente': r.nombre, 'Teléfono': r.telefono, 'Correo': r.email || '',
-      'Mesa': getMesaLabel(r.mesaId), 'Fecha': r.fecha, 'Hora': r.hora,
+      'Mesa': getMesaLabel(r.mesa), 'Fecha': r.fecha, 'Hora': r.hora,
       'Personas': r.personas, 'Ocasión': r.ocasion || '',
-      'Estado': r.estado, 'Notas': r.notas || '',
+      'Estado': ETIQUETA_RESERVA[r.estado] || r.estado, 'Notas': r.notas || '',
     }));
     const hoja = XLSX.utils.json_to_sheet(datos);
     hoja['!cols'] = [
@@ -312,19 +477,18 @@
     toast('Reporte Excel generado');
   };
 
-  window.mcImprimir = function(){
-    const lista = mcListaFiltrada();
-    if(!lista.length){ toast('No hay reservas para imprimir','error'); return; }
-    const filas = lista.map(r => `<tr>
-        <td>#${String(r.id).padStart(2,'0')}</td>
-        <td>${r.nombre}</td><td>${r.telefono}</td>
-        <td>${getMesaLabel(r.mesaId)}</td>
-        <td>${r.fecha}</td><td>${r.hora}</td>
-        <td>${r.personas}</td><td>${r.estado}</td>
+  window.mcImprimir = function () {
+    if (!reservas.length) { toast('No hay reservas para imprimir', 'error'); return; }
+    const filas = reservas.map(r => `<tr>
+        <td>#${String(r.id).padStart(2, '0')}</td>
+        <td>${esc(r.nombre)}</td><td>${esc(r.telefono)}</td>
+        <td>${esc(getMesaLabel(r.mesa))}</td>
+        <td>${esc(r.fecha)}</td><td>${esc(r.hora)}</td>
+        <td>${esc(r.personas)}</td><td>${ETIQUETA_RESERVA[r.estado] || r.estado}</td>
       </tr>`).join('');
-    document.getElementById('mc-print-area').innerHTML = `
+    $('mc-print-area').innerHTML = `
       <h2>Asadero Porras — Reporte de Reservas</h2>
-      <p>Generado el ${new Date().toLocaleString('es-CO')} — ${lista.length} reserva(s)</p>
+      <p>Generado el ${new Date().toLocaleString('es-CO')} — ${reservas.length} reserva(s)</p>
       <table>
         <thead><tr>
           <th>ID</th><th>Cliente</th><th>Teléfono</th><th>Mesa</th>
@@ -335,210 +499,234 @@
     window.print();
   };
 
-  window.mcCrearMesa = function(){
-    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
-    const num = parseInt(document.getElementById('mc-m-numero').value);
-    const cap = parseInt(document.getElementById('mc-m-capacidad').value);
-    const ubi = document.getElementById('mc-m-ubicacion').value;
-    const est = document.getElementById('mc-m-estado').value;
-    if(!num || !cap){ toast('Ingresa número y capacidad','error'); return; }
-    if(editandoMesaId){
-      if(mesas.find(m => m.numero===num && m.id!==editandoMesaId)){
-        toast('Ya existe una mesa con ese número','error'); return;
-      }
-      mesas = mesas.map(m =>
-        m.id===editandoMesaId ? {...m, numero:num, capacidad:cap, ubicacion:ubi, estado:est} : m
-      );
-      djangoPost('/reservas/mesa/guardar/', { numero_mesa:num, capacidad:cap, ubicacion:ubi, estado:est })
-        .catch(e => console.error('Error guardando mesa:', e));
-      toast('Mesa actualizada');
-    } else {
-      if(mesas.find(m=>m.numero===num)){ toast('Ya existe una mesa con ese número','error'); return; }
-      const cols=4, size=92, gap=20, offX=28, offY=46;
-      const idx=mesas.length, col=idx%cols, row=Math.floor(idx/cols);
-      mesas.push({
-        id: nextIdM(), numero:num, capacidad:cap, ubicacion:ubi, estado:est,
-        x: offX+col*(size+gap), y: offY+row*(size+gap)
-      });
-      djangoPost('/reservas/mesa/guardar/', { numero_mesa:num, capacidad:cap, ubicacion:ubi, estado:est })
-        .catch(e => console.error('Error guardando mesa:', e));
-      toast('Mesa '+num+' agregada');
+  // ─── Mesas ────────────────────────────────────────────────
+  window.mcCrearMesa = async function () {
+    if (soloLectura()) { toast('No tienes permisos para realizar esta acción', 'error'); return; }
+    const num = parseInt($('mc-m-numero').value, 10);
+    const cap = parseInt($('mc-m-capacidad').value, 10);
+    const ubi = $('mc-m-ubicacion').value;
+    const est = $('mc-m-estado').value;
+
+    if (!num || !cap) { toast('Ingresa número y capacidad', 'error'); return; }
+    if (!editandoMesaNumero && getMesa(num)) {
+      toast('Ya existe una mesa con ese número', 'error');
+      return;
     }
-    save(); mcRenderTablaMesas(); mcRenderDiagrama();
-    document.getElementById('mc-m-numero').value='';
-    document.getElementById('mc-m-capacidad').value='';
-    document.getElementById('mc-m-ubicacion').value='Salón principal';
-    document.getElementById('mc-m-estado').value='disponible';
-    document.querySelector('.mc-card-title').textContent = 'Agregar mesa';
-    document.querySelector('#mc-crear-mesa .mc-sec-header h2').textContent = 'Gestión de mesas';
-    document.querySelector('#mc-crear-mesa .mc-btn-primary').textContent = 'Agregar mesa';
-    editandoMesaId = null;
+
+    try {
+      await apiPost(API.mesaGuardar, {
+        numero_mesa: num, capacidad: cap, ubicacion: ubi, estado: est,
+      });
+      toast(editandoMesaNumero ? 'Mesa actualizada' : 'Mesa ' + num + ' agregada');
+      editandoMesaNumero = null;
+      await cargarMesas();
+      mcRenderTablaMesas();
+      mcRenderDiagrama();
+      mcPoblarMesas();
+      mcLimpiarFormMesa();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
   };
 
-  function mcListaMesasFiltrada(){
-    const buscar    = document.getElementById('mc-buscar-mesa')?.value.toLowerCase() || '';
-    const ubicacion = document.getElementById('mc-filtro-ubicacion')?.value || '';
-    const capacidad = document.getElementById('mc-filtro-capacidad')?.value || '';
+  function mcLimpiarFormMesa() {
+    $('mc-m-numero').value = '';
+    $('mc-m-capacidad').value = '';
+    $('mc-m-ubicacion').value = 'Salón principal';
+    $('mc-m-estado').value = 'LIBRE';
+    const titulo = document.querySelector('#mc-crear-mesa .mc-card-title');
+    if (titulo) titulo.textContent = 'Agregar mesa';
+    const header = document.querySelector('#mc-crear-mesa .mc-sec-header h2');
+    if (header) header.textContent = 'Gestión de mesas';
+    const boton = document.querySelector('#mc-crear-mesa .mc-btn-primary');
+    if (boton) boton.textContent = 'Agregar mesa';
+  }
+
+  function mcListaMesasFiltrada() {
+    const buscar    = $('mc-buscar-mesa') ? $('mc-buscar-mesa').value.toLowerCase() : '';
+    const ubicacion = $('mc-filtro-ubicacion') ? $('mc-filtro-ubicacion').value : '';
+    const capacidad = $('mc-filtro-capacidad') ? $('mc-filtro-capacidad').value : '';
     return mesas.filter(m =>
       String(m.numero).includes(buscar) &&
-      (!ubicacion || m.ubicacion===ubicacion) &&
-      (!capacidad || m.capacidad==capacidad)
+      (!ubicacion || m.ubicacion === ubicacion) &&
+      (!capacidad || String(m.capacidad) === String(capacidad))
     );
   }
 
-  window.mcRenderTablaMesas = function(){
-    const tb = document.getElementById('mc-tbody-mesas');
-    if(!tb) return;
-    let lista = mcListaMesasFiltrada();
-    if(!lista.length){
-      tb.innerHTML = `<tr><td colspan="5"><div class="mc-empty"><p>No se encontraron mesas</p></div></td></tr>`;
+  window.mcRenderTablaMesas = function () {
+    const tb = $('mc-tbody-mesas');
+    if (!tb) return;
+    const lista = mcListaMesasFiltrada();
+    if (!lista.length) {
+      tb.innerHTML = '<tr><td colspan="5"><div class="mc-empty"><p>No se encontraron mesas</p></div></td></tr>';
       return;
     }
-    tb.innerHTML = lista.map(m=>`<tr>
+    tb.innerHTML = lista.map(m => `<tr>
       <td style="font-weight:500">Mesa ${m.numero}</td>
       <td>${m.capacidad} pers.</td>
-      <td style="font-size:12px;color:var(--muted)">${m.ubicacion}</td>
-      <td><span class="mc-badge ${m.estado==='disponible'?'mc-badge-ok':m.estado==='reservada'?'mc-badge-warn':'mc-badge-danger'}">${m.estado}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${esc(m.ubicacion)}</td>
+      <td><span class="mc-badge ${badgeClass(m.estado)}">${ETIQUETA_MESA[m.estado] || m.estado}</span></td>
       <td><div class="mc-action-btns">
-        <button class="mc-icon-btn" onclick="mcVerMesa(${m.id})">Ver</button>
-        ${!esCajero() ? `
-          <button class="mc-icon-btn edit" onclick="mcEditarMesa(${m.id})">Editar</button>
-          <button class="mc-icon-btn del" onclick="mcPedirEliminarMesa(${m.id})">Borrar</button>
+        <button class="mc-icon-btn" onclick="mcVerMesa(${m.numero})">Ver</button>
+        ${!soloLectura() ? `
+          <button class="mc-icon-btn edit" onclick="mcEditarMesa(${m.numero})">Editar</button>
+          <button class="mc-icon-btn del" onclick="mcPedirEliminarMesa(${m.numero})">Borrar</button>
         ` : ''}
       </div></td>
     </tr>`).join('');
   };
 
-  window.mcEditarMesa = function(id){
-    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
-    const m = mesas.find(x=>x.id===id); if(!m) return;
-    editandoMesaId = id;
+  window.mcEditarMesa = function (numero) {
+    if (soloLectura()) { toast('No tienes permisos para realizar esta acción', 'error'); return; }
+    const m = getMesa(numero);
+    if (!m) return;
+    editandoMesaNumero = numero;
     mcShow('crear-mesa');
-    setTimeout(()=>{
-      document.getElementById('mc-m-numero').value    = m.numero;
-      document.getElementById('mc-m-capacidad').value = m.capacidad;
-      document.getElementById('mc-m-ubicacion').value = m.ubicacion;
-      document.getElementById('mc-m-estado').value    = m.estado;
-      document.querySelector('.mc-card-title').textContent = 'Editar mesa';
-      document.querySelector('#mc-crear-mesa .mc-sec-header h2').textContent = 'Editando mesa ' + m.numero;
-      document.querySelector('#mc-crear-mesa .mc-btn-primary').textContent = 'Actualizar mesa';
-    },30);
-    toast('Editando mesa ' + m.numero);
+    $('mc-m-numero').value    = m.numero;
+    $('mc-m-capacidad').value = m.capacidad;
+    $('mc-m-ubicacion').value = m.ubicacion;
+    $('mc-m-estado').value    = m.estado;
+    const titulo = document.querySelector('#mc-crear-mesa .mc-card-title');
+    if (titulo) titulo.textContent = 'Editar mesa';
+    const header = document.querySelector('#mc-crear-mesa .mc-sec-header h2');
+    if (header) header.textContent = 'Editando mesa ' + m.numero;
+    const boton = document.querySelector('#mc-crear-mesa .mc-btn-primary');
+    if (boton) boton.textContent = 'Actualizar mesa';
   };
 
-  window.mcRenderDiagrama = function(){
-    const fe = document.getElementById('mc-filtro-diagrama').value;
-    const fu = document.getElementById('mc-filtro-zona').value;
+  window.mcRenderDiagrama = function () {
+    const cont = $('mc-floor-mesas');
+    const wrap = $('mc-floor');
+    if (!cont || !wrap) return;
+
+    const fe = $('mc-filtro-diagrama') ? $('mc-filtro-diagrama').value : '';
+    const fu = $('mc-filtro-zona') ? $('mc-filtro-zona').value : '';
     let lista = mesas;
-    if(fe) lista=lista.filter(m=>m.estado===fe);
-    if(fu) lista=lista.filter(m=>m.ubicacion===fu);
-    const d=mesas.filter(m=>m.estado==='disponible').length;
-    const r=mesas.filter(m=>m.estado==='reservada').length;
-    const o=mesas.filter(m=>m.estado==='ocupada').length;
-    document.getElementById('mc-resumen').textContent=`${d} disponibles · ${r} reservadas · ${o} ocupadas`;
-    document.getElementById('mc-floor-count').textContent=lista.length+' mesa'+(lista.length!==1?'s':'')+' mostradas';
-    document.getElementById('mc-zone-label').textContent=fu||'Todas las zonas';
-    const cont=document.getElementById('mc-floor-mesas');
-    const wrap=document.getElementById('mc-floor');
-    if(!lista.length){
-      cont.innerHTML=`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:14px">Sin mesas para mostrar</div>`;
-      wrap.style.minHeight='200px'; return;
+    if (fe) lista = lista.filter(m => m.estado === fe);
+    if (fu) lista = lista.filter(m => m.ubicacion === fu);
+
+    const d = mesas.filter(m => m.estado === 'LIBRE').length;
+    const r = mesas.filter(m => m.estado === 'RESERVADA').length;
+    const o = mesas.filter(m => m.estado === 'OCUPADA').length;
+    if ($('mc-resumen')) $('mc-resumen').textContent = `${d} disponibles · ${r} reservadas · ${o} ocupadas`;
+    if ($('mc-floor-count')) $('mc-floor-count').textContent = lista.length + ' mesa' + (lista.length !== 1 ? 's' : '') + ' mostradas';
+    if ($('mc-zone-label')) $('mc-zone-label').textContent = fu || 'Todas las zonas';
+
+    if (!lista.length) {
+      cont.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:14px">Sin mesas para mostrar</div>';
+      wrap.style.minHeight = '200px';
+      return;
     }
-    const cols=4,size=92,gap=18,offX=28,offY=46;
-    const rows=Math.ceil(lista.length/cols);
-    wrap.style.minHeight=(rows*(size+gap)+offY+36)+'px';
-    cont.innerHTML=lista.map((m,i)=>{
-      const col=i%cols,row=Math.floor(i/cols);
-      const x=offX+col*(size+gap), y=offY+row*(size+gap);
-      const ra=reservas.find(r=>r.mesaId===m.id&&r.estado==='confirmada');
-      const tip=m.estado==='reservada'&&ra?`${ra.nombre} · ${ra.fecha} ${ra.hora}`:`${m.capacidad} personas · ${m.ubicacion}`;
-      return `<div class="mc-mesa ${m.estado}" style="left:${x}px;top:${y}px;width:${size}px;height:76px" onclick="mcVerMesa(${m.id})">
+
+    const cols = 4, size = 92, gap = 18, offX = 28, offY = 46;
+    const rows = Math.ceil(lista.length / cols);
+    wrap.style.minHeight = (rows * (size + gap) + offY + 36) + 'px';
+    cont.innerHTML = lista.map((m, i) => {
+      const col = i % cols, row = Math.floor(i / cols);
+      const x = offX + col * (size + gap), y = offY + row * (size + gap);
+      const ra = reservas.find(res => res.mesa === m.numero && res.estado === 'CONFIRMADA');
+      const tip = (m.estado === 'RESERVADA' && ra)
+        ? `${ra.nombre} · ${ra.fecha} ${ra.hora}`
+        : `${m.capacidad} personas · ${m.ubicacion}`;
+      return `<div class="mc-mesa ${CLASE_MESA[m.estado] || 'disponible'}" style="left:${x}px;top:${y}px;width:${size}px;height:76px" onclick="mcVerMesa(${m.numero})">
         <div class="mc-mesa-num">Mesa ${m.numero}</div>
         <div class="mc-mesa-cap">${m.capacidad} pers.</div>
         <div class="mc-mesa-dot"></div>
-        <div class="mc-tooltip">${tip}</div>
+        <div class="mc-tooltip">${esc(tip)}</div>
       </div>`;
     }).join('');
   };
 
-  window.mcVerMesa = function(id){
-    const m=mesas.find(x=>x.id===id); if(!m) return;
-    const ras=reservas.filter(r=>r.mesaId===id&&r.estado!=='cancelada');
-    const bc=m.estado==='disponible'?'mc-badge-ok':m.estado==='reservada'?'mc-badge-warn':'mc-badge-danger';
-    document.getElementById('mc-modal-m-title').textContent='Mesa '+m.numero;
-    document.getElementById('mc-modal-m-body').innerHTML=`
+  window.mcVerMesa = function (numero) {
+    const m = getMesa(numero);
+    if (!m) return;
+    const ras = reservas.filter(r => r.mesa === numero && r.estado !== 'CANCELADA');
+    $('mc-modal-m-title').textContent = 'Mesa ' + m.numero;
+    $('mc-modal-m-body').innerHTML = `
       <div class="mc-detail-row">
         <div class="mc-detail-item"><div class="mc-detail-key">Número</div><div class="mc-detail-val">Mesa ${m.numero}</div></div>
         <div class="mc-detail-item"><div class="mc-detail-key">Capacidad</div><div class="mc-detail-val">${m.capacidad} personas</div></div>
       </div>
       <div class="mc-detail-row">
-        <div class="mc-detail-item"><div class="mc-detail-key">Ubicación</div><div class="mc-detail-val">${m.ubicacion}</div></div>
-        <div class="mc-detail-item"><div class="mc-detail-key">Estado</div><div class="mc-detail-val"><span class="mc-badge ${bc}">${m.estado}</span></div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Ubicación</div><div class="mc-detail-val">${esc(m.ubicacion)}</div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Estado</div><div class="mc-detail-val"><span class="mc-badge ${badgeClass(m.estado)}">${ETIQUETA_MESA[m.estado] || m.estado}</span></div></div>
       </div>
-      ${ras.length?`
+      ${ras.length ? `
         <div style="margin:14px 0 10px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Reservas activas (${ras.length})</div>
-        ${ras.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <div><div style="font-weight:500">${r.nombre}</div><div style="font-size:12px;color:var(--muted)">${r.personas} pers. · ${r.fecha} ${r.hora}</div></div>
-          <span class="mc-badge ${badgeClass(r.estado)}">${r.estado}</span>
+        ${ras.map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
+          <div><div style="font-weight:500">${esc(r.nombre)}</div><div style="font-size:12px;color:var(--muted)">${r.personas} pers. · ${r.fecha} ${r.hora}</div></div>
+          <span class="mc-badge ${badgeClass(r.estado)}">${ETIQUETA_RESERVA[r.estado] || r.estado}</span>
         </div>`).join('')}`
-        :`<p style="font-size:13px;color:var(--muted);margin:12px 0">Sin reservas activas en esta mesa.</p>`}
-      ${!esCajero() ? `
+        : '<p style="font-size:13px;color:var(--muted);margin:12px 0">Sin reservas activas en esta mesa (según los filtros actuales).</p>'}
+      ${!soloLectura() ? `
       <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)">
         <label class="mc-label" style="display:block;margin-bottom:7px">Cambiar estado</label>
         <div style="display:flex;gap:8px;align-items:center">
           <select class="mc-select" id="mc-nuevo-estado" style="flex:1">
-            <option value="disponible" ${m.estado==='disponible'?'selected':''}>Disponible</option>
-            <option value="reservada"  ${m.estado==='reservada'?'selected':''}>Reservada</option>
-            <option value="ocupada"    ${m.estado==='ocupada'?'selected':''}>Ocupada</option>
+            <option value="LIBRE"     ${m.estado === 'LIBRE' ? 'selected' : ''}>Disponible</option>
+            <option value="RESERVADA" ${m.estado === 'RESERVADA' ? 'selected' : ''}>Reservada</option>
+            <option value="OCUPADA"   ${m.estado === 'OCUPADA' ? 'selected' : ''}>Ocupada</option>
           </select>
-          <button class="mc-btn mc-btn-primary" onclick="mcCambiarEstadoMesa(${m.id},${m.numero})">Actualizar</button>
+          <button class="mc-btn mc-btn-primary" onclick="mcCambiarEstadoMesa(${m.numero})">Actualizar</button>
         </div>
       </div>` : ''}
       <div class="mc-btn-row">
         <button class="mc-btn mc-btn-secondary" onclick="mcCloseModal('mc-modal-mesa')">Cerrar</button>
       </div>`;
-    document.getElementById('mc-modal-mesa').classList.add('open');
+    $('mc-modal-mesa').classList.add('open');
   };
 
-  window.mcCambiarEstadoMesa = function(id, numeroMesa){
-    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
-    const est = document.getElementById('mc-nuevo-estado').value;
-    const mesa = mesas.find(m=>m.id===id);
-    mesas = mesas.map(m=>m.id===id?{...m,estado:est}:m);
-    if(mesa){
-      djangoPost('/reservas/mesa/guardar/', {
-        numero_mesa: numeroMesa, capacidad: mesa.capacidad,
-        ubicacion: mesa.ubicacion, estado: est,
-      }).catch(e => console.error('Error actualizando estado:', e));
+  window.mcCambiarEstadoMesa = async function (numero) {
+    if (soloLectura()) { toast('No tienes permisos para realizar esta acción', 'error'); return; }
+    const m = getMesa(numero);
+    if (!m) return;
+    const est = $('mc-nuevo-estado').value;
+    try {
+      await apiPost(API.mesaGuardar, {
+        numero_mesa: numero, capacidad: m.capacidad, ubicacion: m.ubicacion, estado: est,
+      });
+      await cargarMesas();
+      mcCloseModal('mc-modal-mesa');
+      mcRenderDiagrama();
+      mcRenderTablaMesas();
+      toast('Estado actualizado');
+    } catch (e) {
+      toast(e.message, 'error');
     }
-    save(); mcCloseModal('mc-modal-mesa'); mcRenderDiagrama(); mcRenderTablaMesas(); toast('Estado actualizado');
   };
 
-  window.mcPedirEliminarMesa = function(id){
-    if(esCajero()){ toast('No tienes permisos para realizar esta acción','error'); return; }
-    const m=mesas.find(x=>x.id===id); if(!m) return;
+  window.mcPedirEliminarMesa = function (numero) {
+    if (soloLectura()) { toast('No tienes permisos para realizar esta acción', 'error'); return; }
+    const m = getMesa(numero);
+    if (!m) return;
     mcConfirm('Eliminar mesa',
-      `¿Eliminar la Mesa ${m.numero}? También se perderán sus reservas asociadas.`,
-      ()=>{
-        mesas   = mesas.filter(x=>x.id!==id);
-        reservas= reservas.filter(r=>r.mesaId!==id);
-        djangoPost('/reservas/mesa/eliminar/', { numero_mesa: m.numero })
-          .catch(e => console.error('Error eliminando mesa:', e));
-        save(); mcRenderTablaMesas(); mcRenderDiagrama(); toast('Mesa eliminada');
+      `¿Eliminar la Mesa ${m.numero}? También se eliminarán sus reservas asociadas.`,
+      async () => {
+        try {
+          await apiPost(API.mesaEliminar, { numero_mesa: numero });
+          await cargarMesas();
+          mcRenderTablaMesas();
+          await mcRenderTabla();
+          mcRenderDiagrama();
+          mcPoblarMesas();
+          toast('Mesa eliminada');
+        } catch (e) {
+          toast(e.message, 'error');
+        }
       });
   };
 
-  window.mcExportarMesasPDF = function(){
+  window.mcExportarMesasPDF = function () {
     const lista = mcListaMesasFiltrada();
-    if(!lista.length){ toast('No hay mesas para exportar','error'); return; }
-    if(!window.jspdf){ toast('No se pudo cargar la librería de PDF','error'); return; }
+    if (!lista.length) { toast('No hay mesas para exportar', 'error'); return; }
+    if (!window.jspdf) { toast('No se pudo cargar la librería de PDF', 'error'); return; }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text('Asadero Porras — Reporte de Mesas', 14, 16);
     doc.setFontSize(10); doc.setTextColor(100);
     doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + lista.length + ' mesa(s)', 14, 22);
-    const filas = lista.map(m => ['Mesa ' + m.numero, String(m.capacidad) + ' pers.', m.ubicacion, m.estado]);
+    const filas = lista.map(m => ['Mesa ' + m.numero, m.capacidad + ' pers.', m.ubicacion, ETIQUETA_MESA[m.estado] || m.estado]);
     doc.autoTable({
       head: [['Mesa', 'Capacidad', 'Ubicación', 'Estado']], body: filas, startY: 28,
       styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
@@ -549,13 +737,13 @@
     toast('Reporte PDF generado');
   };
 
-  window.mcExportarMesasExcel = function(){
+  window.mcExportarMesasExcel = function () {
     const lista = mcListaMesasFiltrada();
-    if(!lista.length){ toast('No hay mesas para exportar','error'); return; }
-    if(!window.XLSX){ toast('No se pudo cargar la librería de Excel','error'); return; }
+    if (!lista.length) { toast('No hay mesas para exportar', 'error'); return; }
+    if (!window.XLSX) { toast('No se pudo cargar la librería de Excel', 'error'); return; }
     const datos = lista.map(m => ({
       'Mesa': 'Mesa ' + m.numero, 'Capacidad': m.capacidad,
-      'Ubicación': m.ubicacion, 'Estado': m.estado,
+      'Ubicación': m.ubicacion, 'Estado': ETIQUETA_MESA[m.estado] || m.estado,
     }));
     const hoja = XLSX.utils.json_to_sheet(datos);
     hoja['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }];
@@ -565,14 +753,14 @@
     toast('Reporte Excel generado');
   };
 
-  window.mcImprimirMesas = function(){
+  window.mcImprimirMesas = function () {
     const lista = mcListaMesasFiltrada();
-    if(!lista.length){ toast('No hay mesas para imprimir','error'); return; }
+    if (!lista.length) { toast('No hay mesas para imprimir', 'error'); return; }
     const filas = lista.map(m => `<tr>
         <td>Mesa ${m.numero}</td><td>${m.capacidad} pers.</td>
-        <td>${m.ubicacion}</td><td>${m.estado}</td>
+        <td>${esc(m.ubicacion)}</td><td>${ETIQUETA_MESA[m.estado] || m.estado}</td>
       </tr>`).join('');
-    document.getElementById('mc-print-area').innerHTML = `
+    $('mc-print-area').innerHTML = `
       <h2>Asadero Porras — Reporte de Mesas</h2>
       <p>Generado el ${new Date().toLocaleString('es-CO')} — ${lista.length} mesa(s)</p>
       <table>
@@ -582,22 +770,28 @@
     window.print();
   };
 
-  if(mesas.length) contadorM = Math.max(contadorM, ...mesas.map(m=>m.id||0));
-
-  function fijarFechaMin(){
-    const input = document.getElementById('mc-c-fecha');
-    if(input) input.min = hoy();
+  // ─── Arranque ─────────────────────────────────────────────
+  function fijarFechaMin() {
+    const input = $('mc-c-fecha');
+    if (input) input.min = hoy();
   }
 
-  save();
-  fijarFechaMin();
-  mcPoblarMesas();
-  mcRenderTabla();
+  async function iniciar() {
+    fijarFechaMin();
+    await cargarMesas();
+    await mcRenderTabla();
+    mcRenderDiagrama();
+    mcRenderTablaMesas();
+    mcPoblarMesas();
 
-  // Si la URL trae ?tab=crear / mesas / crear-mesa (enlaces del sidebar),
-  // abrimos esa pestaña automáticamente al cargar la página.
-  const tabInicial = new URLSearchParams(window.location.search).get('tab');
-  if (tabInicial && document.getElementById('mc-' + tabInicial)) {
-    mcShow(tabInicial);
+    // ?tab=crear / mesas / crear-mesa desde los enlaces del menú lateral.
+    const tabInicial = new URLSearchParams(window.location.search).get('tab');
+    if (tabInicial && $('mc-' + tabInicial)) mcShow(tabInicial);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciar);
+  } else {
+    iniciar();
   }
 })();

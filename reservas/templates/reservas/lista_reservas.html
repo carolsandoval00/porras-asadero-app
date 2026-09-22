@@ -13,28 +13,17 @@
       oninput="mcRenderTabla()"
     >
 
-    <select
-      class="mc-select"
-      id="mc-filtro-estado"
-      onchange="mcRenderTabla()"
-    >
-      <option value="">Todos los estados</option>
-      <option value="confirmada">Confirmada</option>
-      <option value="pendiente">Pendiente</option>
-      <option value="cancelada">Cancelada</option>
-    </select>
+  
 
-    <select
-      class="mc-select"
-      id="mc-filtro-fecha"
-      onchange="mcToggleFiltroFecha()"
-    >
+    <!-- ===== FILTRO POR FECHAS ===== -->
+    <select class="mc-select" id="mc-filtro-fecha" onchange="mcToggleFiltroFecha()">
       <option value="">Todas las fechas</option>
       <option value="hoy">Hoy</option>
       <option value="futuras">Próximas</option>
       <option value="pasadas">Pasadas</option>
       <option value="dia">Día específico</option>
       <option value="mes">Mes específico</option>
+      <option value="rango">Rango de fechas</option>
     </select>
 
     <input
@@ -52,6 +41,21 @@
       style="display:none;max-width:170px"
       onchange="mcRenderTabla()"
     >
+
+    <div id="mc-filtro-rango" style="display:none;gap:6px;align-items:center">
+      <label class="mc-label" for="mc-filtro-desde" style="margin:0">Desde</label>
+      <input type="date" class="mc-input" id="mc-filtro-desde"
+             style="max-width:160px" onchange="mcRenderTabla()">
+      <label class="mc-label" for="mc-filtro-hasta" style="margin:0">Hasta</label>
+      <input type="date" class="mc-input" id="mc-filtro-hasta"
+             style="max-width:160px" onchange="mcRenderTabla()">
+    </div>
+
+    <button class="mc-btn-report" onclick="mcLimpiarFiltros()" title="Quitar todos los filtros">
+      Limpiar filtros
+    </button>
+
+    <span id="mc-contador-reservas" class="mc-muted-sm"></span>
 
     <div class="mc-report-bar">
       <button class="mc-btn-report mc-btn-report-pdf" onclick="mcExportarPDF()" title="Descargar PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
