@@ -67,7 +67,10 @@ class PedidoModelTest(TestCase):
         self.assertIsNone(self.pedido.cliente)
 
     def test_numero_orden(self):
-        self.assertEqual(self.pedido.numero_orden, f"ORD-{self.pedido.id:05d}")
+        # La numeración es por posición consecutiva (1, 2, 3, ...), no por el
+        # id crudo, para que no queden huecos si se elimina algún pedido.
+        # Se muestra como "01", "02", etc. (sin prefijo, con un cero adelante).
+        self.assertEqual(self.pedido.numero_orden, "01")
 
     def test_impuesto_property(self):
         self.pedido.impuestos = Decimal("1000.00")

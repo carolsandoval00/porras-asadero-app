@@ -85,9 +85,23 @@ def _items_as_json(pedido):
     return json.dumps(items, ensure_ascii=False)
 
 
+def _fechas_filtro_clampeadas(request):
+    """Lee fecha_desde/fecha_hasta del GET y nunca permite que sean posteriores a hoy."""
+    hoy = timezone.localdate().isoformat()
+    fecha_desde = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta = request.GET.get('fecha_hasta', '').strip()
+    if fecha_desde and fecha_desde > hoy:
+        fecha_desde = hoy
+    if fecha_hasta and fecha_hasta > hoy:
+        fecha_hasta = hoy
+    return fecha_desde, fecha_hasta
+
+
 def _pedidos_filtrados(request):
     q = request.GET.get('q', '').strip()
     estado_sel = request.GET.get('estado', '').strip()
+    fecha_desde, fecha_hasta = _fechas_filtro_clampeadas(request)
+
     qs = (
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
@@ -100,6 +114,10 @@ def _pedidos_filtrados(request):
         )
     if estado_sel:
         qs = qs.filter(estado=estado_sel)
+    if fecha_desde:
+        qs = qs.filter(fecha_creacion__date__gte=fecha_desde)
+    if fecha_hasta:
+        qs = qs.filter(fecha_creacion__date__lte=fecha_hasta)
     return qs
 
 
@@ -121,7 +139,7 @@ def dashboard(request):
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
         .order_by('-fecha_creacion')[:5]
-    )[::-1]
+    )
 
     return render(request, 'pedidos/dashboard.html', {
         'titulo': 'Pedidos',
@@ -143,6 +161,7 @@ def pedido_lista(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q          = request.GET.get('q', '').strip()
     estado_sel = request.GET.get('estado', '').strip()
+    fecha_desde, fecha_hasta = _fechas_filtro_clampeadas(request)
     pedidos_qs = _pedidos_filtrados(request)
     pedidos_lista_data = list(pedidos_qs)
     pedidos_por_fecha  = []
@@ -155,6 +174,8 @@ def pedido_lista(request):
         'estados': Pedido.ESTADO_CHOICES,
         'q': q,
         'estado_sel': estado_sel,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
         'seccion_activa': 'pedido-lista',
     })
 
@@ -323,7 +344,9 @@ def orden_lista(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
 
     q_orden = request.GET.get('q_orden', '').strip()
-    ordenes_qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa').order_by('fecha_creacion'))
+    fecha_desde, fecha_hasta = _fechas_filtro_clampeadas(request)
+    ordenes_qs = _ordenes_filtradas(request)
+    ordenes_qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa').order_by('-fecha_creacion'))
     if q_orden:
         clean_q = q_orden.replace('ORD-', '').lstrip('0')
         if clean_q.isdigit():
@@ -337,7 +360,8 @@ def orden_lista(request):
         ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
     return render(request, 'pedidos/orden_lista.html', {
         'titulo': 'Pedidos', 'ordenes_por_fecha': ordenes_por_fecha,
-        'q_orden': q_orden, 'seccion_activa': 'orden-lista'})
+        'q_orden': q_orden, 'fecha_desde': fecha_desde, 'fecha_hasta': fecha_hasta,
+        'seccion_activa': 'orden-lista'})
 
 
 @login_required
@@ -747,14 +771,19 @@ def cliente_exportar_excel(request):
 
 def _ordenes_filtradas(request):
     q_orden = request.GET.get('q_orden', '').strip()
+    fecha_desde, fecha_hasta = _fechas_filtro_clampeadas(request)
     qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa')
-        .prefetch_related('items__producto').order_by('fecha_creacion'))
+        .prefetch_related('items__producto').order_by('-fecha_creacion'))
     if q_orden:
         clean_q = q_orden.replace('ORD-', '').lstrip('0')
         if clean_q.isdigit():
             qs = qs.filter(Q(id=int(clean_q)) | Q(cliente__nombre_completo__icontains=q_orden))
         else:
             qs = qs.filter(cliente__nombre_completo__icontains=q_orden)
+    if fecha_desde:
+        qs = qs.filter(fecha_creacion__date__gte=fecha_desde)
+    if fecha_hasta:
+        qs = qs.filter(fecha_creacion__date__lte=fecha_hasta)
     return qs
 
 

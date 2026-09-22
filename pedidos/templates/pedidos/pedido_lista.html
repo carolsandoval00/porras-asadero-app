@@ -60,9 +60,9 @@
       <h3>Pedidos</h3>
       {% if request.user.rol == 'ADMIN' or request.user.is_superuser %}
       <div class="pm-card-header-actions">
-        <a href="{% url 'pedidos:pedido_exportar_pdf' %}?q={{ q }}&estado={{ estado_sel }}"
+        <a href="{% url 'pedidos:pedido_exportar_pdf' %}?q={{ q }}&estado={{ estado_sel }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
            class="pm-btn pm-btn-danger pm-btn-sm" data-tooltip="Descargar en PDF">⬇ PDF</a>
-        <a href="{% url 'pedidos:pedido_exportar_excel' %}?q={{ q }}&estado={{ estado_sel }}"
+        <a href="{% url 'pedidos:pedido_exportar_excel' %}?q={{ q }}&estado={{ estado_sel }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
            class="pm-btn pm-btn-success pm-btn-sm" data-tooltip="Descargar en Excel">⬇ Excel</a>
         <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Imprimir esta lista">🖨 Imprimir</button>
         <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm" data-tooltip="Hacer un pedido nuevo">Nuevo pedido</a>
@@ -75,12 +75,9 @@
       <form method="get" action="" class="pm-search-form pm-mb-lg">
         <input class="pm-input"
                type="text" name="q" value="{{ q }}" placeholder="Buscar por cliente o descripción…" data-tooltip="Escribe para buscar">
-        <select name="estado" class="pm-select-filter" data-tooltip="Filtra los pedidos por su estado">
-          <option value="">Todos los estados</option>
-          {% for valor, etiqueta in estados %}
-          <option value="{{ valor }}" {% if estado_sel == valor %}selected{% endif %}>{{ etiqueta }}</option>
-          {% endfor %}
-        </select>
+  
+        <input class="pm-input" type="date" name="fecha_desde" value="{{ fecha_desde }}" max="{% now 'Y-m-d' %}" data-tooltip="Desde esta fecha">
+        <input class="pm-input" type="date" name="fecha_hasta" value="{{ fecha_hasta }}" max="{% now 'Y-m-d' %}" data-tooltip="Hasta esta fecha">
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Buscar">Filtrar</button>
         <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Quitar los filtros">Limpiar</a>
       </form>

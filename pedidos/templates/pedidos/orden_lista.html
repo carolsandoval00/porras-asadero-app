@@ -62,9 +62,9 @@
     <div class="pm-card-header">
       <h3>Órdenes Comerciales</h3>
       <div class="pm-card-header-actions">
-        <a href="{% url 'pedidos:orden_exportar_pdf' %}?q_orden={{ q_orden }}"
+        <a href="{% url 'pedidos:orden_exportar_pdf' %}?q_orden={{ q_orden }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
            class="pm-btn pm-btn-danger pm-btn-sm" data-tooltip="Descargar en PDF">⬇ PDF</a>
-        <a href="{% url 'pedidos:orden_exportar_excel' %}?q_orden={{ q_orden }}"
+        <a href="{% url 'pedidos:orden_exportar_excel' %}?q_orden={{ q_orden }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
            class="pm-btn pm-btn-success pm-btn-sm" data-tooltip="Descargar en Excel">⬇ Excel</a>
         <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Imprimir esta lista">🖨 Imprimir</button>
       </div>
@@ -73,7 +73,10 @@
       <!-- Buscador -->
       <form method="get" action="" class="pm-search-form pm-mb-lg">
         <input class="pm-input" type="text" name="q_orden" value="{{ q_orden }}" placeholder="Buscar orden o cliente…" data-tooltip="Escribe para buscar">
+        <input class="pm-input" type="date" name="fecha_desde" value="{{ fecha_desde }}" max="{% now 'Y-m-d' %}" data-tooltip="Desde esta fecha">
+        <input class="pm-input" type="date" name="fecha_hasta" value="{{ fecha_hasta }}" max="{% now 'Y-m-d' %}" data-tooltip="Hasta esta fecha">
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Buscar">Filtrar</button>
+        <a href="{% url 'pedidos:orden_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Quitar los filtros">Limpiar</a>
       </form>
 
       {% if ordenes_por_fecha %}
