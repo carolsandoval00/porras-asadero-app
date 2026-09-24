@@ -48,6 +48,16 @@
       <input type="date" class="mc-input" id="mc-filtro-hasta"
              style="max-width:160px" onchange="mcRenderTabla()">
     </div>
+  </div>
+  <div class="mc-nav-row">
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver todas las reservas">Reservas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Hacer una reserva nueva">+ Nueva reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver el mapa de mesas del restaurante">Diagrama de mesas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Agregar una mesa nueva">+ Nueva mesa</a>
+    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn active" data-tooltip="Ver y editar las mesas existentes">Editar mesa</a>
+    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn" data-tooltip="Borrar una reserva">Eliminar reserva</a>
+  </div>
+</div>
 
     <button class="mc-btn-report" onclick="mcLimpiarFiltros()" title="Quitar todos los filtros">
       Limpiar filtros
@@ -77,9 +87,73 @@
             <th>Acciones</th>
           </tr>
         </thead>
-
-        <tbody id="mc-tbody-reservas"></tbody>
+        <tbody>
+          {% for mesa in mesas %}
+          <tr>
+            <td>Mesa {{ mesa.numero_mesa }}</td>
+            <td>{{ mesa.capacidad }} personas</td>
+            <td>{{ mesa.ubicacion }}</td>
+            <td>
+              {% if mesa.estado == 'LIBRE' %}
+                <span class="mc-badge mc-badge-ok">Libre</span>
+              {% elif mesa.estado == 'OCUPADA' %}
+                <span class="mc-badge mc-badge-danger">Ocupada</span>
+              {% elif mesa.estado == 'RESERVADA' %}
+                <span class="mc-badge mc-badge-warn">Reservada</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="mc-action-btns">
+                <a href="{% url 'actualizar_mesa' mesa.numero_mesa %}" class="mc-icon-btn edit" data-tooltip="Editar esta mesa">
+                  <i class="bi bi-pencil-fill"></i> Editar
+                </a>
+                <button type="button" class="mc-icon-btn del" data-tooltip="Borrar esta mesa"
+                        onclick="abrirConfirm({{ mesa.numero_mesa }})">
+                  <i class="bi bi-trash-fill"></i> Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="mc-empty">
+              <div class="mc-empty-icon"><i class="bi bi-table"></i></div>
+              <p>No hay mesas registradas</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+{% if messages %}
+<!-- ===== MODAL MENSAJE (éxito / error) ===== -->
+<div class="mc-confirm-overlay open" id="modal-mensaje">
+  <div class="mc-confirm-box">
+    {% for msg in messages %}
+      <h3>{% if msg.tags == 'error' %}Ocurrió un error{% else %}Listo{% endif %}</h3>
+      <p>{{ msg }}</p>
+    {% endfor %}
+    <div class="mc-confirm-btns">
+      <button class="mc-btn mc-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ===== MODAL CONFIRMAR ELIMINAR ===== -->
+<div class="mc-confirm-overlay" id="confirm-eliminar">
+  <div class="mc-confirm-box">
+    <h3>Eliminar mesa</h3>
+    <p id="confirm-msg">¿Eliminar la Mesa? También se perderán sus reservas asociadas.</p>
+    <div class="mc-confirm-btns">
+      <button class="mc-btn mc-btn-secondary" onclick="cerrarConfirm()" data-tooltip="Cerrar sin eliminar">Cancelar</button>
+      <form method="post" id="confirm-form" class="mc-inline">
+        {% csrf_token %}
+        <button type="submit" class="mc-btn mc-btn-danger" data-tooltip="Esta acción no se puede deshacer">Eliminar</button>
+      </form>
     </div>
   </div>
 </div>

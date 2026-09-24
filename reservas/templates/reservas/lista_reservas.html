@@ -11,12 +11,27 @@
       id="mc-buscar"
       placeholder="Buscar por nombre o teléfono..."
       oninput="mcRenderTabla()"
+      data-tooltip="Escribe para buscar"
     >
 
-  
+    <select
+      class="mc-select"
+      id="mc-filtro-estado"
+      onchange="mcRenderTabla()"
+      data-tooltip="Filtra por estado de la reserva"
+    >
+      <option value="">Todos los estados</option>
+      <option value="confirmada">Confirmada</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="cancelada">Cancelada</option>
+    </select>
 
-    <!-- ===== FILTRO POR FECHAS ===== -->
-    <select class="mc-select" id="mc-filtro-fecha" onchange="mcToggleFiltroFecha()">
+    <select
+      class="mc-select"
+      id="mc-filtro-fecha"
+      onchange="mcToggleFiltroFecha()"
+      data-tooltip="Filtra por fecha"
+    >
       <option value="">Todas las fechas</option>
       <option value="hoy">Hoy</option>
       <option value="futuras">Próximas</option>
@@ -32,6 +47,7 @@
       id="mc-filtro-fecha-dia"
       style="display:none;max-width:170px"
       onchange="mcRenderTabla()"
+      data-tooltip="Elige el día"
     >
 
     <input
@@ -40,6 +56,7 @@
       id="mc-filtro-fecha-mes"
       style="display:none;max-width:170px"
       onchange="mcRenderTabla()"
+      data-tooltip="Elige el mes"
     >
 
     <div id="mc-filtro-rango" style="display:none;gap:6px;align-items:center">
@@ -58,9 +75,9 @@
     <span id="mc-contador-reservas" class="mc-muted-sm"></span>
 
     <div class="mc-report-bar">
-      <button class="mc-btn-report mc-btn-report-pdf" onclick="mcExportarPDF()" title="Descargar PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
-      <button class="mc-btn-report mc-btn-report-excel" onclick="mcExportarExcel()" title="Descargar Excel"><i class="bi bi-file-earmark-excel"></i> Excel</button>
-      <button class="mc-btn-report" onclick="mcImprimir()" title="Imprimir"><i class="bi bi-printer"></i> Imprimir</button>
+      <button class="mc-btn-report mc-btn-report-pdf" onclick="mcExportarPDF()" data-tooltip="Descargar en PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+      <button class="mc-btn-report mc-btn-report-excel" onclick="mcExportarExcel()" data-tooltip="Descargar en Excel"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+      <button class="mc-btn-report" onclick="mcImprimir()" data-tooltip="Imprimir esta lista"><i class="bi bi-printer"></i> Imprimir</button>
     </div>
   </div>
 

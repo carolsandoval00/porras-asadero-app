@@ -8,6 +8,8 @@ from django.db.models import Sum, Q
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from itertools import groupby
+from datetime import datetime
+from urllib.parse import urlencode
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
 from pedidos.models import Pedido
@@ -281,7 +283,6 @@ def caja_detalle(request, pk):
         'pagos_pendientes':   0,
         'monto_total':        sum(p.monto for p in pagos_lista_data),
         'nombre':             request.user.get_full_name() or request.user.username,
-        'cajas':              Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
         'caja_seleccionada':  caja_seleccionada,
         'pagos_caja':         pagos_caja,
         'total_ingresos':     total_ingresos,
@@ -377,6 +378,7 @@ def pagos_exportar_pdf(request):
     elementos = [
         Paragraph('Porras Asadero — Pagos registrados', estilos['Title']),
         Paragraph(f'Generado el {timezone.now().strftime("%d/%m/%Y %I:%M %p")}', estilos['Normal']),
+        Paragraph(f'Rango: {_rango_texto(request)}', estilos['Normal']),
         Spacer(1, 0.5*cm),
     ]
 
@@ -422,5 +424,6 @@ def pagos_imprimir(request):
     return render(request, 'pago/pagos_imprimir.html', {
         'pagos':  pagos,
         'ahora':  timezone.now(),
+        'rango':  _rango_texto(request),
         'total':  pagos.aggregate(t=Sum('monto'))['t'] or 0,
     })

@@ -12,12 +12,12 @@
     </div>
   </div>
   <div class="mc-nav-row">
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Reservas</a>
-    <a href="{% url 'reserva_inicio' %}?tab=crear" class="mc-nav-btn">+ Nueva reserva</a>
-    <a href="{% url 'reserva_inicio' %}?tab=mesas" class="mc-nav-btn">Diagrama de mesas</a>
-    <a href="{% url 'reserva_inicio' %}?tab=crear-mesa" class="mc-nav-btn">+ Nueva mesa</a>
-    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn">Editar mesa</a>
-    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn active">Eliminar reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver el panel de reservas">Reservas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Crear una reserva nueva">+ Nueva reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver el mapa de mesas">Diagrama de mesas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Agregar una mesa nueva">+ Nueva mesa</a>
+    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn" data-tooltip="Editar una mesa existente">Editar mesa</a>
+    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn active" data-tooltip="Borrar una reserva">Eliminar reserva</a>
   </div>
 </div>
 
@@ -74,53 +74,44 @@
     </form>
   </div>
 
-  {% if not detalles %}
-    <!-- Estado: sin reservas -->
-    <div class="mc-card">
-      <div class="mc-empty">
-        <div class="mc-empty-emoji">📋</div>
-        <p>No hay reservas que coincidan con los filtros.</p>
-        <a href="{% url 'reserva_inicio' %}" class="mc-back-link">← Volver al panel</a>
+  <!-- Tabla de reservas -->
+  <div class="mc-card mc-hidden" id="ed-tabla">
+    <div class="mc-card-title">Reservas registradas</div>
+    <div class="mc-table-wrap">
+      <table class="mc-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Cliente</th><th>Mesa</th>
+            <th>Fecha</th><th>Hora</th><th>Personas</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="ed-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Selector + botón eliminar -->
+  <div class="mc-card mc-hidden" id="ed-form">
+    <div class="mc-card-title">Seleccionar reserva a eliminar</div>
+
+    <label class="mc-label">Reserva *</label>
+    <select class="mc-select" id="ed-select" data-tooltip="Elige la reserva que quieres borrar">
+      <option value="">— Seleccionar —</option>
+    </select>
+
+    <!-- Confirmación -->
+    <div id="ed-confirm-box" class="mc-confirm-inline">
+      <p class="mc-confirm-warn">⚠️ ¿Estás segura de que deseas eliminar esta reserva?</p>
+      <p id="ed-confirm-texto" class="mc-confirm-detail"></p>
+      <div class="mc-btn-row">
+        <button class="mc-btn mc-btn-secondary" onclick="edCancelar()" data-tooltip="No borrar, volver atrás">Cancelar</button>
+        <button class="mc-btn mc-btn-danger" onclick="edConfirmarEliminar()" data-tooltip="Confirmar y borrar la reserva">Sí, eliminar</button>
       </div>
     </div>
-  {% else %}
 
-    <!-- Tabla de reservas -->
-    <div class="mc-card">
-      <div class="mc-card-title">Reservas registradas ({{ detalles|length }})</div>
-      <div class="mc-table-wrap">
-        <table class="mc-table">
-          <thead>
-            <tr>
-              <th>ID</th><th>Cliente</th><th>Mesa</th>
-              <th>Fecha</th><th>Hora</th><th>Personas</th><th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in detalles %}
-              <tr>
-                <td class="mc-id-cell">#{{ r.id }}</td>
-                <td class="mc-cell-name">
-                  {{ r.nombre_usuario }}
-                  <div style="font-size:12px;color:var(--muted)">{{ r.telefono }}</div>
-                </td>
-                <td>Mesa {{ r.numero_mesa_id }}</td>
-                <td>{{ r.fecha_reserva|date:"Y-m-d" }}</td>
-                <td>{{ r.hora_reserva|time:"H:i" }}</td>
-                <td class="mc-cell-center">{{ r.numero_personas }}</td>
-                <td>
-                  <span class="mc-badge
-                    {% if r.estado == 'CONFIRMADA' %}mc-badge-ok
-                    {% elif r.estado == 'PENDIENTE' %}mc-badge-warn
-                    {% else %}mc-badge-danger{% endif %}">
-                    {{ r.get_estado_display }}
-                  </span>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+    <div class="mc-btn-row" id="ed-btn-row">
+      <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary" data-tooltip="Volver al panel de reservas">← Volver</a>
+      <button class="mc-btn mc-btn-primary" onclick="edPedirConfirmacion()" data-tooltip="Borrar la reserva seleccionada">Eliminar reserva</button>
     </div>
 
     <!-- Selector + botón eliminar -->

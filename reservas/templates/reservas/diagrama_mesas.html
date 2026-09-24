@@ -4,13 +4,13 @@
       <p>Vista del salón en tiempo real — haz clic en una mesa para ver detalles o cambiar su estado</p>
     </div>
     <div class="mc-filter-bar">
-      <select class="mc-select" id="mc-filtro-diagrama" onchange="mcRenderDiagrama()">
+      <select class="mc-select" id="mc-filtro-diagrama" onchange="mcRenderDiagrama()" data-tooltip="Filtra las mesas por estado">
         <option value="">Todas las mesas</option>
         <option value="LIBRE">Solo disponibles</option>
         <option value="RESERVADA">Solo reservadas</option>
         <option value="OCUPADA">Solo ocupadas</option>
       </select>
-      <select class="mc-select" id="mc-filtro-zona" onchange="mcRenderDiagrama()">
+      <select class="mc-select" id="mc-filtro-zona" onchange="mcRenderDiagrama()" data-tooltip="Filtra las mesas por zona">
         <option value="">Todas las zonas</option>
         <option>Salón principal</option><option>Salón secundario</option>
       </select>

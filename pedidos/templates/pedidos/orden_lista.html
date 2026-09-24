@@ -163,10 +163,10 @@
                       {% else %}
                       <span class="pm-badge pm-badge-{{ o.estado }}">Ya enviado</span>
                       {% endif %}
-                      <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">Ver detalle</a>
+                      <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Ver el detalle de esta orden">Ver detalle</a>
                     {% else %}
-                    <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm">Editar</a>
-                    <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm">Ver detalle</a>
+                    <a href="{% url 'pedidos:orden_editar' o.pk %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Editar esta orden">Editar</a>
+                    <a href="{% url 'pedidos:orden_detalle' o.pk %}" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Ver el detalle de esta orden">Ver detalle</a>
                     {% endif %}
                   </td>
                 </tr>

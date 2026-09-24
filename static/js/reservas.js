@@ -567,10 +567,10 @@
       <td style="font-size:12px;color:var(--muted)">${esc(m.ubicacion)}</td>
       <td><span class="mc-badge ${badgeClass(m.estado)}">${ETIQUETA_MESA[m.estado] || m.estado}</span></td>
       <td><div class="mc-action-btns">
-        <button class="mc-icon-btn" onclick="mcVerMesa(${m.numero})">Ver</button>
-        ${!soloLectura() ? `
-          <button class="mc-icon-btn edit" onclick="mcEditarMesa(${m.numero})">Editar</button>
-          <button class="mc-icon-btn del" onclick="mcPedirEliminarMesa(${m.numero})">Borrar</button>
+        <button class="mc-icon-btn" data-tooltip="Ver el detalle de esta mesa" onclick="mcVerMesa(${m.id})">Ver</button>
+        ${!esCajero() ? `
+          <button class="mc-icon-btn edit" data-tooltip="Editar esta mesa" onclick="mcEditarMesa(${m.id})">Editar</button>
+          <button class="mc-icon-btn del" data-tooltip="Borrar esta mesa" onclick="mcPedirEliminarMesa(${m.id})">Borrar</button>
         ` : ''}
       </div></td>
     </tr>`).join('');
@@ -617,22 +617,18 @@
       wrap.style.minHeight = '200px';
       return;
     }
-
-    const cols = 4, size = 92, gap = 18, offX = 28, offY = 46;
-    const rows = Math.ceil(lista.length / cols);
-    wrap.style.minHeight = (rows * (size + gap) + offY + 36) + 'px';
-    cont.innerHTML = lista.map((m, i) => {
-      const col = i % cols, row = Math.floor(i / cols);
-      const x = offX + col * (size + gap), y = offY + row * (size + gap);
-      const ra = reservas.find(res => res.mesa === m.numero && res.estado === 'CONFIRMADA');
-      const tip = (m.estado === 'RESERVADA' && ra)
-        ? `${ra.nombre} · ${ra.fecha} ${ra.hora}`
-        : `${m.capacidad} personas · ${m.ubicacion}`;
-      return `<div class="mc-mesa ${CLASE_MESA[m.estado] || 'disponible'}" style="left:${x}px;top:${y}px;width:${size}px;height:76px" onclick="mcVerMesa(${m.numero})">
+    const cols=4,size=92,gap=18,offX=28,offY=46;
+    const rows=Math.ceil(lista.length/cols);
+    wrap.style.minHeight=(rows*(size+gap)+offY+36)+'px';
+    cont.innerHTML=lista.map((m,i)=>{
+      const col=i%cols,row=Math.floor(i/cols);
+      const x=offX+col*(size+gap), y=offY+row*(size+gap);
+      const ra=reservas.find(r=>r.mesaId===m.id&&r.estado==='confirmada');
+      const tip=(m.estado==='reservada'&&ra?`${ra.nombre} · ${ra.fecha} ${ra.hora}`:`${m.capacidad} personas · ${m.ubicacion}`).replace(/"/g,'&quot;');
+      return `<div class="mc-mesa ${m.estado}" style="left:${x}px;top:${y}px;width:${size}px;height:76px" data-tooltip="${tip}" onclick="mcVerMesa(${m.id})">
         <div class="mc-mesa-num">Mesa ${m.numero}</div>
         <div class="mc-mesa-cap">${m.capacidad} pers.</div>
         <div class="mc-mesa-dot"></div>
-        <div class="mc-tooltip">${esc(tip)}</div>
       </div>`;
     }).join('');
   };
@@ -667,11 +663,11 @@
             <option value="RESERVADA" ${m.estado === 'RESERVADA' ? 'selected' : ''}>Reservada</option>
             <option value="OCUPADA"   ${m.estado === 'OCUPADA' ? 'selected' : ''}>Ocupada</option>
           </select>
-          <button class="mc-btn mc-btn-primary" onclick="mcCambiarEstadoMesa(${m.numero})">Actualizar</button>
+          <button class="mc-btn mc-btn-primary" data-tooltip="Guardar el nuevo estado" onclick="mcCambiarEstadoMesa(${m.id},${m.numero})">Actualizar</button>
         </div>
       </div>` : ''}
       <div class="mc-btn-row">
-        <button class="mc-btn mc-btn-secondary" onclick="mcCloseModal('mc-modal-mesa')">Cerrar</button>
+        <button class="mc-btn mc-btn-secondary" data-tooltip="Cerrar esta ventana" onclick="mcCloseModal('mc-modal-mesa')">Cerrar</button>
       </div>`;
     $('mc-modal-mesa').classList.add('open');
   };
@@ -794,4 +790,94 @@
   } else {
     iniciar();
   }
+})();
+
+/**
+ * Tooltips flotantes delegados para botones dentro de modales
+ * (.mc-modal, .mc-confirm-box). Estos contenedores tienen
+ * overflow-y:auto y recortarían un tooltip CSS normal, así que
+ * el tooltip se crea con JS y se pega al <body>. Usa delegación
+ * de eventos en document para funcionar también con botones
+ * que se agregan después vía innerHTML (como "Actualizar" y
+ * "Cerrar" dentro de mcVerMesa).
+ */
+(function () {
+    let bubble = null;
+    let elActual = null;
+
+    function showTooltip(el) {
+        const text = el.getAttribute('data-tooltip');
+        if (!text) return;
+
+        bubble = document.createElement('div');
+        bubble.className = 'js-tooltip-bubble';
+        bubble.textContent = text;
+        document.body.appendChild(bubble);
+
+        const rect = el.getBoundingClientRect();
+        const bubbleRect = bubble.getBoundingClientRect();
+
+        let left = rect.left + rect.width / 2 - bubbleRect.width / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - bubbleRect.width - 8));
+
+        const espacioArriba = rect.top - bubbleRect.height - 10;
+        let top;
+        let abajo = false;
+        if (espacioArriba < 8) {
+            top = rect.bottom + 10;
+            abajo = true;
+        } else {
+            top = espacioArriba;
+        }
+
+        bubble.classList.toggle('abajo', abajo);
+        bubble.style.left = left + 'px';
+        bubble.style.top = top + 'px';
+
+        requestAnimationFrame(() => bubble.classList.add('show'));
+    }
+
+    function hideTooltip() {
+        if (bubble) {
+            bubble.remove();
+            bubble = null;
+        }
+        elActual = null;
+    }
+
+    document.addEventListener('mouseover', function (e) {
+        const el = e.target.closest('.mc-modal [data-tooltip], .mc-confirm-box [data-tooltip], .mc-floor-container [data-tooltip]');
+        if (el && el !== elActual) {
+            hideTooltip();
+            elActual = el;
+            showTooltip(el);
+        }
+    });
+
+    document.addEventListener('mouseout', function (e) {
+        const el = e.target.closest('.mc-modal [data-tooltip], .mc-confirm-box [data-tooltip], .mc-floor-container [data-tooltip]');
+        if (el && (!e.relatedTarget || !el.contains(e.relatedTarget))) {
+            hideTooltip();
+        }
+    });
+
+    document.addEventListener('focusin', function (e) {
+        const el = e.target.closest('.mc-modal [data-tooltip], .mc-confirm-box [data-tooltip], .mc-floor-container [data-tooltip]');
+        if (el && el !== elActual) {
+            hideTooltip();
+            elActual = el;
+            showTooltip(el);
+        }
+    });
+    document.addEventListener('focusout', function (e) {
+        const el = e.target.closest('.mc-modal [data-tooltip], .mc-confirm-box [data-tooltip], .mc-floor-container [data-tooltip]');
+        if (el) hideTooltip();
+    });
+
+    // Oculta el tooltip al hacer clic en cualquier lado (por ejemplo,
+    // al presionar "Cerrar", "Actualizar" o cualquier botón que
+    // cierre el modal o dispare una acción).
+    document.addEventListener('scroll', hideTooltip, true);
+    document.addEventListener('click', hideTooltip, true);
+    document.addEventListener('mousedown', hideTooltip, true);
 })();

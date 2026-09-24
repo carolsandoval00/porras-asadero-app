@@ -4,13 +4,13 @@
     <div class="pg-card-header">
   <h3>Pagos registrados</h3>
   <div class="pg-reportes">
-    <a href="{% url 'pago:pagos_pdf' %}?q_pago={{ q_pago }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank" data-tooltip="Descargar en PDF">
+    <a href="{% url 'pago:pagos_pdf' %}{% if filtro_pagos_qs %}?{{ filtro_pagos_qs }}{% endif %}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank" data-tooltip="Descargar en PDF">
       <i class="bi bi-file-earmark-arrow-down"></i> PDF
     </a>
-    <a href="{% url 'pago:pagos_excel' %}?q_pago={{ q_pago }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}" class="pg-btn pg-btn-excel pg-btn-sm" data-tooltip="Descargar en Excel">
+    <a href="{% url 'pago:pagos_excel' %}{% if filtro_pagos_qs %}?{{ filtro_pagos_qs }}{% endif %}" class="pg-btn pg-btn-excel pg-btn-sm" data-tooltip="Descargar en Excel">
       <i class="bi bi-file-earmark-arrow-down"></i> Excel
     </a>
-    <a href="{% url 'pago:pagos_imprimir' %}?q_pago={{ q_pago }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank" data-tooltip="Imprimir esta lista">
+    <a href="{% url 'pago:pagos_imprimir' %}{% if filtro_pagos_qs %}?{{ filtro_pagos_qs }}{% endif %}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank" data-tooltip="Imprimir esta lista">
       <i class="bi bi-printer"></i> Imprimir
     </a>
   </div>
@@ -121,7 +121,7 @@
           No se encontraron pagos con ese criterio.
         </p>
       {% else %}
-        <p class="pg-no-pagos">No hay pagos registrados aún.</p>
+        <p class="pg-no-pagos">No hay pagos registrados en ese rango.</p>
       {% endif %}
 
     </div>
