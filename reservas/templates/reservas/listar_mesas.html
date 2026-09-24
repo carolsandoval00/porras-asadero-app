@@ -1,17 +1,52 @@
-{% extends "base 2.html" %}
-{% load static %}
-{% block content %}
+<!-- ===== LISTA RESERVAS ===== -->
+<div id="mc-reservas" class="mc-section active">
+  <div class="mc-sec-header">
+    <p>Consulta, filtra y gestiona todas las reservas del restaurante</p>
+  </div>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="{% static 'css/listar_mesas_css2.css' %}" rel="stylesheet"> 
-<link rel="stylesheet" href="{% static 'css/reservas.css' %}">
+  <div class="mc-filter-bar">
+    <input
+      type="text"
+      class="mc-input"
+      id="mc-buscar"
+      placeholder="Buscar por nombre o teléfono..."
+      oninput="mcRenderTabla()"
+    >
 
-<!-- ===== BANNER + NAV ===== -->
-<div class="mc-banner-wrap">
-  <div class="mc-banner-box">
-    <div>
-      <h1 class="mc-banner-title">Editar Mesas</h1>
-      <p class="mc-banner-sub">Selecciona una mesa para editar su información</p>
+    <!-- ===== FILTRO POR FECHAS ===== -->
+    <select class="mc-select" id="mc-filtro-fecha" onchange="mcToggleFiltroFecha()">
+      <option value="">Todas las fechas</option>
+      <option value="hoy">Hoy</option>
+      <option value="futuras">Próximas</option>
+      <option value="pasadas">Pasadas</option>
+      <option value="dia">Día específico</option>
+      <option value="mes">Mes específico</option>
+      <option value="rango">Rango de fechas</option>
+    </select>
+
+    <input
+      type="date"
+      class="mc-input"
+      id="mc-filtro-fecha-dia"
+      style="display:none;max-width:170px"
+      onchange="mcRenderTabla()"
+    >
+
+    <input
+      type="month"
+      class="mc-input"
+      id="mc-filtro-fecha-mes"
+      style="display:none;max-width:170px"
+      onchange="mcRenderTabla()"
+    >
+
+    <div id="mc-filtro-rango" style="display:none;gap:6px;align-items:center">
+      <label class="mc-label" for="mc-filtro-desde" style="margin:0">Desde</label>
+      <input type="date" class="mc-input" id="mc-filtro-desde"
+             style="max-width:160px" onchange="mcRenderTabla()">
+      <label class="mc-label" for="mc-filtro-hasta" style="margin:0">Hasta</label>
+      <input type="date" class="mc-input" id="mc-filtro-hasta"
+             style="max-width:160px" onchange="mcRenderTabla()">
     </div>
   </div>
   <div class="mc-nav-row">
@@ -24,17 +59,30 @@
   </div>
 </div>
 
-<div class="mc-wrap">
+    <button class="mc-btn-report" onclick="mcLimpiarFiltros()" title="Quitar todos los filtros">
+      Limpiar filtros
+    </button>
 
-  <div class="mc-card">
-    <div class="mc-card-title">Mesas registradas</div>
+    <span id="mc-contador-reservas" class="mc-muted-sm"></span>
+
+    <div class="mc-report-bar">
+      <button class="mc-btn-report mc-btn-report-pdf" onclick="mcExportarPDF()" title="Descargar PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+      <button class="mc-btn-report mc-btn-report-excel" onclick="mcExportarExcel()" title="Descargar Excel"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+      <button class="mc-btn-report" onclick="mcImprimir()" title="Imprimir"><i class="bi bi-printer"></i> Imprimir</button>
+    </div>
+  </div>
+
+  <div class="mc-card mc-card-flush">
     <div class="mc-table-wrap">
       <table class="mc-table">
         <thead>
           <tr>
-            <th>Número</th>
-            <th>Capacidad</th>
-            <th>Ubicación</th>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Mesa</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Personas</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
@@ -109,17 +157,3 @@
     </div>
   </div>
 </div>
-
-<script>
-function abrirConfirm(mesaId) {
-  document.getElementById('confirm-msg').textContent = 
-    '¿Eliminar la Mesa ' + mesaId + '? También se perderán sus reservas asociadas.';
-  document.getElementById('confirm-form').action = '/reservas/mesa/eliminar/' + mesaId + '/';
-  document.getElementById('confirm-eliminar').classList.add('open');
-}
-function cerrarConfirm() {
-  document.getElementById('confirm-eliminar').classList.remove('open');
-}
-</script>
-
-{% endblock %}
