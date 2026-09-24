@@ -4,31 +4,77 @@
     <div class="pg-card-header">
   <h3>Pagos registrados</h3>
   <div class="pg-reportes">
-    <a href="{% url 'pago:pagos_pdf' %}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank" data-tooltip="Descargar en PDF">
+    <a href="{% url 'pago:pagos_pdf' %}?q_pago={{ q_pago }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}" class="pg-btn pg-btn-danger pg-btn-sm" target="_blank" data-tooltip="Descargar en PDF">
       <i class="bi bi-file-earmark-arrow-down"></i> PDF
     </a>
-    <a href="{% url 'pago:pagos_excel' %}" class="pg-btn pg-btn-excel pg-btn-sm" data-tooltip="Descargar en Excel">
+    <a href="{% url 'pago:pagos_excel' %}?q_pago={{ q_pago }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}" class="pg-btn pg-btn-excel pg-btn-sm" data-tooltip="Descargar en Excel">
       <i class="bi bi-file-earmark-arrow-down"></i> Excel
     </a>
-    <a href="{% url 'pago:pagos_imprimir' %}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank" data-tooltip="Imprimir esta lista">
+    <a href="{% url 'pago:pagos_imprimir' %}?q_pago={{ q_pago }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank" data-tooltip="Imprimir esta lista">
       <i class="bi bi-printer"></i> Imprimir
     </a>
   </div>
 </div>
     <div class="pg-card-body">
 
-      <div class="pg-search-bar">
-        <input type="text" id="buscador-pagos"
+      <form method="get" action="{% url 'pago:dashboard' %}" class="pg-search-bar">
+        <input type="hidden" name="tab" value="lista">
+        <input type="text" name="q_pago" value="{{ q_pago }}" id="buscador-pagos"
                placeholder="Buscar por orden, cliente o referencia…"
                oninput="filtrarPagos()" data-tooltip="Escribe para buscar">
-        <select id="filtro-metodo" data-tooltip="Filtra por método de pago">
-          <option value="">Todos los métodos</option>
-          <option value="EFECTIVO">Efectivo</option>
-          <option value="TARJETA">Tarjeta</option>
-          <option value="TRANSFERENCIA">Transferencia</option>
+
+        <!-- ===== FILTRO POR FECHAS (igual que Pedidos) ===== -->
+        <select name="filtro_fecha" id="pg-filtro-fecha" class="pg-select-filter"
+                data-tooltip="Filtra los pagos por fecha" onchange="pgToggleFiltroFecha()">
+          <option value="" {% if filtro_fecha == '' %}selected{% endif %}>Todas las fechas</option>
+          <option value="hoy" {% if filtro_fecha == 'hoy' %}selected{% endif %}>Hoy</option>
+          <option value="futuras" {% if filtro_fecha == 'futuras' %}selected{% endif %}>Próximas</option>
+          <option value="pasadas" {% if filtro_fecha == 'pasadas' %}selected{% endif %}>Pasadas</option>
+          <option value="dia" {% if filtro_fecha == 'dia' %}selected{% endif %}>Día específico</option>
+          <option value="mes" {% if filtro_fecha == 'mes' %}selected{% endif %}>Mes específico</option>
+          <option value="rango" {% if filtro_fecha == 'rango' %}selected{% endif %}>Rango de fechas</option>
         </select>
-        <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="filtrarPagos()" data-tooltip="Buscar">Filtrar</button>
-      </div>
+
+        <input
+          type="date"
+          class="pg-input pg-filtro-fecha-campo"
+          id="pg-filtro-fecha-dia"
+          name="fecha_dia"
+          value="{{ fecha_dia }}"
+          max="{% now 'Y-m-d' %}"
+          style="display:none"
+          data-tooltip="Elige el día"
+        >
+
+        <input
+          type="month"
+          class="pg-input pg-filtro-fecha-campo"
+          id="pg-filtro-fecha-mes"
+          name="fecha_mes"
+          value="{{ fecha_mes }}"
+          max="{% now 'Y-m' %}"
+          style="display:none"
+          data-tooltip="Elige el mes"
+        >
+
+        <span id="pg-filtro-rango" class="pg-filtro-fecha-campo" style="display:none;gap:6px;align-items:center">
+          <input class="pg-input" type="date" name="fecha_desde" value="{{ fecha_desde }}" max="{% now 'Y-m-d' %}" data-tooltip="Desde esta fecha">
+          <input class="pg-input" type="date" name="fecha_hasta" value="{{ fecha_hasta }}" max="{% now 'Y-m-d' %}" data-tooltip="Hasta esta fecha">
+        </span>
+
+        <button type="submit" class="pg-btn pg-btn-accent pg-btn-sm" data-tooltip="Buscar">Filtrar</button>
+        <a href="{% url 'pago:dashboard' %}?tab=lista" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Quitar los filtros">Limpiar</a>
+      </form>
+
+      <script>
+        function pgToggleFiltroFecha() {
+          var valor = document.getElementById('pg-filtro-fecha').value;
+          document.getElementById('pg-filtro-fecha-dia').style.display = (valor === 'dia') ? 'inline-block' : 'none';
+          document.getElementById('pg-filtro-fecha-mes').style.display = (valor === 'mes') ? 'inline-block' : 'none';
+          document.getElementById('pg-filtro-rango').style.display = (valor === 'rango') ? 'inline-flex' : 'none';
+        }
+        pgToggleFiltroFecha();
+      </script>
 
       {% if pagos_por_fecha %}
         {% for grupo in pagos_por_fecha %}
@@ -54,9 +100,7 @@
                 <tr class="fila-pago"
                     data-orden="{{ pg.pedido.numero_orden|lower }}"
                     data-cliente="{{ pg.pedido.cliente.nombre_completo|lower|default:'' }}"
-                    data-referencia="{{ pg.referencia|lower }}"
-                    data-metodo="{{ pg.metodo_pago }}"
-                    data-estado="PAGADO">
+                    data-referencia="{{ pg.referencia|lower }}">
                   <td><strong>{{ pg.pedido.numero_orden }}</strong></td>
                   <td>{{ pg.pedido.cliente.nombre_completo|default:"—" }}</td>
                   <td>{{ pg.get_metodo_pago_display }}</td>
