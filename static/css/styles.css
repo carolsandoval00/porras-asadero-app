@@ -789,21 +789,15 @@ html.admin-html, body.admin-body-shell {
 }
 
 /* ============================================
-   Tooltips informativos genéricos (data-tooltip)
-   Se activan agregando el atributo data-tooltip="texto"
-   a cualquier elemento (botones, links, tarjetas .dash-card,
-   avatar de perfil, etc.). No requiere JavaScript.
+   Tooltips (data-tooltip) — burbuja creada por JavaScript
+   (ver script en base 2.html). Se pega al <body> con
+   position:fixed, así nunca se corta con el borde de la
+   pantalla ni con contenedores que tengan overflow.
+   No se usa un tooltip CSS puro (::after/::before) para
+   evitar que dos sistemas compitan y se vea doble.
    ============================================ */
-[data-tooltip] {
-    position: relative;
-}
-
-[data-tooltip]::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%) translateY(6px);
+.js-tooltip-bubble {
+    position: fixed;
     background: var(--negro);
     color: var(--crema);
     font-family: 'Lato', sans-serif;
@@ -812,44 +806,46 @@ html.admin-html, body.admin-body-shell {
     line-height: 1.35;
     padding: 8px 12px;
     border-radius: 8px;
-    width: 200px;
+    max-width: 200px;
     text-align: left;
-    opacity: 0;
-    visibility: hidden;
+    z-index: 99999;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .25);
     pointer-events: none;
-    transition: opacity .15s ease, transform .15s ease;
-    z-index: 30;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
-    white-space: normal;
+    opacity: 0;
+    transition: opacity .15s ease;
 }
+.js-tooltip-bubble.show { opacity: 1; }
 
-[data-tooltip]::before {
+.js-tooltip-bubble::after {
     content: "";
     position: absolute;
-    bottom: 100%;
+    top: 100%;
     left: 50%;
-    transform: translateX(-50%) translateY(6px);
+    transform: translateX(-50%);
+    border-width: 7px;
+    border-style: solid;
+    border-color: var(--naranja) transparent transparent transparent;
+}
+.js-tooltip-bubble::before {
+    content: "";
+    position: absolute;
+    top: calc(100% - 1px);
+    left: 50%;
+    transform: translateX(-50%);
     border-width: 6px;
     border-style: solid;
     border-color: var(--negro) transparent transparent transparent;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity .15s ease, transform .15s ease;
-    z-index: 30;
 }
 
-[data-tooltip]:hover::after,
-[data-tooltip]:focus-visible::after,
-[data-tooltip]:hover::before,
-[data-tooltip]:focus-visible::before {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
+/* Cuando el tooltip se muestra ABAJO del elemento (por falta de
+   espacio arriba), la flechita apunta hacia arriba. */
+.js-tooltip-bubble.abajo::after {
+    top: auto;
+    bottom: 100%;
+    border-color: transparent transparent var(--naranja) transparent;
 }
-
-@media (max-width: 480px) {
-    [data-tooltip]::after {
-        width: 160px;
-        font-size: 12px;
-    }
+.js-tooltip-bubble.abajo::before {
+    top: auto;
+    bottom: calc(100% - 1px);
+    border-color: transparent transparent var(--negro) transparent;
 }

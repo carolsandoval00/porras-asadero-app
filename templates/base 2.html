@@ -43,5 +43,73 @@
     <script src="{% static 'js/base2_bootstrap_bundle.js' %}" defer></script>
     <script src="{% static 'js/contacto.js' %}" defer></script>
     <script src="{% static 'js/accesibilidad.js' %}" defer></script>
+
+    <!-- ============================================
+         Tooltips (data-tooltip) — sistema único para todo
+         el panel admin. Se pega directo al <body>, así no
+         lo recorta ningún contenedor con overflow, y calcula
+         su posición para nunca salirse de la pantalla (por
+         eso funciona bien en botones pegados al borde, como
+         el de accesibilidad y el de PIA).
+         ============================================ -->
+    <script>
+    (function () {
+        let bubble = null;
+
+        function hideTooltip() {
+            if (bubble) {
+                bubble.remove();
+                bubble = null;
+            }
+        }
+
+        function showTooltip(el) {
+            hideTooltip();
+
+            const text = el.getAttribute('data-tooltip');
+            if (!text) return;
+
+            bubble = document.createElement('div');
+            bubble.className = 'js-tooltip-bubble';
+            bubble.textContent = text;
+            document.body.appendChild(bubble);
+
+            const rect = el.getBoundingClientRect();
+            const bubbleRect = bubble.getBoundingClientRect();
+
+            let left = rect.left + rect.width / 2 - bubbleRect.width / 2;
+            left = Math.max(8, Math.min(left, window.innerWidth - bubbleRect.width - 8));
+
+            const espacioArriba = rect.top - bubbleRect.height - 10;
+            let top;
+            let abajo = false;
+            if (espacioArriba < 8) {
+                top = rect.bottom + 10;
+                abajo = true;
+            } else {
+                top = espacioArriba;
+            }
+
+            bubble.classList.toggle('abajo', abajo);
+            bubble.style.left = left + 'px';
+            bubble.style.top = top + 'px';
+
+            requestAnimationFrame(() => bubble.classList.add('show'));
+        }
+
+        function attach(el) {
+            el.addEventListener('mouseenter', function () { showTooltip(el); });
+            el.addEventListener('mouseleave', hideTooltip);
+            el.addEventListener('focus', function () { showTooltip(el); });
+            el.addEventListener('blur', hideTooltip);
+        }
+
+        document.querySelectorAll('[data-tooltip]').forEach(attach);
+
+        window.addEventListener('scroll', hideTooltip, true);
+        window.addEventListener('pageshow', hideTooltip);
+        document.addEventListener('visibilitychange', hideTooltip);
+    })();
+    </script>
 </body>
 </html>
