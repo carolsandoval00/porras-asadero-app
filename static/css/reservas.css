@@ -357,3 +357,18 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
 .mc-confirm-box [data-tooltip]::before {
     content: none !important;
 }
+
+/* ============================================
+   Botones de reportes (PDF / Excel / Imprimir)
+   -- mismo estilo que pedidos.css (clase pm-btn),
+   reutilizado aqui para que Reservas luzca igual
+   a Pedidos
+   ============================================ */
+.pm-btn  { display:inline-flex; align-items:center; gap:.35rem; font-size:.82rem;
+           font-weight:600; padding:.42rem .95rem; border-radius:50px; border:none;
+           cursor:pointer; text-decoration:none; transition:all .2s; white-space:nowrap; }
+.pm-btn:hover { filter:brightness(1.12); transform:translateY(-1px); text-decoration:none; }
+.pm-btn-success { background:#E8651A; color:#F5ECD7; }
+.pm-btn-info    { background:#A07810; color:#F5ECD7; }
+.pm-btn-danger  { background:#C0392B; color:#F5ECD7; }
+.pm-btn-sm      { font-size:.76rem; padding:.3rem .7rem; }
