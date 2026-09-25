@@ -1,5 +1,5 @@
 import calendar
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
@@ -8,8 +8,8 @@ from django.db.models import Sum, Q
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from itertools import groupby
-from datetime import datetime
 from urllib.parse import urlencode
+
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
 from pedidos.models import Pedido
@@ -98,6 +98,98 @@ def _pagos_filtrados(request):
     return qs, filtro, q_pago
 
 
+def _resolver_filtro_fecha_ordenes(request):
+    """Mismo esquema de filtro de fechas que _resolver_filtro_fecha, pero con
+    prefijo 'op_' para no chocar con el filtro de Pagos en la misma página."""
+    hoy_date = timezone.localdate()
+    hoy = hoy_date.isoformat()
+
+    filtro_fecha = request.GET.get('op_filtro_fecha', '').strip()
+    fecha_dia    = request.GET.get('op_fecha_dia', '').strip()
+    fecha_mes    = request.GET.get('op_fecha_mes', '').strip()
+    fecha_desde  = request.GET.get('op_fecha_desde', '').strip()
+    fecha_hasta  = request.GET.get('op_fecha_hasta', '').strip()
+
+    if fecha_desde and fecha_desde > hoy:
+        fecha_desde = hoy
+    if fecha_hasta and fecha_hasta > hoy:
+        fecha_hasta = hoy
+    if fecha_dia and fecha_dia > hoy:
+        fecha_dia = hoy
+
+    efectivo_desde = ''
+    efectivo_hasta = ''
+
+    if filtro_fecha == 'hoy':
+        efectivo_desde = efectivo_hasta = hoy
+    elif filtro_fecha == 'futuras':
+        efectivo_desde = hoy
+    elif filtro_fecha == 'pasadas':
+        efectivo_hasta = (hoy_date - timedelta(days=1)).isoformat()
+    elif filtro_fecha == 'dia' and fecha_dia:
+        efectivo_desde = efectivo_hasta = fecha_dia
+    elif filtro_fecha == 'mes' and fecha_mes:
+        try:
+            anio, mes = (int(parte) for parte in fecha_mes.split('-'))
+            primer_dia = date(anio, mes, 1)
+            ultimo_dia = date(anio, mes, calendar.monthrange(anio, mes)[1])
+            efectivo_desde = primer_dia.isoformat()
+            efectivo_hasta = min(ultimo_dia.isoformat(), hoy) if ultimo_dia.isoformat() > hoy else ultimo_dia.isoformat()
+        except (ValueError, TypeError):
+            pass
+    elif filtro_fecha == 'rango':
+        efectivo_desde = fecha_desde
+        efectivo_hasta = fecha_hasta
+
+    return {
+        'op_filtro_fecha': filtro_fecha,
+        'op_fecha_dia': fecha_dia,
+        'op_fecha_mes': fecha_mes,
+        'op_fecha_desde': fecha_desde,
+        'op_fecha_hasta': fecha_hasta,
+        'efectivo_desde': efectivo_desde,
+        'efectivo_hasta': efectivo_hasta,
+    }
+
+
+def _ordenes_filtradas(request):
+    """Aplica el filtro de fechas op_* a las órdenes sin pago."""
+    filtro = _resolver_filtro_fecha_ordenes(request)
+
+    qs = Pedido.objects.exclude(estado='PAGADO').order_by('-fecha_creacion')
+    if filtro['efectivo_desde']:
+        qs = qs.filter(fecha_creacion__date__gte=filtro['efectivo_desde'])
+    if filtro['efectivo_hasta']:
+        qs = qs.filter(fecha_creacion__date__lte=filtro['efectivo_hasta'])
+    return qs, filtro
+
+
+def _rango_texto(request):
+    """Describe en texto legible el rango de fechas aplicado a los pagos,
+    para mostrarlo en el encabezado del PDF/impresión."""
+    _qs, filtro, _q_pago = _pagos_filtrados(request)
+    filtro_fecha = filtro['filtro_fecha']
+
+    etiquetas = {
+        '': 'Todas las fechas',
+        'hoy': 'Hoy',
+        'futuras': 'Próximas',
+        'pasadas': 'Pasadas',
+    }
+
+    if filtro_fecha in etiquetas:
+        return etiquetas[filtro_fecha]
+    elif filtro_fecha == 'dia' and filtro['fecha_dia']:
+        return f"Día {filtro['fecha_dia']}"
+    elif filtro_fecha == 'mes' and filtro['fecha_mes']:
+        return f"Mes {filtro['fecha_mes']}"
+    elif filtro_fecha == 'rango':
+        desde = filtro['fecha_desde'] or '—'
+        hasta = filtro['fecha_hasta'] or '—'
+        return f"Del {desde} al {hasta}"
+    return 'Todas las fechas'
+
+
 @login_required
 def pago_dashboard(request):
     if _solo_cajero_admin(request):
@@ -177,7 +269,7 @@ def pago_dashboard(request):
                     messages.error(request, ' No puedes registrar pagos sin una caja abierta.')
                 return redirect('pago:dashboard')
 
-    ordenes_sin_pago = Pedido.objects.exclude(estado='PAGADO').order_by('-fecha_creacion')
+    ordenes_sin_pago, filtro_ordenes = _ordenes_filtradas(request)
     pagos_qs, filtro, q_pago = _pagos_filtrados(request)
     pagos_lista_data = list(pagos_qs)
 
@@ -210,6 +302,13 @@ def pago_dashboard(request):
         'fecha_mes':        filtro['fecha_mes'],
         'fecha_desde':      filtro['fecha_desde'],
         'fecha_hasta':      filtro['fecha_hasta'],
+        'hoy':              timezone.localdate().isoformat(),
+        'hoy_mes':          timezone.localdate().strftime('%Y-%m'),
+        'op_filtro_fecha':  filtro_ordenes['op_filtro_fecha'],
+        'op_fecha_dia':     filtro_ordenes['op_fecha_dia'],
+        'op_fecha_mes':     filtro_ordenes['op_fecha_mes'],
+        'op_fecha_desde':   filtro_ordenes['op_fecha_desde'],
+        'op_fecha_hasta':   filtro_ordenes['op_fecha_hasta'],
     }
     return render(request, 'pago/dashboard.html', context)
 
@@ -259,7 +358,7 @@ def caja_detalle(request, pk):
     form_apertura = CajaForm()
     form = PagoForm()
 
-    ordenes_sin_pago = Pedido.objects.exclude(estado='PAGADO').order_by('-fecha_creacion')
+    ordenes_sin_pago, filtro_ordenes = _ordenes_filtradas(request)
     pagos_qs, filtro, q_pago = _pagos_filtrados(request)
     pagos_lista_data = list(pagos_qs)
 
@@ -296,6 +395,13 @@ def caja_detalle(request, pk):
         'fecha_mes':          filtro['fecha_mes'],
         'fecha_desde':        filtro['fecha_desde'],
         'fecha_hasta':        filtro['fecha_hasta'],
+        'hoy':                timezone.localdate().isoformat(),
+        'hoy_mes':            timezone.localdate().strftime('%Y-%m'),
+        'op_filtro_fecha':    filtro_ordenes['op_filtro_fecha'],
+        'op_fecha_dia':       filtro_ordenes['op_fecha_dia'],
+        'op_fecha_mes':       filtro_ordenes['op_fecha_mes'],
+        'op_fecha_desde':     filtro_ordenes['op_fecha_desde'],
+        'op_fecha_hasta':     filtro_ordenes['op_fecha_hasta'],
     }
     return render(request, 'pago/dashboard.html', context)
 

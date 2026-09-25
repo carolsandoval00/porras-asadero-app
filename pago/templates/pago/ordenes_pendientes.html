@@ -27,13 +27,58 @@
 
       <form method="get" action="{% url 'pago:dashboard' %}" class="pg-search-bar">
         <input type="hidden" name="tab" value="pendientes">
-        <input type="date" name="o_desde" value="{{ o_desde }}" max="{{ hoy }}"
-               data-tooltip="Fecha inicial (no se pueden elegir fechas futuras)">
-        <input type="date" name="o_hasta" value="{{ o_hasta }}" max="{{ hoy }}"
-               data-tooltip="Fecha final (no se pueden elegir fechas futuras)">
+
+        <select name="op_filtro_fecha" id="op-filtro-fecha" class="pg-select-filter"
+                data-tooltip="Filtra las órdenes por fecha" onchange="opToggleFiltroFecha()">
+          <option value="" {% if op_filtro_fecha == '' %}selected{% endif %}>Todas las fechas</option>
+          <option value="hoy" {% if op_filtro_fecha == 'hoy' %}selected{% endif %}>Hoy</option>
+          <option value="futuras" {% if op_filtro_fecha == 'futuras' %}selected{% endif %}>Próximas</option>
+          <option value="pasadas" {% if op_filtro_fecha == 'pasadas' %}selected{% endif %}>Pasadas</option>
+          <option value="dia" {% if op_filtro_fecha == 'dia' %}selected{% endif %}>Día específico</option>
+          <option value="mes" {% if op_filtro_fecha == 'mes' %}selected{% endif %}>Mes específico</option>
+          <option value="rango" {% if op_filtro_fecha == 'rango' %}selected{% endif %}>Rango de fechas</option>
+        </select>
+
+        <input
+          type="date"
+          class="pg-input op-filtro-fecha-campo"
+          id="op-filtro-fecha-dia"
+          name="op_fecha_dia"
+          value="{{ op_fecha_dia }}"
+          max="{{ hoy }}"
+          style="display:none"
+          data-tooltip="Elige el día"
+        >
+
+        <input
+          type="month"
+          class="pg-input op-filtro-fecha-campo"
+          id="op-filtro-fecha-mes"
+          name="op_fecha_mes"
+          value="{{ op_fecha_mes }}"
+          max="{{ hoy_mes }}"
+          style="display:none"
+          data-tooltip="Elige el mes"
+        >
+
+        <span id="op-filtro-rango" class="op-filtro-fecha-campo" style="display:none;gap:6px;align-items:center">
+          <input class="pg-input" type="date" name="op_fecha_desde" value="{{ op_fecha_desde }}" max="{{ hoy }}" data-tooltip="Desde esta fecha">
+          <input class="pg-input" type="date" name="op_fecha_hasta" value="{{ op_fecha_hasta }}" max="{{ hoy }}" data-tooltip="Hasta esta fecha">
+        </span>
+
         <button type="submit" class="pg-btn pg-btn-accent pg-btn-sm" data-tooltip="Aplicar el filtro de fechas">Filtrar</button>
         <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Quitar el filtro de fechas">Limpiar</a>
       </form>
+
+      <script>
+        function opToggleFiltroFecha() {
+          var valor = document.getElementById('op-filtro-fecha').value;
+          document.getElementById('op-filtro-fecha-dia').style.display = (valor === 'dia') ? 'inline-block' : 'none';
+          document.getElementById('op-filtro-fecha-mes').style.display = (valor === 'mes') ? 'inline-block' : 'none';
+          document.getElementById('op-filtro-rango').style.display = (valor === 'rango') ? 'inline-flex' : 'none';
+        }
+        opToggleFiltroFecha();
+      </script>
 
       <div class="pg-table-wrap">
         <table class="pg-table">
