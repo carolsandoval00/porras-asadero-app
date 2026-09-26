@@ -24,6 +24,17 @@
       <h3>Órdenes pendientes de pago</h3>
     </div>
     <div class="pg-card-body">
+
+      <form method="get" action="{% url 'pago:dashboard' %}" class="pg-search-bar">
+        <input type="hidden" name="tab" value="pendientes">
+        <input type="date" name="o_desde" value="{{ o_desde }}" max="{{ hoy }}"
+               data-tooltip="Fecha inicial (no se pueden elegir fechas futuras)">
+        <input type="date" name="o_hasta" value="{{ o_hasta }}" max="{{ hoy }}"
+               data-tooltip="Fecha final (no se pueden elegir fechas futuras)">
+        <button type="submit" class="pg-btn pg-btn-accent pg-btn-sm" data-tooltip="Aplicar el filtro de fechas">Filtrar</button>
+        <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Quitar el filtro de fechas">Limpiar</a>
+      </form>
+
       <div class="pg-table-wrap">
         <table class="pg-table">
           <thead>
@@ -56,7 +67,7 @@
             {% empty %}
             <tr>
               <td colspan="6" class="pg-table-empty">
-                No hay órdenes pendientes de pago.
+                No hay órdenes pendientes de pago en ese rango.
               </td>
             </tr>
             {% endfor %}

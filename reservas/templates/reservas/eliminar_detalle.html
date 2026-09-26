@@ -2,7 +2,6 @@
 {% load static %}
 {% block content %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="{% static 'css/eliminar_detalle_css2.css' %}" rel="stylesheet"> 
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
 <div class="mc-banner-wrap">
@@ -13,12 +12,12 @@
     </div>
   </div>
   <div class="mc-nav-row">
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Reservas</a>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva reserva</a>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">Diagrama de mesas</a>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn">+ Nueva mesa</a>
-    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn">Editar mesa</a>
-    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn active">Eliminar reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver el panel de reservas">Reservas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Crear una reserva nueva">+ Nueva reserva</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver el mapa de mesas">Diagrama de mesas</a>
+    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Agregar una mesa nueva">+ Nueva mesa</a>
+    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn" data-tooltip="Editar una mesa existente">Editar mesa</a>
+    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn active" data-tooltip="Borrar una reserva">Eliminar reserva</a>
   </div>
 </div>
 
@@ -30,13 +29,49 @@
     {% endfor %}
   {% endif %}
 
-  <!-- Estado: sin reservas -->
-  <div class="mc-card mc-hidden" id="ed-empty">
-    <div class="mc-empty">
-      <div class="mc-empty-emoji">📋</div>
-      <p>No hay reservas registradas.</p>
-      <a href="{% url 'reserva_inicio' %}" class="mc-back-link">← Volver al panel</a>
-    </div>
+  <!-- ===== FILTROS (se resuelven en el servidor) ===== -->
+  <div class="mc-card">
+    <div class="mc-card-title">Filtrar reservas</div>
+
+    <form method="get" class="mc-filter-bar" id="ed-filtros">
+      <input type="text" class="mc-input" name="q" value="{{ filtros.q }}"
+             placeholder="Buscar por nombre o teléfono...">
+
+      <select class="mc-select" name="estado">
+        <option value="">Todos los estados</option>
+        {% for valor, etiqueta in estados %}
+          <option value="{{ valor }}" {% if filtros.estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+        {% endfor %}
+      </select>
+
+      <select class="mc-select" name="fecha" id="ed-filtro-fecha" onchange="edToggleFiltroFecha()">
+        <option value="">Todas las fechas</option>
+        <option value="hoy"     {% if filtros.fecha == 'hoy' %}selected{% endif %}>Hoy</option>
+        <option value="futuras" {% if filtros.fecha == 'futuras' %}selected{% endif %}>Próximas</option>
+        <option value="pasadas" {% if filtros.fecha == 'pasadas' %}selected{% endif %}>Pasadas</option>
+        <option value="dia"     {% if filtros.fecha == 'dia' %}selected{% endif %}>Día específico</option>
+        <option value="mes"     {% if filtros.fecha == 'mes' %}selected{% endif %}>Mes específico</option>
+        <option value="rango"   {% if filtros.fecha == 'rango' %}selected{% endif %}>Rango de fechas</option>
+      </select>
+
+      <input type="date" class="mc-input" name="dia" id="ed-filtro-dia"
+             value="{{ filtros.dia }}" style="display:none;max-width:170px">
+
+      <input type="month" class="mc-input" name="mes" id="ed-filtro-mes"
+             value="{{ filtros.mes }}" style="display:none;max-width:170px">
+
+      <span id="ed-filtro-rango" style="display:none;gap:6px;align-items:center">
+        <label class="mc-label" for="ed-desde" style="margin:0">Desde</label>
+        <input type="date" class="mc-input" name="desde" id="ed-desde"
+               value="{{ filtros.desde }}" style="max-width:160px">
+        <label class="mc-label" for="ed-hasta" style="margin:0">Hasta</label>
+        <input type="date" class="mc-input" name="hasta" id="ed-hasta"
+               value="{{ filtros.hasta }}" style="max-width:160px">
+      </span>
+
+      <button type="submit" class="mc-btn mc-btn-primary">Filtrar</button>
+      <a href="{% url 'eliminar_detalle' %}" class="mc-btn mc-btn-secondary">Limpiar</a>
+    </form>
   </div>
 
   <!-- Tabla de reservas -->
@@ -60,7 +95,7 @@
     <div class="mc-card-title">Seleccionar reserva a eliminar</div>
 
     <label class="mc-label">Reserva *</label>
-    <select class="mc-select" id="ed-select">
+    <select class="mc-select" id="ed-select" data-tooltip="Elige la reserva que quieres borrar">
       <option value="">— Seleccionar —</option>
     </select>
 
@@ -69,120 +104,95 @@
       <p class="mc-confirm-warn">⚠️ ¿Estás segura de que deseas eliminar esta reserva?</p>
       <p id="ed-confirm-texto" class="mc-confirm-detail"></p>
       <div class="mc-btn-row">
-        <button class="mc-btn mc-btn-secondary" onclick="edCancelar()">Cancelar</button>
-        <button class="mc-btn mc-btn-danger" onclick="edConfirmarEliminar()">Sí, eliminar</button>
+        <button class="mc-btn mc-btn-secondary" onclick="edCancelar()" data-tooltip="No borrar, volver atrás">Cancelar</button>
+        <button class="mc-btn mc-btn-danger" onclick="edConfirmarEliminar()" data-tooltip="Confirmar y borrar la reserva">Sí, eliminar</button>
       </div>
     </div>
 
     <div class="mc-btn-row" id="ed-btn-row">
-      <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
-      <button class="mc-btn mc-btn-primary" onclick="edPedirConfirmacion()">Eliminar reserva</button>
+      <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary" data-tooltip="Volver al panel de reservas">← Volver</a>
+      <button class="mc-btn mc-btn-primary" onclick="edPedirConfirmacion()" data-tooltip="Borrar la reserva seleccionada">Eliminar reserva</button>
     </div>
-  </div>
 
-  <!-- Modal éxito -->
-  <div id="ed-modal-ok" class="mc-modal-ok-overlay">
-    <div class="mc-modal-ok-box">
-      <h3 class="mc-modal-ok-title">Reserva eliminada</h3>
-      <p id="ed-modal-ok-texto" class="mc-modal-ok-text"></p>
-      <button class="mc-btn mc-btn-primary" onclick="edCerrarModal()">Aceptar</button>
+    <!-- Selector + botón eliminar -->
+    <div class="mc-card">
+      <div class="mc-card-title">Seleccionar reserva a eliminar</div>
+
+      <form method="post" id="ed-form-eliminar">
+        {% csrf_token %}
+        <label class="mc-label" for="ed-select">Reserva *</label>
+        <select class="mc-select" name="detalle" id="ed-select" required>
+          <option value="">— Seleccionar —</option>
+          {% for r in detalles %}
+            <option value="{{ r.id }}"
+                    data-texto="Reserva de {{ r.nombre_usuario }} — {{ r.fecha_reserva|date:'Y-m-d' }} a las {{ r.hora_reserva|time:'H:i' }} (Mesa {{ r.numero_mesa_id }})">
+              #{{ r.id }} — {{ r.nombre_usuario }} · {{ r.fecha_reserva|date:"Y-m-d" }} {{ r.hora_reserva|time:"H:i" }}
+            </option>
+          {% endfor %}
+        </select>
+
+        <!-- Confirmación -->
+        <div id="ed-confirm-box" class="mc-confirm-inline" style="display:none">
+          <p class="mc-confirm-warn">⚠️ ¿Estás seguro de que deseas eliminar esta reserva?</p>
+          <p id="ed-confirm-texto" class="mc-confirm-detail"></p>
+          <div class="mc-btn-row">
+            <button type="button" class="mc-btn mc-btn-secondary" onclick="edCancelar()">Cancelar</button>
+            <button type="submit" class="mc-btn mc-btn-danger">Sí, eliminar</button>
+          </div>
+        </div>
+
+        <div class="mc-btn-row" id="ed-btn-row">
+          <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
+          <button type="button" class="mc-btn mc-btn-primary" onclick="edPedirConfirmacion()">Eliminar reserva</button>
+        </div>
+      </form>
     </div>
-  </div>
+  {% endif %}
 
   <div class="mc-toast" id="ed-toast"></div>
-
 </div>
 
 <script>
-(function(){
-  const reservas = JSON.parse(localStorage.getItem('mc_reservas') || '[]');
-  const mesas    = JSON.parse(localStorage.getItem('mc_mesas')    || '[]');
+(function () {
+  'use strict';
 
-  function getMesaLabel(id){
-    const m = mesas.find(m => m.id === id);
-    return m ? 'Mesa ' + m.numero : '—';
-  }
+  function $(id) { return document.getElementById(id); }
 
-  function badgeClass(estado){
-    return estado === 'confirmada' ? 'mc-badge-ok'
-         : estado === 'pendiente'  ? 'mc-badge-warn'
-         : 'mc-badge-danger';
-  }
-
-  function toast(msg, tipo){
-    const t = document.getElementById('ed-toast');
+  function toast(msg) {
+    const t = $('ed-toast');
+    if (!t) return;
     t.textContent = msg;
-    t.style.background = tipo === 'error' ? '#C0392B' : '#1A1008';
+    t.style.background = '#C0392B';
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2800);
   }
 
-  function render(){
-    if(!reservas.length){
-      document.getElementById('ed-empty').style.display = 'block';
-      return;
-    }
-
-    const tbody = document.getElementById('ed-tbody');
-    tbody.innerHTML = reservas.map(r => `
-      <tr>
-        <td class="mc-id-cell">#${String(r.id).padStart(2,'0')}</td>
-        <td class="mc-cell-name">${r.nombre}</td>
-        <td>${getMesaLabel(r.mesaId)}</td>
-        <td>${r.fecha}</td>
-        <td>${r.hora}</td>
-        <td class="mc-cell-center">${r.personas}</td>
-        <td><span class="mc-badge ${badgeClass(r.estado)}">${r.estado}</span></td>
-      </tr>
-    `).join('');
-    document.getElementById('ed-tabla').style.display = 'block';
-
-    const sel = document.getElementById('ed-select');
-    sel.innerHTML = '<option value="">— Seleccionar —</option>';
-    reservas.forEach(r => {
-      sel.innerHTML += `<option value="${r.id}">#${String(r.id).padStart(2,'0')} — ${r.nombre} · ${r.fecha} ${r.hora}</option>`;
-    });
-    document.getElementById('ed-form').style.display = 'block';
-  }
-
-  window.edPedirConfirmacion = function(){
-    const id = parseInt(document.getElementById('ed-select').value);
-    if(!id){ toast('Debes seleccionar una reserva', 'error'); return; }
-    const r = reservas.find(x => x.id === id);
-    if(!r) return;
-    document.getElementById('ed-confirm-texto').textContent =
-      `Reserva de ${r.nombre} — ${r.fecha} a las ${r.hora} (${getMesaLabel(r.mesaId)})`;
-    document.getElementById('ed-confirm-box').style.display = 'block';
-    document.getElementById('ed-btn-row').style.display = 'none';
+  // Muestra solo los campos del modo de fecha elegido.
+  window.edToggleFiltroFecha = function () {
+    const modo  = $('ed-filtro-fecha') ? $('ed-filtro-fecha').value : '';
+    const dia   = $('ed-filtro-dia');
+    const mes   = $('ed-filtro-mes');
+    const rango = $('ed-filtro-rango');
+    if (dia)   dia.style.display   = modo === 'dia'   ? 'block' : 'none';
+    if (mes)   mes.style.display   = modo === 'mes'   ? 'block' : 'none';
+    if (rango) rango.style.display = modo === 'rango' ? 'inline-flex' : 'none';
   };
 
-  window.edCancelar = function(){
-    document.getElementById('ed-confirm-box').style.display = 'none';
-    document.getElementById('ed-btn-row').style.display = 'flex';
+  window.edPedirConfirmacion = function () {
+    const sel = $('ed-select');
+    if (!sel || !sel.value) { toast('Debes seleccionar una reserva'); return; }
+    const opcion = sel.options[sel.selectedIndex];
+    $('ed-confirm-texto').textContent = opcion.getAttribute('data-texto') || '';
+    $('ed-confirm-box').style.display = 'block';
+    $('ed-btn-row').style.display = 'none';
   };
 
-  window.edConfirmarEliminar = function(){
-    const id = parseInt(document.getElementById('ed-select').value);
-    const idx = reservas.findIndex(x => x.id === id);
-    if(idx === -1) return;
-    const r = reservas[idx];
-    reservas.splice(idx, 1);
-    localStorage.setItem('mc_reservas', JSON.stringify(reservas));
-
-    document.getElementById('ed-confirm-box').style.display = 'none';
-
-    document.getElementById('ed-modal-ok-texto').textContent =
-      `La reserva de ${r.nombre} del ${r.fecha} a las ${r.hora} fue eliminada correctamente.`;
-    const modal = document.getElementById('ed-modal-ok');
-    modal.style.display = 'flex';
+  window.edCancelar = function () {
+    $('ed-confirm-box').style.display = 'none';
+    $('ed-btn-row').style.display = 'flex';
   };
 
-  window.edCerrarModal = function(){
-    document.getElementById('ed-modal-ok').style.display = 'none';
-    location.reload();
-  };
-
-  render();
+  edToggleFiltroFecha();
 })();
 </script>
 

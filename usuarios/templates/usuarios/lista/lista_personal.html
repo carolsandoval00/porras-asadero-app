@@ -363,8 +363,8 @@ window.verPerfil = function(id) {
         ${u.notas ? `<div class="usr-card"><div class="c-label">Notas internas</div><p style="font-size:.88rem;color:#6B5A3E;line-height:1.6">${u.notas}</p></div>` : ''}
         <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.5rem">
             ${ES_ADMIN ? `
-            <button class="btn btn-ok" onclick="editar(${u.id})"><i class="bi bi-pencil"></i> Editar</button>
-            <button class="btn btn-del2" onclick="nav('lista');pedirDel(${u.id})"><i class="bi bi-trash"></i> Eliminar</button>
+            <button class="btn btn-ok" data-tooltip="Editar este usuario" onclick="editar(${u.id})"><i class="bi bi-pencil"></i> Editar</button>
+            <button class="btn btn-del2" data-tooltip="Eliminar este usuario" onclick="nav('lista');pedirDel(${u.id})"><i class="bi bi-trash"></i> Eliminar</button>
             ` : ''}
         </div>`;
     nav('perfil');

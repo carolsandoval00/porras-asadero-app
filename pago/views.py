@@ -1,10 +1,15 @@
+import calendar
+from datetime import date, timedelta
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from itertools import groupby
+from datetime import datetime
+from urllib.parse import urlencode
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
 from pedidos.models import Pedido
@@ -13,6 +18,84 @@ from pedidos.models import Pedido
 def _solo_cajero_admin(request):
     """Retorna True si el usuario NO tiene permiso (es mesero u otro rol no autorizado)."""
     return not (request.user.rol in ('ADMIN', 'CAJERO') or request.user.is_superuser)
+
+
+def _resolver_filtro_fecha(request):
+    """Lee el filtro de fechas del GET (mismo esquema que el de Pedidos/Órdenes:
+    Todas / Hoy / Próximas / Pasadas / Día específico / Mes específico / Rango)
+    y calcula el rango real (efectivo_desde/efectivo_hasta) que hay que aplicar
+    a la consulta de pagos. Nunca permite que los campos manuales caigan después de hoy.
+    """
+    hoy_date = timezone.localdate()
+    hoy = hoy_date.isoformat()
+
+    filtro_fecha = request.GET.get('filtro_fecha', '').strip()
+    fecha_dia    = request.GET.get('fecha_dia', '').strip()
+    fecha_mes    = request.GET.get('fecha_mes', '').strip()  # formato 'YYYY-MM'
+    fecha_desde  = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta  = request.GET.get('fecha_hasta', '').strip()
+
+    if fecha_desde and fecha_desde > hoy:
+        fecha_desde = hoy
+    if fecha_hasta and fecha_hasta > hoy:
+        fecha_hasta = hoy
+    if fecha_dia and fecha_dia > hoy:
+        fecha_dia = hoy
+
+    efectivo_desde = ''
+    efectivo_hasta = ''
+
+    if filtro_fecha == 'hoy':
+        efectivo_desde = efectivo_hasta = hoy
+    elif filtro_fecha == 'futuras':
+        efectivo_desde = hoy
+    elif filtro_fecha == 'pasadas':
+        efectivo_hasta = (hoy_date - timedelta(days=1)).isoformat()
+    elif filtro_fecha == 'dia' and fecha_dia:
+        efectivo_desde = efectivo_hasta = fecha_dia
+    elif filtro_fecha == 'mes' and fecha_mes:
+        try:
+            anio, mes = (int(parte) for parte in fecha_mes.split('-'))
+            primer_dia = date(anio, mes, 1)
+            ultimo_dia = date(anio, mes, calendar.monthrange(anio, mes)[1])
+            efectivo_desde = primer_dia.isoformat()
+            efectivo_hasta = min(ultimo_dia.isoformat(), hoy) if ultimo_dia.isoformat() > hoy else ultimo_dia.isoformat()
+        except (ValueError, TypeError):
+            pass
+    elif filtro_fecha == 'rango':
+        efectivo_desde = fecha_desde
+        efectivo_hasta = fecha_hasta
+    # filtro_fecha == '' (Todas las fechas) -> sin límites
+
+    return {
+        'filtro_fecha': filtro_fecha,
+        'fecha_dia': fecha_dia,
+        'fecha_mes': fecha_mes,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'efectivo_desde': efectivo_desde,
+        'efectivo_hasta': efectivo_hasta,
+    }
+
+
+def _pagos_filtrados(request):
+    """Aplica la búsqueda por texto (orden/cliente/referencia) y el filtro de
+    fecha resuelto por _resolver_filtro_fecha a la consulta de pagos."""
+    q_pago = request.GET.get('q_pago', '').strip()
+    filtro = _resolver_filtro_fecha(request)
+
+    qs = Pago.objects.select_related('pedido', 'pedido__cliente').order_by('-fecha_pago')
+    if q_pago:
+        qs = qs.filter(
+            Q(pedido__numero_orden__icontains=q_pago) |
+            Q(pedido__cliente__nombre_completo__icontains=q_pago) |
+            Q(referencia__icontains=q_pago)
+        )
+    if filtro['efectivo_desde']:
+        qs = qs.filter(fecha_pago__date__gte=filtro['efectivo_desde'])
+    if filtro['efectivo_hasta']:
+        qs = qs.filter(fecha_pago__date__lte=filtro['efectivo_hasta'])
+    return qs, filtro, q_pago
 
 
 @login_required
@@ -95,10 +178,11 @@ def pago_dashboard(request):
                 return redirect('pago:dashboard')
 
     ordenes_sin_pago = Pedido.objects.exclude(estado='PAGADO').order_by('-fecha_creacion')
-    pagos_qs = Pago.objects.select_related('pedido').order_by('-fecha_pago')
+    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+    pagos_lista_data = list(pagos_qs)
 
     pagos_por_fecha = []
-    for fecha, grupo in groupby(pagos_qs, key=lambda p: p.fecha_pago.date()):
+    for fecha, grupo in groupby(pagos_lista_data, key=lambda p: p.fecha_pago.date()):
         items = list(grupo)
         pagos_por_fecha.append({
             'fecha': fecha,
@@ -112,14 +196,20 @@ def pago_dashboard(request):
         'form_apertura':    form_apertura,
         'pagos_por_fecha':  pagos_por_fecha,
         'ordenes_sin_pago': ordenes_sin_pago,
-        'total_pagos':      pagos_qs.count(),
-        'pagos_aprobados':  pagos_qs.count(),
+        'total_pagos':      len(pagos_lista_data),
+        'pagos_aprobados':  len(pagos_lista_data),
         'pagos_pendientes': 0,
-        'monto_total':      pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
+        'monto_total':      sum(p.monto for p in pagos_lista_data),
         'nombre':           request.user.get_full_name() or request.user.username,
         'cajas':            Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
         'tab_activo':       request.GET.get('tab', 'pendientes'),
         'caja_activa':      caja_activa,
+        'q_pago':           q_pago,
+        'filtro_fecha':     filtro['filtro_fecha'],
+        'fecha_dia':        filtro['fecha_dia'],
+        'fecha_mes':        filtro['fecha_mes'],
+        'fecha_desde':      filtro['fecha_desde'],
+        'fecha_hasta':      filtro['fecha_hasta'],
     }
     return render(request, 'pago/dashboard.html', context)
 
@@ -170,10 +260,11 @@ def caja_detalle(request, pk):
     form = PagoForm()
 
     ordenes_sin_pago = Pedido.objects.exclude(estado='PAGADO').order_by('-fecha_creacion')
-    pagos_qs = Pago.objects.select_related('pedido').order_by('-fecha_pago')
+    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+    pagos_lista_data = list(pagos_qs)
 
     pagos_por_fecha = []
-    for fecha, grupo in groupby(pagos_qs, key=lambda p: p.fecha_pago.date()):
+    for fecha, grupo in groupby(pagos_lista_data, key=lambda p: p.fecha_pago.date()):
         items = list(grupo)
         pagos_por_fecha.append({
             'fecha': fecha,
@@ -187,12 +278,11 @@ def caja_detalle(request, pk):
         'form_apertura':      form_apertura,
         'pagos_por_fecha':    pagos_por_fecha,
         'ordenes_sin_pago':   ordenes_sin_pago,
-        'total_pagos':        pagos_qs.count(),
-        'pagos_aprobados':    pagos_qs.count(),
+        'total_pagos':        len(pagos_lista_data),
+        'pagos_aprobados':    len(pagos_lista_data),
         'pagos_pendientes':   0,
-        'monto_total':        pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
+        'monto_total':        sum(p.monto for p in pagos_lista_data),
         'nombre':             request.user.get_full_name() or request.user.username,
-        'cajas':              Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
         'caja_seleccionada':  caja_seleccionada,
         'pagos_caja':         pagos_caja,
         'total_ingresos':     total_ingresos,
@@ -200,14 +290,23 @@ def caja_detalle(request, pk):
         'saldo_final':        caja_seleccionada.monto_inicial + total_ingresos,
         'tab_activo':         'detalle-caja',
         'caja_activa':        Caja.objects.filter(estado='ABIERTA').first(),
+        'q_pago':             q_pago,
+        'filtro_fecha':       filtro['filtro_fecha'],
+        'fecha_dia':          filtro['fecha_dia'],
+        'fecha_mes':          filtro['fecha_mes'],
+        'fecha_desde':        filtro['fecha_desde'],
+        'fecha_hasta':        filtro['fecha_hasta'],
     }
     return render(request, 'pago/dashboard.html', context)
 
 
 # ── REPORTES ────────────────────────────────────────────────────────
 
-def _pagos_reporte_queryset():
-    return Pago.objects.select_related('pedido', 'pedido__cliente').order_by('-fecha_pago')
+def _pagos_reporte_queryset(request=None):
+    if request is None:
+        return Pago.objects.select_related('pedido', 'pedido__cliente').order_by('-fecha_pago')
+    qs, _filtro, _q_pago = _pagos_filtrados(request)
+    return qs
 
 
 @login_required
@@ -218,7 +317,7 @@ def pagos_exportar_excel(request):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
 
-    pagos = _pagos_reporte_queryset()
+    pagos = _pagos_reporte_queryset(request)
     wb = Workbook()
     ws = wb.active
     ws.title = 'Pagos registrados'
@@ -265,7 +364,7 @@ def pagos_exportar_pdf(request):
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
     from reportlab.lib.styles import getSampleStyleSheet
 
-    pagos = _pagos_reporte_queryset()
+    pagos = _pagos_reporte_queryset(request)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="pagos_registrados.pdf"'
@@ -279,6 +378,7 @@ def pagos_exportar_pdf(request):
     elementos = [
         Paragraph('Porras Asadero — Pagos registrados', estilos['Title']),
         Paragraph(f'Generado el {timezone.now().strftime("%d/%m/%Y %I:%M %p")}', estilos['Normal']),
+        Paragraph(f'Rango: {_rango_texto(request)}', estilos['Normal']),
         Spacer(1, 0.5*cm),
     ]
 
@@ -320,9 +420,10 @@ def pagos_imprimir(request):
     if _solo_cajero_admin(request):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
-    pagos = _pagos_reporte_queryset()
+    pagos = _pagos_reporte_queryset(request)
     return render(request, 'pago/pagos_imprimir.html', {
         'pagos':  pagos,
         'ahora':  timezone.now(),
+        'rango':  _rango_texto(request),
         'total':  pagos.aggregate(t=Sum('monto'))['t'] or 0,
     })

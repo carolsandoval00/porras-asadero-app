@@ -1,5 +1,7 @@
+import calendar
 import csv
 import json
+from datetime import date, timedelta
 from itertools import groupby
 
 from django.contrib import messages
@@ -85,22 +87,67 @@ def _items_as_json(pedido):
     return json.dumps(items, ensure_ascii=False)
 
 
-def _fechas_filtro_clampeadas(request):
-    """Lee fecha_desde/fecha_hasta del GET y nunca permite que sean posteriores a hoy."""
-    hoy = timezone.localdate().isoformat()
-    fecha_desde = request.GET.get('fecha_desde', '').strip()
-    fecha_hasta = request.GET.get('fecha_hasta', '').strip()
+def _resolver_filtro_fecha(request):
+    """Lee el filtro de fechas del GET (mismo esquema que el de Reservas:
+    Todas / Hoy / Próximas / Pasadas / Día específico / Mes específico / Rango)
+    y calcula el rango real (efectivo_desde/efectivo_hasta) que hay que aplicar
+    a la consulta. Nunca permite que los campos manuales caigan después de hoy.
+    """
+    hoy_date = timezone.localdate()
+    hoy = hoy_date.isoformat()
+
+    filtro_fecha = request.GET.get('filtro_fecha', '').strip()
+    fecha_dia    = request.GET.get('fecha_dia', '').strip()
+    fecha_mes    = request.GET.get('fecha_mes', '').strip()  # formato 'YYYY-MM'
+    fecha_desde  = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta  = request.GET.get('fecha_hasta', '').strip()
+
     if fecha_desde and fecha_desde > hoy:
         fecha_desde = hoy
     if fecha_hasta and fecha_hasta > hoy:
         fecha_hasta = hoy
-    return fecha_desde, fecha_hasta
+    if fecha_dia and fecha_dia > hoy:
+        fecha_dia = hoy
+
+    efectivo_desde = ''
+    efectivo_hasta = ''
+
+    if filtro_fecha == 'hoy':
+        efectivo_desde = efectivo_hasta = hoy
+    elif filtro_fecha == 'futuras':
+        efectivo_desde = hoy
+    elif filtro_fecha == 'pasadas':
+        efectivo_hasta = (hoy_date - timedelta(days=1)).isoformat()
+    elif filtro_fecha == 'dia' and fecha_dia:
+        efectivo_desde = efectivo_hasta = fecha_dia
+    elif filtro_fecha == 'mes' and fecha_mes:
+        try:
+            anio, mes = (int(parte) for parte in fecha_mes.split('-'))
+            primer_dia = date(anio, mes, 1)
+            ultimo_dia = date(anio, mes, calendar.monthrange(anio, mes)[1])
+            efectivo_desde = primer_dia.isoformat()
+            efectivo_hasta = min(ultimo_dia.isoformat(), hoy) if ultimo_dia.isoformat() > hoy else ultimo_dia.isoformat()
+        except (ValueError, TypeError):
+            pass
+    elif filtro_fecha == 'rango':
+        efectivo_desde = fecha_desde
+        efectivo_hasta = fecha_hasta
+    # filtro_fecha == '' (Todas las fechas) -> sin límites
+
+    return {
+        'filtro_fecha': filtro_fecha,
+        'fecha_dia': fecha_dia,
+        'fecha_mes': fecha_mes,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'efectivo_desde': efectivo_desde,
+        'efectivo_hasta': efectivo_hasta,
+    }
 
 
 def _pedidos_filtrados(request):
     q = request.GET.get('q', '').strip()
-    estado_sel = request.GET.get('estado', '').strip()
-    fecha_desde, fecha_hasta = _fechas_filtro_clampeadas(request)
+    filtro = _resolver_filtro_fecha(request)
 
     qs = (
         Pedido.objects
@@ -112,12 +159,10 @@ def _pedidos_filtrados(request):
         qs = qs.filter(
             Q(cliente__nombre_completo__icontains=q) | Q(descripcion__icontains=q)
         )
-    if estado_sel:
-        qs = qs.filter(estado=estado_sel)
-    if fecha_desde:
-        qs = qs.filter(fecha_creacion__date__gte=fecha_desde)
-    if fecha_hasta:
-        qs = qs.filter(fecha_creacion__date__lte=fecha_hasta)
+    if filtro['efectivo_desde']:
+        qs = qs.filter(fecha_creacion__date__gte=filtro['efectivo_desde'])
+    if filtro['efectivo_hasta']:
+        qs = qs.filter(fecha_creacion__date__lte=filtro['efectivo_hasta'])
     return qs
 
 
@@ -160,8 +205,7 @@ def pedido_lista(request):
     if _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q          = request.GET.get('q', '').strip()
-    estado_sel = request.GET.get('estado', '').strip()
-    fecha_desde, fecha_hasta = _fechas_filtro_clampeadas(request)
+    filtro     = _resolver_filtro_fecha(request)
     pedidos_qs = _pedidos_filtrados(request)
     pedidos_lista_data = list(pedidos_qs)
     pedidos_por_fecha  = []
@@ -171,11 +215,12 @@ def pedido_lista(request):
     return render(request, 'pedidos/pedido_lista.html', {
         'titulo': 'Pedidos',
         'pedidos_por_fecha': pedidos_por_fecha,
-        'estados': Pedido.ESTADO_CHOICES,
         'q': q,
-        'estado_sel': estado_sel,
-        'fecha_desde': fecha_desde,
-        'fecha_hasta': fecha_hasta,
+        'filtro_fecha': filtro['filtro_fecha'],
+        'fecha_dia': filtro['fecha_dia'],
+        'fecha_mes': filtro['fecha_mes'],
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
         'seccion_activa': 'pedido-lista',
     })
 
@@ -344,15 +389,8 @@ def orden_lista(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
 
     q_orden = request.GET.get('q_orden', '').strip()
-    fecha_desde, fecha_hasta = _fechas_filtro_clampeadas(request)
+    filtro = _resolver_filtro_fecha(request)
     ordenes_qs = _ordenes_filtradas(request)
-    ordenes_qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa').order_by('-fecha_creacion'))
-    if q_orden:
-        clean_q = q_orden.replace('ORD-', '').lstrip('0')
-        if clean_q.isdigit():
-            ordenes_qs = ordenes_qs.filter(Q(id=int(clean_q)) | Q(cliente__nombre_completo__icontains=q_orden))
-        else:
-            ordenes_qs = ordenes_qs.filter(cliente__nombre_completo__icontains=q_orden)
     ordenes_lista_data = list(ordenes_qs)
     ordenes_por_fecha  = []
     for fecha, grupo in groupby(ordenes_lista_data, key=lambda o: o.fecha_creacion.date()):
@@ -360,7 +398,12 @@ def orden_lista(request):
         ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
     return render(request, 'pedidos/orden_lista.html', {
         'titulo': 'Pedidos', 'ordenes_por_fecha': ordenes_por_fecha,
-        'q_orden': q_orden, 'fecha_desde': fecha_desde, 'fecha_hasta': fecha_hasta,
+        'q_orden': q_orden,
+        'filtro_fecha': filtro['filtro_fecha'],
+        'fecha_dia': filtro['fecha_dia'],
+        'fecha_mes': filtro['fecha_mes'],
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
         'seccion_activa': 'orden-lista'})
 
 
@@ -771,7 +814,7 @@ def cliente_exportar_excel(request):
 
 def _ordenes_filtradas(request):
     q_orden = request.GET.get('q_orden', '').strip()
-    fecha_desde, fecha_hasta = _fechas_filtro_clampeadas(request)
+    filtro = _resolver_filtro_fecha(request)
     qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa')
         .prefetch_related('items__producto').order_by('-fecha_creacion'))
     if q_orden:
@@ -780,10 +823,10 @@ def _ordenes_filtradas(request):
             qs = qs.filter(Q(id=int(clean_q)) | Q(cliente__nombre_completo__icontains=q_orden))
         else:
             qs = qs.filter(cliente__nombre_completo__icontains=q_orden)
-    if fecha_desde:
-        qs = qs.filter(fecha_creacion__date__gte=fecha_desde)
-    if fecha_hasta:
-        qs = qs.filter(fecha_creacion__date__lte=fecha_hasta)
+    if filtro['efectivo_desde']:
+        qs = qs.filter(fecha_creacion__date__gte=filtro['efectivo_desde'])
+    if filtro['efectivo_hasta']:
+        qs = qs.filter(fecha_creacion__date__lte=filtro['efectivo_hasta'])
     return qs
 
 

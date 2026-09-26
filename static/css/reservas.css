@@ -51,7 +51,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
 
 .mc-btn{padding:9px 20px;font-size:13px;font-weight:500;border-radius:var(--radius);cursor:pointer;border:1px solid;transition:all .15s;font-family:'DM Sans',sans-serif}
 .mc-btn-primary{background:#C0392B;color:#F5ECD7;border-color:#C0392B}.mc-btn-primary:hover{background:#9B2D21}
-.mc-btn-secondary{background:transparent;color:var(--text);border-color:var(--border2)}.mc-btn-secondary:hover{background:var(--bg2)}
+.mc-btn-secondary{background:transparent;color:var(--text);border-color:#3a3226}.mc-btn-secondary:hover{background:var(--bg2)}
 .mc-btn-danger{background:var(--red-bg);color:var(--red-t);border-color:transparent}.mc-btn-danger:hover{opacity:.8}
 .mc-btn-row{display:flex;gap:8px;margin-top:1.1rem;justify-content:flex-end}
 
@@ -127,7 +127,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
 .mc-mesa-num{font-size:13px;font-weight:500;font-family:'Playfair Display',serif}
 .mc-mesa-cap{font-size:10px;opacity:.75;margin-top:1px}
 .mc-mesa-dot{width:6px;height:6px;border-radius:50%;margin-top:4px;background:currentColor;opacity:.6}
-.mc-tooltip{position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);background:#1A1008;color:#F5ECD7;border-radius:var(--radius);padding:7px 11px;font-size:12px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20}
+.mc-tooltip{display:none}
 .mc-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1A1008}
 .mc-mesa:hover .mc-tooltip{opacity:1}
 
@@ -270,3 +270,90 @@ body{font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg)}
 
 /* Form inline dentro de confirm-btns (listar_mesas) */
 .mc-inline { display: inline; }
+
+/* ============================================
+   Tooltip JS (mensajitos de ayuda al pasar el mouse)
+   Se crea con JavaScript y se pega al <body>, para
+   que no se corte si algún contenedor tiene overflow.
+   ============================================ */
+.js-tooltip-bubble {
+    position: fixed;
+    background: #1A1008;
+    color: #F5ECD7;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    padding: 8px 12px;
+    border-radius: 8px;
+    max-width: 200px;
+    text-align: left;
+    z-index: 99999;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, .25);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+.js-tooltip-bubble.show { opacity: 1; }
+
+.js-tooltip-bubble::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: #1A1008 transparent transparent transparent;
+}
+.js-tooltip-bubble.abajo::after {
+    top: auto;
+    bottom: 100%;
+    border-color: transparent transparent #1A1008 transparent;
+}
+
+/* ── Tooltips en la barra de reportes (PDF/Excel/Imprimir) ──
+   Estos botones suelen estar pegados al borde izquierdo de la
+   pantalla, así que el tooltip (que por defecto se centra sobre
+   el botón) se recorta. Aquí se alinea a la izquierda del botón
+   en vez de centrarlo, para que siempre tenga espacio hacia la
+   derecha y no se corte. */
+.mc-report-bar [data-tooltip]::after {
+  left: 0;
+  transform: translateX(0);
+}
+.mc-report-bar [data-tooltip]::before {
+  left: 14px;
+  transform: translateX(0);
+}
+.mc-report-bar [data-tooltip]:hover::after,
+.mc-report-bar [data-tooltip]:focus-visible::after,
+.mc-report-bar [data-tooltip]:hover::before,
+.mc-report-bar [data-tooltip]:focus-visible::before {
+  transform: translateX(0) translateY(0);
+}
+
+/* Dentro de .mc-modal, .mc-confirm-box y .mc-floor-container el tooltip lo
+   controla JavaScript (.js-tooltip-bubble), porque todos recortarían un
+   tooltip CSS normal (por overflow o por posición). Se apaga aquí para
+   que no se dibujen dos globos de texto. */
+.mc-modal [data-tooltip]::after,
+.mc-modal [data-tooltip]::before,
+.mc-confirm-box [data-tooltip]::after,
+.mc-confirm-box [data-tooltip]::before,
+.mc-floor-container [data-tooltip]::after,
+.mc-floor-container [data-tooltip]::before {
+  content: none !important;
+}
+
+/* Dentro de los modales (.mc-modal, .mc-confirm-box) el tooltip
+   lo controla JavaScript (.js-tooltip-bubble), porque estos
+   contenedores tienen overflow-y:auto y recortarían el tooltip
+   CSS normal. Se apaga aquí para no dibujar dos globos de texto
+   encimados. */
+.mc-modal [data-tooltip]::after,
+.mc-modal [data-tooltip]::before,
+.mc-confirm-box [data-tooltip]::after,
+.mc-confirm-box [data-tooltip]::before {
+    content: none !important;
+}
