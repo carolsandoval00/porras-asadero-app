@@ -1,8 +1,8 @@
 {% load static %}
 <!-- ===================== WIDGET DE ACCESIBILIDAD ===================== -->
 
-<!-- Filtro SVG de asistencia a daltonismo (deuteranopía, el tipo más común) -->
-<svg class="a11y-svg-filters" aria-hidden="true" focusable="false">
+<!-- Filtro SVG de daltonismo (deuteranopía, el tipo más común) -->
+<svg class="a11y-svg-filters" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
     <defs>
         <filter id="a11y-filter-daltonismo">
             <feColorMatrix type="matrix" values="0.625 0.375 0     0 0
@@ -30,7 +30,11 @@
      aria-labelledby="a11y-panel-title">
 
     <div class="a11y-panel__header">
-        <h2 id="a11y-panel-title" class="a11y-panel__title">Accesibilidad</h2>
+        <span class="a11y-panel__badge" aria-hidden="true"><i class="bi bi-universal-access"></i></span>
+        <div class="a11y-panel__heading">
+            <h2 id="a11y-panel-title" class="a11y-panel__title">Accesibilidad</h2>
+            <p class="a11y-panel__subtitle">Adapta el sitio a tu comodidad</p>
+        </div>
         <button type="button" id="a11y-close-btn" class="a11y-panel__close" aria-label="Cerrar panel de accesibilidad">
             <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
@@ -38,64 +42,86 @@
 
     <div class="a11y-panel__body">
 
-    <div class="a11y-group">
-        <label class="a11y-group__label" for="a11y-font-size-select">Tamaño de texto</label>
-        <select id="a11y-font-size-select" class="a11y-select">
-            <option value="0.89">16</option>
-            <option value="1">18 (normal)</option>
-            <option value="1.11">20</option>
-            <option value="1.22">22</option>
-            <option value="1.33">24</option>
-            <option value="1.44">26</option>
-            <option value="1.56">28</option>
-            <option value="1.78">32</option>
-            <option value="2">36</option>
-        </select>
-    </div>
+        <!-- Texto -->
+        <div class="a11y-group">
+            <span class="a11y-group__label" id="a11y-size-label">Tamaño de texto</span>
+            <div class="a11y-stepper" role="group" aria-labelledby="a11y-size-label">
+                <button type="button" id="a11y-font-dec" class="a11y-stepper__btn" aria-label="Reducir tamaño de texto">
+                    <span class="sm">A</span><span class="op">−</span>
+                </button>
+                <output id="a11y-font-size-value" class="a11y-stepper__value" aria-live="polite">18 px</output>
+                <button type="button" id="a11y-font-inc" class="a11y-stepper__btn" aria-label="Aumentar tamaño de texto">
+                    <span class="lg">A</span><span class="op">+</span>
+                </button>
+            </div>
 
-    <div class="a11y-group">
-        <label class="a11y-group__label" for="a11y-font-family-select">Tipo de fuente</label>
-        <select id="a11y-font-family-select" class="a11y-select">
-            <option value="">Predeterminada del sitio</option>
-            <option value="Arial, Helvetica, sans-serif">Arial</option>
-            <option value="Verdana, Geneva, sans-serif">Verdana</option>
-            <option value="Tahoma, Geneva, sans-serif">Tahoma</option>
-            <option value="'Times New Roman', Times, serif">Times New Roman</option>
-            <option value="Georgia, 'Times New Roman', serif">Georgia</option>
-            <option value="'Comic Sans MS', 'Comic Sans', cursive">Comic Sans MS</option>
-        </select>
-    </div>
-
-    <div class="a11y-group">
-        <label class="a11y-group__label" for="a11y-theme-select">Tema visual</label>
-        <select id="a11y-theme-select" class="a11y-select">
-            <option value="normal">Normal (colores del sitio)</option>
-            <option value="oscuro">Oscuro</option>
-            <option value="alto-contraste">Alto contraste (blanco y negro)</option>
-            <option value="grises">Escala de grises</option>
-            <option value="daltonismo">Daltonismo</option>
-        </select>
-    </div>
-
-    <div class="a11y-group">
-        <span class="a11y-group__label" id="a11y-otros-label">Otros ajustes</span>
-        <div class="a11y-row" role="group" aria-labelledby="a11y-otros-label">
-            <button type="button" class="a11y-btn" data-a11y-toggle="a11y-underline-links" aria-pressed="false">
-                <i class="bi bi-link-45deg" aria-hidden="true"></i> Subrayar enlaces
-            </button>
-            <button type="button" class="a11y-btn" data-a11y-toggle="a11y-big-cursor" aria-pressed="false">
-                <i class="bi bi-cursor-fill" aria-hidden="true"></i> Cursor grande
-            </button>
-            <button type="button" class="a11y-btn" data-a11y-toggle="a11y-no-motion" aria-pressed="false">
-                <i class="bi bi-pause-circle" aria-hidden="true"></i> Reducir animaciones
-            </button>
+            <label class="a11y-group__label" for="a11y-font-family-select">Tipo de fuente</label>
+            <select id="a11y-font-family-select" class="a11y-select">
+                <option value="">Predeterminada del sitio</option>
+                <option value="Arial, Helvetica, sans-serif" style="font-family: Arial, sans-serif">Arial</option>
+                <option value="Verdana, Geneva, sans-serif" style="font-family: Verdana, sans-serif">Verdana</option>
+                <option value="Tahoma, Geneva, sans-serif" style="font-family: Tahoma, sans-serif">Tahoma</option>
+                <option value="'Times New Roman', Times, serif" style="font-family: 'Times New Roman', serif">Times New Roman</option>
+                <option value="Georgia, 'Times New Roman', serif" style="font-family: Georgia, serif">Georgia</option>
+                <option value="'Comic Sans MS', 'Comic Sans', cursive" style="font-family: 'Comic Sans MS', cursive">Comic Sans MS</option>
+            </select>
         </div>
-    </div>
+
+        <!-- Tema visual -->
+        <div class="a11y-group">
+            <span class="a11y-group__label" id="a11y-theme-label">Tema visual</span>
+            <div class="a11y-themes" role="group" aria-labelledby="a11y-theme-label">
+                <button type="button" class="a11y-theme" data-a11y-theme="normal" aria-pressed="true">
+                    <span class="a11y-theme__preview" aria-hidden="true"></span>
+                    Normal
+                    <i class="bi bi-check-circle-fill a11y-theme__check" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="a11y-theme" data-a11y-theme="oscuro" aria-pressed="false">
+                    <span class="a11y-theme__preview" aria-hidden="true"></span>
+                    Oscuro
+                    <i class="bi bi-check-circle-fill a11y-theme__check" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="a11y-theme" data-a11y-theme="grises" aria-pressed="false">
+                    <span class="a11y-theme__preview" aria-hidden="true"></span>
+                    Escala de grises
+                    <i class="bi bi-check-circle-fill a11y-theme__check" aria-hidden="true"></i>
+                </button>
+                <button type="button" class="a11y-theme" data-a11y-theme="daltonismo" aria-pressed="false">
+                    <span class="a11y-theme__preview" aria-hidden="true"></span>
+                    Daltonismo
+                    <i class="bi bi-check-circle-fill a11y-theme__check" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Otros ajustes -->
+        <div class="a11y-group">
+            <span class="a11y-group__label" id="a11y-otros-label">Otros ajustes</span>
+            <div role="group" aria-labelledby="a11y-otros-label">
+                <button type="button" class="a11y-switch" role="switch" aria-checked="false" data-a11y-toggle="a11y-underline-links">
+                    <i class="bi bi-link-45deg a11y-switch__icon" aria-hidden="true"></i>
+                    <span class="a11y-switch__label">Subrayar enlaces</span>
+                    <span class="a11y-switch__track" aria-hidden="true"></span>
+                </button>
+                <button type="button" class="a11y-switch" role="switch" aria-checked="false" data-a11y-toggle="a11y-big-cursor">
+                    <i class="bi bi-cursor-fill a11y-switch__icon" aria-hidden="true"></i>
+                    <span class="a11y-switch__label">Cursor grande</span>
+                    <span class="a11y-switch__track" aria-hidden="true"></span>
+                </button>
+                <button type="button" class="a11y-switch" role="switch" aria-checked="false" data-a11y-toggle="a11y-no-motion">
+                    <i class="bi bi-pause-circle a11y-switch__icon" aria-hidden="true"></i>
+                    <span class="a11y-switch__label">Reducir animaciones</span>
+                    <span class="a11y-switch__track" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
 
     </div>
 
-    <button type="button" id="a11y-reset-btn" class="a11y-reset">
-        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Restablecer todo
-    </button>
+    <div class="a11y-panel__footer">
+        <button type="button" id="a11y-reset-btn" class="a11y-reset">
+            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Restablecer todo
+        </button>
+    </div>
 </div>
 <!-- =================== FIN WIDGET DE ACCESIBILIDAD =================== -->

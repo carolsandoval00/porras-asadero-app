@@ -1,85 +1,92 @@
 /* =====================================================
-   ACCESIBILIDAD - Porras Asadero
+   ACCESIBILIDAD - Porras Asadero  (v2)
    Widget flotante de ajustes de accesibilidad
    ===================================================== */
 
 :root {
-    --a11y-font-scale: 1;
     --a11y-font-family: inherit;
 }
 
-/* Botón flotante que abre el panel — mismo estilo visual que el
-   botón de PIA (.pia-fab), ubicado a su IZQUIERDA con 12px de
-   separación (24px + 58px + 12px = 94px) */
+/* ---------- Tokens del widget (independientes del sitio) ----------
+   Usan las variables del sitio cuando existen y traen un valor de
+   respaldo, así el widget nunca se rompe si cambia la paleta. */
+.a11y-toggle,
+.a11y-panel {
+    --w-bg: #1c1a17;
+    --w-surface: #282521;
+    --w-surface-hi: #34302b;
+    --w-line: rgba(245, 236, 215, .14);
+    --w-line-strong: rgba(245, 236, 215, .30);
+    --w-text: #f5ecd7;
+    --w-muted: #bdb39e;
+    --w-off: #8f8574;
+    --w-accent: var(--naranja, #e8651a);
+    --w-gold: var(--dorado, #d4a24c);
+    --w-ink: #1a1108;
+}
+
+.a11y-panel *,
+.a11y-panel *::before,
+.a11y-panel *::after {
+    box-sizing: border-box;
+}
+
+/* ================= BOTÓN FLOTANTE ================= */
+/* Apilado justo arriba del botón de PIA (bottom 24 + 58 alto + 12 de aire) */
 .a11y-toggle {
     position: fixed;
     bottom: 94px;
     right: 24px;
-    width: 58px;
-    height: 58px;
+    z-index: 100000; /* por encima de todo el widget PIA (llega a 9999) */
+    width: 56px;
+    height: 56px;
+    padding: 0;
     border-radius: 50%;
-    background: var(--pia-gradient);
-    box-shadow: 0 4px 18px rgba(192, 57, 43, 0.4);
-    border: none;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
+    background: var(--w-accent);
+    color: var(--w-ink);
+    border: 2px solid var(--w-gold);
+    display: grid;
+    place-items: center;
+    font-size: 26px;
+    line-height: 1;
     cursor: pointer;
-    z-index: 9997;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
-    animation: pia-fab-float 3.6s ease-in-out infinite, pia-fab-glow 3.6s ease-in-out infinite;
-}
-
-.a11y-toggle::before,
-.a11y-toggle::after {
-    content: "";
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 2px solid var(--pia-dorado);
-    opacity: 0;
-    animation: pia-fab-ping 3.2s ease-out infinite;
-}
-
-.a11y-toggle::after {
-    border-color: var(--pia-naranja);
-    animation-delay: 1.1s;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .45), 0 0 0 5px rgba(232, 101, 26, .16);
+    transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
 }
 
 .a11y-toggle:hover,
 .a11y-toggle:focus-visible {
-    transform: scale(1.08) translateY(-2px);
-    box-shadow: 0 10px 26px rgba(192, 57, 43, 0.55);
+    background: var(--w-gold);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .5), 0 0 0 6px rgba(212, 162, 76, .22);
 }
 
 .a11y-toggle:focus-visible {
-    outline: 3px solid var(--crema);
-    outline-offset: 3px;
+    outline: 3px solid var(--w-text) !important;
+    outline-offset: 3px !important;
 }
 
-/* Panel: se abre hacia arriba desde el botón, alineado con el
-   mismo offset vertical que el panel de PIA (.pia-panel) */
+/* ================= PANEL ================= */
 .a11y-panel {
     position: fixed;
-    bottom: 96px;
-    right: 94px;
-    z-index: 9997;
-    width: min(320px, calc(100vw - 32px));
-    max-height: min(560px, calc(100vh - 190px));
+    bottom: 162px;
+    right: 24px;
+    z-index: 100000;
+    width: min(340px, calc(100vw - 32px));
+    max-height: min(640px, calc(100vh - 190px));
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: var(--humo);
-    color: var(--crema);
-    border: 1px solid var(--gris-borde);
-    border-radius: 14px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, .55);
+    background: var(--w-bg);
+    color: var(--w-text);
+    border: 1px solid var(--w-line-strong);
+    border-radius: 18px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .6), 0 2px 0 rgba(255, 255, 255, .04) inset;
     font-family: 'Lato', sans-serif;
-    font-size: 0.95rem;
+    font-size: 14px;
+    line-height: 1.35;
     transform-origin: bottom right;
-    transform: scale(.95);
+    transform: translateY(8px) scale(.96);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -90,177 +97,343 @@
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: scale(1);
+    transform: none;
 }
 
+.a11y-panel :focus-visible {
+    outline: 3px solid var(--w-gold) !important;
+    outline-offset: 2px !important;
+}
+
+/* ---------- Encabezado ---------- */
 .a11y-panel__header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
     flex-shrink: 0;
-    padding: 18px 18px 10px;
-    border-bottom: 1px solid rgba(212, 196, 160, .3);
+    padding: 16px 16px 14px 18px;
+    background: linear-gradient(180deg, var(--w-surface) 0%, var(--w-bg) 100%);
+    border-bottom: 1px solid var(--w-line);
 }
 
-/* Zona con scroll: solo esto se desplaza, el header y el botón de
-   restablecer quedan siempre fijos y visibles */
-.a11y-panel__body {
-    overflow-y: auto;
-    padding: 14px 18px 4px;
-    flex: 1 1 auto;
-    min-height: 0;
+.a11y-panel__badge {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: rgba(232, 101, 26, .18);
+    color: var(--w-accent);
+    font-size: 20px;
 }
+
+.a11y-panel__heading { flex: 1; min-width: 0; }
 
 .a11y-panel__title {
+    margin: 0;
     font-family: 'Oswald', sans-serif;
     font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    font-size: 1rem;
-    color: var(--dorado);
-    margin: 0;
+    font-size: 18px;
+    letter-spacing: .4px;
+    line-height: 1.15;
+    color: var(--w-text);
+}
+
+.a11y-panel__subtitle {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--w-muted);
 }
 
 .a11y-panel__close {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
     background: transparent;
-    border: none;
-    color: var(--crema);
-    font-size: 1.3rem;
-    line-height: 1;
+    border: 1px solid transparent;
+    color: var(--w-muted);
+    font-size: 16px;
+    border-radius: 10px;
     cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
+    transition: background .15s ease, color .15s ease;
 }
 
-.a11y-panel__close:hover,
-.a11y-panel__close:focus-visible {
-    background: rgba(232, 101, 26, .25);
-    outline: none;
+.a11y-panel__close:hover {
+    background: var(--w-surface-hi);
+    color: var(--w-text);
 }
 
-.a11y-group {
-    margin-bottom: 16px;
+/* ---------- Cuerpo con scroll (header y "restablecer" quedan fijos) ---------- */
+.a11y-panel__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px 18px 6px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--w-line-strong) transparent;
 }
+
+.a11y-group { margin-bottom: 20px; }
 
 .a11y-group__label {
     display: block;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--gris-borde);
     margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    color: var(--w-muted);
 }
 
-/* ---------- Selects tipo "desplegable de Word" ---------- */
+.a11y-group > * + .a11y-group__label,
+.a11y-field + .a11y-field { margin-top: 12px; }
+
+/* ---------- Stepper de tamaño ---------- */
+.a11y-stepper {
+    display: flex;
+    align-items: stretch;
+    background: var(--w-surface);
+    border: 1px solid var(--w-line-strong);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.a11y-stepper__btn {
+    flex: 0 0 56px;
+    min-height: 44px;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 1px;
+    padding-top: 10px;
+    background: transparent;
+    border: 0;
+    color: var(--w-text);
+    font-family: 'Oswald', sans-serif;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.a11y-stepper__btn:hover:not(:disabled) { background: var(--w-surface-hi); }
+.a11y-stepper__btn:disabled { opacity: .35; cursor: not-allowed; }
+.a11y-stepper__btn .sm { font-size: 14px; }
+.a11y-stepper__btn .lg { font-size: 22px; }
+.a11y-stepper__btn .op { font-size: 15px; margin-left: 2px; color: var(--w-gold); }
+
+.a11y-stepper__value {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    border-left: 1px solid var(--w-line);
+    border-right: 1px solid var(--w-line);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--w-text);
+}
+
+.a11y-stepper__value small {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 400;
+    color: var(--w-muted);
+    text-align: center;
+}
+
+/* ---------- Select (tipo de fuente) ---------- */
 .a11y-select {
     width: 100%;
-    background: rgba(245, 236, 215, .06);
-    border: 1px solid var(--gris-borde);
-    color: var(--crema);
-    border-radius: 8px;
-    padding: 9px 10px;
-    font-size: 0.9rem;
+    min-height: 44px;
+    padding: 10px 38px 10px 12px;
+    background-color: var(--w-surface);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16'><path fill='none' stroke='%23bdb39e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M3 6l5 5 5-5'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    border: 1px solid var(--w-line-strong);
+    border-radius: 12px;
+    color: var(--w-text);
     font-family: 'Lato', sans-serif;
+    font-size: 14px;
     cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
-.a11y-select:focus-visible {
-    outline: 3px solid var(--dorado);
-    outline-offset: 1px;
-}
+.a11y-select:hover { background-color: var(--w-surface-hi); }
+.a11y-select option { background: #1c1a17; color: #f5ecd7; }
 
-.a11y-select option {
-    background: var(--humo);
-    color: var(--crema);
-    font-size: 0.9rem !important;
-}
-
-.a11y-row {
-    display: flex;
+/* ---------- Tarjetas de tema ---------- */
+.a11y-themes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
-    flex-wrap: wrap;
 }
 
-/* Botones tipo "chip" para toggles simples (enlaces subrayados, cursor, movimiento) */
-.a11y-btn {
-    flex: 1 1 auto;
-    min-width: 44px;
-    min-height: 40px;
-    background: rgba(245, 236, 215, .06);
-    border: 1px solid var(--gris-borde);
-    color: var(--crema);
-    border-radius: 8px;
-    font-size: 0.85rem;
+.a11y-theme {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 8px 10px;
+    background: var(--w-surface);
+    border: 1.5px solid var(--w-line);
+    border-radius: 14px;
+    color: var(--w-text);
     font-family: 'Lato', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: left;
     cursor: pointer;
-    padding: 8px 10px;
+    transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+
+.a11y-theme:hover { background: var(--w-surface-hi); border-color: var(--w-line-strong); }
+
+.a11y-theme[aria-pressed="true"] {
+    background: var(--w-surface-hi);
+    border-color: var(--w-accent);
+    box-shadow: 0 0 0 1px var(--w-accent) inset;
+}
+
+.a11y-theme__preview {
+    position: relative;
+    height: 46px;
+    border-radius: 9px;
+    background: var(--p-bg);
+    border: 1px solid rgba(255, 255, 255, .14);
+    overflow: hidden;
+}
+
+.a11y-theme__preview::before,
+.a11y-theme__preview::after {
+    content: "";
+    position: absolute;
+    left: 9px;
+    border-radius: 4px;
+}
+
+.a11y-theme__preview::before { top: 9px; width: 58%; height: 6px; background: var(--p-fg); }
+.a11y-theme__preview::after  { top: 23px; width: 30px; height: 12px; background: var(--p-ac); border-radius: 6px; }
+
+.a11y-theme[data-a11y-theme="normal"]     .a11y-theme__preview { --p-bg: #2b2622; --p-fg: #f5ecd7; --p-ac: #e8651a; }
+.a11y-theme[data-a11y-theme="oscuro"]     .a11y-theme__preview { --p-bg: #0f0f11; --p-fg: #ececef; --p-ac: #5a5a63; }
+.a11y-theme[data-a11y-theme="grises"]     .a11y-theme__preview { --p-bg: #8a8a8a; --p-fg: #f4f4f4; --p-ac: #3f3f3f; }
+.a11y-theme[data-a11y-theme="daltonismo"] .a11y-theme__preview { --p-bg: #2b2622; --p-fg: #ece3c9; --p-ac: #b3a133; }
+
+.a11y-theme__check {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--w-accent);
+    background: var(--w-bg);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(.6);
+    transition: opacity .15s ease, transform .15s ease;
+}
+
+.a11y-theme[aria-pressed="true"] .a11y-theme__check { opacity: 1; transform: none; }
+
+/* ---------- Interruptores ---------- */
+.a11y-switch {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
+    gap: 12px;
+    width: 100%;
+    min-height: 46px;
+    padding: 8px 12px;
+    background: var(--w-surface);
+    border: 1px solid var(--w-line);
+    border-radius: 12px;
+    color: var(--w-text);
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
     transition: background .15s ease, border-color .15s ease;
 }
 
-.a11y-btn:hover,
-.a11y-btn:focus-visible {
-    background: rgba(232, 101, 26, .22);
-    border-color: var(--naranja);
-    outline: none;
+.a11y-switch + .a11y-switch { margin-top: 8px; }
+.a11y-switch:hover { background: var(--w-surface-hi); }
+.a11y-switch[aria-checked="true"] { border-color: rgba(232, 101, 26, .55); }
+
+.a11y-switch__icon { font-size: 18px; color: var(--w-gold); flex-shrink: 0; }
+.a11y-switch__label { flex: 1; }
+
+.a11y-switch__track {
+    position: relative;
+    flex-shrink: 0;
+    width: 42px;
+    height: 24px;
+    border-radius: 999px;
+    border: 2px solid var(--w-off);
+    background: transparent;
+    transition: background .18s ease, border-color .18s ease;
 }
 
-.a11y-btn[aria-pressed="true"] {
-    background: var(--naranja);
-    border-color: var(--dorado);
-    color: var(--negro);
-    font-weight: 700;
+.a11y-switch__track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--w-off);
+    transition: transform .18s ease, background .18s ease;
 }
 
-.a11y-btn:focus-visible {
-    outline: 3px solid var(--dorado);
-    outline-offset: 2px;
+.a11y-switch[aria-checked="true"] .a11y-switch__track { background: var(--w-accent); border-color: var(--w-accent); }
+.a11y-switch[aria-checked="true"] .a11y-switch__track::after { transform: translateX(18px); background: var(--w-ink); }
+
+/* ---------- Restablecer ---------- */
+.a11y-panel__footer {
+    flex-shrink: 0;
+    padding: 12px 18px 16px;
+    border-top: 1px solid var(--w-line);
+    background: var(--w-bg);
 }
 
 .a11y-reset {
-    width: calc(100% - 36px);
-    flex-shrink: 0;
-    margin: 10px 18px 18px;
-    background: var(--humo);
-    border: 1px dashed var(--gris-borde);
-    color: var(--crema);
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 0.85rem;
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--w-line-strong);
+    border-radius: 12px;
+    color: var(--w-text);
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
     cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
 
-.a11y-reset:hover,
-.a11y-reset:focus-visible {
-    border-color: var(--rojo);
-    color: var(--rojo);
-    outline: none;
-}
+.a11y-reset:hover { background: var(--w-surface-hi); border-color: var(--w-accent); }
 
-/* ============ EFECTOS APLICADOS AL SITIO ============ */
+/* ================= EFECTOS APLICADOS AL SITIO ================= */
+/* El tamaño de texto lo aplica accesibilidad.js elemento por elemento
+   (no hay zoom): no hace falta ninguna regla aquí. */
 
-/* El tamaño de texto ya NO se hace con "zoom" (eso agranda toda la
-   página: imágenes, espaciados, botones, como el zoom del navegador).
-   Ahora accesibilidad.js calcula y aplica el font-size real de cada
-   elemento de texto en píxeles, así que solo crece la letra. No hace
-   falta ninguna regla CSS aquí para eso. */
-
-/* Tipo de fuente elegido en el desplegable */
-html.a11y-font-family body,
-html.a11y-font-family body * {
+/* Tipo de fuente. Se excluyen el widget y las fuentes de iconos
+   (Bootstrap Icons / Font Awesome), que se rompen si se les cambia la fuente. */
+html.a11y-font-family body *:not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *,
+        .bi, [class^="bi-"], [class*=" bi-"], .fa, .fas, .far, .fab, [class^="fa-"], [class*=" fa-"]) {
     font-family: var(--a11y-font-family) !important;
 }
 
-/* Subrayar todos los enlaces */
-html.a11y-underline-links a {
+html.a11y-underline-links a:not(.a11y-toggle) {
     text-decoration: underline !important;
     text-underline-offset: 3px;
 }
 
-/* Pausar animaciones y transiciones */
 html.a11y-no-motion *,
 html.a11y-no-motion *::before,
 html.a11y-no-motion *::after {
@@ -270,67 +443,378 @@ html.a11y-no-motion *::after {
     scroll-behavior: auto !important;
 }
 
-/* Cursor grande */
 html.a11y-big-cursor,
 html.a11y-big-cursor * {
     cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24"><path fill="%23E8651A" stroke="%23000" stroke-width="1" d="M4 2l14 8-6 2-2 6z"/></svg>') 4 4, auto !important;
 }
 
-/* ---------- TEMAS (uno activo a la vez) ---------- */
+/* Los controles DENTRO del panel (interruptores, tarjeta de tema
+   seleccionada, check) toman su color de --w-accent / --w-gold, que por
+   defecto es el naranja de marca. En el tema oscuro pasan a blanco/gris
+   para quedar acordes; como ya usan var(--w-accent) en vez de un color
+   fijo, cambian solos sin tocar nada más. El botón flotante NO se incluye
+   aquí: se trata aparte, más abajo, para que se vea igual que el botón
+   de PIA (fondo oscuro con borde claro) en vez de un círculo blanco. */
+html.a11y-theme-oscuro .a11y-panel {
+    --w-accent: #e9e9ee;
+    --w-gold: #ffffff;
+    --w-ink: #0f0f11;
+}
 
-/* Oscuro: fondo homogéneo oscuro, útil si el usuario abre una vista clara */
+/* Botón flotante de accesibilidad: mismo tratamiento que el botón de
+   PIA en este tema (fondo de superficie oscura + borde claro sutil +
+   ícono claro), en vez de su relleno naranja habitual. */
+html.a11y-theme-oscuro .a11y-toggle {
+    background: #222226;
+    border-color: #8a8a92;
+    color: #ececef;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .05);
+}
+html.a11y-theme-oscuro .a11y-toggle:hover,
+html.a11y-theme-oscuro .a11y-toggle:focus-visible {
+    background: #2c2c31;
+    border-color: #b0b0b8;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .08);
+}
+/* El borde del interruptor activado también estaba fijo en naranja
+   (rgba directo, no variable): se neutraliza aparte. */
+html.a11y-theme-oscuro .a11y-switch[aria-checked="true"] {
+    border-color: rgba(233, 233, 238, .55);
+}
+
+/* ================= TEMAS ================= */
+
+/* ---------- OSCURO ----------
+   Antes: todo #000 con bordes blancos en cada elemento → aspecto pesado y
+   sin jerarquía. Ahora: paleta neutra con 3 niveles de elevación
+   (fondo → tarjeta → encabezado/elemento resaltado), bordes sutiles y un
+   único botón "primario" en claro. Sigue siendo 100 % monocromo.
+   Para cambiar el look basta editar las variables --dk-* de aquí abajo. */
+html.a11y-theme-oscuro {
+    color-scheme: dark;
+    scrollbar-color: #eeeef1 #18181b;
+
+    --dk-bg: #0f0f11;          /* fondo de página */
+    --dk-surface: #18181b;     /* tarjetas, menús, modales */
+    --dk-surface-2: #222226;   /* encabezados de tarjeta, botones, chips */
+    --dk-surface-3: #2c2c31;   /* hover */
+    --dk-line: #36363c;        /* bordes suaves */
+    --dk-line-strong: #5a5a63; /* bordes de controles */
+    --dk-text: #ececef;
+    --dk-muted: #b3b3ba;
+    --dk-img: grayscale(1) brightness(1) contrast(1.05); /* pon "none" para conservar el color de las fotos */
+
+    /* Widget PIA (asistente.css) */
+    --pia-rojo: #2c2c31 !important;
+    --pia-naranja: #222226 !important;
+    --pia-naranja-dk: #18181b !important;
+    --pia-dorado: #ececef !important;
+    --pia-negro: #0f0f11 !important;
+    --pia-humo: #18181b !important;
+    --pia-crema: #ececef !important;
+    --pia-gris-borde: #36363c !important;
+    --pia-gradient: #222226 !important;
+    --pia-gradient-header: #18181b !important;
+    --pia-border: #36363c !important;
+}
+
 html.a11y-theme-oscuro body {
-    background: #0A0603 !important;
-}
-html.a11y-theme-oscuro body * {
-    background-color: #0A0603 !important;
-    color: #F5ECD7 !important;
-    border-color: #4A3A28 !important;
-}
-html.a11y-theme-oscuro a,
-html.a11y-theme-oscuro .btn,
-html.a11y-theme-oscuro button {
-    color: #E8A33C !important;
+    background: var(--dk-bg) !important;
+    color: var(--dk-text) !important;
 }
 
-/* Alto contraste: blanco y negro puro para máxima legibilidad */
-html.a11y-theme-alto-contraste body {
-    background: #000 !important;
-}
-html.a11y-theme-alto-contraste body * {
-    background-color: #000 !important;
-    color: #FFF !important;
-    border-color: #FFF !important;
-    text-shadow: none !important;
+html.a11y-theme-oscuro ::selection { background: #ececef; color: #0f0f11; }
+html.a11y-theme-oscuro ::placeholder { color: #9a9aa2 !important; opacity: 1; }
+
+/* Capa base: cada elemento HEREDA el fondo de su padre (así nada queda
+   transparente sobre otra cosa: menús, modales, sticky headers y el chat de
+   PIA siguen siendo opacos) y se le quitan degradados, sombras y colores. */
+html.a11y-theme-oscuro body *:not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *,
+        .a11y-svg-filters, .a11y-svg-filters *, img, video, picture, canvas, svg, svg *,
+        .pia-fab, .pia-fab *, .pia-panel-avatar, .pia-panel-avatar *) {
+    background-color: inherit !important;
+    background-image: none !important;
+    color: var(--dk-text) !important;
+    border-color: var(--dk-line) !important;
     box-shadow: none !important;
-}
-html.a11y-theme-alto-contraste a,
-html.a11y-theme-alto-contraste .btn,
-html.a11y-theme-alto-contraste button {
-    color: #FFD700 !important;
-}
-html.a11y-theme-alto-contraste img,
-html.a11y-theme-alto-contraste video {
-    filter: grayscale(20%) contrast(1.1);
+    text-shadow: none !important;
 }
 
-/* Escala de grises */
-html.a11y-theme-grises body {
-    filter: grayscale(100%);
+/* El texto del hero ("Porras Asadero...") va sobre la foto de portada, no
+   sobre una tarjeta. La regla de "capa base" de arriba lo hace heredar el
+   fondo sólido que le acabamos de poner a #inicio, y eso pintaba un
+   recuadro negro opaco tapando la foto justo detrás del texto. Aquí se
+   deja ese contenido transparente para que la foto se vea de nuevo. */
+html.a11y-theme-oscuro #inicio * {
+    background-color: transparent !important;
 }
 
-/* Daltonismo: un único filtro SVG (definido en el partial), el más
-   representativo (deuteranopía, el tipo más común).
-   Se aplica a <body>, no a <html>: el filtro CSS sobre <html>
-   directamente no es confiable entre navegadores (Chrome/Firefox
-   a veces simplemente lo ignoran ahí). */
-html.a11y-theme-daltonismo body {
+/* Mismo problema que el del hero, aplicado a la foto de "Nuestra
+   Historia": su capa .nosotros-img-overlay (el degradado suave de abajo)
+   heredaba el fondo sólido de #nosotros y quedaba como un rectángulo
+   opaco tapando la foto entera. */
+html.a11y-theme-oscuro body .nosotros-img-container * {
+    background-color: transparent !important;
+}
+
+/* Botón/avatar de PIA en oscuro.
+   El muñequito (cuerpo + orejas/"puffs") ya es blanco/crema de por sí
+   (radial-gradient con #fffdf7 → #f0e2bf en asistente.css): NO se toca.
+   Lo naranja que se ve es solo el CÍRCULO DE FONDO del botón
+   (`.pia-fab { background: var(--pia-gradient); }`, un degradado
+   rojo→naranja→dorado) y su BRILLO alrededor, que en asistente.css está
+   escrito con un color fijo `rgba(192, 57, 43, ...)` (no una variable),
+   así que sobrevivía aunque las variables --pia-* ya se hubieran
+   redefinido más arriba. Aquí se fuerza el mismo círculo oscuro con
+   borde claro que usa .a11y-toggle, y se neutraliza ese brillo. */
+html.a11y-theme-oscuro .pia-fab {
+    background: #222226 !important;
+    border: 2px solid #8a8a92 !important;
+    border-radius: 50% !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .05) !important;
+}
+
+html.a11y-theme-oscuro .pia-fab:hover,
+html.a11y-theme-oscuro .pia-fab:focus-visible {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .08) !important;
+}
+
+html.a11y-theme-oscuro .pia-panel-avatar {
+    background: rgba(255, 255, 255, .12) !important;
+}
+
+/* Anillos de "ping" que laten alrededor del botón (::before/::after en
+   asistente.css): se fija su color en vez de depender de que las
+   variables --pia-dorado / --pia-naranja lleguen bien por herencia. */
+html.a11y-theme-oscuro .pia-fab::before,
+html.a11y-theme-oscuro .pia-fab::after {
+    border-color: #8a8a92 !important;
+}
+
+/* Nivel 1: superficies (tarjetas, barras, menús, modales) */
+html.a11y-theme-oscuro body *:is(nav, aside, footer, header, dialog, table,
+        [class*="card"], [class*="modal-content"], [class*="dropdown-menu"],
+        [class*="offcanvas"], [class*="popover"], [class*="toast"], [class*="list-group-item"]):not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *, .a11y-svg-filters, .a11y-svg-filters *) {
+    background-color: var(--dk-surface) !important;
+}
+
+html.a11y-theme-oscuro body *:is([class*="card"], [class*="modal-content"], [class*="dropdown-menu"],
+        [class*="popover"], [class*="toast"], dialog):not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *, .a11y-svg-filters, .a11y-svg-filters *) {
+    border: 1px solid var(--dk-line) !important;
+}
+
+/* Nivel 2: encabezados de módulo (.pg-header, .pm-header, .mc-banner-box,
+   .perfil-header…). Antes se "perdían" al quitarles el degradado. */
+html.a11y-theme-oscuro body *:is([class*="header"], [class*="banner-box"], thead th, th):not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *, .a11y-svg-filters, .a11y-svg-filters *) {
+    background-color: var(--dk-surface-2) !important;
+}
+
+html.a11y-theme-oscuro body *:is([class*="header"], [class*="banner-box"]):not(header, .a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *, .a11y-svg-filters, .a11y-svg-filters *) {
+    border: 1px solid var(--dk-line) !important;
+}
+
+/* Filas alternas de tabla */
+html.a11y-theme-oscuro body tbody tr:nth-child(even):not(.a11y-panel *) {
+    background-color: #1e1e22 !important;
+}
+html.a11y-theme-oscuro body tbody tr:hover:not(.a11y-panel *) {
+    background-color: var(--dk-surface-3) !important;
+}
+
+/* Texto secundario */
+html.a11y-theme-oscuro body *:is(small, figcaption, caption, .text-muted, [class*="muted"],
+        [class*="subtitle"], [class*="hint"]):not(.a11y-panel, .a11y-panel *) {
+    color: var(--dk-muted) !important;
+}
+
+/* Campos de formulario: "hundidos" respecto a la tarjeta */
+html.a11y-theme-oscuro body *:is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="button"], [type="submit"], [type="reset"]),
+        select, textarea):not(.a11y-panel *) {
+    background-color: var(--dk-bg) !important;
+    border: 1px solid var(--dk-line-strong) !important;
+    border-radius: 8px;
+}
+html.a11y-theme-oscuro body *:is(input, select, textarea):not(.a11y-panel *):focus {
+    border-color: #ececef !important;
+}
+html.a11y-theme-oscuro body option { background-color: #18181b !important; }
+html.a11y-theme-oscuro body input[type="checkbox"],
+html.a11y-theme-oscuro body input[type="radio"],
+html.a11y-theme-oscuro body input[type="range"] { accent-color: #ececef; }
+
+/* Enlaces */
+html.a11y-theme-oscuro body a:not(.a11y-toggle) { color: #ffffff !important; }
+html.a11y-theme-oscuro body a:not(.a11y-toggle):hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* Botones: secundarios en gris elevado con borde visible.
+   Se excluye .pia-fab explícitamente: ya tiene su propio bloque completo
+   más arriba (círculo, no cuadrado) y esta regla genérica, al coincidir
+   por clase, le imponía "border-radius: 8px" (de ahí el cuadrado). */
+html.a11y-theme-oscuro body *:is(button, .btn, [class*="btn"], [role="button"],
+        input[type="button"], input[type="submit"], input[type="reset"]):not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *, .pia-fab, .pia-fab *) {
+    background-color: var(--dk-surface-2) !important;
+    border: 1px solid var(--dk-line-strong) !important;
+    border-radius: 8px;
+    transition: background-color .15s ease, border-color .15s ease;
+}
+html.a11y-theme-oscuro body *:is(button, .btn, [class*="btn"], [role="button"]):not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *):hover {
+    background-color: var(--dk-surface-3) !important;
+    border-color: #8a8a92 !important;
+}
+html.a11y-theme-oscuro body *:is(button, .btn, [class*="btn"]):not(.a11y-panel *):disabled { opacity: .5; }
+
+/* Botón primario ("Consultar", "Abrir caja", enviar…): el único elemento
+   en claro → da jerarquía sin usar ningún color */
+html.a11y-theme-oscuro body *:is([class*="btn-accent"], [class*="btn-primary"], [class*="btn-success"],
+        button[type="submit"], input[type="submit"]):not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *),
+html.a11y-theme-oscuro body *:is([class*="btn-accent"], [class*="btn-primary"], [class*="btn-success"],
+        button[type="submit"]):not(.a11y-panel *) * {
+    background-color: #ececef !important;
+    color: #0f0f11 !important;
+    border-color: #ececef !important;
+}
+html.a11y-theme-oscuro body *:is([class*="btn-accent"], [class*="btn-primary"], [class*="btn-success"],
+        button[type="submit"]):not(.a11y-panel *):hover {
+    background-color: #ffffff !important;
+}
+
+/* Chips de estado (badges): sin color, pero siguen distinguiéndose */
+html.a11y-theme-oscuro body *:is(.badge, [class*="badge"], [class*="estado"], [class*="status"]):not(.a11y-panel *) {
+    background-color: var(--dk-surface-2) !important;
+    border: 1px solid var(--dk-line-strong) !important;
+    border-radius: 999px;
+}
+
+/* PIA: sin animaciones de color (el borde de .pia-fab / .pia-panel-avatar
+   ya se define más arriba, junto con su fondo y su brillo) */
+html.a11y-theme-oscuro [class*="pia-"] { animation: none !important; }
+html.a11y-theme-oscuro .pia-fab-badge {
+    border: 2px solid #222226 !important;
+}
+
+/* Imágenes, vídeo e iconos SVG */
+html.a11y-theme-oscuro body img:not(.a11y-panel *),
+html.a11y-theme-oscuro body video,
+html.a11y-theme-oscuro #inicio::before { filter: var(--dk-img) !important; }
+html.a11y-theme-oscuro body svg:not(.a11y-svg-filters, .a11y-panel svg, .a11y-toggle svg) { filter: grayscale(1); }
+
+/* La sección de inicio (portada) tiene, además de la foto (#inicio::before,
+   ya cubierta arriba), otra capa encima (#inicio::after) con degradados
+   naranja/rojo fijos en styles.css para dar ambiente "brasa". Como es un
+   ::after (pseudo-elemento), la regla genérica de arriba no lo alcanza
+   con "*" y se queda con su color cálido de siempre. Se reemplaza por el
+   mismo tipo de viñeta pero en tonos neutros, acorde al tema oscuro. */
+html.a11y-theme-oscuro #inicio::after {
+    background:
+        radial-gradient(ellipse at 50% 80%, rgba(236, 236, 239, .10) 0%, transparent 65%),
+        radial-gradient(ellipse at 20% 30%, rgba(236, 236, 239, .06) 0%, transparent 55%),
+        linear-gradient(to bottom, rgba(15, 15, 17, .12) 0%, rgba(15, 15, 17, .6) 60%, #0f0f11 100%) !important;
+}
+
+/* #inicio, #menu, #nosotros y #contacto traen su fondo puesto con un
+   selector de ID + !important en styles.css. Un ID le gana en
+   especificidad a una regla que solo usa clases (como la "capa base"
+   de arriba), así que esas secciones se quedaban con su café-negro
+   cálido de siempre (var(--negro)/var(--humo)) sin importar el tema.
+   Anteponiendo "html.a11y-theme-oscuro" se iguala el ID y se suma una
+   clase de más, así esta sí gana. */
+html.a11y-theme-oscuro #inicio {
+    background-color: var(--dk-bg) !important;
+}
+html.a11y-theme-oscuro #menu {
+    background: linear-gradient(to bottom, var(--dk-bg) 0%, var(--dk-surface) 150px, var(--dk-surface) calc(100% - 150px), var(--dk-bg) 100%) !important;
+}
+html.a11y-theme-oscuro #nosotros {
+    background: var(--dk-bg) !important;
+}
+html.a11y-theme-oscuro #contacto {
+    background: linear-gradient(to bottom, var(--dk-bg) 0%, var(--dk-surface) 150px, var(--dk-surface) 100%) !important;
+}
+
+/* Foco visible en blanco sobre fondo oscuro */
+html.a11y-theme-oscuro body :focus-visible:not(.a11y-panel *) { outline-color: #ffffff !important; }
+
+/* Red de seguridad: neutraliza cualquier color puesto con "style" en línea
+   (barras de progreso, indicadores de scroll o sliders armados por JS,
+   que no se pueden atrapar por clase porque su color viene inyectado
+   directamente en el atributo style="..."). Esto es justo lo que deja
+   cosas naranjas sueltas en modo oscuro aunque el resto ya esté neutro. */
+html.a11y-theme-oscuro body [style*="background" i]:not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *, img, video, picture, svg, svg *, canvas) {
+    background: inherit !important;
+    background-color: inherit !important;
+    background-image: none !important;
+}
+html.a11y-theme-oscuro body [style*="border" i]:not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *, img, video, picture, svg, svg *, canvas) {
+    border-color: var(--dk-line-strong) !important;
+}
+html.a11y-theme-oscuro body [style*="color" i]:not(.a11y-toggle, .a11y-toggle *, .a11y-panel, .a11y-panel *, img, video, picture, svg, svg *, canvas) {
+    color: var(--dk-text) !important;
+}
+/* Barras/indicadores dibujados en <canvas> (gráficas, progreso): a
+   diferencia de las fotos, sí deben apagarse en este tema. */
+html.a11y-theme-oscuro body canvas:not(.a11y-panel *) {
+    filter: grayscale(1) brightness(1.15) !important;
+}
+/* Barras de desplazamiento nativas del navegador */
+html.a11y-theme-oscuro { scrollbar-color: #eeeef1 #18181b !important; }
+html.a11y-theme-oscuro ::-webkit-scrollbar { background: #18181b !important; }
+html.a11y-theme-oscuro ::-webkit-scrollbar-thumb { background: #eeeef1 !important; border-radius: 8px; }
+html.a11y-theme-oscuro ::-webkit-scrollbar-track { background: #18181b !important; }
+html.a11y-theme-oscuro ::-webkit-scrollbar-button { background-color: #18181b !important; border-color: #18181b !important; }
+html.a11y-theme-oscuro ::-webkit-scrollbar-corner { background: #18181b !important; }
+
+/* Estas dos barras de scroll tienen su propio color naranja fijado con
+   una regla más específica (por clase) en styles.css / pedidos.css, así
+   que le ganan a la regla genérica de arriba y seguían naranjas: la
+   vertical del menú lateral (.sidebar-desktop) y la horizontal bajo las
+   pestañas del panel (.pm-nav). */
+html.a11y-theme-oscuro .sidebar-desktop {
+    scrollbar-color: #eeeef1 transparent !important;
+}
+html.a11y-theme-oscuro .sidebar-desktop::-webkit-scrollbar-thumb {
+    background-color: rgba(238, 238, 241, 0.55) !important;
+}
+html.a11y-theme-oscuro [class*="pm-nav"] {
+    scrollbar-color: #eeeef1 #18181b !important;
+}
+html.a11y-theme-oscuro [class*="pm-nav"]::-webkit-scrollbar-thumb {
+    background: #eeeef1 !important;
+    border-color: #18181b !important;
+}
+html.a11y-theme-oscuro [class*="pm-nav"]::-webkit-scrollbar-track {
+    background: #18181b !important;
+}
+
+/* ---------- ESCALA DE GRISES ----------
+   El filtro va en <html>: es el único elemento donde un "filter" no rompe
+   el position:fixed de los hijos (en <body> hacía que el widget dejara de
+   flotar y quedara "pegado" al final de la página). */
+html.a11y-theme-grises { filter: grayscale(100%); }
+
+/* ---------- DALTONISMO ----------
+   El filtro SVG url() no es fiable sobre <html>, así que se aplica a cada
+   hijo directo de <body> excepto al widget (mismo motivo: no romper fixed). */
+html.a11y-theme-daltonismo body > *:not(.a11y-toggle, .a11y-panel, .a11y-svg-filters) {
     filter: url('#a11y-filter-daltonismo');
 }
 
-/* Resalte de foco visible reforzado (siempre útil, no depende de un toggle) */
+/* El botón de accesibilidad queda fuera de ese filtro (aplicárselo
+   directamente rompería su position:fixed), así que se le da a mano el
+   mismo color al que llega el naranja de marca al pasar por el filtro
+   de deuteranopía: un verde-oliva, igual al de PIA y el resto del sitio
+   en este tema, para que no desentone. */
+html.a11y-theme-daltonismo .a11y-toggle {
+    background: #b7c131 !important;
+    border-color: #c1c566 !important;
+}
+html.a11y-theme-daltonismo .a11y-toggle:hover,
+html.a11y-theme-daltonismo .a11y-toggle:focus-visible {
+    background: #c1c566 !important;
+}
+
+/* Foco visible reforzado (siempre activo) */
 body :focus-visible {
-    outline: 3px solid var(--naranja) !important;
+    outline: 3px solid var(--naranja, #e8651a) !important;
     outline-offset: 2px !important;
 }
 
@@ -340,45 +824,24 @@ body :focus-visible {
     top: -60px;
     left: 12px;
     z-index: 2147483647;
-    background: var(--dorado);
-    color: var(--negro);
+    background: var(--dorado, #d4a24c);
+    color: var(--negro, #000);
     padding: 10px 16px;
     border-radius: 0 0 8px 8px;
     font-family: 'Oswald', sans-serif;
-    text-transform: uppercase;
-    font-size: 0.85rem;
+    font-size: 14px;
     letter-spacing: 1px;
     text-decoration: none;
     transition: top .2s ease;
 }
+.a11y-skip-link:focus { top: 0; }
 
-.a11y-skip-link:focus {
-    top: 0;
-}
-
+/* ================= RESPONSIVE / MOVIMIENTO ================= */
 @media (max-width: 480px) {
-    .a11y-panel {
-        right: 12px;
-        bottom: 84px;
-        max-height: min(500px, calc(100vh - 170px));
-    }
-    .a11y-toggle {
-        right: 86px;
-        bottom: 16px;
-        width: 50px;
-        height: 50px;
-        font-size: 1.3rem;
-    }
+    .a11y-toggle { right: 16px; bottom: 84px; width: 50px; height: 50px; font-size: 23px; }
+    .a11y-panel { right: 16px; bottom: 148px; max-height: min(560px, calc(100vh - 170px)); }
 }
 
-.a11y-toggle,
-.a11y-panel,
-.a11y-panel * {
-    font-size: revert !important;
+@media (prefers-reduced-motion: reduce) {
+    .a11y-toggle, .a11y-panel, .a11y-panel * { transition: none !important; }
 }
-.a11y-toggle { font-size: 1.5rem !important; }
-.a11y-panel__title { font-size: 1rem !important; }
-.a11y-select,
-.a11y-btn,
-.a11y-reset { font-size: 0.85rem !important; }
-.a11y-group__label { font-size: 0.78rem !important; }
