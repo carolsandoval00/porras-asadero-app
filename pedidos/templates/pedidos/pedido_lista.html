@@ -60,9 +60,9 @@
       <h3>Pedidos</h3>
       {% if request.user.rol == 'ADMIN' or request.user.is_superuser %}
       <div class="pm-card-header-actions">
-        <a href="{% url 'pedidos:pedido_exportar_pdf' %}?q={{ q }}&estado={{ estado_sel }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
+        <a href="{% url 'pedidos:pedido_exportar_pdf' %}?q={{ q }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
            class="pm-btn pm-btn-danger pm-btn-sm" data-tooltip="Descargar en PDF">⬇ PDF</a>
-        <a href="{% url 'pedidos:pedido_exportar_excel' %}?q={{ q }}&estado={{ estado_sel }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
+        <a href="{% url 'pedidos:pedido_exportar_excel' %}?q={{ q }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
            class="pm-btn pm-btn-success pm-btn-sm" data-tooltip="Descargar en Excel">⬇ Excel</a>
         <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Imprimir esta lista">🖨 Imprimir</button>
         <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm" data-tooltip="Hacer un pedido nuevo">Nuevo pedido</a>
@@ -75,12 +75,59 @@
       <form method="get" action="" class="pm-search-form pm-mb-lg">
         <input class="pm-input"
                type="text" name="q" value="{{ q }}" placeholder="Buscar por cliente o descripción…" data-tooltip="Escribe para buscar">
-  
-        <input class="pm-input" type="date" name="fecha_desde" value="{{ fecha_desde }}" max="{% now 'Y-m-d' %}" data-tooltip="Desde esta fecha">
-        <input class="pm-input" type="date" name="fecha_hasta" value="{{ fecha_hasta }}" max="{% now 'Y-m-d' %}" data-tooltip="Hasta esta fecha">
+
+        <!-- ===== FILTRO POR FECHAS ===== -->
+        <select name="filtro_fecha" id="pm-filtro-fecha" class="pm-select-filter"
+                data-tooltip="Filtra los pedidos por fecha" onchange="pmToggleFiltroFecha()">
+          <option value="" {% if filtro_fecha == '' %}selected{% endif %}>Todas las fechas</option>
+          <option value="hoy" {% if filtro_fecha == 'hoy' %}selected{% endif %}>Hoy</option>
+          <option value="futuras" {% if filtro_fecha == 'futuras' %}selected{% endif %}>Próximas</option>
+          <option value="pasadas" {% if filtro_fecha == 'pasadas' %}selected{% endif %}>Pasadas</option>
+          <option value="dia" {% if filtro_fecha == 'dia' %}selected{% endif %}>Día específico</option>
+          <option value="mes" {% if filtro_fecha == 'mes' %}selected{% endif %}>Mes específico</option>
+          <option value="rango" {% if filtro_fecha == 'rango' %}selected{% endif %}>Rango de fechas</option>
+        </select>
+
+        <input
+          type="date"
+          class="pm-input pm-filtro-fecha-campo"
+          id="pm-filtro-fecha-dia"
+          name="fecha_dia"
+          value="{{ fecha_dia }}"
+          max="{% now 'Y-m-d' %}"
+          style="display:none"
+          data-tooltip="Elige el día"
+        >
+
+        <input
+          type="month"
+          class="pm-input pm-filtro-fecha-campo"
+          id="pm-filtro-fecha-mes"
+          name="fecha_mes"
+          value="{{ fecha_mes }}"
+          max="{% now 'Y-m' %}"
+          style="display:none"
+          data-tooltip="Elige el mes"
+        >
+
+        <span id="pm-filtro-rango" class="pm-filtro-fecha-campo" style="display:none;gap:6px;align-items:center">
+          <input class="pm-input" type="date" name="fecha_desde" value="{{ fecha_desde }}" max="{% now 'Y-m-d' %}" data-tooltip="Desde esta fecha">
+          <input class="pm-input" type="date" name="fecha_hasta" value="{{ fecha_hasta }}" max="{% now 'Y-m-d' %}" data-tooltip="Hasta esta fecha">
+        </span>
+
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Buscar">Filtrar</button>
         <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Quitar los filtros">Limpiar</a>
       </form>
+
+      <script>
+        function pmToggleFiltroFecha() {
+          var valor = document.getElementById('pm-filtro-fecha').value;
+          document.getElementById('pm-filtro-fecha-dia').style.display = (valor === 'dia') ? 'inline-block' : 'none';
+          document.getElementById('pm-filtro-fecha-mes').style.display = (valor === 'mes') ? 'inline-block' : 'none';
+          document.getElementById('pm-filtro-rango').style.display = (valor === 'rango') ? 'inline-flex' : 'none';
+        }
+        pmToggleFiltroFecha();
+      </script>
 
       {% for grupo in pedidos_por_fecha %}
       <div class="pm-fecha-group-header">

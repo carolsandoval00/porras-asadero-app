@@ -113,6 +113,8 @@ def poblar_base_datos():
     # 5. Siembra de Reservas (según MER)
     print("\nSembrando Reservas...")
     reserva1 = Reserva.objects.create(
+        nombre_cliente=cli2.nombre_completo,
+        telefono=cli2.telefono,
         fecha_reserva=date(2026, 5, 30),
         hora_reserva=time(13, 0, 0),
         numero_personas=8,
@@ -121,6 +123,8 @@ def poblar_base_datos():
         numero_mesa=mesa2
     )
     reserva2 = Reserva.objects.create(
+        nombre_cliente=cli1.nombre_completo,
+        telefono=cli1.telefono,
         fecha_reserva=date(2026, 5, 31),
         hora_reserva=time(19, 30, 0),
         numero_personas=4,

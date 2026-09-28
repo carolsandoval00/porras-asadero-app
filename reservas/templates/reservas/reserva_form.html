@@ -1,0 +1,46 @@
+{% extends "base 2.html" %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/reservas.css' %}">
+
+<div class="mc-banner-wrap">
+  <div class="mc-banner-box-simple">
+    <h1 class="mc-banner-title-light">{{ titulo }}</h1>
+    <p class="mc-banner-sub-sm">Formulario de reserva validado en el servidor</p>
+  </div>
+</div>
+
+<div class="mc-wrap">
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="mc-card">
+    <form method="post">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="mc-msg-err">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      {% for campo in form %}
+        <div class="mc-form-group mc-mb-12">
+          <label class="mc-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+          {{ campo }}
+          {% if campo.errors %}
+            <div class="mc-msg-err">{{ campo.errors|striptags }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <div class="mc-btn-row">
+        <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
+        <button type="submit" class="mc-btn mc-btn-primary">Guardar reserva</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
