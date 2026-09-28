@@ -44,7 +44,74 @@
 
 
 {% include "partials/footer.html" %}
+
+<!-- Botón para abrir Créditos y Referencias (alineado a la derecha) -->
+<div class="creditos-link-wrap">
+    <a href="#" data-bs-toggle="modal" data-bs-target="#modalCreditos" class="creditos-link text-decoration-none text-secondary small">
+        <i class="bi bi-info-circle me-1"></i>Créditos y Referencias
+    </a>
+</div>
+
 {% include "partials/accesibilidad.html" %}
+
+<!-- Modal de Créditos y Referencias -->
+<div class="modal fade" id="modalCreditos" tabindex="-1" aria-labelledby="modalCreditosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content creditos-modal">
+      <div class="modal-header creditos-header">
+        <h5 class="modal-title creditos-title" id="modalCreditosLabel">
+          <i class="bi bi-images text-naranja me-2"></i>Créditos y Referencias
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body creditos-body">
+        <p class="creditos-intro">
+          En cumplimiento con las normas de propiedad intelectual, se listan los recursos utilizados en esta aplicación.
+        </p>
+
+        <div class="creditos-item">
+          <h6 class="creditos-item-title"><i class="bi bi-fonts me-2"></i>Tipografías</h6>
+          <p class="creditos-item-text">
+            <strong>Crimson Text</strong>, <strong>Oswald</strong> y <strong>Playfair Display</strong>,
+            provistas por <a href="https://fonts.google.com" target="_blank" rel="noopener">Google Fonts</a>.
+          </p>
+        </div>
+
+        <div class="creditos-item">
+          <h6 class="creditos-item-title"><i class="bi bi-emoji-smile me-2"></i>Iconografía y frameworks</h6>
+          <p class="creditos-item-text">
+            Iconos de <a href="https://icons.getbootstrap.com" target="_blank" rel="noopener">Bootstrap Icons</a>.
+            Interfaz con <a href="https://getbootstrap.com" target="_blank" rel="noopener">Bootstrap</a>
+            y <a href="https://www.djangoproject.com" target="_blank" rel="noopener">Django</a>.
+          </p>
+        </div>
+
+        <div class="creditos-item">
+          <h6 class="creditos-item-title"><i class="bi bi-image me-2"></i>Imágenes</h6>
+          <p class="creditos-item-text">
+            Icono, imágenes de la carta, restaurante y fondo generadas con inteligencia artificial
+            (Google Gemini, según indica el equipo). Logo: fuente propia.
+            Usadas con fines académicos y demostrativos.
+          </p>
+        </div>
+
+        <div class="creditos-item">
+          <h6 class="creditos-item-title"><i class="bi bi-geo-alt me-2"></i>Servicios externos</h6>
+          <p class="creditos-item-text">
+            Mapa de <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a>
+            y pedidos por <a href="https://faq.whatsapp.com/5913398998672934" target="_blank" rel="noopener">WhatsApp</a>.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-footer creditos-footer">
+        <button type="button" class="btn bg-naranja text-dark ff-oswald fw-bold text-uppercase px-4 btn-parrilla" data-bs-dismiss="modal">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="{% static 'js/base_bootstrap_bundle.js' %}" defer></script>
 <script src="{% static "js/contacto.js" %}" defer></script>
 <script src="{% static "js/accesibilidad.js" %}" defer></script>
