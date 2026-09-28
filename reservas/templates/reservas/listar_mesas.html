@@ -1,90 +1,51 @@
-<!-- ===== LISTA RESERVAS ===== -->
-<div id="mc-reservas" class="mc-section active">
-  <div class="mc-sec-header">
-    <p>Consulta, filtra y gestiona todas las reservas del restaurante</p>
-  </div>
+{% extends "base 2.html" %}
+{% load static %}
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
-  <div class="mc-filter-bar">
-    <input
-      type="text"
-      class="mc-input"
-      id="mc-buscar"
-      placeholder="Buscar por nombre o teléfono..."
-      oninput="mcRenderTabla()"
-    >
-
-    <!-- ===== FILTRO POR FECHAS ===== -->
-    <select class="mc-select" id="mc-filtro-fecha" onchange="mcToggleFiltroFecha()">
-      <option value="">Todas las fechas</option>
-      <option value="hoy">Hoy</option>
-      <option value="futuras">Próximas</option>
-      <option value="pasadas">Pasadas</option>
-      <option value="dia">Día específico</option>
-      <option value="mes">Mes específico</option>
-      <option value="rango">Rango de fechas</option>
-    </select>
-
-    <input
-      type="date"
-      class="mc-input"
-      id="mc-filtro-fecha-dia"
-      style="display:none;max-width:170px"
-      onchange="mcRenderTabla()"
-    >
-
-    <input
-      type="month"
-      class="mc-input"
-      id="mc-filtro-fecha-mes"
-      style="display:none;max-width:170px"
-      onchange="mcRenderTabla()"
-    >
-
-    <div id="mc-filtro-rango" style="display:none;gap:6px;align-items:center">
-      <label class="mc-label" for="mc-filtro-desde" style="margin:0">Desde</label>
-      <input type="date" class="mc-input" id="mc-filtro-desde"
-             style="max-width:160px" onchange="mcRenderTabla()">
-      <label class="mc-label" for="mc-filtro-hasta" style="margin:0">Hasta</label>
-      <input type="date" class="mc-input" id="mc-filtro-hasta"
-             style="max-width:160px" onchange="mcRenderTabla()">
+<div class="mc-wrapper">
+<div class="mc-banner-wrap">
+  <div class="mc-banner-box">
+    <div>
+      <h1 class="mc-banner-title">Mesas registradas</h1>
+      <p class="mc-banner-sub">Consulta y edita las mesas del restaurante</p>
     </div>
   </div>
   <div class="mc-nav-row">
+  <div class="mc-nav-group">
+    <span class="mc-nav-label">Reservas</span>
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver todas las reservas">Reservas</a>
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Hacer una reserva nueva">+ Nueva reserva</a>
+    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn" data-tooltip="Borrar una reserva">Eliminar reserva</a>
+  </div>
+  <div class="mc-nav-group">
+    <span class="mc-nav-label">Mesas</span>
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver el mapa de mesas del restaurante">Diagrama de mesas</a>
     <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Agregar una mesa nueva">+ Nueva mesa</a>
     <a href="{% url 'listar_mesas' %}" class="mc-nav-btn active" data-tooltip="Ver y editar las mesas existentes">Editar mesa</a>
-    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn" data-tooltip="Borrar una reserva">Eliminar reserva</a>
+  </div>
   </div>
 </div>
 
-    <button class="mc-btn-report" onclick="mcLimpiarFiltros()" title="Quitar todos los filtros">
-      Limpiar filtros
-    </button>
+<div class="mc-wrap">
 
-    <span id="mc-contador-reservas" class="mc-muted-sm"></span>
-
-    <div class="mc-report-bar">
-      <button class="mc-btn-report mc-btn-report-pdf" onclick="mcExportarPDF()" title="Descargar PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
-      <button class="mc-btn-report mc-btn-report-excel" onclick="mcExportarExcel()" title="Descargar Excel"><i class="bi bi-file-earmark-excel"></i> Excel</button>
-      <button class="mc-btn-report" onclick="mcImprimir()" title="Imprimir"><i class="bi bi-printer"></i> Imprimir</button>
-    </div>
-  </div>
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
 
   <div class="mc-card mc-card-flush">
     <div class="mc-table-wrap">
       <table class="mc-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Cliente</th>
             <th>Mesa</th>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th>Personas</th>
+            <th>Capacidad</th>
+            <th>Ubicación</th>
             <th>Estado</th>
-            <th>Acciones</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -127,21 +88,7 @@
     </div>
   </div>
 </div>
-
-{% if messages %}
-<!-- ===== MODAL MENSAJE (éxito / error) ===== -->
-<div class="mc-confirm-overlay open" id="modal-mensaje">
-  <div class="mc-confirm-box">
-    {% for msg in messages %}
-      <h3>{% if msg.tags == 'error' %}Ocurrió un error{% else %}Listo{% endif %}</h3>
-      <p>{{ msg }}</p>
-    {% endfor %}
-    <div class="mc-confirm-btns">
-      <button class="mc-btn mc-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
-    </div>
-  </div>
-</div>
-{% endif %}
+</div><!-- /.mc-wrapper -->
 
 <!-- ===== MODAL CONFIRMAR ELIMINAR ===== -->
 <div class="mc-confirm-overlay" id="confirm-eliminar">
@@ -157,3 +104,19 @@
     </div>
   </div>
 </div>
+
+<script>
+function abrirConfirm(numeroMesa) {
+  document.getElementById('confirm-msg').innerText =
+    '¿Eliminar la Mesa ' + numeroMesa + '? También se perderán sus reservas asociadas.';
+  document.getElementById('confirm-form').action = '/reservas/mesa/eliminar/' + numeroMesa + '/';
+  document.getElementById('confirm-eliminar').classList.add('open');
+}
+function cerrarConfirm() {
+  document.getElementById('confirm-eliminar').classList.remove('open');
+}
+</script>
+
+<script src="{% static 'js/reservas_nav_tooltips.js' %}" defer></script>
+
+{% endblock %}
