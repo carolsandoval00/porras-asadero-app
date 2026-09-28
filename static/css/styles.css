@@ -849,3 +849,176 @@ html.admin-html, body.admin-body-shell {
     bottom: calc(100% - 1px);
     border-color: transparent transparent var(--negro) transparent;
 }
+
+/* ============================================
+   Enlace de Créditos y Referencias
+   Alineado a la derecha, debajo del botón de accesibilidad
+   ============================================ */
+.creditos-link-wrap {
+    text-align: right;
+    padding: 12px 24px 16px;
+}
+
+.creditos-link {
+    display: inline-block;
+    transition: color .3s;
+}
+
+.creditos-link:hover {
+    color: var(--naranja) !important;
+}
+
+/* ============================================
+   Modal de Créditos y Referencias  (v2)
+   Título centrado, tarjetas en cuadrícula 2x2 con
+   acento superior (igual que .contacto-card)
+   ============================================ */
+.modal-backdrop.show {
+    opacity: .88;
+    background-color: #0a0603;
+}
+
+#modalCreditos .modal-dialog {
+    max-width: 780px;
+}
+
+.creditos-modal {
+    background: var(--humo);
+    color: var(--crema);
+    border: 1px solid rgba(212, 160, 23, .25);
+    border-radius: 0;
+    box-shadow: 0 0 60px rgba(232, 101, 26, .2), 0 20px 50px rgba(0, 0, 0, .65);
+    position: relative;
+    overflow: hidden;
+}
+/* Franja de brasa en el borde superior */
+.creditos-modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--naranja), var(--dorado), var(--naranja), transparent);
+    z-index: 2;
+}
+
+.creditos-header {
+    background: var(--negro);
+    border-bottom: none;
+    border-radius: 0;
+    padding: 1.6rem 1.4rem 1.2rem;
+    justify-content: center;
+    position: relative;
+}
+.creditos-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--naranja), transparent);
+}
+.creditos-header .btn-close {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    margin: 0;
+}
+.creditos-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--crema);
+    font-size: 1.6rem;
+    text-align: center;
+}
+
+.creditos-body {
+    padding: 1.6rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-content: start;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(232, 101, 26, .5) transparent;
+}
+.creditos-body::-webkit-scrollbar { width: 6px; }
+.creditos-body::-webkit-scrollbar-thumb {
+    background-color: rgba(232, 101, 26, .5);
+    border-radius: 10px;
+}
+.creditos-body::-webkit-scrollbar-track { background: transparent; }
+
+.creditos-intro {
+    grid-column: 1 / -1;
+    font-family: 'Crimson Text', serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    text-align: center;
+    color: rgba(245, 236, 215, .6);
+    margin: 0 0 .4rem;
+}
+
+.creditos-item {
+    background: rgba(245, 236, 215, .04);
+    border: 1px solid rgba(245, 236, 215, .1);
+    border-top: 3px solid transparent;
+    border-radius: 0;
+    padding: 1.3rem 1.2rem;
+    text-align: center;
+    transition: transform .3s ease, background .3s ease, border-top-color .3s ease, box-shadow .3s ease;
+}
+.creditos-item:hover {
+    background: #221406;
+    transform: translateY(-4px);
+    border-top-color: var(--naranja);
+    box-shadow: 0 8px 25px rgba(232, 101, 26, .15);
+}
+
+.creditos-item-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: .8rem;
+    font-weight: 400;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--dorado);
+    margin-bottom: .7rem;
+}
+/* Ícono grande arriba del título */
+.creditos-item-title i {
+    display: block;
+    margin: 0 auto .5rem !important;
+    font-size: 1.8rem;
+    color: var(--naranja);
+}
+
+.creditos-item-text {
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: rgba(245, 236, 215, .85);
+    margin: 0;
+}
+.creditos-item-text strong { color: var(--crema); }
+.creditos-item-text a {
+    color: var(--naranja);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(232, 101, 26, .35);
+    transition: color .3s, border-color .3s;
+}
+.creditos-item-text a:hover {
+    color: var(--dorado);
+    border-bottom-color: var(--dorado);
+}
+
+.creditos-footer {
+    background: var(--negro);
+    border-top: 1px solid rgba(212, 160, 23, .2);
+    border-radius: 0;
+    padding: 1rem 1.4rem;
+    justify-content: center;
+}
+
+/* Móvil: una sola columna */
+@media (max-width: 640px) {
+    .creditos-body { grid-template-columns: 1fr; padding: 1.2rem; }
+    .creditos-title { font-size: 1.3rem; }
+}
