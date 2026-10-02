@@ -1,9 +1,17 @@
 <!-- ===== LISTA RESERVAS ===== -->
 <div id="mc-reservas" class="mc-section active">
-  <div class="mc-sec-header">
-    <p>Consulta, filtra y gestiona todas las reservas del restaurante</p>
+ <div class="mc-list-card">
+  <div class="mc-list-header">
+    <h3>Reservas</h3>
+    <div class="mc-report-bar">
+      <button class="pm-btn pm-btn-danger pm-btn-sm" onclick="mcExportarPDF()" data-tooltip="Descargar en PDF">⬇ PDF</button>
+      <button class="pm-btn pm-btn-success pm-btn-sm" onclick="mcExportarExcel()" data-tooltip="Descargar en Excel">⬇ Excel</button>
+      <button class="pm-btn pm-btn-info pm-btn-sm" onclick="mcImprimir()" data-tooltip="Imprimir esta lista">🖨 Imprimir</button>
+      <button class="pm-btn pm-btn-accent pm-btn-sm" onclick="mcShow('crear')" data-tooltip="Hacer una reserva nueva">Nueva reserva</button>
+    </div>
   </div>
 
+  <div class="mc-list-body">
   <div class="mc-filter-bar">
     <input
       type="text"
@@ -14,17 +22,7 @@
       data-tooltip="Escribe para buscar"
     >
 
-    <select
-      class="mc-select"
-      id="mc-filtro-estado"
-      onchange="mcRenderTabla()"
-      data-tooltip="Filtra por estado de la reserva"
-    >
-      <option value="">Todos los estados</option>
-      <option value="confirmada">Confirmada</option>
-      <option value="pendiente">Pendiente</option>
-      <option value="cancelada">Cancelada</option>
-    </select>
+
 
     <select
       class="mc-select"
@@ -68,21 +66,15 @@
              style="max-width:160px" onchange="mcRenderTabla()">
     </div>
 
-    <button class="mc-btn-report" onclick="mcLimpiarFiltros()" title="Quitar todos los filtros">
-      Limpiar filtros
+    <button type="button" class="pm-btn pm-btn-primary pm-btn-sm" onclick="mcRenderTabla()" data-tooltip="Buscar con los filtros elegidos">Filtrar</button>
+    <button class="pm-btn pm-btn-light pm-btn-sm" onclick="mcLimpiarFiltros()" title="Quitar todos los filtros">
+      Limpiar
     </button>
 
-    <span id="mc-contador-reservas" class="mc-muted-sm"></span>
-
-    <div class="mc-report-bar">
-      <button class="mc-btn-report mc-btn-report-pdf" onclick="mcExportarPDF()" data-tooltip="Descargar en PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
-      <button class="mc-btn-report mc-btn-report-excel" onclick="mcExportarExcel()" data-tooltip="Descargar en Excel"><i class="bi bi-file-earmark-excel"></i> Excel</button>
-      <button class="mc-btn-report" onclick="mcImprimir()" data-tooltip="Imprimir esta lista"><i class="bi bi-printer"></i> Imprimir</button>
-    </div>
+    <span id="mc-contador-reservas" class="mc-list-count"></span>
   </div>
 
-  <div class="mc-card mc-card-flush">
-    <div class="mc-table-wrap">
+  <div class="mc-table-wrap">
       <table class="mc-table">
         <thead>
           <tr>
@@ -99,6 +91,7 @@
 
         <tbody id="mc-tbody-reservas"></tbody>
       </table>
-    </div>
   </div>
+  </div><!-- /.mc-list-body -->
+ </div><!-- /.mc-list-card -->
 </div>

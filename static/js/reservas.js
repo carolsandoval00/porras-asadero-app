@@ -148,8 +148,10 @@
     const mes    = $('mc-filtro-fecha-mes');
     const desde  = $('mc-filtro-desde');
     const hasta  = $('mc-filtro-hasta');
+    const estado = $('mc-filtro-estado');
 
     if (buscar && buscar.value.trim()) filtros.q = buscar.value.trim();
+    if (estado && estado.value) filtros.estado = estado.value;
     if (fecha && fecha.value) {
       filtros.fecha = fecha.value;
       if (fecha.value === 'dia' && dia && dia.value) filtros.dia = dia.value;
@@ -209,7 +211,7 @@
   };
 
   window.mcLimpiarFiltros = function () {
-    ['mc-buscar', 'mc-filtro-fecha',
+    ['mc-buscar', 'mc-filtro-estado', 'mc-filtro-fecha',
      'mc-filtro-fecha-dia', 'mc-filtro-fecha-mes',
      'mc-filtro-desde', 'mc-filtro-hasta'].forEach(id => {
       const el = $(id);
