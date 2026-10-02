@@ -32,7 +32,7 @@
         </h1>
         <div class="hero-divider mx-auto my-4 fade-up-3"></div>
         <p class="ff-crimson fst-italic fs-5 text-white-50 mb-5 fade-up-4">El sabor auténtico de las brasas, directo a tu mesa</p>
-        <a href="#menu" class="btn btn-lg bg-naranja text-dark ff-oswald fw-bold text-uppercase px-5 btn-parrilla fade-up-5">Ver Menú</a>
+         <a href="#menu" class="btn btn-lg bg-naranja text-dark ff-oswald fw-bold text-uppercase px-5 btn-parrilla fade-up-5" data-tooltip="Ver nuestro menú">Ver Menú</a>
     </div>
 </section>
 
@@ -44,9 +44,142 @@
 
 
 {% include "partials/footer.html" %}
+
+<!-- Botón para abrir Créditos y Referencias (alineado a la derecha) -->
+<div class="creditos-link-wrap">
+    <a href="#" data-bs-toggle="modal" data-bs-target="#modalCreditos" class="creditos-link text-decoration-none text-secondary small">
+        <i class="bi bi-info-circle me-1"></i>Créditos y Referencias
+    </a>
+</div>
+
 {% include "partials/accesibilidad.html" %}
+
+<!-- Modal de Créditos y Referencias -->
+<div class="modal fade" id="modalCreditos" tabindex="-1" aria-labelledby="modalCreditosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content creditos-modal">
+      <div class="modal-header creditos-header">
+        <h5 class="modal-title creditos-title" id="modalCreditosLabel">
+          <i class="bi bi-images text-naranja me-2"></i>Créditos y Referencias
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body creditos-body">
+        <p class="creditos-intro">
+          En cumplimiento con las normas de propiedad intelectual, se listan los recursos utilizados en esta aplicación.
+        </p>
+
+        <div class="creditos-item">
+          <h6 class="creditos-item-title"><i class="bi bi-fonts me-2"></i>Tipografías</h6>
+          <p class="creditos-item-text">
+            <strong>Crimson Text</strong>, <strong>Oswald</strong> y <strong>Playfair Display</strong>,
+            provistas por <a href="https://fonts.google.com" target="_blank" rel="noopener">Google Fonts</a>.
+          </p>
+        </div>
+
+        <div class="creditos-item">
+          <h6 class="creditos-item-title"><i class="bi bi-emoji-smile me-2"></i>Iconografía y frameworks</h6>
+          <p class="creditos-item-text">
+            Iconos de <a href="https://icons.getbootstrap.com" target="_blank" rel="noopener">Bootstrap Icons</a>.
+            Interfaz con <a href="https://getbootstrap.com" target="_blank" rel="noopener">Bootstrap</a>
+            y <a href="https://www.djangoproject.com" target="_blank" rel="noopener">Django</a>.
+          </p>
+        </div>
+
+        <div class="creditos-item">
+          <h6 class="creditos-item-title"><i class="bi bi-image me-2"></i>Imágenes</h6>
+          <p class="creditos-item-text">
+            Icono, imágenes de la carta, restaurante y fondo generadas con inteligencia artificial
+            (Google Gemini, según indica el equipo). Logo: fuente propia.
+            Usadas con fines académicos y demostrativos.
+          </p>
+        </div>
+
+        <div class="creditos-item">
+          <h6 class="creditos-item-title"><i class="bi bi-geo-alt me-2"></i>Servicios externos</h6>
+          <p class="creditos-item-text">
+            Mapa de <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a>
+            y pedidos por <a href="https://faq.whatsapp.com/5913398998672934" target="_blank" rel="noopener">WhatsApp</a>.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-footer creditos-footer">
+        <button type="button" class="btn bg-naranja text-dark ff-oswald fw-bold text-uppercase px-4 btn-parrilla" data-bs-dismiss="modal">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="{% static 'js/base_bootstrap_bundle.js' %}" defer></script>
 <script src="{% static "js/contacto.js" %}" defer></script>
 <script src="{% static "js/accesibilidad.js" %}" defer></script>
+
+<!-- ============================================
+     Tooltips (data-tooltip) — mismo sistema del panel
+     admin (ver base 2.html), para que el botón de
+     accesibilidad también muestre su mensaje aquí en
+     el sitio público.
+     ============================================ -->
+<script>
+(function () {
+    let bubble = null;
+
+    function hideTooltip() {
+        if (bubble) {
+            bubble.remove();
+            bubble = null;
+        }
+    }
+
+    function showTooltip(el) {
+        hideTooltip();
+
+        const text = el.getAttribute('data-tooltip');
+        if (!text) return;
+
+        bubble = document.createElement('div');
+        bubble.className = 'js-tooltip-bubble';
+        bubble.textContent = text;
+        document.body.appendChild(bubble);
+
+        const rect = el.getBoundingClientRect();
+        const bubbleRect = bubble.getBoundingClientRect();
+
+        let left = rect.left + rect.width / 2 - bubbleRect.width / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - bubbleRect.width - 8));
+
+        const espacioArriba = rect.top - bubbleRect.height - 10;
+        let top;
+        let abajo = false;
+        if (espacioArriba < 8) {
+            top = rect.bottom + 10;
+            abajo = true;
+        } else {
+            top = espacioArriba;
+        }
+
+        bubble.classList.toggle('abajo', abajo);
+        bubble.style.left = left + 'px';
+        bubble.style.top = top + 'px';
+
+        requestAnimationFrame(() => bubble.classList.add('show'));
+    }
+
+    function attach(el) {
+        el.addEventListener('mouseenter', function () { showTooltip(el); });
+        el.addEventListener('mouseleave', hideTooltip);
+        el.addEventListener('focus', function () { showTooltip(el); });
+        el.addEventListener('blur', hideTooltip);
+    }
+
+    document.querySelectorAll('[data-tooltip]').forEach(attach);
+
+    window.addEventListener('scroll', hideTooltip, true);
+    window.addEventListener('pageshow', hideTooltip);
+    document.addEventListener('visibilitychange', hideTooltip);
+})();
+</script>
 </body>
 </html>
