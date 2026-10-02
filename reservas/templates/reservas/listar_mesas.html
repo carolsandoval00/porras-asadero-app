@@ -4,6 +4,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
+<<<<<<< Updated upstream
 <div class="mc-wrapper">
 <div class="mc-banner-wrap">
   <div class="mc-banner-box">
@@ -12,6 +13,10 @@
       <p class="mc-banner-sub">Consulta y edita las mesas del restaurante</p>
     </div>
   </div>
+=======
+<div class="mc-wrap">
+
+>>>>>>> Stashed changes
   <div class="mc-nav-row">
   <div class="mc-nav-group">
     <span class="mc-nav-label">Reservas</span>
@@ -26,6 +31,7 @@
     <a href="{% url 'listar_mesas' %}" class="mc-nav-btn active" data-tooltip="Ver y editar las mesas existentes">Editar mesa</a>
   </div>
   </div>
+<<<<<<< Updated upstream
 </div>
 
 <div class="mc-wrap">
@@ -35,6 +41,8 @@
       <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">{{ msg }}</div>
     {% endfor %}
   {% endif %}
+=======
+>>>>>>> Stashed changes
 
   <div class="mc-card mc-card-flush">
     <div class="mc-table-wrap">
@@ -87,6 +95,7 @@
       </table>
     </div>
   </div>
+
 </div>
 </div><!-- /.mc-wrapper -->
 
@@ -105,6 +114,7 @@
   </div>
 </div>
 
+<<<<<<< Updated upstream
 <script>
 function abrirConfirm(numeroMesa) {
   document.getElementById('confirm-msg').innerText =
@@ -119,4 +129,6 @@ function cerrarConfirm() {
 
 <script src="{% static 'js/reservas_nav_tooltips.js' %}" defer></script>
 
+=======
+>>>>>>> Stashed changes
 {% endblock %}
