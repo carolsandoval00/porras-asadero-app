@@ -66,12 +66,13 @@
              style="max-width:160px" onchange="mcRenderTabla()">
     </div>
 
+
     <button type="button" class="pm-btn pm-btn-primary pm-btn-sm" onclick="mcRenderTabla()" data-tooltip="Buscar con los filtros elegidos">Filtrar</button>
-    <button class="pm-btn pm-btn-light pm-btn-sm" onclick="mcLimpiarFiltros()" title="Quitar todos los filtros">
+    <button class="pm-btn pm-btn-light pm-btn-sm" onclick="mcLimpiarFiltros()" data-tooltip="Quitar todos los filtros y ver todas las reservas">
       Limpiar
     </button>
 
-    <span id="mc-contador-reservas" class="mc-list-count"></span>
+    <span id="mc-contador-reservas" class="mc-list-count" data-tooltip="Cantidad de reservas que se muestran"></span>
   </div>
 
   <div class="mc-table-wrap">

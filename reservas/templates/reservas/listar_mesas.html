@@ -4,6 +4,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
+
 <div class="mc-wrapper">
 <div class="mc-banner-wrap">
   <div class="mc-banner-box">
@@ -12,6 +13,10 @@
       <p class="mc-banner-sub">Consulta y edita las mesas del restaurante</p>
     </div>
   </div>
+
+<div class="mc-wrap">
+
+
   <div class="mc-nav-row">
   <div class="mc-nav-group">
     <span class="mc-nav-label">Reservas</span>
@@ -26,6 +31,7 @@
     <a href="{% url 'listar_mesas' %}" class="mc-nav-btn active" data-tooltip="Ver y editar las mesas existentes">Editar mesa</a>
   </div>
   </div>
+
 </div>
 
 <div class="mc-wrap">
@@ -35,6 +41,7 @@
       <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">{{ msg }}</div>
     {% endfor %}
   {% endif %}
+
 
   <div class="mc-card mc-card-flush">
     <div class="mc-table-wrap">
@@ -87,6 +94,7 @@
       </table>
     </div>
   </div>
+
 </div>
 </div><!-- /.mc-wrapper -->
 
