@@ -5,7 +5,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="{% static 'css/reservas.css' %}">
 
-
 <div class="mc-wrapper">
 <div class="mc-banner-wrap">
   <div class="mc-banner-box">
@@ -14,10 +13,6 @@
       <p class="mc-banner-sub">Consulta y edita las mesas del restaurante</p>
     </div>
   </div>
-
-<div class="mc-wrap">
-
-
   <div class="mc-nav-row">
   <div class="mc-nav-group">
     <span class="mc-nav-label">Reservas</span>
@@ -32,7 +27,6 @@
     <a href="{% url 'listar_mesas' %}" class="mc-nav-btn active" data-tooltip="Ver y editar las mesas existentes">Editar mesa</a>
   </div>
   </div>
-
 </div>
 
 <div class="mc-wrap">
@@ -42,7 +36,6 @@
       <div class="{% if msg.tags == 'error' %}mc-msg-err{% else %}mc-msg-ok{% endif %}">{{ msg }}</div>
     {% endfor %}
   {% endif %}
-
 
   <div class="mc-card mc-card-flush">
     <div class="mc-table-wrap">
@@ -76,10 +69,6 @@
                 <a href="{% url 'actualizar_mesa' mesa.numero_mesa %}" class="mc-icon-btn edit" data-tooltip="Editar esta mesa">
                   <i class="bi bi-pencil-fill"></i> Editar
                 </a>
-                <button type="button" class="mc-icon-btn del" data-tooltip="Borrar esta mesa"
-                        onclick="abrirConfirm({{ mesa.numero_mesa }})">
-                  <i class="bi bi-trash-fill"></i> Eliminar
-                </button>
               </div>
             </td>
           </tr>
@@ -95,36 +84,8 @@
       </table>
     </div>
   </div>
-
 </div>
 </div><!-- /.mc-wrapper -->
-
-<!-- ===== MODAL CONFIRMAR ELIMINAR ===== -->
-<div class="mc-confirm-overlay" id="confirm-eliminar">
-  <div class="mc-confirm-box">
-    <h3>Eliminar mesa</h3>
-    <p id="confirm-msg">¿Eliminar la Mesa? También se perderán sus reservas asociadas.</p>
-    <div class="mc-confirm-btns">
-      <button class="mc-btn mc-btn-secondary" onclick="cerrarConfirm()" data-tooltip="Cerrar sin eliminar">Cancelar</button>
-      <form method="post" id="confirm-form" class="mc-inline">
-        {% csrf_token %}
-        <button type="submit" class="mc-btn mc-btn-danger" data-tooltip="Esta acción no se puede deshacer">Eliminar</button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<script>
-function abrirConfirm(numeroMesa) {
-  document.getElementById('confirm-msg').innerText =
-    '¿Eliminar la Mesa ' + numeroMesa + '? También se perderán sus reservas asociadas.';
-  document.getElementById('confirm-form').action = '/reservas/mesa/eliminar/' + numeroMesa + '/';
-  document.getElementById('confirm-eliminar').classList.add('open');
-}
-function cerrarConfirm() {
-  document.getElementById('confirm-eliminar').classList.remove('open');
-}
-</script>
 
 <script src="{% static 'js/reservas_nav_tooltips.js' %}" defer></script>
 

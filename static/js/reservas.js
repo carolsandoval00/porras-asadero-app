@@ -93,13 +93,20 @@
   function getMesaLabel(numero) { const m = getMesa(numero); return m ? 'Mesa ' + m.numero : '—'; }
 
   // ─── Modales / avisos ─────────────────────────────────────
-  function toast(msg, tipo) {
-    const titulo = $('mc-msg-title'), texto = $('mc-msg-text'), overlay = $('mc-msg-overlay');
+  // Aviso en modal. `titulo` es opcional; si no se pasa se usa uno por defecto.
+  function toast(msg, tipo, titulo) {
+    const tit = $('mc-msg-title'), texto = $('mc-msg-text'), overlay = $('mc-msg-overlay');
     if (!overlay) { console.log(msg); return; }
-    titulo.textContent = tipo === 'error' ? 'Atención' : '¡Listo!';
+    tit.textContent = titulo || (tipo === 'error' ? 'Atención' : '¡Listo!');
     texto.textContent = msg;
+    overlay.classList.toggle('error', tipo === 'error');
     overlay.classList.add('open');
   }
+
+  window.mcCloseMsg = function () {
+    const el = $('mc-msg-overlay');
+    if (el) el.classList.remove('open');
+  };
 
   window.mcCloseConfirm = function () {
     const el = $('mc-confirm-overlay');
@@ -357,7 +364,8 @@
 
     try {
       await apiPost(API.reservaGuardar, payload);
-      toast(editandoId ? 'Reserva actualizada' : 'Reserva creada exitosamente');
+      if (editandoId) toast('La reserva se actualizó correctamente.', 'ok', 'Reserva actualizada');
+      else            toast('La reserva se creó correctamente.', 'ok', 'Reserva creada');
       editandoId = null;
       await cargarMesas();
       mcLimpiar();
@@ -424,7 +432,7 @@
           await cargarMesas();
           await mcRenderTabla();
           mcRenderDiagrama();
-          toast('Reserva eliminada');
+          toast('La reserva se eliminó correctamente.', 'ok', 'Reserva eliminada');
         } catch (e) {
           toast(e.message, 'error');
         }
@@ -572,7 +580,6 @@
         <button class="mc-icon-btn" data-tooltip="Ver el detalle de esta mesa" onclick="mcVerMesa(${m.id})">Ver</button>
         ${!soloLectura() ? `
           <button class="mc-icon-btn edit" data-tooltip="Editar esta mesa" onclick="mcEditarMesa(${m.id})">Editar</button>
-          <button class="mc-icon-btn del" data-tooltip="Borrar esta mesa" onclick="mcPedirEliminarMesa(${m.id})">Borrar</button>
         ` : ''}
       </div></td>
     </tr>`).join('');
@@ -693,27 +700,6 @@
     }
   };
 
-  window.mcPedirEliminarMesa = function (numero) {
-    if (soloLectura()) { toast('No tienes permisos para realizar esta acción', 'error'); return; }
-    const m = getMesa(numero);
-    if (!m) return;
-    mcConfirm('Eliminar mesa',
-      `¿Eliminar la Mesa ${m.numero}? También se eliminarán sus reservas asociadas.`,
-      async () => {
-        try {
-          await apiPost(API.mesaEliminar, { numero_mesa: numero });
-          await cargarMesas();
-          mcRenderTablaMesas();
-          await mcRenderTabla();
-          mcRenderDiagrama();
-          mcPoblarMesas();
-          toast('Mesa eliminada');
-        } catch (e) {
-          toast(e.message, 'error');
-        }
-      });
-  };
-
   window.mcExportarMesasPDF = function () {
     const lista = mcListaMesasFiltrada();
     if (!lista.length) { toast('No hay mesas para exportar', 'error'); return; }
@@ -789,6 +775,20 @@
       // Va en finally para que un error al pintar no impida abrir la sección.
       const tabInicial = new URLSearchParams(window.location.search).get('tab');
       if (tabInicial && $('mc-' + tabInicial)) mcShow(tabInicial);
+
+      // Mensajes que llegan desde las vistas de Django (crear/editar por formulario HTML).
+      const msj = (window.MC_MENSAJES || [])[0];
+      if (msj) {
+        const error = /error/.test(msj.tipo);
+        let titulo = 'Atención';
+        if (!error) {
+          if (/creada/.test(msj.texto)) titulo = 'Reserva creada';
+          else if (/actualizada/.test(msj.texto)) titulo = 'Reserva actualizada';
+          else if (/eliminada/.test(msj.texto)) titulo = 'Reserva eliminada';
+          else titulo = '¡Listo!';
+        }
+        toast(msj.texto, error ? 'error' : 'ok', titulo);
+      }
     }
   }
 

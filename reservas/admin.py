@@ -9,6 +9,9 @@ class MesaAdmin(admin.ModelAdmin):
     list_filter = ('estado', 'ubicacion')
     search_fields = ('numero_mesa', 'ubicacion')
 
+    def has_delete_permission(self, request, obj=None):
+        return False   # las mesas son fijas
+
 
 @admin.register(Reserva)
 class ReservaAdmin(admin.ModelAdmin):
