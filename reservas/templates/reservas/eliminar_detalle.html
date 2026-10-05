@@ -77,25 +77,9 @@
                value="{{ filtros.hasta }}" style="max-width:160px">
       </span>
 
-      <button type="submit" class="mc-btn mc-btn-primary">Filtrar</button>
-      <a href="{% url 'eliminar_detalle' %}" class="mc-btn mc-btn-secondary">Limpiar</a>
+      <button type="submit" class="mc-btn mc-btn-primary" data-tooltip="Mostrar solo las reservas que coinciden con los filtros">Filtrar</button>
+      <a href="{% url 'eliminar_detalle' %}" class="mc-btn mc-btn-secondary" data-tooltip="Quitar los filtros y ver todas las reservas">Limpiar</a>
     </form>
-  </div>
-
-  <!-- Tabla de reservas -->
-  <div class="mc-card mc-hidden" id="ed-tabla">
-    <div class="mc-card-title">Reservas registradas</div>
-    <div class="mc-table-wrap">
-      <table class="mc-table">
-        <thead>
-          <tr>
-            <th>ID</th><th>Cliente</th><th>Mesa</th>
-            <th>Fecha</th><th>Hora</th><th>Personas</th><th>Estado</th>
-          </tr>
-        </thead>
-        <tbody id="ed-tbody"></tbody>
-      </table>
-    </div>
   </div>
 
   <!-- Selector + botón eliminar -->
@@ -131,6 +115,39 @@
         </div>
       </form>
     </div>
+
+    <div class="mc-card-title">Seleccionar reserva a eliminar</div>
+
+    <form method="post" id="ed-form-eliminar">
+      {% csrf_token %}
+      <label class="mc-label" for="ed-select">Reserva *</label>
+      <select class="mc-select" name="detalle" id="ed-select" required data-tooltip="Elige la reserva que quieres borrar">
+        <option value="">— Seleccionar —</option>
+        {% for r in detalles %}
+          <option value="{{ r.id }}"
+                  data-texto="Reserva de {{ r.nombre_usuario }} — {{ r.fecha_reserva|date:'Y-m-d' }} a las {{ r.hora_reserva|time:'H:i' }} (Mesa {{ r.numero_mesa_id }})">
+            #{{ r.id }} — {{ r.nombre_usuario }} · {{ r.fecha_reserva|date:"Y-m-d" }} {{ r.hora_reserva|time:"H:i" }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <!-- Confirmación -->
+      <div id="ed-confirm-box" class="mc-confirm-inline" style="display:none">
+        <p class="mc-confirm-warn">⚠️ ¿Estás seguro de que deseas eliminar esta reserva?</p>
+        <p id="ed-confirm-texto" class="mc-confirm-detail"></p>
+        <div class="mc-btn-row">
+          <button type="button" class="mc-btn mc-btn-secondary" onclick="edCancelar()" data-tooltip="No borrar, volver atrás">Cancelar</button>
+          <button type="submit" class="mc-btn mc-btn-danger" data-tooltip="Confirmar y borrar la reserva">Sí, eliminar</button>
+        </div>
+      </div>
+
+      <div class="mc-btn-row" id="ed-btn-row">
+        <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary" data-tooltip="Volver al panel de reservas">← Volver</a>
+        <button type="button" class="mc-btn mc-btn-primary" onclick="edPedirConfirmacion()" data-tooltip="Borrar la reserva seleccionada">Eliminar reserva</button>
+      </div>
+    </form>
+  </div>
+
 
   <div class="mc-toast" id="ed-toast"></div>
 </div>
