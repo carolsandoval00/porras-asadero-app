@@ -570,7 +570,7 @@
       <td><span class="mc-badge ${badgeClass(m.estado)}">${ETIQUETA_MESA[m.estado] || m.estado}</span></td>
       <td><div class="mc-action-btns">
         <button class="mc-icon-btn" data-tooltip="Ver el detalle de esta mesa" onclick="mcVerMesa(${m.id})">Ver</button>
-        ${!esCajero() ? `
+        ${!soloLectura() ? `
           <button class="mc-icon-btn edit" data-tooltip="Editar esta mesa" onclick="mcEditarMesa(${m.id})">Editar</button>
           <button class="mc-icon-btn del" data-tooltip="Borrar esta mesa" onclick="mcPedirEliminarMesa(${m.id})">Borrar</button>
         ` : ''}
@@ -776,15 +776,20 @@
 
   async function iniciar() {
     fijarFechaMin();
-    await cargarMesas();
-    await mcRenderTabla();
-    mcRenderDiagrama();
-    mcRenderTablaMesas();
-    mcPoblarMesas();
-
-    // ?tab=crear / mesas / crear-mesa desde los enlaces del menú lateral.
-    const tabInicial = new URLSearchParams(window.location.search).get('tab');
-    if (tabInicial && $('mc-' + tabInicial)) mcShow(tabInicial);
+    try {
+      await cargarMesas();
+      await mcRenderTabla();
+      mcRenderDiagrama();
+      mcRenderTablaMesas();
+      mcPoblarMesas();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      // ?tab=crear / mesas / crear-mesa desde los enlaces del menú lateral.
+      // Va en finally para que un error al pintar no impida abrir la sección.
+      const tabInicial = new URLSearchParams(window.location.search).get('tab');
+      if (tabInicial && $('mc-' + tabInicial)) mcShow(tabInicial);
+    }
   }
 
   if (document.readyState === 'loading') {
