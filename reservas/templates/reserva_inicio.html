@@ -88,7 +88,24 @@
   </div>
 </div>
 
+<!-- ===== MODAL DE AVISOS (reserva creada / actualizada / eliminada) ===== -->
+<div class="mc-confirm-overlay" id="mc-msg-overlay" onclick="if (event.target === this) mcCloseMsg()">
+  <div class="mc-confirm-box" role="alertdialog" aria-labelledby="mc-msg-title" aria-describedby="mc-msg-text">
+    <h3 id="mc-msg-title">¡Listo!</h3>
+    <p id="mc-msg-text"></p>
+    <div class="mc-confirm-btns">
+      <button type="button" class="mc-btn mc-btn-primary" onclick="mcCloseMsg()">Aceptar</button>
+    </div>
+  </div>
+</div>
+
 <div class="mc-toast" id="mc-toast"></div>
+
+{% if messages %}
+<script>
+  window.MC_MENSAJES = [{% for m in messages %}{ texto: "{{ m|escapejs }}", tipo: "{{ m.tags }}" }{% if not forloop.last %},{% endif %}{% endfor %}];
+</script>
+{% endif %}
 
 <!-- Librerías reportes -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>

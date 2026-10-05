@@ -254,12 +254,7 @@ def mesa_eliminar(request):
     except json.JSONDecodeError:
         return _error_json('Datos inválidos.')
 
-    mesa = Mesa.objects.filter(numero_mesa=data.get('numero_mesa')).first()
-    if mesa is None:
-        return _error_json('La mesa ya no existe.', 404)
-
-    mesa.delete()   # las reservas asociadas caen en cascada
-    return JsonResponse({'ok': True})
+    return _error_json('Las mesas son fijas y no se pueden eliminar.', 403)
 
 
 @require_POST
@@ -267,9 +262,7 @@ def mesa_eliminar(request):
 def eliminar_mesa_vista(request, mesa_id):
     if _solo_lectura(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
-    mesa = get_object_or_404(Mesa, numero_mesa=mesa_id)
-    mesa.delete()
-    messages.success(request, f'Mesa {mesa_id} eliminada correctamente.')
+    messages.error(request, 'Las mesas son fijas y no se pueden eliminar.')
     return redirect('listar_mesas')
 
 

@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.db import models
 
 
@@ -23,6 +24,10 @@ class Mesa(models.Model):
 
     def __str__(self):
         return f"Mesa {self.numero_mesa}"
+
+    def delete(self, *args, **kwargs):
+        # Las mesas son fijas: se crean una vez y no se borran.
+        raise PermissionDenied('Las mesas son fijas y no se pueden eliminar.')
 
     def as_dict(self):
         """Representación JSON que consume static/js/reservas.js."""
@@ -75,7 +80,7 @@ class Reserva(models.Model):
     )
     numero_mesa = models.ForeignKey(
         'Mesa',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='reservas',
         verbose_name='Mesa'
     )
