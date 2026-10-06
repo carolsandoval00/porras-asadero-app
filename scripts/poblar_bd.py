@@ -25,7 +25,7 @@ def poblar_base_datos():
     PedidoItem.objects.all().delete()
     Pedido.objects.all().delete()
     Reserva.objects.all().delete()
-    Mesa.objects.all().delete()
+    # Las mesas son fijas: NO se borran en la limpieza.
     Producto.objects.all().delete()
     Categoria.objects.all().delete()
     Cliente.objects.all().delete()
@@ -105,10 +105,11 @@ def poblar_base_datos():
 
     # 4. Siembra de Mesas (según MER)
     print("\nSembrando Mesas...")
-    mesa1 = Mesa.objects.create(numero_mesa=1, capacidad=4, ubicacion='Zona Ventana Principal', estado='LIBRE')
-    mesa2 = Mesa.objects.create(numero_mesa=2, capacidad=8, ubicacion='Terraza de las Flores', estado='RESERVADA')
-    mesa3 = Mesa.objects.create(numero_mesa=3, capacidad=6, ubicacion='Zona VIP', estado='OCUPADA')
-    print(f"[OK] {Mesa.objects.count()} mesas creadas.")
+    # get_or_create: si la mesa ya existe se conserva tal cual; si no, se crea.
+    mesa1, _ = Mesa.objects.get_or_create(numero_mesa=1, defaults={'capacidad': 4, 'ubicacion': 'Zona Ventana Principal', 'estado': 'LIBRE'})
+    mesa2, _ = Mesa.objects.get_or_create(numero_mesa=2, defaults={'capacidad': 8, 'ubicacion': 'Terraza de las Flores', 'estado': 'RESERVADA'})
+    mesa3, _ = Mesa.objects.get_or_create(numero_mesa=3, defaults={'capacidad': 6, 'ubicacion': 'Zona VIP', 'estado': 'OCUPADA'})
+    print(f"[OK] {Mesa.objects.count()} mesas en la base de datos.")
 
     # 5. Siembra de Reservas (según MER)
     print("\nSembrando Reservas...")
