@@ -1,0 +1,322 @@
+{% extends "base 2.html" %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/ayuda.css' %}">
+
+<div class="ay-wrapper">
+
+  <!-- Hero / Cabecera -->
+  <div class="ay-hero">
+    <span class="ay-hero-badge" aria-hidden="true"><i class="bi bi-life-preserver"></i></span>
+    <h1>Centro de Ayuda</h1>
+    <h2>Resuelve tus dudas sobre el sistema de Porras Asadero, {{ nombre }}</h2>
+
+    <div class="ay-search-wrap">
+      <i class="bi bi-search ay-search-icon" aria-hidden="true"></i>
+      <input type="search"
+             id="ay-search"
+             class="ay-search"
+             placeholder="Escribe una palabra clave… por ejemplo: caja, mesa, contraseña"
+             aria-label="Buscar en el centro de ayuda"
+             autocomplete="off">
+    </div>
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="ay-quick-grid" id="ay-quick-grid">
+    <a href="#sec-reservas" class="ay-quick-card">
+      <span class="ay-quick-icon"><i class="bi bi-calendar-check"></i></span>
+      <span class="ay-quick-title">Reservas y Mesas</span>
+      <span class="ay-quick-text">Crear reservas, ver el diagrama de mesas y generar reportes</span>
+    </a>
+    <a href="#sec-pedidos" class="ay-quick-card">
+      <span class="ay-quick-icon"><i class="bi bi-journal-text"></i></span>
+      <span class="ay-quick-title">Pedidos y Carta</span>
+      <span class="ay-quick-text">Pedidos, órdenes, productos, categorías y clientes</span>
+    </a>
+    <a href="#sec-pagos" class="ay-quick-card">
+      <span class="ay-quick-icon"><i class="bi bi-credit-card"></i></span>
+      <span class="ay-quick-title">Gestión de Pagos</span>
+      <span class="ay-quick-text">Abrir y cerrar caja, registrar y reportar pagos</span>
+    </a>
+    <a href="#sec-personal" class="ay-quick-card">
+      <span class="ay-quick-icon"><i class="bi bi-people"></i></span>
+      <span class="ay-quick-title">Personal y Perfil</span>
+      <span class="ay-quick-text">Roles, contraseña, foto de perfil y gestión de personal</span>
+    </a>
+    <a href="#sec-pia" class="ay-quick-card">
+      <span class="ay-quick-icon"><i class="bi bi-stars"></i></span>
+      <span class="ay-quick-title">Asistente PIA</span>
+      <span class="ay-quick-text">Qué es, dónde está y qué puede responder</span>
+    </a>
+    <a href="#sec-general" class="ay-quick-card">
+      <span class="ay-quick-icon"><i class="bi bi-compass"></i></span>
+      <span class="ay-quick-title">General</span>
+      <span class="ay-quick-text">Navegación del panel y accesibilidad</span>
+    </a>
+  </div>
+
+  <p id="ay-empty" class="ay-empty" hidden>
+    <i class="bi bi-emoji-frown"></i> No encontramos resultados para tu búsqueda.
+  </p>
+
+  <!-- Reservas y Mesas -->
+  <section class="ay-section" id="sec-reservas">
+    <div class="ay-section-head">
+      <i class="bi bi-calendar-check"></i>
+      <h3>Reservas y Mesas</h3>
+    </div>
+
+    <details class="ay-faq">
+      <summary>¿Cómo creo una nueva reserva?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Entra a <strong>Reservas y Mesas → Nueva Reserva</strong>, completa los datos del cliente, la fecha, la hora y la mesa, y guarda. La reserva quedará visible de inmediato en el Tablero y en el Diagrama de Mesas.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo sé qué mesas están libres, ocupadas o reservadas?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En <strong>Diagrama de Mesas</strong> cada mesa se muestra con un color según su estado. Puedes filtrar por zona desde los selectores de la parte superior.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo busco o filtro reservas?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En el listado de reservas puedes buscar por nombre o teléfono, y filtrar por estado o por fecha (hoy, próximas, pasadas, un día específico o un rango). El botón <strong>Limpiar filtros</strong> los quita todos a la vez.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo descargo un reporte de reservas o mesas?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En la parte superior de los listados de reservas y mesas encontrarás los botones para exportar en <strong>PDF</strong>, <strong>Excel</strong> o enviar directamente a <strong>imprimir</strong>.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo elimino una reserva?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Ve a <strong>Eliminar Reserva</strong>, búscala con los filtros disponibles y confirma la eliminación. Esta acción no se puede deshacer.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Pedidos y Carta -->
+  <section class="ay-section" id="sec-pedidos">
+    <div class="ay-section-head">
+      <i class="bi bi-journal-text"></i>
+      <h3>Pedidos y Carta</h3>
+    </div>
+
+    <details class="ay-faq">
+      <summary>¿Cómo creo un pedido?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En <strong>Pedidos y Carta → Crear</strong>, elige el cliente, agrega los productos de la carta y guarda. El pedido aparecerá en estado "En preparación" dentro de Ver Pedidos.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo marco un pedido como listo?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Desde <strong>Ver Pedidos</strong>, usa el botón para marcarlo como listo. Solo se puede hacer mientras el pedido está en preparación.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Dónde administro el menú (productos y categorías)?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En las secciones <strong>Productos</strong> y <strong>Categorías</strong> puedes crear, buscar, editar o eliminar elementos de la carta.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo exporto pedidos, órdenes, productos o clientes?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Cada listado (Pedidos, Órdenes, Productos, Categorías y Clientes) tiene sus propios botones de exportar a <strong>PDF</strong> y <strong>Excel</strong> en la parte superior.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo registro un nuevo cliente?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En <strong>Clientes</strong> puedes crear uno nuevo con su nombre, teléfono y documento, y reutilizarlo después al crear pedidos.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Gestión de Pagos -->
+  <section class="ay-section" id="sec-pagos">
+    <div class="ay-section-head">
+      <i class="bi bi-credit-card"></i>
+      <h3>Gestión de Pagos</h3>
+    </div>
+
+    <details class="ay-faq">
+      <summary>No puedo registrar un pago, ¿por qué?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Para registrar pagos primero debe haber una <strong>caja abierta</strong>. Ve a <strong>Gestión de Pagos → Abrir caja</strong> e ingresa el monto inicial.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo abro o cierro la caja?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Usa <strong>Abrir caja</strong> al iniciar el turno y <strong>Cajas</strong> para consultarla y cerrarla al finalizar, revisando los movimientos del día.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo genero el reporte de pagos del día?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En <strong>Pagos registrados</strong> encontrarás botones para exportar a <strong>PDF</strong>, <strong>Excel</strong> o <strong>imprimir</strong> el reporte.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Quién puede editar o eliminar un pago?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Solo el personal con permisos de cajero o administrador. Cualquier cambio queda reflejado de inmediato en los movimientos de la caja.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Personal y Perfil -->
+  <section class="ay-section" id="sec-personal">
+    <div class="ay-section-head">
+      <i class="bi bi-people"></i>
+      <h3>Personal y Perfil</h3>
+    </div>
+
+    <details class="ay-faq">
+      <summary>Olvidé mi contraseña, ¿cómo la recupero?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En la pantalla de inicio de sesión, usa la opción <strong>"¿Olvidaste tu contraseña?"</strong>. Te enviaremos un correo con un enlace para crear una nueva.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo cambio mi foto de perfil?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Entra a <strong>Mi Perfil</strong> y sube una nueva imagen desde ahí.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Qué roles existen en el sistema?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Existen los roles <strong>Administrador</strong>, <strong>Cajero</strong> y <strong>Mesero</strong>. Cada uno ve en el menú solo las secciones que le corresponden.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Cómo agrego a un nuevo integrante del personal?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Desde <strong>Lista Personal</strong> (disponible para administradores) puedes crear un nuevo usuario y asignarle su rol.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Asistente PIA -->
+  <section class="ay-section" id="sec-pia">
+    <div class="ay-section-head">
+      <i class="bi bi-stars"></i>
+      <h3>Asistente PIA</h3>
+    </div>
+
+    <details class="ay-faq">
+      <summary>¿Qué es PIA?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Es el asistente virtual del panel. Puede responderte preguntas sobre el estado actual del restaurante: mesas, reservas del día y pedidos en curso.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Dónde lo encuentro?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En el botón flotante con su ícono, visible en la esquina inferior derecha de cualquier pantalla del panel.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Qué tipo de preguntas puede responder?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Preguntas sobre datos agregados del sistema (cuántas mesas están libres, cuántos pedidos hay en preparación, etc.). No tiene acceso a datos personales de clientes ni responde temas ajenos al sistema.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- General -->
+  <section class="ay-section" id="sec-general">
+    <div class="ay-section-head">
+      <i class="bi bi-compass"></i>
+      <h3>General</h3>
+    </div>
+
+    <details class="ay-faq">
+      <summary>¿Cómo navego el panel en el celular?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Usa el botón de menú (☰) en la parte superior para abrir el mismo menú lateral del escritorio.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>¿Dónde ajusto el tamaño del texto o el contraste?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>En el botón de accesibilidad (ícono de persona), donde puedes cambiar el tamaño de texto, el tema visual, el cursor y más.</p>
+      </div>
+    </details>
+
+    <details class="ay-faq">
+      <summary>Encontré un error en el sistema, ¿qué hago?<i class="bi bi-chevron-down ay-chevron"></i></summary>
+      <div class="ay-faq-answer">
+        <p>Repórtalo al administrador del sistema describiendo qué estabas haciendo y qué pasó. Mientras más detalle des, más rápido se podrá solucionar.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- Soporte -->
+  <div class="ay-support">
+    <i class="bi bi-headset ay-support-icon" aria-hidden="true"></i>
+    <div class="ay-support-text">
+      <h4>¿No encontraste tu respuesta?</h4>
+      <p>Pregúntale a PIA, nuestro asistente virtual, o contacta al administrador del sistema.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+    const input   = document.getElementById('ay-search');
+    const items   = document.querySelectorAll('.ay-faq');
+    const secciones = document.querySelectorAll('.ay-section');
+    const vacio   = document.getElementById('ay-empty');
+    const quickGrid = document.getElementById('ay-quick-grid');
+
+    input.addEventListener('input', function () {
+        const q = input.value.trim().toLowerCase();
+        let totalVisibles = 0;
+
+        secciones.forEach(function (sec) {
+            let visiblesEnSeccion = 0;
+            sec.querySelectorAll('.ay-faq').forEach(function (item) {
+                const texto = item.textContent.toLowerCase();
+                const coincide = q === '' || texto.includes(q);
+                item.style.display = coincide ? '' : 'none';
+                if (coincide) visiblesEnSeccion++;
+                item.open = q !== '' && coincide;
+            });
+            sec.style.display = (q === '' || visiblesEnSeccion > 0) ? '' : 'none';
+            totalVisibles += visiblesEnSeccion;
+        });
+
+        quickGrid.style.display = (q === '') ? '' : 'none';
+        vacio.hidden = !(q !== '' && totalVisibles === 0);
+    });
+})();
+</script>
+
+{% endblock content %} 

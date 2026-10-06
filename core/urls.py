@@ -12,6 +12,7 @@ urlpatterns = [
     path('pedidos/', include('pedidos.urls')),
     path('pagos/', include('pago.urls')), 
     path('asistente/', include('asistente.urls')),
+    path('ayuda/', include('ayuda.urls')),
     
     path('', inicio, name='inicio'),
     
