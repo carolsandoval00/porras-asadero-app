@@ -157,13 +157,21 @@
     <i class="bi bi-gear-fill me-2"></i>Editar Mesas
 </a>
                     </li>
-                    <li>
+                                        <li>
                         <a href="{% url 'eliminar_detalle' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'eliminar_detalle' %}text-warning fw-bold{% endif %}">
                             <i class="bi bi-trash-fill me-2"></i>Eliminar Reserva
                         </a>
                     </li>
                 </ul>
             </div>
+        </li>
+
+        <!-- Ayuda -->
+        <li class="nav-item">
+            <a href="{% url 'ayuda:centro_ayuda' %}" class="nav-link {% if request.resolver_match.app_name == 'ayuda' %}active-custom{% endif %}">
+                <i class="bi bi-life-preserver me-2"></i>
+                Ayuda
+            </a>
         </li>
     </ul>
 
@@ -356,13 +364,21 @@
                                 <i class="bi bi-pencil-square me-2"></i>Editar Mesa
                             </a>
                         </li>
-                        <li>
+                                                <li>
                             <a href="{% url 'eliminar_detalle' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'eliminar_detalle' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
                                 <i class="bi bi-trash-fill me-2"></i>Eliminar Reserva
                             </a>
                         </li>
                     </ul>
                 </div>
+            </li>
+
+            <!-- Ayuda -->
+            <li class="nav-item">
+                <a href="{% url 'ayuda:centro_ayuda' %}" class="nav-link {% if request.resolver_match.app_name == 'ayuda' %}active-custom{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
+                    <i class="bi bi-life-preserver me-2"></i>
+                    Ayuda
+                </a>
             </li>
         </ul>
 
