@@ -1,0 +1,288 @@
+:root {
+  --ay-primary:  #C0392B;
+  --ay-accent:   #E8651A;
+  --ay-gold:     #D4A017;
+  --ay-surface:  #EDE3C8;
+  --ay-card:     #FDF7EC;
+  --ay-border:   #D4C4A0;
+  --ay-text:     #1A1008;
+  --ay-muted:    #6B5A3E;
+  --ay-radius:   10px;
+  --ay-shadow:   0 2px 12px rgba(26,16,8,.10);
+  --ay-shadow-lg:0 6px 30px rgba(26,16,8,.15);
+}
+
+.ay-wrapper {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--ay-text);
+  background: var(--ay-surface);
+  padding: 1.5rem;
+}
+
+/* ===== Hero ===== */
+.ay-hero {
+  background: linear-gradient(135deg, #1A1008 0%, #3a1a08 100%);
+  color: #F5ECD7;
+  border-radius: var(--ay-radius);
+  padding: 2.4rem 2.5rem 2.2rem;
+  margin-bottom: 1.8rem;
+  box-shadow: var(--ay-shadow-lg);
+  text-align: center;
+}
+.ay-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(232, 101, 26, .18);
+  color: var(--ay-accent);
+  font-size: 1.6rem;
+  margin-bottom: .75rem;
+}
+.ay-hero h1 { font-size: 1.9rem; font-weight: 700; margin: 0 0 .35rem; }
+.ay-hero h2 { font-size: 1rem; font-weight: 400; margin: 0 0 1.5rem; opacity: .82; }
+
+.ay-search-wrap {
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.ay-search-icon {
+  position: absolute;
+  left: 16px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--ay-muted);
+}
+.ay-search {
+  width: 100%;
+  padding: .85rem 1rem .85rem 2.6rem;
+  border-radius: 50px;
+  border: none;
+  background: var(--ay-card);
+  color: var(--ay-text);
+  font-size: .95rem;
+}
+.ay-search:focus { outline: 2px solid var(--ay-accent); outline-offset: 2px; }
+
+/* ===== Accesos rápidos ===== */
+.ay-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 900px) {
+  .ay-quick-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 520px) {
+  .ay-quick-grid { grid-template-columns: 1fr; }
+}
+
+.ay-quick-card {
+  background: var(--ay-card);
+  border: 1px solid var(--ay-border);
+  border-radius: var(--ay-radius);
+  box-shadow: var(--ay-shadow);
+  padding: 1.2rem;
+  text-decoration: none;
+  color: var(--ay-text);
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.ay-quick-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--ay-shadow-lg);
+  color: var(--ay-text);
+}
+.ay-quick-icon {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(232, 101, 26, .12);
+  color: var(--ay-accent);
+  font-size: 1.25rem;
+}
+.ay-quick-title { font-weight: 700; font-size: .98rem; }
+.ay-quick-text { font-size: .82rem; color: var(--ay-muted); line-height: 1.35; }
+
+/* ===== Secciones / FAQ ===== */
+.ay-section { margin-bottom: 1.8rem; }
+.ay-section-head {
+  display: flex; align-items: center; gap: .6rem;
+  margin-bottom: .8rem;
+  color: var(--ay-primary);
+}
+.ay-section-head i { font-size: 1.2rem; }
+.ay-section-head h3 { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--ay-text); }
+
+.ay-faq {
+  background: var(--ay-card);
+  border: 1px solid var(--ay-border);
+  border-radius: var(--ay-radius);
+  box-shadow: var(--ay-shadow);
+  margin-bottom: .6rem;
+  overflow: hidden;
+}
+.ay-faq summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem 1.2rem;
+  font-weight: 600;
+  font-size: .94rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+.ay-faq summary::-webkit-details-marker { display: none; }
+.ay-faq summary:focus-visible { outline: 2px solid var(--ay-accent); outline-offset: -2px; }
+.ay-chevron { transition: transform .2s ease; color: var(--ay-muted); flex-shrink: 0; }
+.ay-faq[open] .ay-chevron { transform: rotate(180deg); }
+.ay-faq[open] summary { border-bottom: 1px solid var(--ay-border); }
+.ay-faq-answer { padding: .9rem 1.2rem 1.1rem; font-size: .9rem; line-height: 1.55; color: var(--ay-muted); }
+.ay-faq-answer p { margin: 0; }
+.ay-faq-answer strong { color: var(--ay-text); }
+
+.ay-empty {
+  text-align: center;
+  color: var(--ay-muted);
+  padding: 2rem 0;
+  font-size: .95rem;
+}
+
+/* ===== Soporte ===== */
+.ay-support {
+  background: var(--ay-card);
+  border: 1px dashed var(--ay-border);
+  border-radius: var(--ay-radius);
+  padding: 1.3rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.ay-support-icon { font-size: 1.8rem; color: var(--ay-accent); }
+.ay-support-text h4 { margin: 0 0 .2rem; font-size: 1rem; font-weight: 700; }
+.ay-support-text p { margin: 0; font-size: .87rem; color: var(--ay-muted); }
+
+@media (max-width: 480px) {
+  .ay-wrapper { padding: 1rem; }
+  .ay-hero { padding: 1.8rem 1.3rem 1.6rem; }
+  .ay-support { flex-direction: column; text-align: center; }
+}
+
+/* ===== Botón flotante de ayuda ===== */
+/* Flota, brilla y lanza anillos — igual que el botón de PIA */
+.ay-fab {
+  position: fixed;
+  bottom: 164px;
+  right: 24px;
+  z-index: 99999;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ay-accent);
+  color: #060606;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(26,16,8,.35);
+  transition: transform .15s ease, background .15s ease;
+  animation: ay-fab-float 3.6s ease-in-out infinite, ay-fab-glow 3.6s ease-in-out infinite;
+}
+
+@keyframes ay-fab-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+@keyframes ay-fab-glow {
+  0%, 100% { box-shadow: 0 4px 18px rgba(232, 101, 26, .4); }
+  50%      { box-shadow: 0 8px 26px rgba(232, 101, 26, .6); }
+}
+
+.ay-fab::before,
+.ay-fab::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--ay-gold);
+  opacity: 0;
+  animation: ay-fab-ping 3.2s ease-out infinite;
+}
+
+.ay-fab::after {
+  border-color: var(--ay-accent);
+  animation-delay: 1.1s;
+}
+
+@keyframes ay-fab-ping {
+  0%   { transform: scale(0.85); opacity: 0.55; }
+  70%  { transform: scale(1.45); opacity: 0; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+
+.ay-fab:hover { transform: scale(1.08) translateY(-2px); color: #0a0a09; }
+
+@media (max-width: 480px) {
+  .ay-fab { right: 16px; bottom: 148px; width: 48px; height: 48px; font-size: 1.25rem; }
+}
+
+/* ===================== Tema oscuro (accesibilidad) ===================== */
+
+html.a11y-theme-oscuro body .ay-wrapper .ay-hero {
+  background: var(--dk-surface-2) !important;
+  border: 1px solid var(--dk-line) !important;
+}
+
+html.a11y-theme-oscuro body .ay-wrapper .ay-hero-badge {
+  background: var(--dk-surface-3) !important;
+  color: var(--dk-text) !important;
+}
+
+html.a11y-theme-oscuro body .ay-wrapper .ay-quick-icon {
+  background: var(--dk-surface-2) !important;
+  color: var(--dk-text) !important;
+}
+
+html.a11y-theme-oscuro body .ay-wrapper .ay-faq,
+html.a11y-theme-oscuro body .ay-wrapper .ay-support {
+  background: var(--dk-surface) !important;
+  border: 1px solid var(--dk-line) !important;
+}
+
+html.a11y-theme-oscuro body .ay-wrapper .ay-faq[open] summary {
+  border-bottom: 1px solid var(--dk-line) !important;
+}
+
+html.a11y-theme-oscuro body a.ay-fab {
+  background: var(--dk-surface-2) !important;
+  border: 2px solid var(--dk-line-strong) !important;
+  color: var(--dk-text) !important;
+  animation: ay-fab-float 3.6s ease-in-out infinite, ay-fab-glow-oscuro 3.6s ease-in-out infinite !important;
+}
+
+html.a11y-theme-oscuro body a.ay-fab:hover {
+  background: var(--dk-surface-3) !important;
+  border-color: #8a8a92 !important;
+}
+
+@keyframes ay-fab-glow-oscuro {
+    0%, 100% { box-shadow: 0 6px 20px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .05); }
+    50%      { box-shadow: 0 8px 26px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .1); }
+}
+
+html.a11y-theme-oscuro body a.ay-fab::before,
+html.a11y-theme-oscuro body a.ay-fab::after {
+    border-color: #8a8a92 !important;
+}
