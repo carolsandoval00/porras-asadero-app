@@ -338,10 +338,19 @@
 {% elif vista == "sin_permisos" %}
 <div class="auth-wrap">
     <div class="auth-card" style="max-width:420px; text-align:center;">
-        <i class="bi bi-shield-x" style="font-size:3.8rem; color:var(--rojo); display:block; margin-bottom:1rem;"></i>
-        <h1 class="auth-title">Acceso <span>Restringido</span></h1>
+
+        <span data-tooltip="Tu rol actual no tiene acceso a esta sección" tabindex="0" style="display:inline-block;">
+            <i class="bi bi-shield-x" style="font-size:3.8rem; color:var(--rojo); display:block; margin-bottom:1rem;"></i>
+        </span>
+
+        <h1 class="auth-title" data-tooltip="Contacta al administrador si necesitas acceso" tabindex="0">
+            Acceso <span>Restringido</span>
+        </h1>
+
         <p class="auth-sub">No tienes permisos para ver esta sección.</p>
-        <a href="{% url 'login' %}" class="btn-auth">Volver al Inicio</a>
+
+        <a href="{% url 'login' %}" class="btn-auth" data-tooltip="Regresar a la página de inicio">Volver al Inicio</a>
+
     </div>
 </div>
 {% endif %}
