@@ -36,6 +36,8 @@
 
     {% if request.user.is_authenticated %}
         {% include "partials/asistente_ia.html" %}
+        {% include "partials/ayuda_fab.html" %}
+
     {% endif %}
 
     {% include "partials/accesibilidad.html" %}
