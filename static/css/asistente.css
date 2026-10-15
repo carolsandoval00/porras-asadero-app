@@ -26,6 +26,10 @@
   --pia-text-muted: var(--pia-gris-borde);
   --pia-border: rgba(212, 160, 23, 0.2);
   --pia-radius: 16px;
+
+  /* Capas: PIA siempre por encima de otros botones flotantes */
+  --pia-z-top: 2147483647;
+  --pia-z-teaser: 2147483646;
 }
 
 .pia-logo {
@@ -153,7 +157,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--pia-z-top);
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
   animation: pia-fab-float 3.6s ease-in-out infinite, pia-fab-glow 3.6s ease-in-out infinite;
 }
@@ -246,6 +250,44 @@
   display: block;
 }
 
+/* Tooltip del botón PIA (elemento propio, siempre por encima) */
+.pia-fab-tooltip {
+  position: fixed;
+  right: 24px;              /* alineado al borde derecho del botón */
+  bottom: 96px;             /* 24px (margen) + 58px (botón) + 14px (espacio) */
+  z-index: var(--pia-z-top);
+  background: var(--pia-negro);
+  color: var(--pia-crema);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  padding: 10px 18px;
+  border-radius: 12px;
+  white-space: nowrap;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Flechita apuntando al botón (centrada sobre el botón de 58px) */
+.pia-fab-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 22px;              /* 29px (mitad del botón) - 7px (mitad de la flecha) */
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 7px solid var(--pia-negro);
+}
+
+.pia-fab:hover + .pia-fab-tooltip,
+.pia-fab:focus-visible + .pia-fab-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* Burbuja proactiva */
 .pia-teaser {
   position: fixed;
@@ -260,7 +302,7 @@
   font-size: 13px;
   line-height: 1.4;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-  z-index: 9998;
+  z-index: var(--pia-z-teaser);
   opacity: 0;
   transform: translateY(8px);
   pointer-events: none;
@@ -289,7 +331,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  z-index: 9999;
+  z-index: var(--pia-z-top);
   opacity: 0;
   transform: translateY(16px) scale(0.98);
   pointer-events: none;
@@ -611,4 +653,13 @@
     right: 16px;
     bottom: 16px;
   }
+  .pia-fab-tooltip {
+    right: 16px;
+    bottom: 88px;           /* 16px + 58px + 14px */
+  }
+}
+
+/* En pantallas táctiles no hay hover: se oculta el tooltip */
+@media (hover: none) {
+  .pia-fab-tooltip { display: none; }
 }

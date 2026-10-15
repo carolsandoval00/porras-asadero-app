@@ -48,17 +48,24 @@
 
     <!-- ============================================
          Tooltips (data-tooltip) — sistema único para todo
-         el panel admin. Se pega directo al <body>, así no
-         lo recorta ningún contenedor con overflow, y calcula
-         su posición para nunca salirse de la pantalla (por
-         eso funciona bien en botones pegados al borde, como
-         el de accesibilidad y el de PIA).
+         el panel admin.
+
+         Usa DELEGACIÓN de eventos sobre el document, así
+         funciona también con los botones que se crean después
+         con JavaScript (por ejemplo los de la tabla de usuarios
+         y del perfil, que se generan con innerHTML).
+
+         Se pega directo al <body>, así no lo recorta ningún
+         contenedor con overflow, y calcula su posición para
+         nunca salirse de la pantalla.
          ============================================ -->
     <script>
     (function () {
         let bubble = null;
+        let current = null;
 
         function hideTooltip() {
+            current = null;
             if (bubble) {
                 bubble.remove();
                 bubble = null;
@@ -71,8 +78,10 @@
             const text = el.getAttribute('data-tooltip');
             if (!text) return;
 
+            current = el;
             bubble = document.createElement('div');
             bubble.className = 'js-tooltip-bubble';
+            bubble.setAttribute('role', 'tooltip');
             bubble.textContent = text;
             document.body.appendChild(bubble);
 
@@ -96,17 +105,32 @@
             bubble.style.left = left + 'px';
             bubble.style.top = top + 'px';
 
-            requestAnimationFrame(() => bubble.classList.add('show'));
+            requestAnimationFrame(function () {
+                if (bubble) bubble.classList.add('show');
+            });
         }
 
-        function attach(el) {
-            el.addEventListener('mouseenter', function () { showTooltip(el); });
-            el.addEventListener('mouseleave', hideTooltip);
-            el.addEventListener('focus', function () { showTooltip(el); });
-            el.addEventListener('blur', hideTooltip);
-        }
+        // Ratón: mouseover/mouseout burbujean, por eso sirven para delegar
+        document.addEventListener('mouseover', function (e) {
+            const el = e.target.closest ? e.target.closest('[data-tooltip]') : null;
+            if (el === current) return;
+            if (el) showTooltip(el);
+            else hideTooltip();
+        });
 
-        document.querySelectorAll('[data-tooltip]').forEach(attach);
+        document.addEventListener('mouseout', function (e) {
+            if (!e.relatedTarget) hideTooltip();
+        });
+
+        // Teclado: focusin/focusout burbujean (focus/blur no)
+        document.addEventListener('focusin', function (e) {
+            const el = e.target.closest ? e.target.closest('[data-tooltip]') : null;
+            if (el) showTooltip(el);
+        });
+        document.addEventListener('focusout', hideTooltip);
+
+        // Al hacer clic se oculta (el botón puede desaparecer o re-renderizarse)
+        document.addEventListener('click', hideTooltip);
 
         window.addEventListener('scroll', hideTooltip, true);
         window.addEventListener('pageshow', hideTooltip);

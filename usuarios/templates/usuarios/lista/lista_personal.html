@@ -174,7 +174,7 @@
     <div class="m-box">
         <div class="m-hdr">
             <h3 id="m-titulo">Usuario</h3>
-            <button class="m-cls" onclick="cModal('m-ver')">×</button>
+            <button class="m-cls" onclick="cModal('m-ver')" data-tooltip="Cerrar">×</button>
         </div>
         <div id="m-body"></div>
     </div>
@@ -185,8 +185,8 @@
         <h3 id="cf-tit">¿Estás seguro?</h3>
         <p id="cf-msg">Esta acción no se puede deshacer.</p>
         <div class="cf-actions">
-            <button class="btn btn-out" onclick="cConfirm()">Cancelar</button>
-            <button class="btn btn-del2" id="cf-ok">Eliminar</button>
+            <button class="btn btn-out" onclick="cConfirm()" data-tooltip="Cancelar y volver sin eliminar">Cancelar</button>
+            <button class="btn btn-del2" id="cf-ok" data-tooltip="Confirmar y eliminar este usuario">Eliminar</button>
         </div>
     </div>
 </div>

@@ -7,7 +7,7 @@
 
 <div id="pia-assistant-root">
 
-  <button class="pia-fab" id="piaFab" aria-label="Abrir asistente PIA" data-tooltip="Habla con PIA, tu asistente">
+  <button class="pia-fab" id="piaFab" aria-label="Abrir asistente PIA" aria-describedby="piaFabTooltip">
     <span class="pia-fab-badge" id="piaFabBadge"></span>
     <div class="pia-logo">
       <div class="pia-logo-shape">
@@ -20,6 +20,9 @@
       <span class="pia-logo-sparkle"></span>
     </div>
   </button>
+
+  <!-- Tooltip propio: debe ir justo después del botón -->
+  <span class="pia-fab-tooltip" id="piaFabTooltip" role="tooltip">Habla con PIA, tu asistente</span>
 
   <div class="pia-panel" id="piaPanel" role="dialog" aria-label="Asistente virtual PIA" aria-hidden="true">
 
