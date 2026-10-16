@@ -58,6 +58,53 @@ function cerrarModalCierre() {
   document.getElementById('modal-cerrar-caja').classList.remove('open');
 }
 
+// ── Ventana de atención (avisos de validación) ──────────────
+function mostrarAtencion(mensaje) {
+  const modal = document.getElementById('modal-atencion');
+  if (!modal) { alert(mensaje); return; }
+  document.getElementById('modal-atencion-msg').textContent = mensaje;
+  modal.classList.add('open');
+}
+function cerrarAtencion() {
+  const modal = document.getElementById('modal-atencion');
+  if (modal) modal.classList.remove('open');
+  const monto = document.querySelector('[name="monto_inicial"]');
+  if (monto) monto.focus();
+}
+
+// ── Abrir caja: validar monto inicial (200.000 a 1.000.000) ─
+const MONTO_INICIAL_MIN = 200000;
+const MONTO_INICIAL_MAX = 1000000;
+
+function iniciarValidacionApertura() {
+  const monto = document.querySelector('[name="monto_inicial"]');
+  if (!monto || !monto.form) return;
+  const form = monto.form;
+
+  // Se desactiva la burbuja del navegador para mostrar nuestra ventana
+  form.noValidate = true;
+
+  form.addEventListener('submit', function (e) {
+    const valor = parseFloat(monto.value);
+
+    if (monto.value.trim() === '' || isNaN(valor)) {
+      e.preventDefault();
+      mostrarAtencion('El monto inicial es obligatorio.');
+      return;
+    }
+    if (valor < MONTO_INICIAL_MIN || valor > MONTO_INICIAL_MAX) {
+      e.preventDefault();
+      mostrarAtencion('El monto inicial debe estar entre $200.000 y $1.000.000.');
+      return;
+    }
+    // Resto de campos (responsable, etc.): se usa el aviso normal del navegador
+    if (!form.checkValidity()) {
+      e.preventDefault();
+      form.reportValidity();
+    }
+  });
+}
+
 // ── Editar caja (AJAX) ──────────────────────────────────────
 let _editandoCajaId = null;
 
@@ -157,6 +204,7 @@ document.getElementById('modal-eliminar').addEventListener('click',     function
 document.getElementById('modal-cerrar-caja').addEventListener('click',  function(e){ if(e.target===this) cerrarModalCierre(); });
 document.getElementById('modal-editar-caja').addEventListener('click',  function(e){ if(e.target===this) cerrarEditarCaja(); });
 document.getElementById('modal-pago-exito').addEventListener('click',   function(e){ if(e.target===this) this.classList.remove('open'); });
+document.getElementById('modal-atencion').addEventListener('click',     function(e){ if(e.target===this) cerrarAtencion(); });
 // ── Buscador de pagos (client-side) ─────────────────────────
 function filtrarPagos() {
   const texto  = document.getElementById('buscador-pagos').value.toLowerCase().trim();
@@ -190,6 +238,8 @@ function filtrarPagos() {
 
 // ── Init ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+
+    iniciarValidacionApertura();
 
     if (window.pagoConfig?.formErrors) {
         showTab('crear');
