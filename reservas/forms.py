@@ -23,7 +23,7 @@ class MesaForm(forms.ModelForm):
                 'style': INPUT_STYLE, 'min': 1, 'placeholder': 'Ej: 7',
             }),
             'capacidad': forms.NumberInput(attrs={
-                'style': INPUT_STYLE, 'min': 1, 'max': 30, 'placeholder': 'Ej: 4',
+                'style': INPUT_STYLE, 'min': 1, 'max': 20, 'placeholder': 'Ej: 4',
             }),
             'ubicacion': forms.TextInput(attrs={
                 'style': INPUT_STYLE, 'placeholder': 'Ej: Salón principal',
@@ -45,8 +45,8 @@ class MesaForm(forms.ModelForm):
             raise ValidationError('La capacidad es obligatoria.')
         if capacidad <= 0:
             raise ValidationError('La capacidad debe ser mayor que cero.')
-        if capacidad > 30:
-            raise ValidationError('La capacidad máxima permitida es de 30 personas.')
+        if capacidad > 20:
+            raise ValidationError('La capacidad máxima permitida es de 20 personas.')
         return capacidad
 
     def clean_ubicacion(self):

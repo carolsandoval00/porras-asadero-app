@@ -195,8 +195,17 @@ function enviarForm(e) {
     }, 3000);
 }
 
-// ── 8. ALERTA FLOTANTE ───────────────────────────────────────
+// ── 8. ALERTA ────────────────────────────────────────────────
+// Usa la ventana de avisos (cuadro crema con "Aceptar") que está
+// en base.html y base 2.html. Si por alguna razón no existe, usa
+// la alerta flotante de antes.
 function mostrarAlerta(msg, tipo = 'success') {
+    if (typeof window.mostrarAviso === 'function') {
+        const titulo = tipo === 'success' ? 'Listo' : 'Atención';
+        window.mostrarAviso(msg, titulo, tipo === 'success' ? 'success' : 'error');
+        return;
+    }
+
     const existing = document.querySelector('.alerta-flotante');
     if (existing) existing.remove();
 

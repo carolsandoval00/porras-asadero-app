@@ -112,9 +112,139 @@
   </div>
 </div>
 
+{% if messages %}
+<div id="avisos-django" hidden>
+    {% for message in messages %}<span data-nivel="{{ message.tags }}">{{ message }}</span>{% endfor %}
+</div>
+{% endif %}
+
 <script src="{% static 'js/base_bootstrap_bundle.js' %}" defer></script>
 <script src="{% static "js/contacto.js" %}" defer></script>
 <script src="{% static "js/accesibilidad.js" %}" defer></script>
+
+<!-- ============================================
+     Avisos (ventana de mensajes) — mismo sistema del panel
+     admin (ver base 2.html).
+
+     - mostrarAviso(mensaje, titulo, tipo) abre la ventana.
+     - Reemplaza window.alert para que todos los alert()
+       del proyecto salgan con este mismo diseño.
+     - Muestra los mensajes de Django (messages) con el
+       mismo diseño.
+     ============================================ -->
+<script>
+(function () {
+    var cola = [];
+    var abierto = null;
+    var focoPrevio = null;
+
+    function cerrar() {
+        if (!abierto) return;
+        var ov = abierto;
+        abierto = null;
+        ov.classList.remove('show');
+        setTimeout(function () {
+            ov.remove();
+            if (focoPrevio && focoPrevio.focus) {
+                try { focoPrevio.focus(); } catch (e) {}
+            }
+            siguiente();
+        }, 180);
+    }
+
+    function siguiente() {
+        if (abierto || !cola.length) return;
+        var a = cola.shift();
+        crear(a.mensaje, a.titulo, a.tipo);
+    }
+
+    function crear(mensaje, titulo, tipo) {
+        focoPrevio = document.activeElement;
+
+        var ov = document.createElement('div');
+        ov.className = 'aviso-overlay';
+
+        var caja = document.createElement('div');
+        caja.className = 'aviso-caja' + (tipo === 'success' ? ' aviso-exito' : '');
+        caja.setAttribute('role', 'alertdialog');
+        caja.setAttribute('aria-modal', 'true');
+        caja.setAttribute('aria-labelledby', 'aviso-titulo-id');
+        caja.setAttribute('aria-describedby', 'aviso-texto-id');
+
+        var h = document.createElement('h2');
+        h.className = 'aviso-titulo';
+        h.id = 'aviso-titulo-id';
+        h.textContent = titulo;
+
+        var p = document.createElement('p');
+        p.className = 'aviso-texto';
+        p.id = 'aviso-texto-id';
+        p.textContent = mensaje;
+
+        var acciones = document.createElement('div');
+        acciones.className = 'aviso-acciones';
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'aviso-boton';
+        btn.textContent = 'Aceptar';
+        btn.addEventListener('click', cerrar);
+
+        acciones.appendChild(btn);
+        caja.appendChild(h);
+        caja.appendChild(p);
+        caja.appendChild(acciones);
+        ov.appendChild(caja);
+        document.body.appendChild(ov);
+
+        abierto = ov;
+        requestAnimationFrame(function () { ov.classList.add('show'); });
+        btn.focus();
+    }
+
+    function mostrar(mensaje, titulo, tipo) {
+        cola.push({
+            mensaje: String(mensaje),
+            titulo: titulo || 'Atención',
+            tipo: tipo || 'error'
+        });
+        siguiente();
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (!abierto) return;
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            cerrar();
+        } else if (e.key === 'Tab') {
+            e.preventDefault();
+            var b = abierto.querySelector('.aviso-boton');
+            if (b) b.focus();
+        }
+    });
+
+    window.mostrarAviso = mostrar;
+    window.alert = function (mensaje) { mostrar(mensaje); };
+
+    // Mensajes de Django
+    var cont = document.getElementById('avisos-django');
+    if (cont) {
+        cont.querySelectorAll('span').forEach(function (s) {
+            var tags = s.getAttribute('data-nivel') || '';
+            var tipo = 'error';
+            var titulo = 'Atención';
+            if (tags.indexOf('success') > -1) {
+                tipo = 'success';
+                titulo = 'Listo';
+            } else if (tags.indexOf('info') > -1) {
+                tipo = 'info';
+                titulo = 'Información';
+            }
+            mostrar(s.textContent.trim(), titulo, tipo);
+        });
+    }
+})();
+</script>
 
 <!-- ============================================
      Tooltips (data-tooltip) — mismo sistema del panel

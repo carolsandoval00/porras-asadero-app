@@ -18,11 +18,7 @@
     <h2>Bienvenido, {{ nombre }}</h2>
   </div>
 
-  {% if messages %}
-    {% for msg in messages %}
-    <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
-    {% endfor %}
-  {% endif %}
+  {# Los mensajes de Django (éxito y errores) salen en la ventanita de base 2.html #}
 
   <!-- Navegación Compartida -->
   <div class="pm-nav">
@@ -62,35 +58,23 @@
       <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de pedidos">← Volver</a>
     </div>
     <div class="pm-card-body">
-      <form method="post" action="" class="pm-form pm-form-full" id="form-pedido">
+      {# novalidate: evita las burbujas del navegador para que los avisos salgan en la ventanita #}
+      <form method="post" action="" class="pm-form pm-form-full" id="form-pedido" novalidate>
         {% csrf_token %}
         <div id="items-hidden-container"></div>
 
         <div class="pm-form-grid pm-form-grid-mb">
-          {% if pedido %}
           <div class="full">
             <label>Cliente</label>
             {{ form.cliente }}
-            {% for error in form.cliente.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
-          {% else %}
-          <div style="display:none">{{ form.cliente }}</div>
-          {% endif %}
           <div>
             <label>Mesa</label>
             {{ form.mesa }}
-            {% for error in form.mesa.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
           <div>
             <label>Tipo de Pedido</label>
             {{ form.tipo_pedido }}
-            {% for error in form.tipo_pedido.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
           <div>
             {% if pedido %}
@@ -103,16 +87,10 @@
               </div>
               {{ form.estado }}
             {% endif %}
-            {% for error in form.estado.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
           <div class="full">
             <label>Descripción / Nota adicional</label>
             {{ form.descripcion }}
-            {% for error in form.descripcion.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
           <div class="full">
             <label>Agregar producto al pedido</label>

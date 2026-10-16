@@ -1,10 +1,19 @@
+from django.core.validators import RegexValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+validar_celular = RegexValidator(
+    r'^3\d{9}$', 'Ingresa un celular colombiano válido: 10 dígitos que empiecen por 3.'
+)
+
+
 class Usuario(AbstractUser):
     email = models.EmailField(unique=True, verbose_name='Correo electrónico')
-    telefono = models.CharField(max_length=15, blank=True, null=True, verbose_name='Teléfono')
-    
+    telefono = models.CharField(
+        max_length=10, blank=True, null=True,
+        validators=[validar_celular], verbose_name='Celular'
+    )
+
     ROLE_CHOICES = [
         ('ADMIN', 'Administrador'),
         ('CAJERO', 'Cajero'),
@@ -18,28 +27,27 @@ class Usuario(AbstractUser):
         ('TI', 'Tarjeta de Identidad'),
         ('PP', 'Pasaporte'),
     ]
-    
+
     tipo_documento = models.CharField(
-        max_length=2, 
+        max_length=2,
         choices=TIPO_DOCUMENTO_CHOICES,
         default='CC',
         verbose_name='Tipo de Documento'
     )
     documento = models.CharField(
-        max_length=20, 
+        max_length=20,
         unique=True,
-        blank=True, 
+        blank=True,
         null=True,
         verbose_name='Número de Documento'
     )
     rol = models.CharField(
-        max_length=20, 
-        choices=ROLE_CHOICES, 
-        default='MESERO', 
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default='MESERO',
         verbose_name='Rol del Usuario'
     )
-    
-    
+
     foto = models.ImageField(
         upload_to='fotos_perfil/',
         blank=True,
@@ -52,14 +60,16 @@ class Usuario(AbstractUser):
     class Meta:
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
-        
+
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.username})"
 
 
 class Cliente(models.Model):
     nombre_completo = models.CharField(max_length=255, verbose_name='Nombre Completo')
-    telefono        = models.CharField(max_length=20, verbose_name='Teléfono')
+    telefono        = models.CharField(
+        max_length=10, validators=[validar_celular], verbose_name='Celular'
+    )
     tipo_documento  = models.CharField(max_length=20, verbose_name='Tipo de Documento')
     documento       = models.CharField(max_length=50, unique=True, verbose_name='Documento')
     direccion       = models.TextField(blank=True, null=True, verbose_name='Dirección')

@@ -12,11 +12,7 @@
     <h2>Bienvenido, {{ nombre }}</h2>
   </div>
 
-  {% if messages %}
-    {% for msg in messages %}
-    <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
-    {% endfor %}
-  {% endif %}
+  {# Los mensajes de Django (éxito y errores) salen en la ventanita de base 2.html #}
 
   <!-- Navegación Compartida -->
   <div class="pm-nav">
@@ -56,36 +52,25 @@
       <a href="{% url 'pedidos:cliente_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de clientes">← Volver</a>
     </div>
     <div class="pm-card-body">
-      <form method="post" action="" class="pm-form">
+      {# novalidate: evita las burbujas del navegador para que los avisos salgan en la ventanita #}
+      <form method="post" action="" class="pm-form" novalidate>
         {% csrf_token %}
         <div class="pm-form-grid">
           <div class="full">
             <label>Nombre Completo</label>
             {{ form_cliente.nombre_completo }}
-            {% for error in form_cliente.nombre_completo.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
           <div>
             <label>Tipo de Documento</label>
             {{ form_cliente.tipo_documento }}
-            {% for error in form_cliente.tipo_documento.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
           <div>
             <label>Número de Documento</label>
             {{ form_cliente.documento }}
-            {% for error in form_cliente.documento.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
           <div>
             <label>Teléfono de Contacto</label>
             {{ form_cliente.telefono }}
-            {% for error in form_cliente.telefono.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
           <div class="full"><label>Dirección física (domicilios)</label>{{ form_cliente.direccion }}</div>
         </div>
