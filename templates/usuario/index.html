@@ -4,7 +4,7 @@
 
 <section id="menu" class="bg-humo py-5 px-4 px-md-5">
     <div class="container-xl">
-        <p class="ff-oswald fw-light text-uppercase text-naranja mb-2 section-subtitle">Lo Mejor de la Parrilla</p>
+        <p class="ff-oswald fw-light text-uppercase text-naranja mb-2 section-subtitle">Lo Mejor de Nuestro Asadero</p>
         <h2 class="ff-playfair fw-bold text-crema display-4">Nuestro Menú</h2>
         <div class="gold-line mb-5"></div>
        
@@ -34,7 +34,6 @@
                                 <span class="ff-crimson text-crema">{{ prod.nombre }}</span>
                                 <span class="d-block small fst-italic text-white-50">{{ prod.descripcion|default:"" }}</span>
                             </div>
-                            <span class="ff-oswald fw-bold text-naranja ms-3">${{ prod.precio|floatformat:0 }}</span>
                         </div>
                         {% endif %}
                     {% empty %}
