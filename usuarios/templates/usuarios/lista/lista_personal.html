@@ -259,6 +259,13 @@ window.nav = function(id) {
 };
 
 function toast(msg, tipo) {
+    // Usa la ventana de avisos (cuadro crema con "Aceptar") de base 2.html.
+    // Si por alguna razón no existe, usa el aviso pequeño de antes.
+    if (typeof window.mostrarAviso === 'function') {
+        if (tipo === 'ok') window.mostrarAviso(msg, 'Listo', 'success');
+        else window.mostrarAviso(msg, 'Atención', 'error');
+        return;
+    }
     const t = document.getElementById('toast');
     t.textContent = msg; t.className = 'toast show ' + (tipo || '');
     clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2800);
@@ -408,10 +415,7 @@ window.guardar = function() {
     const tel = document.getElementById('u-tel').value.trim();
     if (!nom || !ape || !ema || !usr || !rol) { toast('Completa los campos obligatorios (*)', 'err'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ema)) { toast('El correo electrónico no es válido', 'err'); return; }
-    if (tel) {
-        if (!/^\d+$/.test(tel)) { toast('El teléfono solo debe contener números', 'err'); return; }
-        if (tel.length > 10)    { toast('El teléfono no puede tener más de 10 dígitos', 'err'); return; }
-    }
+    if (tel && !/^3\d{9}$/.test(tel)) { toast('El celular debe tener 10 dígitos y empezar por 3', 'err'); return; }
     const doc = document.getElementById('u-doc').value.trim();
     if (doc) {
         if (!/^\d+$/.test(doc))                    { toast('El documento solo debe contener números', 'err'); return; }
@@ -442,6 +446,10 @@ window.guardar = function() {
         notas:document.getElementById('u-notas').value.trim(),
         foto: editId ? (uList.find(u => u.id === editId) || {}).foto || '' : '',
         perms,
+        // La contraseña solo viaja al servidor; se borra antes de guardar en localStorage
+        password: editId
+            ? (document.getElementById('cb-pw').checked ? document.getElementById('u-pw-e').value : '')
+            : document.getElementById('u-pw').value,
         acc:  editId ? (uList.find(u => u.id === editId) || {}).acc || '—' : '—',
         cr:   editId ? (uList.find(u => u.id === editId) || {}).cr  || new Date().toISOString() : new Date().toISOString()
     };
@@ -454,6 +462,7 @@ window.guardar = function() {
     .then(res => res.json())
     .then(data => {
         if (data.ok) {
+            delete obj.password;
             if (!editId && data.id) obj.id = data.id;
             if (editId) { uList = uList.map(u => u.id === editId ? obj : u); toast('Usuario actualizado', 'ok'); }
             else        { uList.push(obj); toast('Usuario creado', 'ok'); }
@@ -499,12 +508,13 @@ window.pedirDel = function(id) {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
             })
-            .then(res => {
-                if (res.ok || res.redirected) {
+            .then(res => res.json().then(data => ({ ok: res.ok && data.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok) {
                     setTimeout(() => { uList = uList.filter(x => x.id !== id); save(); renderTabla(); toast('Usuario eliminado correctamente', 'err'); }, 300);
                 } else {
                     if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; }
-                    toast('Error al eliminar el usuario', 'err');
+                    toast(data.error || 'Error al eliminar el usuario', 'err');
                 }
             })
             .catch(() => { if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; } toast('Error de conexión', 'err'); });

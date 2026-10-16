@@ -1022,3 +1022,79 @@ html.admin-html, body.admin-body-shell {
     .creditos-body { grid-template-columns: 1fr; padding: 1.2rem; }
     .creditos-title { font-size: 1.3rem; }
 }
+
+/* ============================================
+   Avisos (ventana de mensajes)
+   Cuadro crema con título "Atención" y botón "Aceptar".
+   Lo abre el script de base.html / base 2.html para todos
+   los alert() y los mensajes de Django.
+   ============================================ */
+.aviso-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(26, 16, 8, .55);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity .18s ease;
+}
+.aviso-overlay.show { opacity: 1; }
+
+.aviso-caja {
+    background: #FFF8EC;
+    border: 1px solid var(--gris-borde);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(26, 16, 8, .35);
+    width: 100%;
+    max-width: 440px;
+    padding: 1.6rem 1.8rem 1.4rem;
+    font-family: 'Lato', sans-serif;
+    transform: translateY(10px) scale(.97);
+    transition: transform .18s ease;
+}
+.aviso-overlay.show .aviso-caja { transform: none; }
+
+.aviso-titulo {
+    color: var(--rojo);
+    font-family: 'Lato', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 .6rem;
+}
+.aviso-texto {
+    color: #6B4A2E;
+    font-family: 'Lato', sans-serif;
+    font-size: 1rem;
+    line-height: 1.45;
+    white-space: pre-line;
+    margin: 0 0 1.4rem;
+}
+.aviso-acciones { text-align: right; }
+
+.aviso-boton {
+    background: var(--rojo);
+    color: #fff;
+    border: 0;
+    border-radius: 999px;
+    padding: .5rem 1.4rem;
+    font-family: 'Lato', sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+}
+.aviso-boton:hover { background: #A93226; transform: translateY(-1px); }
+.aviso-boton:focus-visible {
+    outline: 3px solid rgba(192, 57, 43, .35);
+    outline-offset: 2px;
+}
+
+/* Mensajes de éxito: título y botón en verde */
+.aviso-exito .aviso-titulo { color: #2E7D32; }
+.aviso-exito .aviso-boton { background: #2E7D32; }
+.aviso-exito .aviso-boton:hover { background: #256628; }
+.aviso-exito .aviso-boton:focus-visible { outline-color: rgba(46, 125, 50, .35); }

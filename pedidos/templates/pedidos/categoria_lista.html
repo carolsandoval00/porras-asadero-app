@@ -12,18 +12,7 @@
     <h2>Bienvenido, {{ nombre }}</h2>
   </div>
 
-  {% if messages %}
-  <div id="modal-mensaje" class="pm-modal-overlay open">
-    <div class="pm-modal-box">
-      {% for msg in messages %}
-      <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
-      {% endfor %}
-      <div class="pm-modal-actions">
-        <button class="pm-btn pm-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
-      </div>
-    </div>
-  </div>
-  {% endif %}
+  {# Los mensajes de Django (éxito y errores) salen en la ventanita de base 2.html #}
 
   <!-- Navegación Compartida -->
   <div class="pm-nav">

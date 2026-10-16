@@ -12,11 +12,7 @@
     <h2>Bienvenido, {{ nombre }}</h2>
   </div>
 
-  {% if messages %}
-    {% for msg in messages %}
-    <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
-    {% endfor %}
-  {% endif %}
+  {# Los mensajes de Django (éxito y errores) salen en la ventanita de base 2.html #}
 
   <!-- Navegación Compartida -->
   <div class="pm-nav">
@@ -56,15 +52,13 @@
       <a href="{% url 'pedidos:categoria_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de categorías">← Volver</a>
     </div>
     <div class="pm-card-body">
-      <form method="post" action="" class="pm-form">
+      {# novalidate: evita las burbujas del navegador para que los avisos salgan en la ventanita #}
+      <form method="post" action="" class="pm-form" novalidate>
         {% csrf_token %}
         <div class="pm-form-grid">
           <div class="full">
             <label>Nombre de la Categoría</label>
             {{ form_categoria.nombre }}
-            {% for error in form_categoria.nombre.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
           </div>
           <div class="full"><label>Descripción</label>{{ form_categoria.descripcion }}</div>
         </div>

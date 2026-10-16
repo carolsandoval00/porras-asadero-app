@@ -87,6 +87,41 @@ def _items_as_json(pedido):
     return json.dumps(items, ensure_ascii=False)
 
 
+def _items_data_as_json(items_data):
+    """Igual que _items_as_json, pero a partir de los productos que llegaron por POST
+    (para no perderlos si el formulario falla y se vuelve a mostrar)."""
+    return json.dumps([
+        {
+            'id': str(it['producto'].pk),
+            'nombre': it['producto'].nombre,
+            'precio': int(it['producto'].precio),
+            'cantidad': it['cantidad'],
+        }
+        for it in items_data
+    ], ensure_ascii=False)
+
+
+def _errores_form(form):
+    """Junta los errores de un formulario en un solo texto para mostrarlo
+    en la ventanita 'Atención' (los mensajes de Django ya salen ahí desde base 2.html)."""
+    mensajes = []
+    for campo, errores in form.errors.as_data().items():
+        etiqueta = None if campo == '__all__' else str(form[campo].label).lower()
+        for e in errores:
+            if e.code == 'required' and etiqueta:
+                # "Este campo es obligatorio." -> dice qué campo falta
+                texto = f'El campo de {etiqueta} es obligatorio.'
+            elif e.code and etiqueta:
+                # Otros avisos genéricos de Django (número inválido, opción inválida...)
+                texto = f'{etiqueta.capitalize()}: {e.messages[0]}'
+            else:
+                # Avisos propios de forms.py, que ya son claros
+                texto = e.messages[0]
+            if texto not in mensajes:
+                mensajes.append(texto)
+    return ' '.join(mensajes)
+
+
 def _resolver_filtro_fecha(request):
     """Lee el filtro de fechas del GET (mismo esquema que el de Reservas:
     Todas / Hoy / Próximas / Pasadas / Día específico / Mes específico / Rango)
@@ -307,7 +342,7 @@ def pedido_crear(request):
             pedido.estado        = 'PREPARACION'
             items_data = _parse_items_from_post(request)
             if not items_data:
-                messages.error(request, '❌ Agrega al menos un producto al pedido.')
+                messages.error(request, 'Agrega al menos un producto al pedido.')
                 return render(request, 'pedidos/pedido_form.html', {
                     'form': form, 'productos_disponibles': productos_disponibles,
                     'seccion_activa': 'pedido-crear'})
@@ -320,9 +355,14 @@ def pedido_crear(request):
                 for it in items_data])
             messages.success(request, f'✅ Pedido {pedido.numero_pedido} creado correctamente.')
             return redirect('pedidos:pedido_lista')
-        messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
+        items_data = _parse_items_from_post(request)
+        errores = _errores_form(form)
+        if not items_data:
+            errores = (errores + ' ' if errores else '') + 'Agrega al menos un producto al pedido.'
+        messages.error(request, errores)
         return render(request, 'pedidos/pedido_form.html', {
             'form': form, 'productos_disponibles': productos_disponibles,
+            'pedido_items_json': _items_data_as_json(items_data),
             'seccion_activa': 'pedido-crear'})
     form = PedidoForm()
     return render(request, 'pedidos/pedido_form.html', {
@@ -355,6 +395,7 @@ def pedido_editar(request, pk):
                 p.save()
             messages.success(request, 'Pedido actualizado correctamente.')
             return redirect('pedidos:pedido_lista')
+        messages.error(request, _errores_form(form))
         return render(request, 'pedidos/pedido_form.html', {
             'form': form, 'pedido': pedido,
             'pedido_items_json': _items_as_json(pedido),
@@ -428,6 +469,7 @@ def orden_editar(request, pk):
             form.save()
             messages.success(request, f'Pedido {pedido.numero_orden} actualizado.')
             return redirect('pedidos:orden_lista')
+        messages.error(request, _errores_form(form))
         return render(request, 'pedidos/orden_form.html', {
             'form_orden': form, 'orden_editando': pedido, 'seccion_activa': 'orden-editar'})
     form = PedidoForm(instance=pedido)
@@ -475,7 +517,7 @@ def producto_crear(request):
             form.save()
             messages.success(request, '✅ Producto creado correctamente.')
             return redirect('pedidos:producto_lista')
-        messages.error(request, '❌ Corrige los errores en el formulario de producto.')
+        messages.error(request, _errores_form(form))
         return render(request, 'pedidos/producto_form.html', {
             'form_producto': form, 'seccion_activa': 'producto-crear'})
     form = ProductoForm()
@@ -494,6 +536,7 @@ def producto_editar(request, pk):
             form.save()
             messages.success(request, 'Producto actualizado correctamente.')
             return redirect('pedidos:producto_lista')
+        messages.error(request, _errores_form(form))
         return render(request, 'pedidos/producto_form.html', {
             'form_producto': form, 'producto_editando': producto,
             'seccion_activa': 'producto-editar'})
@@ -598,7 +641,7 @@ def categoria_crear(request):
             form.save()
             messages.success(request, '✅ Categoría creada correctamente.')
             return redirect('pedidos:categoria_lista')
-        messages.error(request, '❌ Corrige los errores en el formulario.')
+        messages.error(request, _errores_form(form))
         return render(request, 'pedidos/categoria_form.html', {
             'form_categoria': form, 'seccion_activa': 'categoria-crear'})
     form = CategoriaForm()
@@ -617,6 +660,7 @@ def categoria_editar(request, pk):
             form.save()
             messages.success(request, '✅ Categoría actualizada correctamente.')
             return redirect('pedidos:categoria_lista')
+        messages.error(request, _errores_form(form))
         return render(request, 'pedidos/categoria_form.html', {
             'form_categoria': form, 'categoria_editando': categoria,
             'seccion_activa': 'categoria-editar'})
@@ -716,7 +760,7 @@ def cliente_crear(request):
             form.save()
             messages.success(request, '✅ Cliente registrado correctamente.')
             return redirect('pedidos:cliente_lista')
-        messages.error(request, '❌ Corrige los errores en el formulario.')
+        messages.error(request, _errores_form(form))
         return render(request, 'pedidos/cliente_form.html', {
             'form_cliente': form, 'seccion_activa': 'cliente-crear'})
     form = ClienteForm()
@@ -735,6 +779,7 @@ def cliente_editar(request, pk):
             form.save()
             messages.success(request, 'Cliente actualizado correctamente.')
             return redirect('pedidos:cliente_lista')
+        messages.error(request, _errores_form(form))
         return render(request, 'pedidos/cliente_form.html', {
             'form_cliente': form, 'cliente_editando': cliente,
             'seccion_activa': 'cliente-editar'})

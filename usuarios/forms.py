@@ -43,6 +43,16 @@ def _validar_palabras(value, campo='nombre', min_palabras=2):
     return texto
 
 
+def _validar_celular(value):
+    """Valida un celular colombiano: 10 dígitos y empieza por 3."""
+    celular = (value or '').strip()
+    if not celular:
+        raise ValidationError('El celular es obligatorio.')
+    if not re.fullmatch(r'3\d{9}', celular):
+        raise ValidationError('Ingresa un celular colombiano válido: 10 dígitos que empiecen por 3.')
+    return celular
+
+
 class CustomPasswordResetForm(PasswordResetForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -63,12 +73,20 @@ class PersonalForm(forms.ModelForm):
 
     class Meta:
         model = Usuario
-        fields = ['first_name', 'last_name', 'username', 'email', 'rol']
+        fields = ['first_name', 'last_name', 'username', 'email', 'telefono',
+                  'rol', 'tipo_documento', 'documento', 'is_active']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '3001234567',
+                'maxlength': 10,
+                'inputmode': 'numeric',
+                'pattern': '3[0-9]{9}',
+            }),
             'rol': forms.Select(attrs={'class': 'form-select'}),
         }
 
@@ -86,7 +104,7 @@ class PersonalForm(forms.ModelForm):
             raise ValidationError('El usuario solo puede contener letras, números, punto y guion bajo.')
         if len(usuario) < 3:
             raise ValidationError('El nombre de usuario debe tener al menos 3 caracteres.')
-        if Usuario.objects.filter(username=usuario).exclude(pk=self.instance.pk if self.instance else None).exists():
+        if Usuario.objects.filter(username=usuario).exclude(pk=self.instance.pk).exists():
             raise ValidationError('Ese nombre de usuario ya está en uso.')
         return usuario
 
@@ -94,9 +112,28 @@ class PersonalForm(forms.ModelForm):
         email = self.cleaned_data.get('email', '').strip().lower()
         if not email:
             raise ValidationError('El correo electrónico es obligatorio.')
-        if Usuario.objects.filter(email__iexact=email).exclude(pk=self.instance.pk if self.instance else None).exists():
+        if Usuario.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
             raise ValidationError('Ese correo electrónico ya está registrado.')
         return email
+
+    def clean_telefono(self):
+        # Opcional: en el formulario el teléfono no lleva asterisco.
+        # Si quieres que sea obligatorio, cambia este bloque por:
+        #     return _validar_celular(self.cleaned_data.get('telefono', ''))
+        tel = (self.cleaned_data.get('telefono') or '').strip()
+        if not tel:
+            return None
+        return _validar_celular(tel)
+
+    def clean_documento(self):
+        doc = (self.cleaned_data.get('documento') or '').strip()
+        if not doc:
+            return None
+        if not re.fullmatch(r'\d{6,10}', doc):
+            raise ValidationError('El documento debe tener entre 6 y 10 dígitos.')
+        if Usuario.objects.filter(documento=doc).exclude(pk=self.instance.pk).exists():
+            raise ValidationError('Ese documento ya está registrado.')
+        return doc
 
     def clean_rol(self):
         rol = self.cleaned_data.get('rol')

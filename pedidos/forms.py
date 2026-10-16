@@ -15,6 +15,9 @@ _INPUT = (
 _SELECT   = _INPUT
 _TEXTAREA = _INPUT + 'resize:vertical;min-height:80px;'
 
+# Precio mínimo permitido para un producto
+PRECIO_MINIMO = 1000
+
 # ─── Validadores reutilizables ─────────────────────────────────
 def _solo_numeros(value, longitud=None, campo='campo'):
     """Valida que el valor contenga solo dígitos y opcionalmente una longitud exacta."""
@@ -67,6 +70,16 @@ def _precio_positivo(value):
     return value
 
 
+def _precio_minimo(value, minimo=PRECIO_MINIMO):
+    """Valida que el precio exista y sea al menos el mínimo permitido."""
+    if value is None:
+        raise ValidationError('El precio es obligatorio.')
+    if value < minimo:
+        minimo_txt = f'{minimo:,.0f}'.replace(',', '.')
+        raise ValidationError(f'El precio mínimo es de ${minimo_txt}.')
+    return value
+
+
 # ─── Formulario de Pedido ──────────────────────────────────────
 class PedidoForm(forms.ModelForm):
     class Meta:
@@ -109,6 +122,17 @@ class PedidoForm(forms.ModelForm):
             raise ValidationError('El total no puede ser negativo.')
         return total
 
+    def clean(self):
+        cleaned = super().clean()
+        tipo = cleaned.get('tipo_pedido')
+        mesa = cleaned.get('mesa')
+        if not cleaned.get('cliente'):
+            self.add_error('cliente', 'Debes elegir un cliente para el pedido.')
+        # Para llevar y domicilio no hay mesa; en el local sí es obligatoria.
+        if tipo == 'LOCAL' and not mesa:
+            self.add_error('mesa', 'Debes elegir una mesa para los pedidos en el local.')
+        return cleaned
+
 
 # ─── Formulario de Producto ────────────────────────────────────
 class ProductoForm(forms.ModelForm):
@@ -122,7 +146,8 @@ class ProductoForm(forms.ModelForm):
             }),
             'categoria': forms.Select(attrs={'style': _SELECT}),
             'precio':     forms.NumberInput(attrs={
-                'style': _INPUT, 'step': '0.01', 'placeholder': '0.00',
+                'style': _INPUT, 'step': '0.01', 'min': str(PRECIO_MINIMO),
+                'placeholder': str(PRECIO_MINIMO),
             }),
             'descripcion': forms.Textarea(attrs={
                 'style': _TEXTAREA,
@@ -139,7 +164,7 @@ class ProductoForm(forms.ModelForm):
 
     def clean_precio(self):
         precio = self.cleaned_data.get('precio')
-        return _precio_positivo(precio)
+        return _precio_minimo(precio)
 
     def clean_categoria(self):
         categoria = self.cleaned_data.get('categoria')
