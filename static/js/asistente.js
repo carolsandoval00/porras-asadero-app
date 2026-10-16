@@ -15,6 +15,23 @@
 
   if (!fab || !panel || !messages || !input || !sendBtn) return;
 
+  // Mover el widget al final del <body>: así queda por encima de otros
+  // botones flotantes (ayuda, accesibilidad) que tengan el mismo z-index,
+  // y fuera de cualquier contenedor que cree su propio contexto de apilamiento.
+  var root = document.getElementById("pia-assistant-root");
+  function bringToFront() {
+    if (root && document.body.lastElementChild !== root) {
+      document.body.appendChild(root);
+    }
+  }
+  bringToFront();
+  window.addEventListener("load", function () {
+    bringToFront();
+    // Otros widgets (accesibilidad, ayuda) suelen inyectarse tarde
+    setTimeout(bringToFront, 1000);
+    setTimeout(bringToFront, 3000);
+  });
+
   var STORAGE_KEY = "piaConversation";
   var GREETING_HTML = messages.innerHTML;
 
@@ -28,8 +45,8 @@
     isOpen = true;
     panel.classList.add("is-open");
     panel.setAttribute("aria-hidden", "false");
-    teaser.classList.remove("is-visible");
-    fabBadge.classList.remove("is-visible");
+    if (teaser) teaser.classList.remove("is-visible");
+    if (fabBadge) fabBadge.classList.remove("is-visible");
     input.focus();
   }
 
@@ -49,14 +66,16 @@
 
   setTimeout(function () {
     if (!isOpen) {
-      teaser.classList.add("is-visible");
-      fabBadge.classList.add("is-visible");
+      if (teaser) teaser.classList.add("is-visible");
+      if (fabBadge) fabBadge.classList.add("is-visible");
     }
   }, 8000);
 
-  teaser.addEventListener("click", function () {
-    openPanel();
-  });
+  if (teaser) {
+    teaser.addEventListener("click", function () {
+      openPanel();
+    });
+  }
 
   // ---------- Chips de acceso rápido ----------
 
@@ -287,7 +306,8 @@
   });
 
   input.addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.isComposing) {
+      e.preventDefault();
       sendMessage(input.value);
     }
   });
