@@ -256,7 +256,8 @@ def pago_dashboard(request):
                     post_data['monto'] = pedido.total
                 except Pedido.DoesNotExist:
                     pass
-            form = PagoForm(post_data)
+            # ★ CAMBIO: se pasa request.FILES para que llegue el baucher
+            form = PagoForm(post_data, request.FILES)
             if form.is_valid():
                 pago = form.save(commit=False)
                 if caja_activa:
@@ -319,7 +320,8 @@ def pago_editar(request, pk):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
     pago = get_object_or_404(Pago, pk=pk)
-    form = PagoForm(request.POST or None, instance=pago)
+    # ★ CAMBIO: se pasa request.FILES para poder subir/cambiar el baucher
+    form = PagoForm(request.POST or None, request.FILES or None, instance=pago)
     if form.is_valid():
         form.save()
         messages.success(request, ' Pago actualizado.')
