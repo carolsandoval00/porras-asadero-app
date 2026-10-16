@@ -12,6 +12,11 @@ from .forms import MesaForm, ReservaForm
 from .models import Mesa, Reserva
 
 
+# Límites de las mesas
+MESA_NUMERO_MAX = 20      # número de mesa: de 1 a 20
+MESA_CAPACIDAD_MAX = 10   # capacidad: de 1 a 10 personas
+
+
 # ─────────────────────────────────────────────────────────────
 # HELPERS DE PERMISOS
 # ─────────────────────────────────────────────────────────────
@@ -233,7 +238,18 @@ def mesa_guardar(request):
     except json.JSONDecodeError:
         return _error_json('Datos inválidos.')
 
-    numero = data.get('numero_mesa')
+    # ── Límites: número de mesa 1–20, capacidad 1–10 ──
+    try:
+        numero = int(data.get('numero_mesa'))
+        capacidad = int(data.get('capacidad'))
+    except (TypeError, ValueError):
+        return _error_json('El número de mesa y la capacidad deben ser números.')
+
+    if numero < 1 or numero > MESA_NUMERO_MAX:
+        return _error_json(f'El número de mesa debe estar entre 1 y {MESA_NUMERO_MAX}.')
+    if capacidad < 1 or capacidad > MESA_CAPACIDAD_MAX:
+        return _error_json(f'La capacidad debe estar entre 1 y {MESA_CAPACIDAD_MAX} personas.')
+
     existente = Mesa.objects.filter(numero_mesa=numero).first()
     form = MesaForm(data, instance=existente)
     if not form.is_valid():

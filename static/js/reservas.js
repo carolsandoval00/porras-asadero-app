@@ -358,6 +358,13 @@
       return;
     }
 
+    // Reglas de teléfono, personas y correo.
+    const errorValidacion = validarReserva(payload);
+    if (errorValidacion) {
+      toast(errorValidacion, 'error');
+      return;
+    }
+
     const btn = $('mc-btn-guardar');
     const textoOriginal = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
@@ -754,6 +761,53 @@
     window.print();
   };
 
+  // ─── Validaciones del formulario de reserva ───────────────
+  const MAX_PERSONAS = 10;
+  const RE_TEL_CO = /^3\d{9}$/;   // celular colombiano: 10 dígitos, empieza por 3
+  // Nombre de usuario con al menos una letra, sin puntos/guiones al inicio, al final ni repetidos;
+  // dominio con etiquetas válidas y extensión de solo letras.
+  const RE_EMAIL  = /^(?=.*[A-Za-z])[A-Za-z0-9]+([._-][A-Za-z0-9]+)*@([A-Za-z0-9]+(-[A-Za-z0-9]+)*\.)+[A-Za-z]{2,}$/;
+  const PROVEEDORES_COMUNES = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com', 'icloud.com'];
+
+  // Correo con formato válido y dominio colombiano (.co / .com.co) o proveedor común.
+  function correoValido(v) {
+    if (!RE_EMAIL.test(v)) return false;
+    const dominio = v.split('@')[1].toLowerCase();
+    return dominio.endsWith('.co') || PROVEEDORES_COMUNES.includes(dominio);
+  }
+
+  // Devuelve un mensaje de error, o '' si todo está bien.
+  function validarReserva(p) {
+    if (!RE_TEL_CO.test(p.telefono))
+      return 'El teléfono debe tener 10 dígitos y empezar por 3 (ej: 3001234567).';
+    const n = parseInt(p.numero_personas, 10);
+    if (!Number.isInteger(n) || n < 1 || n > MAX_PERSONAS)
+      return 'El número de personas debe estar entre 1 y ' + MAX_PERSONAS + '.';
+    if (p.email && !correoValido(p.email))
+      return 'Ingresa un correo válido (ej: nombre@gmail.com o nombre@empresa.com.co).';
+    return '';
+  }
+
+  // Ajusta los campos mientras el usuario escribe.
+  function configurarValidaciones() {
+    const tel = $('mc-c-telefono'), per = $('mc-c-personas');
+    if (tel) {
+      tel.setAttribute('inputmode', 'numeric');
+      tel.setAttribute('maxlength', '10');
+      tel.addEventListener('input', () => {
+        tel.value = tel.value.replace(/\D/g, '').slice(0, 10);
+      });
+    }
+    if (per) {
+      per.min = 1; per.max = MAX_PERSONAS; per.step = 1;
+      per.addEventListener('input', () => {
+        const n = parseInt(per.value, 10);
+        if (n > MAX_PERSONAS) per.value = MAX_PERSONAS;
+        if (n < 1) per.value = 1;
+      });
+    }
+  }
+
   // ─── Arranque ─────────────────────────────────────────────
   function fijarFechaMin() {
     const input = $('mc-c-fecha');
@@ -761,6 +815,7 @@
   }
 
   async function iniciar() {
+    configurarValidaciones();
     fijarFechaMin();
     try {
       await cargarMesas();
