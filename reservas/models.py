@@ -9,11 +9,17 @@ class Mesa(models.Model):
         ('OCUPADA', 'Ocupada'),
         ('RESERVADA', 'Reservada'),
     ]
-    numero_mesa = models.IntegerField(primary_key=True)
+    numero_mesa = models.IntegerField(
+        primary_key=True,
+        validators=[
+            MinValueValidator(1, 'El número de mesa mínimo es 1.'),
+            MaxValueValidator(20, 'El número de mesa máximo es 20.'),
+        ]
+    )
     capacidad = models.IntegerField(
         validators=[
             MinValueValidator(1, 'La capacidad mínima es 1.'),
-            MaxValueValidator(20, 'La capacidad máxima es de 20 personas.'),
+            MaxValueValidator(10, 'La capacidad máxima es de 10 personas.'),
         ]
     )
     ubicacion = models.CharField(max_length=100)

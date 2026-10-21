@@ -32,6 +32,12 @@
   --pia-z-teaser: 2147483646;
 }
 
+/* Raíz del widget: capa propia por encima de cualquier otro botón flotante */
+#pia-assistant-root {
+  position: relative;
+  z-index: var(--pia-z-top);
+}
+
 .pia-logo {
   position: relative;
   width: 40px;
