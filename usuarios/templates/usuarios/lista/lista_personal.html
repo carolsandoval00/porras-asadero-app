@@ -87,16 +87,16 @@
             <div class="fg2">
                 <div>
                     <label class="f-label">Tipo de documento</label>
-                    <select class="f-sel" id="u-tdoc">
+                    <select class="f-sel" id="u-tdoc" onchange="ajustarDoc()">
                         <option value="">— Seleccionar —</option>
-                        <option>Cédula de Ciudadanía</option><option>Cédula de Extranjería</option>
-                        <option>Tarjeta de Identidad</option><option>Pasaporte</option>
+                        <option value="CC">Cédula de Ciudadanía</option><option value="CE">Cédula de Extranjería</option>
+                        <option value="TI">Tarjeta de Identidad</option><option value="PP">Pasaporte</option>
                     </select>
                 </div>
-                <div><label class="f-label">Número de documento</label><input class="f-inp" id="u-doc" placeholder="Ej: 1234567890" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
+                <div><label class="f-label">Número de documento</label><input class="f-inp" id="u-doc" placeholder="Ej: 1013640172" maxlength="10" inputmode="numeric" autocomplete="off" oninput="ajustarDoc()"></div>
             </div>
             <div class="fg2">
-                <div><label class="f-label">Correo electrónico *</label><input type="email" class="f-inp" id="u-email" placeholder="correo@porras.com"></div>
+                <div><label class="f-label">Correo electrónico *</label><input type="email" class="f-inp" id="u-email" placeholder="nombre@gmail.com"></div>
                 <div><label class="f-label">Teléfono</label><input type="tel" class="f-inp" id="u-tel" placeholder="3001234567" maxlength="10" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)"></div>
             </div>
             <div><label class="f-label">Dirección</label><input class="f-inp" id="u-dir" placeholder="Ej: Calle 93 # 15-20, Bogotá"></div>
@@ -123,27 +123,29 @@
                 <div class="fg2">
                     <div>
                         <label class="f-label">Contraseña *</label>
-                        <div class="pw-wrap"><input type="password" class="f-inp" id="u-pw" placeholder="Mínimo 6 caracteres"><button class="pw-tog" type="button" onclick="tPw('u-pw',this)">Ver</button></div>
+                        <div class="pw-wrap"><input type="password" class="f-inp" id="u-pw" placeholder="6 a 8 caracteres" maxlength="8" autocomplete="new-password"><button class="pw-tog" type="button" onclick="tPw('u-pw',this)">Ver</button></div>
                     </div>
                     <div>
                         <label class="f-label">Confirmar contraseña *</label>
-                        <div class="pw-wrap"><input type="password" class="f-inp" id="u-pw2" placeholder="Repite la contraseña"><button class="pw-tog" type="button" onclick="tPw('u-pw2',this)">Ver</button></div>
+                        <div class="pw-wrap"><input type="password" class="f-inp" id="u-pw2" placeholder="Repite la contraseña" maxlength="8" autocomplete="new-password"><button class="pw-tog" type="button" onclick="tPw('u-pw2',this)">Ver</button></div>
                     </div>
                 </div>
+                <small style="display:block;margin-top:.45rem;font-size:.76rem;color:var(--muted)">De 6 a 8 caracteres, con mayúscula, minúscula, número y un símbolo (@ # $ % &amp; *).</small>
             </div>
             <div id="pw-edit" class="usr-tab-oculto">
                 <label class="pw-edit-label">
                     <input type="checkbox" id="cb-pw" onchange="tPwEdit()"> Cambiar contraseña
                 </label>
                 <div id="pw-edit-campos" class="usr-tab-oculto">
+                    <small style="display:block;margin-top:.45rem;font-size:.76rem;color:var(--muted)">De 6 a 8 caracteres, con mayúscula, minúscula, número y un símbolo (@ # $ % &amp; *).</small>
                     <div class="fg2">
                         <div>
                             <label class="f-label">Nueva contraseña</label>
-                            <div class="pw-wrap"><input type="password" class="f-inp" id="u-pw-e" placeholder="Mínimo 6 caracteres"><button class="pw-tog" type="button" onclick="tPw('u-pw-e',this)">Ver</button></div>
+                            <div class="pw-wrap"><input type="password" class="f-inp" id="u-pw-e" placeholder="6 a 8 caracteres" maxlength="8" autocomplete="new-password"><button class="pw-tog" type="button" onclick="tPw('u-pw-e',this)">Ver</button></div>
                         </div>
                         <div>
                             <label class="f-label">Confirmar</label>
-                            <div class="pw-wrap"><input type="password" class="f-inp" id="u-pw2-e" placeholder="Repite"><button class="pw-tog" type="button" onclick="tPw('u-pw2-e',this)">Ver</button></div>
+                            <div class="pw-wrap"><input type="password" class="f-inp" id="u-pw2-e" placeholder="Repite" maxlength="8" autocomplete="new-password"><button class="pw-tog" type="button" onclick="tPw('u-pw2-e',this)">Ver</button></div>
                         </div>
                     </div>
                 </div>
@@ -195,6 +197,519 @@
 
 <div id="django-es-admin" data-admin="{% if request.user.rol == 'ADMIN' or request.user.is_superuser %}1{% else %}0{% endif %}" style="display:none"></div>
 
+{# Validaciones y aviso "Atención" del formulario de usuarios (mismas reglas que usuarios/validators.py) #}
+{% verbatim %}
+<script>
+/* ============================================================
+   VALIDACIONES_USUARIO.JS  (Porras Asadero)
+
+   Reglas para crear / editar usuarios + aviso "Atención".
+   Es el espejo en el navegador de usuarios/validators.py:
+   si cambias una regla allá, cámbiala también aquí.
+
+   Uso:
+     const errores = ValidacionesUsuario.validarFormulario({ nom, ape, tdoc, doc, email, user, rol, tel, pw, pw2 });
+     if (errores.length) { mostrarAtencion(errores.map(e => e.mensaje)); return; }
+
+   validarFormulario solo revisa las claves que vengan en el objeto.
+   ============================================================ */
+(function (global) {
+    'use strict';
+
+    var PASSWORD_MIN = 6;
+    var PASSWORD_MAX = 8;
+
+    var PARTICULAS = ['de', 'del', 'la', 'las', 'los', 'y', 'e'];
+    var FILAS_TECLADO = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+
+    var FORMATOS_DOC = {
+        CC: [/^[1-9]\d{5,9}$/, 'La cédula debe tener entre 6 y 10 dígitos, sin letras y sin empezar en 0.'],
+        TI: [/^[1-9]\d{9,10}$/, 'La tarjeta de identidad debe tener 10 u 11 dígitos, sin empezar en 0.'],
+        CE: [/^[1-9]\d{5,6}$/, 'La cédula de extranjería debe tener 6 o 7 dígitos, sin empezar en 0.'],
+        PP: [/^(?=.*\d)[A-Z0-9]{6,9}$/, 'El pasaporte debe tener entre 6 y 9 letras y números, con al menos un número.']
+    };
+    var MSG_DOC_CONSECUTIVOS =
+        'El documento tiene demasiados números consecutivos o repetidos (ej: 1234567). Escribe uno real.';
+
+    // Pares de consonantes que SÍ existen en nombres y apellidos (idéntico a validators.py)
+    var PARES_CONSONANTES = (
+        'bb bl br bs bd cc ch ck cl cq cr cs ct dd dg dj dm dr ds dv dw ff fl fr gd gg gh gl gn ' +
+        'gr gs hl hm hn hr jh kh kl kn kr ks lb lc ld lf lg lj lk ll lm ln lp lq ls lt lv lz mb ' +
+        'mc mm mn mp ms nc nd nf ng nh nj nk nl nm nn nq nr ns nt nv nz pl pr ps pt ph pp rb rc ' +
+        'rd rf rg rh rj rk rl rm rn rp rq rr rs rt rv rw rz sb sc sf sh sk sl sm sp sq ss st sv ' +
+        'sw sz tl tr th tt ts tz wh xc xp xt zc zh zm zz '
+    ).trim().split(' ');
+
+    var RATIO_VECINOS = 0.75;   // letras seguidas en teclas vecinas = tecleo al azar
+
+    // Palabras de relleno que no son nombres reales (idéntico a validators.py)
+    var NOMBRES_FALSOS = (
+        'test tester prueba pruebas nombre nombres apellido apellidos usuario admin administrador ' +
+        'fulano fulana mengano mengana zutano perengano lorem ipsum ejemplo ninguno ninguna nada ' +
+        'nadie abc abcd xxx asdf qwerty null none undefined anonimo sinnombre sapo hola '
+    ).trim().split(' ');
+
+    // Nombres reales poco comunes que las reglas genéricas rechazarían por error
+    var EXCEPCIONES = (
+        'abner aguayo ariadna asdrubal aznar barba barbara blanch blazquez capdevila casas cases ' +
+        'cisneros concepcion dafne derek duilio dwight eder edna edwar edward efren esneider ' +
+        'feliu ferrer franch fredes fredy isaza israel izquierdo julio lilia lillo neftali peres ' +
+        'plaza polo sastre schmidt schwartz sergio sessa sigfrido sisneros sneider teresa vazquez ' +
+        'velazquez vladimir washington wladimir yasna '
+    ).trim().split(' ');
+
+    var DOMINIOS_DESECHABLES = [
+        'mailinator.com', 'tempmail.com', 'temp-mail.org', '10minutemail.com', 'guerrillamail.com',
+        'yopmail.com', 'trashmail.com', 'throwawaymail.com', 'getnada.com', 'sharklasers.com',
+        'dispostable.com', 'maildrop.cc', 'fakeinbox.com', 'mintemail.com', 'tempinbox.com', 'mohmal.com'
+    ];
+    var DOMINIOS_TYPO = {
+        'gmial.com': 'gmail.com', 'gamil.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmil.com': 'gmail.com',
+        'gmail.co': 'gmail.com', 'gmail.con': 'gmail.com', 'gmail.comm': 'gmail.com', 'gnail.com': 'gmail.com',
+        'hotmial.com': 'hotmail.com', 'hotmal.com': 'hotmail.com', 'hotmail.con': 'hotmail.com', 'hotmai.com': 'hotmail.com',
+        'outlok.com': 'outlook.com', 'outloo.com': 'outlook.com', 'outlook.con': 'outlook.com',
+        'yaho.com': 'yahoo.com', 'yahooo.com': 'yahoo.com', 'yahoo.con': 'yahoo.com'
+    };
+    var CONTRASENAS_COMUNES = [
+        'password', 'contrasena', 'contraseña', 'qwerty', 'admin', 'porras',
+        'asadero', 'abc123', 'letmein', 'welcome', 'colombia'
+    ];
+
+    /* ─── Utilidades ─────────────────────────────────────── */
+    function sinAcentos(t) {
+        return String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function enTeclado(p) {
+        var n = p.length;
+        if (n < 4) return false;
+        for (var f = 0; f < FILAS_TECLADO.length; f++) {
+            var fila = FILAS_TECLADO[f];
+            var inversa = fila.split('').reverse().join('');
+            var tiras = [fila, inversa];
+            for (var t = 0; t < 2; t++) {
+                if (n <= 4 && tiras[t].indexOf(p) !== -1) return true;
+                if (n > 4) {
+                    for (var i = 0; i <= n - 5; i++) {
+                        if (tiras[t].indexOf(p.substr(i, 5)) !== -1) return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // Proporción de letras seguidas que están en teclas vecinas del teclado (qwerty)
+    function ratioVecinos(w) {
+        var pos = {};
+        FILAS_TECLADO.forEach(function (fila, r) {
+            fila.split('').forEach(function (c, i) { pos[c] = [r, i]; });
+        });
+        if (w.length < 2) return 0;
+        var vecinas = 0;
+        for (var i = 0; i < w.length - 1; i++) {
+            var a = w.charAt(i), b = w.charAt(i + 1);
+            if (pos[a] && pos[b] && a !== b &&
+                Math.abs(pos[a][0] - pos[b][0]) <= 1 && Math.abs(pos[a][1] - pos[b][1]) <= 1) vecinas++;
+        }
+        return vecinas / (w.length - 1);
+    }
+
+    function parecePalabraReal(palabra, minVocales, estricto) {
+        if (minVocales === undefined) minVocales = 0.2;
+        var w = sinAcentos(palabra.toLowerCase());
+        if (estricto && EXCEPCIONES.indexOf(w) !== -1) return true;
+        if (w.length < 2) return false;
+        if (!/[aeiouy]/.test(w)) return false;           // sin vocales
+        if (/(.)\1\1/.test(w)) return false;              // tres letras iguales seguidas
+        if (/[^aeiouy]{5,}/.test(w)) return false;        // 5 consonantes seguidas
+        if (/[aeiouy]{4,}/.test(w)) return false;         // 4 vocales seguidas (aeiou)
+        if (/(..)\1\1/.test(w)) return false;             // patrón repetido: ababab
+        if (/(.{3})\1/.test(w)) return false;             // sílaba de 3 repetida: asdasd
+        for (var per = 2; per <= 3; per++) {              // palabra periódica: lolol, jajaj
+            if (w.length >= 5) {
+                var unidad = w.slice(0, per), rep = '';
+                while (rep.length < w.length) rep += unidad;
+                if (rep.slice(0, w.length) === w) return false;
+            }
+        }
+        if (w.length >= 5) {
+            var vocales = (w.match(/[aeiouy]/g) || []).length;
+            if (vocales / w.length < minVocales) return false;
+        }
+        if (enTeclado(w)) return false;
+        if (estricto) {
+            if (w.length >= 4 && ratioVecinos(w) >= RATIO_VECINOS) return false;   // tecleo sobre teclas vecinas: likik
+            // pares de consonantes que no existen en español
+            for (var i = 0; i < w.length - 1; i++) {
+                var a = w.charAt(i), b = w.charAt(i + 1);
+                if ('aeiouy'.indexOf(a) === -1 && 'aeiouy'.indexOf(b) === -1 &&
+                    PARES_CONSONANTES.indexOf(a + b) === -1) return false;
+            }
+        }
+        return true;
+    }
+
+    /* ─── 1. Nombres y apellidos ─────────────────────────── */
+    function validarNombre(valor, campo) {
+        campo = campo || 'nombre';
+        var texto = String(valor || '').trim().replace(/\s+/g, ' ');
+        if (!texto) return 'Debes escribir el ' + campo + '.';
+        if (texto.length > 60) return 'El ' + campo + ' no puede superar 60 caracteres.';
+        if (!/^[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+(?:[ \-'][A-Za-záéíóúÁÉÍÓÚüÜñÑ]+)*$/.test(texto)) {
+            return 'El ' + campo + ' solo puede tener letras y espacios (sin números ni símbolos).';
+        }
+        var palabras = texto.split(/[ \-]/).map(function (p) { return p.replace(/'/g, ''); })
+            .filter(function (p) { return p && PARTICULAS.indexOf(p.toLowerCase()) === -1; });
+        if (!palabras.length) return 'Escribe un ' + campo + ' real.';
+        var ejemplo = campo === 'nombre' ? 'Juan Carlos' : 'Pérez López';
+        for (var j = 0; j < palabras.length; j++) {
+            if (NOMBRES_FALSOS.indexOf(sinAcentos(palabras[j].toLowerCase())) !== -1) {
+                return 'Escribe tu ' + campo + ' real, no una palabra de relleno (ej: ' + ejemplo + ').';
+            }
+        }
+        for (var i = 0; i < palabras.length; i++) {
+            if (!parecePalabraReal(palabras[i], 0.2, true)) {
+                return 'Escribe un ' + campo + ' real, sin letras al azar (ej: ' + ejemplo + ').';
+            }
+        }
+        return '';
+    }
+
+    /* ─── 2. Documento (formato Colombia) ────────────────── */
+    function hayRepeticionOSecuencia(v) {
+        var i, j;
+        if (/(.)\1{3,}/.test(v)) return true;                 // 1111, 0000…
+        if (/^(.{1,4})\1+$/.test(v)) return true;             // 12121212, 12341234
+        if (/^(?:(.)\1)+$/.test(v)) return true;              // 11223344
+        var distintos = {};
+        v.split('').forEach(function (c) { distintos[c] = 1; });
+        if (Object.keys(distintos).length < (v.length >= 8 ? 4 : 3)) return true;
+        for (i = 0; i <= v.length - 5; i++) {                  // 12345, 98765, 67890
+            var ven = v.substr(i, 5);
+            if (!/^\d{5}$/.test(ven)) continue;
+            var asc = true, desc = true;
+            for (j = 0; j < 4; j++) {
+                var d = (parseInt(ven[j + 1], 10) - parseInt(ven[j], 10) + 10) % 10;
+                if (d !== 1) asc = false;
+                if (d !== 9) desc = false;
+            }
+            if (asc || desc) return true;
+        }
+        return false;
+    }
+
+    // tipo: 'CC' | 'TI' | 'CE' | 'PP' | '' (también acepta la etiqueta completa)
+    function codigoTipoDoc(tipo) {
+        var mapa = {
+            'Cédula de Ciudadanía': 'CC', 'Cédula de Extranjería': 'CE',
+            'Tarjeta de Identidad': 'TI', 'Pasaporte': 'PP'
+        };
+        tipo = String(tipo || '').trim();
+        return (mapa[tipo] || tipo).toUpperCase();
+    }
+
+    function validarDocumento(tipo, numero) {
+        tipo = codigoTipoDoc(tipo);
+        numero = String(numero || '').replace(/[\s.\-]/g, '').toUpperCase();
+        if (!tipo && !numero) return '';                       // es opcional
+        if (!tipo) return 'Debes elegir el tipo de documento.';
+        if (!numero) return 'Debes escribir el número de documento.';
+        if (!FORMATOS_DOC[tipo]) return 'El tipo de documento no es válido.';
+        if (!FORMATOS_DOC[tipo][0].test(numero)) return FORMATOS_DOC[tipo][1];
+        if (hayRepeticionOSecuencia(numero)) return MSG_DOC_CONSECUTIVOS;
+        return '';
+    }
+
+    /* ─── Teléfono (celular colombiano: 10 dígitos que empiezan por 3) ── */
+    function validarTelefono(valor) {
+        var numero = String(valor || '').trim();
+        if (!numero) return '';                                  // es opcional
+        if (!/^\d+$/.test(numero)) return 'El teléfono solo debe contener números.';
+        if (numero.charAt(0) !== '3') return 'El teléfono debe empezar por 3 (celular), ej: 3001234567.';
+        if (numero.length !== 10) return 'El teléfono debe tener 10 dígitos, ej: 3001234567.';
+        return '';
+    }
+
+    /* ─── 3. Correo ──────────────────────────────────────── */
+    function validarCorreo(valor) {
+        var email = String(valor || '').trim().toLowerCase();
+        if (!email) return 'Debes escribir el correo electrónico.';
+        var msgFormato = 'Escribe un correo real (ej: nombre@gmail.com).';
+        if (!/^[a-z0-9.!#$%&'*+\/=?^_`{|}~\-]+@[^\s@]+$/.test(email)) return msgFormato;
+
+        var pos = email.lastIndexOf('@');
+        var local = email.slice(0, pos), dominio = email.slice(pos + 1);
+        if (!/^(?:[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(dominio)) return msgFormato;
+        if (local.length < 3) return msgFormato;
+
+        if (DOMINIOS_TYPO[dominio]) return '¿Quisiste escribir @' + DOMINIOS_TYPO[dominio] + '? Revisa el dominio del correo.';
+        if (DOMINIOS_DESECHABLES.indexOf(dominio) !== -1) return 'No se permiten correos temporales o desechables. Usa tu correo real.';
+
+        if (dominio === 'gmail.com' || dominio === 'googlemail.com') {
+            var base = local.split('+')[0];
+            if (base.length < 6 || base.length > 30 || !/^[a-z0-9.]+$/.test(base) ||
+                base.charAt(0) === '.' || base.charAt(base.length - 1) === '.' || base.indexOf('..') !== -1) {
+                return 'Ese correo de Gmail no es válido. Escribe tu correo real.';
+            }
+        }
+        if (/^[\d._+\-]+$/.test(local)) return msgFormato;
+        var bloques = sinAcentos(local).match(/[a-z]+/g) || [];
+        for (var i = 0; i < bloques.length; i++) {
+            if (bloques[i].length >= 4 && !parecePalabraReal(bloques[i], 0.2)) {
+                return 'Ese correo parece escrito al azar. Escribe un correo real (ej: nombre@gmail.com).';
+            }
+        }
+        return '';
+    }
+
+    /* ─── 4. Contraseña (6 a 8 caracteres) ───────────────── */
+    function secuenciaClave(pw, largo) {
+        largo = largo || 4;
+        var p = sinAcentos(pw.toLowerCase());
+        for (var i = 0; i <= p.length - largo; i++) {
+            var v = p.substr(i, largo);
+            if (!/^[a-z0-9]+$/.test(v)) continue;
+            var asc = true, desc = true;
+            for (var j = 0; j < largo - 1; j++) {
+                var d = v.charCodeAt(j + 1) - v.charCodeAt(j);
+                if (d !== 1) asc = false;
+                if (d !== -1) desc = false;
+            }
+            if (asc || desc) return true;
+        }
+        return false;
+    }
+
+    function tieneSimbolo(pw) {
+        return /[^\p{L}\p{N}\s]/u.test(pw);
+    }
+
+    // Devuelve una lista de mensajes (vacía si la contraseña es válida)
+    function validarPassword(pw, usuario) {
+        pw = pw || '';
+        var errores = [];
+        if (!pw) return ['Debes escribir la contraseña.'];
+        var requisitos = [];
+        if (pw.length < PASSWORD_MIN || pw.length > PASSWORD_MAX) {
+            requisitos.push('tener entre ' + PASSWORD_MIN + ' y ' + PASSWORD_MAX + ' caracteres');
+        }
+        if (/\s/.test(pw)) requisitos.push('no tener espacios');
+
+        var faltan = [];
+        if (!/[A-Z]/.test(pw)) faltan.push('una mayúscula');
+        if (!/[a-z]/.test(pw)) faltan.push('una minúscula');
+        if (!/\d/.test(pw)) faltan.push('un número');
+        if (!tieneSimbolo(pw)) faltan.push('un símbolo (@ # $ % & *)');
+        if (faltan.length) {
+            requisitos.push('incluir ' + (faltan.length === 1 ? faltan[0] : faltan.slice(0, -1).join(', ') + ' y ' + faltan[faltan.length - 1]));
+        }
+
+        if (requisitos.length) {
+            var mensaje = 'La contraseña debe ' + requisitos[0];
+            for (var r = 1; r < requisitos.length; r++) {
+                mensaje += (requisitos[r].indexOf('incluir') === 0 ? ' e ' : ' y ') + requisitos[r];
+            }
+            errores.push(mensaje + '.');
+        }
+
+        if (!errores.length) {
+            var bloques = sinAcentos(pw.toLowerCase()).match(/[a-z]+/g) || [];
+            var lower = pw.toLowerCase();
+            if (/(.)\1\1/i.test(pw) || secuenciaClave(pw) || bloques.some(enTeclado)) {
+                errores.push('La contraseña es muy fácil de adivinar: evita repetidos o seguidos (aaa, 1234, abcd).');
+            } else if (CONTRASENAS_COMUNES.some(function (c) { return lower.indexOf(c) !== -1; })) {
+                errores.push('Esa contraseña es muy común. Elige otra.');
+            } else if (usuario && usuario.length >= 3 && lower.indexOf(String(usuario).toLowerCase()) !== -1) {
+                errores.push('La contraseña no puede contener tu nombre de usuario.');
+            }
+        }
+        return errores;
+    }
+
+    /* ─── Formulario completo ────────────────────────────── */
+    // vals: { nom, ape, tdoc, doc, email, user, rol, tel, pw, pw2 } (solo se revisan las claves presentes)
+    // Devuelve [{ campo, mensaje }]
+    function validarFormulario(vals) {
+        var errores = [];
+        function add(campo, mensaje) { if (mensaje) errores.push({ campo: campo, mensaje: mensaje }); }
+        function tiene(k) { return Object.prototype.hasOwnProperty.call(vals, k); }
+
+        if (tiene('nom')) add('nom', validarNombre(vals.nom, 'nombre'));
+        if (tiene('ape')) add('ape', validarNombre(vals.ape, 'apellido'));
+
+        if (tiene('tdoc') || tiene('doc')) {
+            var msgDoc = validarDocumento(vals.tdoc, vals.doc);
+            if (msgDoc) add(/tipo de documento/.test(msgDoc) ? 'tdoc' : 'doc', msgDoc);
+        }
+
+        if (tiene('email')) add('email', validarCorreo(vals.email));
+
+        if (tiene('user')) {
+            var u = String(vals.user || '').trim();
+            if (!u) add('user', 'Debes escribir el nombre de usuario.');
+            else if (u.length < 3) add('user', 'El nombre de usuario debe tener al menos 3 caracteres.');
+            else if (!/^[A-Za-z0-9_.]+$/.test(u)) add('user', 'El usuario solo puede contener letras, números, punto y guion bajo.');
+        }
+
+        if (tiene('rol') && !vals.rol) add('rol', 'Debes elegir un rol para el usuario.');
+
+        if (tiene('tel')) add('tel', validarTelefono(vals.tel));
+
+        if (tiene('pw')) {
+            var erroresPw = validarPassword(vals.pw, vals.user);
+            erroresPw.forEach(function (m) { add('pw', m); });
+            if (!erroresPw.length && tiene('pw2') && vals.pw !== vals.pw2) {
+                add('pw2', 'Las contraseñas no coinciden.');
+            }
+        }
+        return errores;
+    }
+
+    /* ─── Aviso "Atención" (estilo del aviso de pedidos, con lista ordenada) ── */
+    var ESTILO_ID = 'va-estilos';
+    var CSS =
+        '.va-overlay{display:none;position:fixed;inset:0;z-index:2147483647;align-items:center;justify-content:center;padding:1rem;' +
+        'background:rgba(40,28,18,.45);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}' +
+        '.va-overlay.open{display:flex}' +
+        '.va-box{width:100%;max-width:440px;max-height:90vh;display:flex;flex-direction:column;box-sizing:border-box;' +
+        'background:#FFF8EC;border-radius:18px;padding:1.7rem 1.9rem 1.5rem;' +
+        'border:1px solid rgba(212,196,160,.55);box-shadow:0 14px 44px rgba(26,16,8,.28)}' +
+        '.va-box h3{margin:0;font-size:1.3rem;font-weight:700;color:#C0392B}' +
+        '.va-sub{margin:.25rem 0 0;font-size:.9rem;color:#9A8466}' +
+        '.va-lista{list-style:none;margin:.9rem 0 0;padding:0;overflow:auto;flex:1 1 auto;min-height:0}' +
+        '.va-lista li{position:relative;padding:.62rem 0 .62rem 1.35rem;font-size:.97rem;line-height:1.45;color:#6B4F33;' +
+        'border-top:1px solid #EFE2CC}' +
+        '.va-lista li:first-child{border-top:0;padding-top:.15rem}' +
+        '.va-lista li::before{content:"";position:absolute;left:.15rem;top:1.12em;width:7px;height:7px;border-radius:50%;background:#C0392B}' +
+        '.va-lista li:first-child::before{top:.65em}' +
+        '.va-lista.va-uno li{padding-left:0}' +
+        '.va-lista.va-uno li::before{display:none}' +
+        '.va-actions{display:flex;justify-content:flex-end;margin-top:1.3rem;padding-right:.35rem}' +
+        '.va-btn{border:0;border-radius:999px;padding:.6rem 1.9rem;font:inherit;font-weight:700;font-size:1rem;' +
+        'color:#FFF8EC;background:#C0392B;cursor:pointer;box-shadow:0 0 0 2px #FFF8EC,0 0 0 5px #E8651A}' +
+        '.va-btn:hover{background:#A93226}' +
+        '.va-campo-error{border-color:#C0392B !important;box-shadow:0 0 0 3px rgba(192,57,43,.16) !important}';
+
+    var cierreActual = null;
+    var marcados = [];
+
+    function limpiarMarcas() {
+        marcados.forEach(function (el) { el.classList.remove('va-campo-error'); });
+        marcados = [];
+    }
+
+    function marcar(el) {
+        if (!el) return;
+        el.classList.add('va-campo-error');
+        marcados.push(el);
+        var quitar = function () {
+            el.classList.remove('va-campo-error');
+            el.removeEventListener('input', quitar);
+            el.removeEventListener('change', quitar);
+        };
+        el.addEventListener('input', quitar);
+        el.addEventListener('change', quitar);
+    }
+
+    // Evita que un paréntesis o un ejemplo se parta a mitad de línea: (ej: Pérez López), (@ # $ % & *)
+    function ordenarTexto(t) {
+        return String(t)
+            .replace(/\([^)]*\)/g, function (m) { return m.replace(/ /g, '\u00A0'); })
+            .replace(/ej: /g, 'ej:\u00A0');
+    }
+
+    function crearModal() {
+        if (!document.getElementById(ESTILO_ID)) {
+            var st = document.createElement('style');
+            st.id = ESTILO_ID;
+            st.textContent = CSS;
+            document.head.appendChild(st);
+        }
+        var overlay = document.getElementById('va-overlay');
+        if (overlay) return overlay;
+
+        overlay = document.createElement('div');
+        overlay.id = 'va-overlay';
+        overlay.className = 'va-overlay';
+        overlay.innerHTML =
+            '<div class="va-box" role="alertdialog" aria-modal="true" aria-labelledby="va-titulo" aria-describedby="va-texto">' +
+            '<h3 id="va-titulo">Atención</h3>' +
+            '<p class="va-sub" id="va-sub"></p>' +
+            '<ul class="va-lista" id="va-texto"></ul>' +
+            '<div class="va-actions"><button type="button" class="va-btn" id="va-ok">Aceptar</button></div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', function (e) { if (e.target === overlay && cierreActual) cierreActual(); });
+        document.getElementById('va-ok').addEventListener('click', function () { if (cierreActual) cierreActual(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && overlay.classList.contains('open') && cierreActual) cierreActual();
+        });
+        return overlay;
+    }
+
+    /*
+      items: texto, o lista de textos, o lista de { campo, mensaje }.
+      opts:  { titulo, ids: { campo: 'id-del-input' }, foco: 'id-del-input' }
+             Un solo aviso sale como frase; varios salen como lista ordenada.
+             Con "ids", los campos con error se marcan en rojo y al cerrar se enfoca el primero.
+    */
+    function mostrarAtencion(items, opts) {
+        opts = opts || {};
+        if (!Array.isArray(items)) items = [items];
+        var overlay = crearModal();
+        var previo = document.activeElement;
+
+        limpiarMarcas();
+        document.getElementById('va-titulo').textContent = opts.titulo || 'Atención';
+        var lista = document.getElementById('va-texto');
+        lista.innerHTML = '';
+        lista.className = 'va-lista' + (items.length === 1 ? ' va-uno' : '');
+        var primerCampo = null;
+
+        items.forEach(function (it) {
+            if (typeof it === 'string') it = { mensaje: it };
+            var li = document.createElement('li');
+            li.textContent = ordenarTexto(it.mensaje);
+            lista.appendChild(li);
+            if (it.campo && opts.ids && opts.ids[it.campo]) {
+                var el = document.getElementById(opts.ids[it.campo]);
+                if (el) { marcar(el); if (!primerCampo) primerCampo = el; }
+            }
+        });
+        document.getElementById('va-sub').textContent = items.length > 1 ? 'Revisa lo siguiente para continuar:' : '';
+        document.getElementById('va-sub').style.display = items.length > 1 ? '' : 'none';
+
+        cierreActual = function () {
+            overlay.classList.remove('open');
+            cierreActual = null;
+            var destino = (opts.foco && document.getElementById(opts.foco)) || primerCampo;
+            if (destino && destino.focus) { destino.focus(); }
+            else if (previo && previo.focus) { previo.focus(); }
+        };
+        overlay.classList.add('open');
+        document.getElementById('va-ok').focus();
+    }
+
+    global.ValidacionesUsuario = {
+        PASSWORD_MIN: PASSWORD_MIN,
+        PASSWORD_MAX: PASSWORD_MAX,
+        validarNombre: validarNombre,
+        validarDocumento: validarDocumento,
+        validarCorreo: validarCorreo,
+        validarTelefono: validarTelefono,
+        validarPassword: validarPassword,
+        validarFormulario: validarFormulario,
+        tieneSimbolo: tieneSimbolo,
+        codigoTipoDoc: codigoTipoDoc,
+        mostrarAtencion: mostrarAtencion
+    };
+    global.mostrarAtencion = mostrarAtencion;
+})(window);
+
+</script>
+{% endverbatim %}
 <script>
 (function(){
 
@@ -259,13 +774,6 @@ window.nav = function(id) {
 };
 
 function toast(msg, tipo) {
-    // Usa la ventana de avisos (cuadro crema con "Aceptar") de base 2.html.
-    // Si por alguna razón no existe, usa el aviso pequeño de antes.
-    if (typeof window.mostrarAviso === 'function') {
-        if (tipo === 'ok') window.mostrarAviso(msg, 'Listo', 'success');
-        else window.mostrarAviso(msg, 'Atención', 'error');
-        return;
-    }
     const t = document.getElementById('toast');
     t.textContent = msg; t.className = 'toast show ' + (tipo || '');
     clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2800);
@@ -391,7 +899,7 @@ window.editar = function(id) {
         document.getElementById('u-email').value = u.email;
         document.getElementById('u-tel').value   = u.tel || '';
         document.getElementById('u-doc').value   = u.doc || '';
-        document.getElementById('u-tdoc').value  = u.tdoc || '';
+        document.getElementById('u-tdoc').value  = codigoTipo(u.tdoc);
         document.getElementById('u-dir').value   = u.dir || '';
         document.getElementById('u-user').value  = u.user;
         document.getElementById('u-rol').value   = u.rol;
@@ -401,77 +909,129 @@ window.editar = function(id) {
         document.getElementById('pw-edit').style.display  = '';
         document.getElementById('cb-pw').checked = false;
         document.getElementById('pw-edit-campos').style.display = 'none';
+        ['u-pw-e','u-pw2-e'].forEach(id => { document.getElementById(id).value = ''; });
+        ajustarDoc(true);
         renderPermsForm(u.perms || []);
     }, 30);
 };
 
+// Formato del número según el tipo de documento (Colombia)
+const TIPOS_DOC = {
+    CC: { max: 10, alfa: false, ph: 'Ej: 1013640172' },
+    TI: { max: 11, alfa: false, ph: 'Ej: 10436789512' },
+    CE: { max: 7,  alfa: false, ph: 'Ej: 452198' },
+    PP: { max: 9,  alfa: true,  ph: 'Ej: AN123946' },
+};
+window.ajustarDoc = function(soloRestricciones) {
+    const sel = document.getElementById('u-tdoc'), inp = document.getElementById('u-doc');
+    const cfg = TIPOS_DOC[sel.value] || { max: 11, alfa: false, ph: 'Ej: 1013640172' };
+    inp.maxLength   = cfg.max;
+    inp.inputMode   = cfg.alfa ? 'text' : 'numeric';
+    inp.placeholder = cfg.ph;
+    if (soloRestricciones === true) return;
+    const limpio = cfg.alfa ? inp.value.toUpperCase().replace(/[^A-Z0-9]/g, '') : inp.value.replace(/[^0-9]/g, '');
+    inp.value = limpio.slice(0, cfg.max);
+};
+
+const TDOC_ETIQ = { 'Cédula de Ciudadanía': 'CC', 'Cédula de Extranjería': 'CE', 'Tarjeta de Identidad': 'TI', 'Pasaporte': 'PP' };
+const codigoTipo = t => TDOC_ETIQ[t] || t || '';
+
+// Campo de validación -> id del input en el formulario
+function idsCampos() {
+    return {
+        nom: 'u-nom', ape: 'u-ape', tdoc: 'u-tdoc', doc: 'u-doc', email: 'u-email',
+        user: 'u-user', rol: 'u-rol', tel: 'u-tel',
+        pw:  editId ? 'u-pw-e'  : 'u-pw',
+        pw2: editId ? 'u-pw2-e' : 'u-pw2',
+    };
+}
+
+// Aviso "Atención": items = [{ campo, mensaje }] o [texto]
+function mostrarAviso(items) {
+    if (window.ValidacionesUsuario) { ValidacionesUsuario.mostrarAtencion(items, { ids: idsCampos() }); return; }
+    alert(items.map(i => typeof i === 'string' ? i : i.mensaje).join('\n'));
+}
+
 window.guardar = function() {
     if (!ES_ADMIN) { toast('No tienes permisos para guardar usuarios', 'err'); return; }
-    const nom = document.getElementById('u-nom').value.trim();
-    const ape = document.getElementById('u-ape').value.trim();
-    const ema = document.getElementById('u-email').value.trim();
-    const usr = document.getElementById('u-user').value.trim();
-    const rol = document.getElementById('u-rol').value;
-    const tel = document.getElementById('u-tel').value.trim();
-    if (!nom || !ape || !ema || !usr || !rol) { toast('Completa los campos obligatorios (*)', 'err'); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(ema)) { toast('El correo electrónico no es válido', 'err'); return; }
-    if (tel && !/^3\d{9}$/.test(tel)) { toast('El celular debe tener 10 dígitos y empezar por 3', 'err'); return; }
-    const doc = document.getElementById('u-doc').value.trim();
-    if (doc) {
-        if (!/^\d+$/.test(doc))                    { toast('El documento solo debe contener números', 'err'); return; }
-        if (doc.length < 6 || doc.length > 10)     { toast('El documento debe tener entre 6 y 10 dígitos', 'err'); return; }
-    }
+    const val = id => document.getElementById(id).value;
+    const original = editId ? uList.find(u => u.id === editId) : null;
+    const cambiaPw = !!editId && document.getElementById('cb-pw').checked;
+
+    // 1) Validar en el navegador (mismas reglas que el servidor)
+    const vals = {
+        nom: val('u-nom').trim(), ape: val('u-ape').trim(),
+        tdoc: val('u-tdoc'), doc: val('u-doc').trim(),
+        email: val('u-email').trim(), rol: val('u-rol'), tel: val('u-tel').trim(),
+    };
     if (!editId) {
-        const pw  = document.getElementById('u-pw').value;
-        const pw2 = document.getElementById('u-pw2').value;
-        if (!pw || pw.length < 6) { toast('Contraseña mínimo 6 caracteres', 'err'); return; }
-        if (pw !== pw2)           { toast('Las contraseñas no coinciden', 'err'); return; }
-        if (uList.find(u => u.user === usr)) { toast('Ese usuario ya existe', 'err'); return; }
+        vals.user = val('u-user').trim();
+        vals.pw   = val('u-pw');
+        vals.pw2  = val('u-pw2');
+    } else if (cambiaPw) {
+        vals.pw  = val('u-pw-e');
+        vals.pw2 = val('u-pw2-e');
     }
-    if (editId && document.getElementById('cb-pw').checked) {
-        const pw  = document.getElementById('u-pw-e').value;
-        const pw2 = document.getElementById('u-pw2-e').value;
-        if (!pw || pw.length < 6) { toast('Contraseña mínimo 6 caracteres', 'err'); return; }
-        if (pw !== pw2)           { toast('Las contraseñas no coinciden', 'err'); return; }
+    // Al editar, no se vuelve a exigir lo que no se cambió (cuentas antiguas)
+    if (original && vals.doc && vals.doc === (original.doc || '')) { delete vals.tdoc; delete vals.doc; }
+    if (original && vals.email.toLowerCase() === (original.email || '').toLowerCase()) { delete vals.email; }
+    if (original && vals.tel && vals.tel === (original.tel || '')) { delete vals.tel; }
+    if (original && vals.nom && vals.nom === (original.nom || '')) { delete vals.nom; }
+    if (original && vals.ape && vals.ape === (original.ape || '')) { delete vals.ape; }
+
+    const errores = window.ValidacionesUsuario ? ValidacionesUsuario.validarFormulario(vals) : [];
+    if (!editId && vals.user && uList.find(u => (u.user || '').toLowerCase() === vals.user.toLowerCase())) {
+        errores.push({ campo: 'user', mensaje: 'Ese nombre de usuario ya existe.' });
     }
+    if (errores.length) { mostrarAviso(errores); return; }
+
+    // 2) Armar el usuario (la contraseña NUNCA se guarda en la lista local)
     const perms = [];
     document.querySelectorAll('#perm-form .perm-it.on').forEach(el => perms.push(el.dataset.p));
     const obj = {
-        id: editId || Date.now(), nom, ape, email: ema, user: usr, rol,
-        e:    document.getElementById('u-est').value,
-        tel,
-        doc:  document.getElementById('u-doc').value.trim(),
-        tdoc: document.getElementById('u-tdoc').value,
-        dir:  document.getElementById('u-dir').value.trim(),
-        notas:document.getElementById('u-notas').value.trim(),
-        foto: editId ? (uList.find(u => u.id === editId) || {}).foto || '' : '',
+        id: editId || Date.now(),
+        nom: val('u-nom').trim(), ape: val('u-ape').trim(),
+        email: val('u-email').trim(),
+        user: editId ? original.user : val('u-user').trim(),
+        rol: val('u-rol'),
+        e:    val('u-est'),
+        tel:  val('u-tel').trim(),
+        doc:  val('u-doc').trim(),
+        tdoc: val('u-tdoc'),
+        dir:  val('u-dir').trim(),
+        notas:val('u-notas').trim(),
+        foto: editId ? (original || {}).foto || '' : '',
         perms,
-        // La contraseña solo viaja al servidor; se borra antes de guardar en localStorage
-        password: editId
-            ? (document.getElementById('cb-pw').checked ? document.getElementById('u-pw-e').value : '')
-            : document.getElementById('u-pw').value,
-        acc:  editId ? (uList.find(u => u.id === editId) || {}).acc || '—' : '—',
-        cr:   editId ? (uList.find(u => u.id === editId) || {}).cr  || new Date().toISOString() : new Date().toISOString()
+        acc:  editId ? (original || {}).acc || '—' : '—',
+        cr:   editId ? (original || {}).cr  || new Date().toISOString() : new Date().toISOString()
     };
+    const payload = Object.assign({}, obj);
+    if (vals.pw) { payload.pw = vals.pw; payload.pw2 = vals.pw2; }
+
+    // 3) Enviar al servidor (que vuelve a validar todo)
     const url = editId ? `/usuarios/editar/${editId}/` : `/usuarios/crear/`;
     fetch(url, {
         method: 'POST',
         headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
-        body: JSON.stringify(obj),
+        body: JSON.stringify(payload),
     })
-    .then(res => res.json())
+    .then(res => res.json().catch(() => ({ ok: false, error: 'Respuesta inválida del servidor' })))
     .then(data => {
         if (data.ok) {
-            delete obj.password;
             if (!editId && data.id) obj.id = data.id;
+            // El servidor devuelve nombres/correo/documento ya normalizados
+            if (data.nom)   obj.nom = data.nom;
+            if (data.ape)   obj.ape = data.ape;
+            if (data.email) obj.email = data.email;
+            if (data.doc !== undefined) obj.doc = data.doc || '';
             if (editId) { uList = uList.map(u => u.id === editId ? obj : u); toast('Usuario actualizado', 'ok'); }
             else        { uList.push(obj); toast('Usuario creado', 'ok'); }
             save(); limpiar(); nav('lista');
         } else {
-            toast(data.error || 'Error al guardar', 'err');
+            mostrarAviso(data.detalle || data.errores || [data.error || 'Error al guardar']);
         }
     })
-    .catch(() => toast('Error de conexión', 'err'));
+    .catch(() => mostrarAviso(['Error de conexión. Intenta de nuevo.']));
 };
 
 window.limpiar = function() {
@@ -486,6 +1046,7 @@ window.limpiar = function() {
     document.getElementById('btn-grd').innerHTML     = '<i class="bi bi-person-check"></i> Crear usuario';
     document.getElementById('pw-nuevo').style.display = '';
     document.getElementById('pw-edit').style.display  = 'none';
+    ajustarDoc();
     renderPermsForm([]);
 };
 
@@ -508,13 +1069,12 @@ window.pedirDel = function(id) {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
             })
-            .then(res => res.json().then(data => ({ ok: res.ok && data.ok, data })))
-            .then(({ ok, data }) => {
-                if (ok) {
+            .then(res => {
+                if (res.ok || res.redirected) {
                     setTimeout(() => { uList = uList.filter(x => x.id !== id); save(); renderTabla(); toast('Usuario eliminado correctamente', 'err'); }, 300);
                 } else {
                     if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; }
-                    toast(data.error || 'Error al eliminar el usuario', 'err');
+                    toast('Error al eliminar el usuario', 'err');
                 }
             })
             .catch(() => { if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; } toast('Error de conexión', 'err'); });
