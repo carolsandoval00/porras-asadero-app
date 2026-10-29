@@ -15,6 +15,16 @@ from .forms import PagoForm, CajaForm
 from pedidos.models import Pedido
 
 
+# ── DATOS DEL ASADERO (para el recibo) ──────────────────────────────
+# Cambia estos datos por los reales
+ASADERO = {
+    'nombre':    'Porras Asadero',
+    'nit':       '000.000.000-0',
+    'direccion': 'Calle 00 # 00-00',
+    'telefono':  '300 000 0000',
+}
+
+
 def _solo_cajero_admin(request):
     """Retorna True si el usuario NO tiene permiso (es mesero u otro rol no autorizado)."""
     return not (request.user.rol in ('ADMIN', 'CAJERO') or request.user.is_superuser)
@@ -256,7 +266,7 @@ def pago_dashboard(request):
                     post_data['monto'] = pedido.total
                 except Pedido.DoesNotExist:
                     pass
-            # ★ CAMBIO: se pasa request.FILES para que llegue el baucher
+            # Se pasa request.FILES para que llegue el baucher
             form = PagoForm(post_data, request.FILES)
             if form.is_valid():
                 pago = form.save(commit=False)
@@ -265,7 +275,8 @@ def pago_dashboard(request):
                     pago.save()
                     pago.pedido.estado = 'PAGADO'
                     pago.pedido.save()
-                    messages.success(request, 'Pedido registrado correctamente.', extra_tags='modal-pago')
+                    # ★ CAMBIO: al pagar, se abre el recibo del pago
+                    return redirect('pago:recibo', pk=pago.pk)
                 else:
                     messages.error(request, ' No puedes registrar pagos sin una caja abierta.')
                 return redirect('pago:dashboard')
@@ -320,7 +331,7 @@ def pago_editar(request, pk):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
     pago = get_object_or_404(Pago, pk=pk)
-    # ★ CAMBIO: se pasa request.FILES para poder subir/cambiar el baucher
+    # Se pasa request.FILES para poder subir/cambiar el baucher
     form = PagoForm(request.POST or None, request.FILES or None, instance=pago)
     if form.is_valid():
         form.save()
@@ -406,6 +417,28 @@ def caja_detalle(request, pk):
         'op_fecha_hasta':     filtro_ordenes['op_fecha_hasta'],
     }
     return render(request, 'pago/dashboard.html', context)
+
+
+# ── RECIBO ──────────────────────────────────────────────────────────
+
+@login_required
+def pago_recibo(request, pk):
+    """Recibo imprimible (tirilla) con datos del asadero y del cliente."""
+    if _solo_cajero_admin(request):
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
+
+    pago = get_object_or_404(
+        Pago.objects.select_related(
+            'pedido', 'pedido__cliente', 'pedido__mesa', 'caja', 'caja__cajero'
+        ),
+        pk=pk,
+    )
+    return render(request, 'pago/recibo.html', {
+        'pago':    pago,
+        'pedido':  pago.pedido,
+        'cliente': pago.pedido.cliente,
+        'asadero': ASADERO,
+    })
 
 
 # ── REPORTES ────────────────────────────────────────────────────────
