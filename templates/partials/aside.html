@@ -29,7 +29,7 @@
                 <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
                     <li>
                         <a href="{% url 'lista_personal' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'lista_personal' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-person-lines-fill me-2"></i>Lista Personal
+                            <i class="bi bi-person-lines-fill me-2"></i>Gestión de Usuarios
                         </a>
                     </li>
                     <li>
@@ -170,7 +170,7 @@
         <li class="nav-item">
             <a href="{% url 'ayuda:centro_ayuda' %}" class="nav-link {% if request.resolver_match.app_name == 'ayuda' %}active-custom{% endif %}">
                 <i class="bi bi-life-preserver me-2"></i>
-                Ayuda
+                Centro de Ayuda
             </a>
         </li>
     </ul>

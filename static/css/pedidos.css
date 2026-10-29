@@ -42,13 +42,9 @@
 .pm-nav-group { display:flex; flex-wrap:wrap; gap:.4rem; background:var(--p-card);
                 border:1px solid var(--p-border); border-radius:50px;
                 padding:.35rem .5rem; }
-
-/* ★ CAMBIO 1: títulos de grupo (PEDIDOS, ÓRDENES, PRODUCTOS...) más grandes y resaltados
-   antes: font-size:.7rem; font-weight:700; letter-spacing:.8px; color:var(--p-muted) */
-.pm-nav-group .pm-label { font-size:.82rem; font-weight:800; text-transform:uppercase;
-                             letter-spacing:1px; color:var(--p-text); padding:.3rem .6rem;
+.pm-nav-group .pm-label { font-size:.7rem; font-weight:700; text-transform:uppercase;
+                             letter-spacing:.8px; color:var(--p-muted); padding:.3rem .6rem;
                              align-self:center; }
-
 .pm-btn  { display:inline-flex; align-items:center; gap:.35rem; font-size:.82rem;
            font-weight:600; padding:.42rem .95rem; border-radius:50px; border:none;
            cursor:pointer; text-decoration:none; transition:all .2s; white-space:nowrap; }
@@ -159,8 +155,6 @@
   .pm-form-grid   { grid-template-columns:1fr; }
   .pm-detail-grid { grid-template-columns:1fr; }
   .pm-header      { padding: 1.2rem 1.5rem 1.1rem; margin-bottom: 1.2rem; }
-  .pm-header h1   { font-size: 1.35rem; }
-  .pm-header h2   { font-size: 0.88rem; }
   .pm-stats       { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.2rem; }
   .pm-stat        { padding: 0.85rem 1rem; }
   .pm-stat .val   { font-size: 1.5rem; }
@@ -283,18 +277,14 @@
 
 /* ── Estilos específicos de pedido_form ── */
 
-/* Visualización de estado "En Preparación" (solo lectura)
-   ★ CAMBIO 2: se agregó font-size (antes heredaba ~18px del body)
-   y se bajó el font-weight de 600 a 500, para que quede
-   parecido a los otros campos como "Local". */
+/* Visualización de estado "En Preparación" (solo lectura) */
 .pm-estado-display {
   padding: .55rem .85rem;
   border: 1px solid #D4C4A0;
   border-radius: 8px;
   background: #FDF7EC;
   color: #1A1008;
-  font-size: .9rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* Select de producto en el formulario de pedido */
@@ -461,20 +451,7 @@
     border-color: transparent transparent #1A1008 transparent;
 }
 
-/* ============================================
-   Hover de la barra de navegación:
-   - "Consultar" (y demás enlaces) -> rojo
-   - "Crear" (enlaces con "crear" en la URL) -> naranja
-   Solo afecta a los botones claros; los que ya están
-   activos (rojo/naranja) se quedan como están.
-   ============================================ */
-.pm-nav .pm-nav-group:not(:first-child) a.pm-btn-light:hover {
-    background: #C0392B;
-    border-color: #C0392B;
-    color: #F5ECD7;
-}
-.pm-nav .pm-nav-group:not(:first-child) a.pm-btn-light[href*="crear"]:hover {
-    background: #E8651A;
-    border-color: #E8651A;
-    color: #F5ECD7;
+/* Título del encabezado: mismo tamaño que Pagos (1.8rem; baja a 1.4rem solo en celular) */
+@media(max-width:600px){
+  .pm-header h1   { font-size: 1.4rem; }
 }
