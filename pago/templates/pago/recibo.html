@@ -1,0 +1,94 @@
+{% extends "base 2.html" %}
+{% block title %}Recibo {{ pedido.numero_orden }}{% endblock title %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/pago.css' %}">
+
+<div class="pg-wrapper">
+
+  <div class="pg-header">
+    <h1>Recibo de pago</h1>
+    <p>Orden {{ pedido.numero_orden }} — pago registrado correctamente</p>
+  </div>
+
+  <div class="pg-card">
+    <div class="pg-card-header">
+      <h3>Recibo N° {{ pago.pk }}</h3>
+      <div class="pg-flex-gap-md">
+        <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="window.print()"
+                data-tooltip="Imprimir el recibo">Imprimir</button>
+        <a href="{% url 'pago:dashboard' %}" class="pg-btn pg-btn-light pg-btn-sm"
+           data-tooltip="Volver al panel de pagos">← Volver</a>
+      </div>
+    </div>
+
+    <div class="pg-card-body">
+
+      <div class="rc-ticket">
+
+        <!-- DATOS DEL ASADERO -->
+        <div class="rc-center">
+          <p class="rc-nombre">{{ asadero.nombre }}</p>
+          <div>NIT: {{ asadero.nit }}</div>
+          <div>{{ asadero.direccion }}</div>
+          <div>Tel: {{ asadero.telefono }}</div>
+        </div>
+
+        <div class="rc-sep"></div>
+        <div class="rc-center"><strong>RECIBO DE PAGO</strong></div>
+        <div class="rc-sep"></div>
+
+        <!-- DATOS DEL PEDIDO -->
+        <div class="rc-fila"><span>Recibo N°:</span><span>{{ pago.pk }}</span></div>
+        <div class="rc-fila"><span>Orden:</span><span>{{ pedido.numero_orden }}</span></div>
+        <div class="rc-fila"><span>Fecha:</span><span>{{ pago.fecha_pago|date:"d/m/Y h:i A" }}</span></div>
+        <div class="rc-fila"><span>Mesa:</span><span>{{ pedido.mesa.numero_mesa|default:"—" }}</span></div>
+        <div class="rc-fila"><span>Cajero:</span><span>{{ pago.caja.cajero.get_full_name|default:pago.caja.cajero.username }}</span></div>
+
+        <div class="rc-sep"></div>
+
+        <!-- DATOS DEL CLIENTE -->
+        <div class="rc-seccion">Cliente</div>
+        <div class="rc-fila"><span>Nombre:</span><span>{{ cliente.nombre_completo|default:"—" }}</span></div>
+        {% if cliente.telefono %}
+        <div class="rc-fila"><span>Teléfono:</span><span>{{ cliente.telefono }}</span></div>
+        {% endif %}
+        {% if cliente.documento %}
+        <div class="rc-fila"><span>Documento:</span><span>{{ cliente.documento }}</span></div>
+        {% endif %}
+
+        <div class="rc-sep"></div>
+
+        <!-- DETALLE -->
+        <div class="rc-seccion">Detalle</div>
+        <div class="rc-desc">{{ pedido.descripcion|default:"—"|linebreaksbr }}</div>
+
+        <div class="rc-sep"></div>
+
+        <!-- TOTAL Y MÉTODO DE PAGO -->
+        <div class="rc-fila rc-total"><span>TOTAL</span><span>${{ pago.monto|floatformat:0 }}</span></div>
+        <div class="rc-fila"><span>Método:</span><span>{{ pago.get_metodo_pago_display }}</span></div>
+        {% if pago.referencia %}
+        <div class="rc-fila"><span>Referencia:</span><span>{{ pago.referencia }}</span></div>
+        {% endif %}
+
+        <div class="rc-sep"></div>
+        <div class="rc-center">¡Gracias por su compra!<br>Vuelva pronto 🍗</div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- fin pg-wrapper -->
+
+<script>
+  // Abre el cuadro de impresión apenas carga el recibo
+  window.addEventListener('load', function () {
+    setTimeout(function () { window.print(); }, 400);
+  });
+</script>
+
+{% endblock %}
