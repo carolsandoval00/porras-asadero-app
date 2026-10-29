@@ -126,12 +126,82 @@
                         <h3 class="ff-oswald fw-bold text-dorado text-uppercase mb-0 whatsapp-cta-title">Pedidos y Reservas</h3>
                     </div>
                     <p class="text-white-50 mb-4 lh-lg">¿Listo para saborear la mejor parrilla de Sogamoso? Escríbenos directamente a nuestro WhatsApp. Atendemos tus reservas, pedidos a domicilio y consultas especiales al instante.</p>
-                    <a href="https://wa.me/573123883777?text=Hola!%20Quiero%20hacer%20un%20pedido%20en%20Asadero%20Porras." target="_blank" rel="noopener noreferrer" class="btn btn-lg w-100 bg-success text-white ff-oswald fw-bold text-uppercase py-3 d-flex align-items-center justify-content-center gap-2 btn-whatsapp" data-tooltip="Abrir chat de WhatsApp">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-whatsapp" viewBox="0 0 16 16">
-                            <path d="M13.601 2.326A7.85 7.85 0 0 0 10.84 0 7.89 7.89 0 0 0 2.93 7.89c.002 1.35.353 2.67 1.02 3.84L2.52 16l4.35-1.14a7.82 7.82 0 0 0 3.73.93h.003A7.89 7.89 0 0 0 16 7.89a7.8 7.8 0 0 0-2.399-5.564zM10.84 14.533h-.002a6.45 6.45 0 0 1-3.298-.902l-.236-.141-2.458.644.656-2.396-.155-.247a6.46 6.46 0 0 1-.968-3.414c.005-3.561 2.91-6.464 6.467-6.464a6.47 6.47 0 0 1 4.582 1.902A6.47 6.47 0 0 1 14.54 7.9a6.46 6.46 0 0 1-3.701 6.633z"/>
-                        </svg>
-                        Escríbenos por WhatsApp
-                    </a>
+<!-- Botón flotante de WhatsApp -->
+<a href="https://wa.me/573123883777?text=Hola!%20Quiero%20hacer%20un%20pedido%20en%20Asadero%20Porras."target="_blank" rel="noopener noreferrer"class="whatsapp-float" aria-label="Escríbenos por WhatsApp"data-tip="Escríbenos por WhatsApp">
+    <i class="bi bi-whatsapp"></i>
+</a>
+
+<style>
+    .whatsapp-float {
+        position: fixed;
+        right: 28px;
+        bottom: 24px; /* debajo del botón de accesibilidad */
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #25d366;
+        color: #fff;
+        font-size: 1.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+        z-index: 1050;
+        transition: transform 0.2s ease;
+    }
+    .whatsapp-float:hover {
+        transform: scale(1.1);
+        color: #fff;
+    }
+
+    /* Tooltip */
+.whatsapp-float::after {
+    content: attr(data-tip);
+    position: absolute;
+    right: 72px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 130px;
+    background: #1f130b;
+    color: #f5e6c8;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.25;
+    text-align: left;
+    white-space: normal;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+/* Flecha naranja hacia el botón */
+.whatsapp-float::before {
+    content: "";
+    position: absolute;
+    right: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-style: solid;
+    border-width: 6px 0 6px 10px;
+    border-color: transparent transparent transparent #e8730c;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1;
+}
+
+    .whatsapp-float:hover::after,
+    .whatsapp-float:hover::before,
+    .whatsapp-float:focus-visible::after,
+    .whatsapp-float:focus-visible::before {
+        opacity: 1;
+    }
+</style>
                 </div>
             </div>
 
