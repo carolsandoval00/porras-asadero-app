@@ -1,4 +1,13 @@
 {% load static %}
+<style>
+    .sidebar-user-role {
+        font-size: 0.75rem;
+        font-weight: 400;
+        margin-top: 3px;
+        color: rgba(245, 236, 215, 0.65);
+        text-transform: capitalize;
+    }
+</style>
 <!-- ── 1. ESCRITORIO: Sidebar Fijo (Visible en lg y superiores) ── -->
 <aside class="d-none d-lg-flex flex-column p-3 shadow sidebar-desktop">
     <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
@@ -180,7 +189,10 @@
     <div class="dropdown">
         <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-person-circle fs-5 me-2"></i>
-            <strong>{{ user.username|default:"Admin" }}</strong>
+            <div class="d-flex flex-column lh-1">
+                <strong>{{ user.username|default:"Admin" }}</strong>
+                <small class="sidebar-user-role">{% if user.rol %}{{ user.rol }}{% elif user.groups.first %}{{ user.groups.first.name }}{% elif user.is_superuser %}Administrador{% else %}Personal{% endif %}</small>
+            </div>
         </a>
         <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser">
             <li><a class="dropdown-item" href="{% url 'panel_perfil' %}">Mi Perfil</a></li>
@@ -386,7 +398,10 @@
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="m-dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-person-circle fs-5 me-2"></i>
-                    <strong>{{ user.username|default:"Admin" }}</strong>
+                    <div class="d-flex flex-column lh-1">
+                        <strong>{{ user.username|default:"Admin" }}</strong>
+                        <small class="sidebar-user-role">{% if user.rol %}{{ user.rol }}{% elif user.groups.first %}{{ user.groups.first.name }}{% elif user.is_superuser %}Administrador{% else %}Personal{% endif %}</small>
+                    </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="m-dropdownUser">
                     <li><a class="dropdown-item" href="{% url 'panel_perfil' %}">Mi Perfil</a></li>
