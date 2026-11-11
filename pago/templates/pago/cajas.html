@@ -225,31 +225,55 @@
       <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('pendientes')" data-tooltip="Cancelar y volver">← Volver</button>
     </div>
     <div class="pg-card-body">
-      <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form">
+      <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form caja-form">
         {% csrf_token %}
         <input type="hidden" name="action" value="abrir_caja">
+
+        <p class="caja-form-intro">Registra el dinero con el que empieza el turno y quién queda a cargo de la caja.</p>
+
         <div class="caja-form-grid">
-          <div>
-            <label>Monto inicial ($)</label>
+          <div class="caja-field{% if form_apertura.monto_inicial.errors %} has-error{% endif %}">
+            <label for="{{ form_apertura.monto_inicial.id_for_label }}">Monto inicial ($)</label>
             {{ form_apertura.monto_inicial }}
+            {% if form_apertura.monto_inicial.errors %}
+              <p class="pg-field-error">{{ form_apertura.monto_inicial.errors.0 }}</p>
+            {% else %}
+              <p class="pg-field-hint">Efectivo con el que inicia la caja.</p>
+            {% endif %}
           </div>
-          <div>
-            <label>Responsable / Cajero</label>
+
+          <div class="caja-field{% if form_apertura.cajero.errors %} has-error{% endif %}">
+            <label for="{{ form_apertura.cajero.id_for_label }}">Responsable / Cajero</label>
             {{ form_apertura.cajero }}
+            {% if form_apertura.cajero.errors %}
+              <p class="pg-field-error">{{ form_apertura.cajero.errors.0 }}</p>
+            {% else %}
+              <p class="pg-field-hint">Administrador o cajero a cargo.</p>
+            {% endif %}
           </div>
-          <div>
-            <label>Fecha y hora de apertura</label>
-            <input type="text" id="fecha-apertura-display" readonly data-tooltip="Se registra automáticamente al abrir la caja">
+
+          <div class="caja-field">
+            <label for="fecha-apertura-display">Fecha y hora de apertura</label>
+            <div class="pg-input-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <input type="text" id="fecha-apertura-display" readonly data-tooltip="Se registra automáticamente al abrir la caja">
+            </div>
+            <p class="pg-field-hint">Se registra automáticamente.</p>
           </div>
-          <div>
+
+          <div class="caja-field">
             <label>Estado</label>
             <span class="caja-estado-badge">
               <span class="caja-estado-dot"></span>
               Abierta
             </span>
+            <p class="pg-field-hint">La caja queda abierta al guardar.</p>
           </div>
-          <div class="full">
-            <label>Observaciones <span class="pg-label-optional">(opcional)</span></label>
+
+          <div class="caja-field full">
+            <label for="{{ form_apertura.observaciones.id_for_label }}">Observaciones <span class="pg-label-optional">(opcional)</span></label>
             {{ form_apertura.observaciones }}
           </div>
         </div>
