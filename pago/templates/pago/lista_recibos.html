@@ -1,0 +1,84 @@
+{% extends "base 2.html" %}
+{% block title %}Recibos{% endblock title %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/pago.css' %}">
+
+<div class="pg-wrapper">
+
+  <div class="pg-header">
+    <h1>Recibos de pago</h1>
+    <p>Bienvenido, {{ nombre }}</p>
+  </div>
+
+  <div class="pg-card">
+    <div class="pg-card-header">
+      <h3>Todos los recibos <span class="caja-pagos-count">({{ pagos|length }})</span></h3>
+      <a href="{% url 'pago:dashboard' %}" class="pg-btn pg-btn-light pg-btn-sm"
+         data-tooltip="Volver al panel de pagos">← Volver</a>
+    </div>
+    <div class="pg-card-body">
+
+      <form method="get" action="{% url 'pago:recibos' %}" class="pg-search-bar">
+        <input type="text" name="q_pago" value="{{ q_pago }}"
+               placeholder="Buscar por orden, cliente o referencia"
+               data-tooltip="Busca por número de orden, nombre del cliente o referencia">
+        <input type="hidden" name="filtro_fecha" value="rango">
+        <input type="date" name="fecha_desde" value="{{ fecha_desde }}" max="{{ hoy }}"
+               data-tooltip="Desde esta fecha">
+        <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" max="{{ hoy }}"
+               data-tooltip="Hasta esta fecha">
+        <button type="submit" class="pg-btn pg-btn-accent pg-btn-sm"
+                data-tooltip="Aplicar la búsqueda">Buscar</button>
+        <a href="{% url 'pago:recibos' %}" class="pg-btn pg-btn-light pg-btn-sm"
+           data-tooltip="Quitar los filtros">Limpiar</a>
+      </form>
+
+      <div class="pg-table-wrap">
+        <table class="pg-table">
+          <thead>
+            <tr>
+              <th>Recibo</th><th>Orden</th><th>Cliente</th><th>Método</th>
+              <th>Total</th><th>Fecha</th><th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pg in pagos %}
+            <tr>
+              <td><strong>#{{ pg.pk }}</strong></td>
+              <td>{{ pg.pedido.numero_orden|default:"—" }}</td>
+              <td>{{ pg.pedido.cliente.nombre_completo|default:"—" }}</td>
+              <td>{{ pg.get_metodo_pago_display }}</td>
+              <td><strong class="pg-text-primary">${{ pg.monto|floatformat:0 }}</strong></td>
+              <td>{{ pg.fecha_pago|date:"d/m/Y h:i A" }}</td>
+              <td>
+                <a href="{% url 'pago:recibo' pg.pk %}" target="_blank"
+                   class="pg-btn pg-btn-light pg-btn-sm"
+                   data-tooltip="Abrir este recibo para verlo o imprimirlo">Ver recibo</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="pg-table-empty">No hay recibos en ese rango.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          {% if pagos %}
+          <tfoot>
+            <tr class="caja-tfoot-row">
+              <td colspan="4"><span class="caja-tfoot-label">Total</span></td>
+              <td colspan="3"><span class="caja-tfoot-total">${{ total|floatformat:0 }}</span></td>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- fin pg-wrapper -->
+
+{% endblock %}
