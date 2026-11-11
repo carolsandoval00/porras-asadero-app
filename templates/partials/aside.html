@@ -180,7 +180,16 @@
     <div class="dropdown">
         <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-person-circle fs-5 me-2"></i>
-            <strong>{{ user.username|default:"Admin" }}</strong>
+            <span class="d-flex flex-column lh-sm">
+                <strong>{{ user.username|default:"Admin" }}</strong>
+                <small class="text-uppercase" style="font-size:.7rem; opacity:.75;">
+                    {% if user.rol == 'ADMIN' or user.is_superuser %}Administrador
+                    {% elif user.rol == 'MESERO' %}Mesero
+                    {% elif user.rol == 'CAJERO' %}Cajero
+                    {% elif user.rol == 'COCINERA' %}Cocina
+                    {% endif %}
+                </small>
+            </span>
         </a>
         <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser">
             <li><a class="dropdown-item" href="{% url 'panel_perfil' %}">Mi Perfil</a></li>
@@ -386,7 +395,16 @@
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="m-dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-person-circle fs-5 me-2"></i>
-                    <strong>{{ user.username|default:"Admin" }}</strong>
+                    <span class="d-flex flex-column lh-sm">
+                        <strong>{{ user.username|default:"Admin" }}</strong>
+                        <small class="text-uppercase" style="font-size:.7rem; opacity:.75;">
+                            {% if user.rol == 'ADMIN' or user.is_superuser %}Administrador
+                            {% elif user.rol == 'MESERO' %}Mesero
+                            {% elif user.rol == 'CAJERO' %}Cajero
+                            {% elif user.rol == 'COCINERA' %}Cocina
+                            {% endif %}
+                        </small>
+                    </span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="m-dropdownUser">
                     <li><a class="dropdown-item" href="{% url 'panel_perfil' %}">Mi Perfil</a></li>
@@ -396,4 +414,4 @@
             </div>
         </div>
     </div>
-</div>
+</div> 

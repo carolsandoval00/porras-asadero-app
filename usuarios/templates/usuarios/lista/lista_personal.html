@@ -440,9 +440,12 @@ window.guardar = function() {
         // Los permisos ya no se editan en el formulario: se conservan los existentes
         perms: editId ? ((uList.find(u => u.id === editId) || {}).perms || []) : [],
         // La contraseña solo viaja al servidor; se borra antes de guardar en localStorage
-        password: editId
+        pw: editId
             ? (document.getElementById('cb-pw').checked ? document.getElementById('u-pw-e').value : '')
             : document.getElementById('u-pw').value,
+        pw2: editId
+            ? (document.getElementById('cb-pw').checked ? document.getElementById('u-pw2-e').value : '')
+            : document.getElementById('u-pw2').value,
         acc:  editId ? (uList.find(u => u.id === editId) || {}).acc || '—' : '—',
         cr:   editId ? (uList.find(u => u.id === editId) || {}).cr  || new Date().toISOString() : new Date().toISOString()
     };
@@ -455,7 +458,7 @@ window.guardar = function() {
     .then(res => res.json())
     .then(data => {
         if (data.ok) {
-            delete obj.password;
+            delete obj.pw; delete obj.pw2;
             if (!editId && data.id) obj.id = data.id;
             if (editId) { uList = uList.map(u => u.id === editId ? obj : u); toast('Usuario actualizado', 'ok'); }
             else        { uList.push(obj); toast('Usuario creado', 'ok'); }
