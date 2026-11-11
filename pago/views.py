@@ -166,7 +166,7 @@ def _ordenes_filtradas(request):
     """Aplica el filtro de fechas op_* a las órdenes sin pago."""
     filtro = _resolver_filtro_fecha_ordenes(request)
 
-    qs = Pedido.objects.exclude(estado='PAGADO').order_by('-fecha_creacion')
+    qs = Pedido.objects.exclude(estado='PAGADO').select_related('cliente', 'mesa').order_by('-fecha_creacion')
     if filtro['efectivo_desde']:
         qs = qs.filter(fecha_creacion__date__gte=filtro['efectivo_desde'])
     if filtro['efectivo_hasta']:
