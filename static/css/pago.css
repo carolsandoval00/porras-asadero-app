@@ -416,3 +416,87 @@
     bottom: calc(100% - 1px);
     border-color: transparent transparent #1A1008 transparent;
 }
+
+/* ── RECIBO (tirilla de 58 mm) ───────────────────────────── */
+.rc-ticket {
+  width: 58mm;
+  max-width: 58mm;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 3mm 5mm;
+  background: #fff;
+  color: #000;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  border: 1px dashed #999;
+}
+.rc-center { text-align: center; }
+.rc-nombre { font-size: 14px; font-weight: bold; margin: 0 0 4px; }
+.rc-sep { border-top: 1px dashed #000; margin: 10px 0; }
+.rc-seccion { font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+.rc-fila { display: flex; justify-content: space-between; gap: 10px; }
+.rc-desc { word-break: break-word; }
+.rc-total { font-size: 13px; font-weight: bold; }
+
+/* Tamaño de papel solo para el recibo (página con nombre) */
+@page recibo {
+  size: 58mm auto;
+  margin: 0;
+}
+
+@media print {
+  /* Toda la página usa el papel de 58 mm (sin saltos de hoja extra) */
+  body:has(.rc-ticket) {
+    page: recibo;
+    width: 58mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  /* Oculta botones flotantes (ayuda, accesibilidad, asistente),
+     avisos y cualquier cosa que esté fuera del layout principal */
+  body:has(.rc-ticket) > *:not(.admin-shell) {
+    display: none !important;
+  }
+
+  /* Oculta menú lateral y footer */
+  body:has(.rc-ticket) .admin-shell > *:not(.admin-main),
+  body:has(.rc-ticket) .admin-main > *:not(section),
+  body:has(.rc-ticket) .a11y-skip-link,
+  body:has(.rc-ticket) .pg-header,
+  body:has(.rc-ticket) .pg-card-header {
+    display: none !important;
+  }
+
+  /* Quita alturas y espacios del layout para que no genere hojas en blanco */
+  body:has(.rc-ticket) .admin-shell,
+  body:has(.rc-ticket) .admin-main,
+  body:has(.rc-ticket) .admin-main > section {
+    display: block !important;
+    width: 58mm !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  body:has(.rc-ticket) .pg-wrapper,
+  body:has(.rc-ticket) .pg-card,
+  body:has(.rc-ticket) .pg-card-body {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .rc-ticket {
+    position: static !important;
+    width: 58mm;
+    margin: 0;
+    border: none;
+  }
+}
