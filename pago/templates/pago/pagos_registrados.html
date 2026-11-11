@@ -92,7 +92,7 @@
               <thead>
                 <tr>
                   <th>Orden</th><th>Cliente</th><th>Método</th>
-                  <th>Monto</th><th>Referencia</th><th>Estado</th><th>Hora</th>
+                  <th>Monto</th><th>Comprobante</th><th>Estado</th><th>Hora</th>
                 </tr>
               </thead>
               <tbody>
@@ -105,7 +105,10 @@
                   <td>{{ pg.pedido.cliente.nombre_completo|default:"—" }}</td>
                   <td>{{ pg.get_metodo_pago_display }}</td>
                   <td><strong class="pg-text-primary">${{ pg.monto }}</strong></td>
-                  <td>{{ pg.referencia|default:"—" }}</td>
+                  <td>
+                    {{ pg.referencia|default:"—" }}
+                    {% if pg.comprobante %}<br><a href="{{ pg.comprobante.url }}" target="_blank" rel="noopener">Ver foto</a>{% endif %}
+                  </td>
                   <td>
                     <span class="pg-badge pg-badge-pagado">Pagado</span>
                   </td>
@@ -149,12 +152,40 @@
         </div>
       </div>
 
-      <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form">
+      <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="pg-form-grid">
           <div class="full"><label>Pedido vinculado</label>{{ form.pedido }}</div>
-          <div><label>Método de pago</label>{{ form.metodo_pago }}</div>
-          <div><label>Referencia</label>{{ form.referencia }}</div>
+          <div class="full"><label>Método de pago</label>{{ form.metodo_pago }}</div>
+          <div class="full pg-upload{% if form.comprobante.errors %} has-error{% endif %}" id="bloque-comprobante" hidden>
+            <label for="id_comprobante">Foto del comprobante</label>
+            {{ form.comprobante }}
+
+            <label for="id_comprobante" class="pg-upload-drop" id="upload-drop">
+              <span class="pg-upload-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </span>
+              <span class="pg-upload-title">Tomar o seleccionar foto</span>
+              <span class="pg-upload-sub">Obligatoria · JPG o PNG · máx. 8 MB</span>
+            </label>
+
+            <div class="pg-upload-result" id="upload-result" hidden>
+              <img id="preview-comprobante" alt="Vista previa del comprobante">
+              <div class="pg-upload-info">
+                <strong id="upload-nombre"></strong>
+                <span id="upload-peso"></span>
+                <div class="pg-upload-actions">
+                  <button type="button" class="pg-btn pg-btn-light pg-btn-sm" id="upload-cambiar">Cambiar foto</button>
+                  <button type="button" class="pg-btn pg-btn-light pg-btn-sm" id="upload-quitar">Quitar</button>
+                </div>
+              </div>
+            </div>
+
+            <p class="pg-upload-error" id="upload-error"{% if not form.comprobante.errors %} hidden{% endif %}>{% if form.comprobante.errors %}{{ form.comprobante.errors.0 }}{% endif %}</p>
+          </div>
           <div class="full"><label>Descripción</label>{{ form.descripcion }}</div>
         </div>
         {% if form.errors %}

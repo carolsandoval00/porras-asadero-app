@@ -417,86 +417,41 @@
     border-color: transparent transparent #1A1008 transparent;
 }
 
-/* ── RECIBO (tirilla de 58 mm) ───────────────────────────── */
-.rc-ticket {
-  width: 58mm;
-  max-width: 58mm;
-  box-sizing: border-box;
-  margin: 0 auto;
-  padding: 3mm 5mm;
-  background: #fff;
-  color: #000;
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  line-height: 1.35;
-  border: 1px dashed #999;
-}
-.rc-center { text-align: center; }
-.rc-nombre { font-size: 14px; font-weight: bold; margin: 0 0 4px; }
-.rc-sep { border-top: 1px dashed #000; margin: 10px 0; }
-.rc-seccion { font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
-.rc-fila { display: flex; justify-content: space-between; gap: 10px; }
-.rc-desc { word-break: break-word; }
-.rc-total { font-size: 13px; font-weight: bold; }
+/* ── Foto del comprobante (pago por transferencia) ───────── */
+.pg-upload [hidden] { display:none !important; }
+.pg-upload[hidden]  { display:none !important; }
 
-/* Tamaño de papel solo para el recibo (página con nombre) */
-@page recibo {
-  size: 58mm auto;
-  margin: 0;
-}
+/* El input real queda oculto; se usa la tarjeta de abajo para abrirlo */
+.pg-form input.pg-upload-input { position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+                                 border:0; opacity:0; overflow:hidden; clip:rect(0 0 0 0); }
 
-@media print {
-  /* Toda la página usa el papel de 58 mm (sin saltos de hoja extra) */
-  body:has(.rc-ticket) {
-    page: recibo;
-    width: 58mm;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: #fff !important;
-  }
+.pg-form label.pg-upload-drop { display:flex; flex-direction:column; align-items:center;
+                                justify-content:center; gap:.3rem; padding:1.5rem 1rem; margin:0;
+                                text-align:center; text-transform:none; letter-spacing:normal;
+                                cursor:pointer; background:var(--p-card);
+                                border:2px dashed var(--p-border); border-radius:var(--p-radius);
+                                transition:border-color .2s, background .2s, box-shadow .2s; }
+.pg-form label.pg-upload-drop:hover { border-color:var(--p-accent); background:#FFF3E6; }
+.pg-upload:focus-within .pg-upload-drop { border-color:var(--p-accent);
+                                          box-shadow:0 0 0 3px rgba(232,101,26,.18); }
 
-  /* Oculta botones flotantes (ayuda, accesibilidad, asistente),
-     avisos y cualquier cosa que esté fuera del layout principal */
-  body:has(.rc-ticket) > *:not(.admin-shell) {
-    display: none !important;
-  }
+.pg-upload-icon  { display:flex; align-items:center; justify-content:center; width:52px; height:52px;
+                   border-radius:50%; background:rgba(232,101,26,.12); color:var(--p-accent);
+                   margin-bottom:.2rem; }
+.pg-upload-title { font-size:.95rem; font-weight:700; color:var(--p-text); }
+.pg-upload-sub   { font-size:.78rem; font-weight:500; color:var(--p-muted); }
 
-  /* Oculta menú lateral y footer */
-  body:has(.rc-ticket) .admin-shell > *:not(.admin-main),
-  body:has(.rc-ticket) .admin-main > *:not(section),
-  body:has(.rc-ticket) .a11y-skip-link,
-  body:has(.rc-ticket) .pg-header,
-  body:has(.rc-ticket) .pg-card-header {
-    display: none !important;
-  }
+.pg-upload-result { display:flex; align-items:center; gap:1rem; padding:.8rem 1rem;
+                    background:var(--p-card); border:1px solid var(--p-border);
+                    border-left:4px solid #27AE60; border-radius:var(--p-radius);
+                    box-shadow:var(--p-shadow); }
+.pg-upload-result img { width:84px; height:84px; object-fit:cover; flex-shrink:0;
+                        border-radius:8px; border:1px solid var(--p-border); background:#fff; }
+.pg-upload-info   { display:flex; flex-direction:column; gap:.15rem; min-width:0; flex:1; }
+.pg-upload-info strong { font-size:.88rem; color:var(--p-text); white-space:nowrap;
+                         overflow:hidden; text-overflow:ellipsis; }
+.pg-upload-info span   { font-size:.78rem; color:var(--p-muted); }
+.pg-upload-actions { display:flex; gap:.5rem; margin-top:.5rem; flex-wrap:wrap; }
 
-  /* Quita alturas y espacios del layout para que no genere hojas en blanco */
-  body:has(.rc-ticket) .admin-shell,
-  body:has(.rc-ticket) .admin-main,
-  body:has(.rc-ticket) .admin-main > section {
-    display: block !important;
-    width: 58mm !important;
-    min-height: 0 !important;
-    height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-  }
-
-  body:has(.rc-ticket) .pg-wrapper,
-  body:has(.rc-ticket) .pg-card,
-  body:has(.rc-ticket) .pg-card-body {
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: #fff !important;
-  }
-
-  .rc-ticket {
-    position: static !important;
-    width: 58mm;
-    margin: 0;
-    border: none;
-  }
-}
+.pg-upload.has-error .pg-upload-drop { border-color:var(--p-primary); background:#FAE0DC; }
+.pg-upload-error { margin:.5rem 0 0; font-size:.82rem; font-weight:600; color:var(--p-primary); }
