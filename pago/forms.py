@@ -1,5 +1,7 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 from pedidos.models import Pedido
 
@@ -126,7 +128,27 @@ class CajaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['observaciones'].required = False
-        self.fields['cajero'].required = True
+
+        # Responsable de la caja: solo administradores y cajeros activos
+        # (el mismo criterio que decide quién puede entrar al módulo de pagos).
+        Usuario = get_user_model()
+        campo = self.fields['cajero']
+        campo.required = True
+        campo.queryset = (
+            Usuario.objects.filter(is_active=True)
+            .filter(Q(rol__in=['ADMIN', 'CAJERO']) | Q(is_superuser=True))
+            .order_by('first_name', 'last_name', 'username')
+        )
+        campo.empty_label = 'Selecciona un responsable'
+        campo.label_from_instance = self._etiqueta_cajero
+        campo.error_messages['invalid_choice'] = 'Selecciona un administrador o cajero válido.'
+
+    @staticmethod
+    def _etiqueta_cajero(usuario):
+        nombre = usuario.get_full_name().strip() or usuario.username
+        es_admin = usuario.is_superuser or usuario.rol == 'ADMIN'
+        rol = 'Administrador' if es_admin else 'Cajero'
+        return f'{nombre} — {rol}'
 
     def clean_monto_inicial(self):
         monto = self.cleaned_data.get('monto_inicial')

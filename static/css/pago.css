@@ -455,3 +455,35 @@
 
 .pg-upload.has-error .pg-upload-drop { border-color:var(--p-primary); background:#FAE0DC; }
 .pg-upload-error { margin:.5rem 0 0; font-size:.82rem; font-weight:600; color:var(--p-primary); }
+
+/* ── Abrir caja ──────────────────────────────────────────── */
+.pg-form.caja-form { max-width:760px; }
+.caja-form-intro   { margin:0 0 1.3rem; font-size:.9rem; color:var(--p-muted); }
+
+.caja-form-grid   { display:grid; grid-template-columns:1fr 1fr; gap:1.3rem 1.5rem; align-items:start; }
+.caja-form-grid .full { grid-column:1/-1; }
+.caja-field label { margin-bottom:.4rem; }
+
+.caja-field.has-error input,
+.caja-field.has-error select { border-color:var(--p-primary) !important;
+                               box-shadow:0 0 0 3px rgba(192,57,43,.12); }
+
+.pg-field-hint  { margin:.35rem 0 0; font-size:.76rem; color:var(--p-muted); }
+.pg-field-error { margin:.35rem 0 0; font-size:.8rem; font-weight:600; color:var(--p-primary); }
+
+/* Campo de solo lectura con ícono */
+.pg-input-icon { position:relative; }
+.pg-input-icon svg { position:absolute; left:.85rem; top:50%; transform:translateY(-50%);
+                     color:var(--p-muted); pointer-events:none; }
+.pg-form .pg-input-icon input { padding-left:2.6rem; cursor:default; }
+
+/* Estado de la caja */
+.caja-estado-badge { display:inline-flex; align-items:center; gap:.55rem; min-height:42px;
+                     padding:0 1.1rem; border-radius:999px; font-size:.88rem; font-weight:700;
+                     background:#E6F6EC; color:#1E8449; border:1px solid #BFE5CC; }
+.caja-estado-dot   { width:9px; height:9px; border-radius:50%; background:#27AE60;
+                     box-shadow:0 0 0 3px rgba(39,174,96,.25); }
+
+@media(max-width:600px){
+  .caja-form-grid { grid-template-columns:1fr; }
+}
