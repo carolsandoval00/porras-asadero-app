@@ -85,6 +85,7 @@
           <thead>
             <tr>
               <th>Orden</th>
+              <th>Cliente</th>
               <th>Mesa</th>
               <th>Descripción</th>
               <th>Total a cobrar</th>
@@ -96,6 +97,7 @@
             {% for o in ordenes_sin_pago %}
             <tr class="fila-pendiente">
               <td><strong>{{ o.numero_orden }}</strong></td>
+              <td>{% if o.cliente %}{{ o.cliente.nombre_completo }}{% else %}<span class="pg-text-muted">Cliente de paso</span>{% endif %}</td>
               <td><strong>{{ o.mesa.numero_mesa|default:"—" }}</strong></td>
               <td class="pg-desc-truncate pg-text-muted">
                 {{ o.descripcion|default:"—" }}
@@ -104,14 +106,14 @@
               <td>{{ o.fecha_creacion|date:"d/m/Y h:i A" }}</td>
               <td>
                 <button class="pg-btn pg-btn-pago pg-btn-sm" data-tooltip="Registrar el pago de esta orden"
-                        onclick="registrarPago('{{ o.numero_orden }}',{{ o.pk }},'Mesa {{ o.mesa.numero_mesa|default:"Sin mesa" }}',{{ o.total }})">
+                        onclick="registrarPago('{{ o.numero_orden }}',{{ o.pk }},'{% if o.cliente %}{{ o.cliente.nombre_completo|escapejs }}{% else %}Cliente de paso{% endif %} · Mesa {{ o.mesa.numero_mesa|default:"Sin mesa" }}',{{ o.total }})">
                   Registrar pago
                 </button>
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="6" class="pg-table-empty">
+              <td colspan="7" class="pg-table-empty">
                 No hay órdenes pendientes de pago en ese rango.
               </td>
             </tr>
