@@ -441,6 +441,24 @@ def pago_recibo(request, pk):
     })
 
 
+@login_required
+def recibos_lista(request):
+    """Lista de todos los recibos (pagos) con búsqueda y filtro de fechas."""
+    if _solo_cajero_admin(request):
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
+
+    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+    return render(request, 'pago/lista_recibos.html', {
+        'pagos':       pagos_qs,
+        'total':       pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
+        'q_pago':      q_pago,
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
+        'hoy':         timezone.localdate().isoformat(),
+        'nombre':      request.user.get_full_name() or request.user.username,
+    })
+
+
 # ── REPORTES ────────────────────────────────────────────────────────
 
 def _pagos_reporte_queryset(request=None):
