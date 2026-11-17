@@ -153,7 +153,13 @@ body{font-family:'Segoe UI', system-ui, sans-serif; color:var(--text); backgroun
 .mc-floor-container{position:relative;min-height:380px;background:#FBF5E6}
 .mc-floor-grid{position:absolute;inset:0;background-image:repeating-linear-gradient(var(--border) 0 0.5px,transparent 0.5px 44px),repeating-linear-gradient(90deg,var(--border) 0 0.5px,transparent 0.5px 44px);background-size:44px 44px;opacity:.35;pointer-events:none}
 
-.mc-mesa{position:absolute;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:transform .15s,box-shadow .15s;border:2px solid;border-radius:10px;user-select:none}
+/* Las mesas se colocan en #mc-floor-mesas (position:absolute) para quedar SIEMPRE
+   por encima del grid y recibir los clics. */
+#mc-floor-mesas{position:absolute;inset:0;z-index:1}
+
+/* Borde y fondo por defecto (si llega un estado desconocido); los colores reales
+   los dan las clases .disponible / .reservada / .ocupada de abajo. */
+.mc-mesa{position:absolute;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:transform .15s,box-shadow .15s;border:2px solid var(--border2);background:var(--card);color:var(--text);border-radius:10px;user-select:none}
 .mc-mesa:hover{transform:scale(1.1);z-index:10;box-shadow:var(--shadow-lg)}
 .mc-mesa.disponible{background:#DFF5E1;border-color:#3B6D11;color:#1A6B2A}
 .mc-mesa.ocupada{background:#FAE0DC;border-color:#C0392B;color:#C0392B}
