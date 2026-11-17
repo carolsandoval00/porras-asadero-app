@@ -125,14 +125,15 @@ def logout_view(request):
 
 def recuperar_password(request):
     """
-    Vista GET: muestra el formulario para pedir el correo.
-    Vista POST: si el correo existe, envía el enlace de recuperación.
+    Vista GET: muestra el formulario (usuario + correo donde recibir el enlace).
+    Vista POST: si el usuario existe, envía el enlace de recuperación al correo escrito.
     """
     if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
         email = request.POST.get('email', '').strip()
-        usuario = Usuario.objects.filter(email__iexact=email).first()
+        usuario = Usuario.objects.filter(username__iexact=username, is_active=True).first()
 
-        if usuario:
+        if usuario and email:
             uid = urlsafe_base64_encode(force_bytes(usuario.pk))
             token = token_generator.make_token(usuario)
             dominio = get_current_site(request).domain
@@ -143,15 +144,18 @@ def recuperar_password(request):
                 'enlace': enlace,
             })
 
-            send_mail(
-                subject="Recupera tu contraseña - Porras Asadero",
-                message="",
-                from_email=None,  # usa DEFAULT_FROM_EMAIL de settings.py
-                recipient_list=[usuario.email],
-                html_message=mensaje_html,
-            )
+            try:
+                send_mail(
+                    subject="Recupera tu contraseña - Porras Asadero",
+                    message="",
+                    from_email=None,  # usa DEFAULT_FROM_EMAIL de settings.py
+                    recipient_list=[email],
+                    html_message=mensaje_html,
+                )
+            except Exception as e:
+                print("Error enviando correo:", repr(e))
 
-        # Se muestra siempre el mismo mensaje para no revelar qué correos existen
+        # Se muestra siempre el mismo mensaje para no revelar qué usuarios existen
         return render(request, 'usuarios/recuperar_password.html', {'vista': 'enviado', 'email': email})
 
     return render(request, 'usuarios/recuperar_password.html')
