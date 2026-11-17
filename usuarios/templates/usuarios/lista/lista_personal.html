@@ -157,11 +157,6 @@
         </div>
 
         <div class="usr-card">
-            <div class="c-label">Permisos de módulos</div>
-            <div class="perm-g" id="perm-form"></div>
-        </div>
-
-        <div class="usr-card">
             <div class="c-label">Notas internas</div>
             <textarea class="f-ta" id="u-notas" placeholder="Información adicional sobre este usuario…"></textarea>
             <div class="btn-row">
@@ -478,7 +473,6 @@ window.editar = function(id) {
         document.getElementById('pw-edit').style.display  = '';
         document.getElementById('cb-pw').checked = false;
         document.getElementById('pw-edit-campos').style.display = 'none';
-        renderPermsForm(u.perms || []);
     }, 30);
 };
 
@@ -511,8 +505,6 @@ window.guardar = function() {
         if (!pw || pw.length < 6) { toast('Contraseña mínimo 6 caracteres', 'err'); return; }
         if (pw !== pw2)           { toast('Las contraseñas no coinciden', 'err'); return; }
     }
-    const perms = [];
-    document.querySelectorAll('#perm-form .perm-it.on').forEach(el => perms.push(el.dataset.p));
     const obj = {
         id: editId || Date.now(), nom, ape, email: ema, user: usr, rol,
         e:    document.getElementById('u-est').value,
@@ -522,11 +514,15 @@ window.guardar = function() {
         dir:  document.getElementById('u-dir').value.trim(),
         notas:document.getElementById('u-notas').value.trim(),
         foto: editId ? (uList.find(u => u.id === editId) || {}).foto || '' : '',
-        perms,
+        // Los permisos ya no se editan en el formulario: se conservan los existentes
+        perms: editId ? ((uList.find(u => u.id === editId) || {}).perms || []) : [],
         // La contraseña solo viaja al servidor; se borra antes de guardar en localStorage
-        password: editId
+        pw: editId
             ? (document.getElementById('cb-pw').checked ? document.getElementById('u-pw-e').value : '')
             : document.getElementById('u-pw').value,
+        pw2: editId
+            ? (document.getElementById('cb-pw').checked ? document.getElementById('u-pw2-e').value : '')
+            : document.getElementById('u-pw2').value,
         acc:  editId ? (uList.find(u => u.id === editId) || {}).acc || '—' : '—',
         cr:   editId ? (uList.find(u => u.id === editId) || {}).cr  || new Date().toISOString() : new Date().toISOString()
     };
@@ -539,7 +535,7 @@ window.guardar = function() {
     .then(res => res.json())
     .then(data => {
         if (data.ok) {
-            delete obj.password;
+            delete obj.pw; delete obj.pw2;
             if (!editId && data.id) obj.id = data.id;
             if (editId) { uList = uList.map(u => u.id === editId ? obj : u); toast('Usuario actualizado', 'ok'); }
             else        { uList.push(obj); toast('Usuario creado', 'ok'); }
@@ -563,14 +559,7 @@ window.limpiar = function() {
     document.getElementById('btn-grd').innerHTML     = '<i class="bi bi-person-check"></i> Crear usuario';
     document.getElementById('pw-nuevo').style.display = '';
     document.getElementById('pw-edit').style.display  = 'none';
-    renderPermsForm([]);
 };
-
-function renderPermsForm(activos) {
-    document.getElementById('perm-form').innerHTML =
-        PERMS.map(p => `<div class="perm-it ${activos.includes(p)?'on':''}" data-p="${p}"
-            onclick="this.classList.toggle('on')"><div class="perm-dot"></div>${p}</div>`).join('');
-}
 
 window.pedirDel = function(id) {
     if (!ES_ADMIN) { toast('No tienes permisos para eliminar usuarios', 'err'); return; }

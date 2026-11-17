@@ -1,7 +1,7 @@
 import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth import login, authenticate, logout, get_user_model, update_session_auth_hash
+from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sites.shortcuts import get_current_site
@@ -13,7 +13,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.decorators.http import require_POST
 
-from .forms import PersonalForm, RegistroForm, _validar_nombre
+from .forms import PersonalForm, PersonalEditarForm, RegistroForm
 from .models import Usuario
 
 # Constantes de plantillas
@@ -24,76 +24,6 @@ TEMPLATE_PERFIL = 'usuarios/panel_perfil.html'
 # Instancias para restablecimiento de contraseña
 token_generator = PasswordResetTokenGenerator()
 
-# ==========================================
-# MAPEOS ENTRE EL FRONTEND (JS) Y EL MODELO
-# ==========================================
-# El JS usa nombres "bonitos"; el modelo guarda códigos.
-ROL_MAP = {
-    'Administrador': 'ADMIN',
-    'Mesero': 'MESERO',
-    'Cajero': 'CAJERO',
-    'Cocina': 'COCINERA',   # el modelo usa COCINERA, no COCINA
-}
-ROL_INV = {v: k for k, v in ROL_MAP.items()}
-
-TDOC_MAP = {
-    'Cédula de Ciudadanía': 'CC',
-    'Cédula de Extranjería': 'CE',
-    'Tarjeta de Identidad': 'TI',
-    'Pasaporte': 'PP',
-}
-TDOC_INV = {v: k for k, v in TDOC_MAP.items()}
-
-
-def _es_admin(user):
-    return user.is_superuser or user.rol == 'ADMIN'
-
-
-def _datos_form_desde_json(data, base=None):
-    """
-    Convierte el JSON del frontend en los campos que espera PersonalForm.
-    `base` es el usuario existente (al editar) para usar sus valores como respaldo.
-    """
-    return {
-        'first_name': (data.get('nom') or '').strip(),
-        'last_name': (data.get('ape') or '').strip(),
-        'username': (data.get('user') or (base.username if base else '')).strip(),
-        'email': (data.get('email') or '').strip(),
-        'telefono': (data.get('tel') or '').strip(),
-        'rol': ROL_MAP.get(data.get('rol'), base.rol if base else ''),
-        'tipo_documento': TDOC_MAP.get(data.get('tdoc'), 'CC'),
-        'documento': (data.get('doc') or '').strip(),
-        'is_active': data.get('e', 'activo') == 'activo',
-    }
-
-
-def _errores_a_texto(form):
-    return '; '.join(
-        f'{campo}: {", ".join(errores)}' for campo, errores in form.errors.items()
-    )
-
-
-def _usuario_a_dict(u):
-    """Formato que espera el JavaScript de la plantilla (personal_list_json)."""
-    return {
-        'id': u.id,
-        'nom': u.first_name,
-        'ape': u.last_name,
-        'email': u.email,
-        'user': u.username,
-        'rol': ROL_INV.get(u.rol, u.rol),
-        'e': 'activo' if u.is_active else 'inactivo',
-        'tel': getattr(u, 'telefono', '') or '',
-        'doc': getattr(u, 'documento', '') or '',
-        'tdoc': TDOC_INV.get(getattr(u, 'tipo_documento', ''), ''),
-        'dir': getattr(u, 'direccion', '') or '',
-        'foto': u.foto.url if u.foto else '',
-        'notas': '',
-        'perms': [],
-        'acc': u.last_login.strftime('%d/%m/%Y %H:%M') if u.last_login else '—',
-        'cr': u.date_joined.isoformat() if hasattr(u, 'date_joined') else '',
-    }
-
 
 # ==========================================
 # VISTAS DE AUTENTICACIÓN Y REGISTRO
@@ -103,7 +33,7 @@ def login_view(request):
     vista = request.GET.get('vista', 'login')
     if request.user.is_authenticated and vista == 'login':
         return redirect('inicio_usuarios')
-
+         
     if request.method == 'POST':
         usuario_input = request.POST.get('username')
         password_input = request.POST.get('password')
@@ -112,9 +42,9 @@ def login_view(request):
             usuario_obj = Usuario.objects.filter(email__iexact=usuario_input).first()
             if usuario_obj:
                 usuario_input = usuario_obj.username
-
+  
         user = authenticate(request, username=usuario_input, password=password_input)
-
+        
         if user is not None:
             login(request, user)
             next_url = request.POST.get('next') or request.GET.get('next')
@@ -124,7 +54,7 @@ def login_view(request):
         else:
             messages.error(request, 'Usuario o contraseña incorrectos.')
             return render(request, TEMPLATE_LOGIN, {'vista': 'login'})
-
+            
     context = {'vista': vista}
     return render(request, TEMPLATE_LOGIN, context)
 
@@ -281,11 +211,32 @@ def inicio_usuarios(request):
 
 @login_required
 def lista_personal(request):
-    if not _es_admin(request.user):
+    if request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return redirect('validar_permisos')
 
-    personal = Usuario.objects.all().order_by('id')
-    personal_json = json.dumps([_usuario_a_dict(u) for u in personal])
+    personal = Usuario.objects.all()
+
+    personal_json = json.dumps([
+        {
+            'id': u.id,
+            'nom': u.first_name,
+            'ape': u.last_name,
+            'email': u.email,
+            'user': u.username,
+            'rol': ROL_ETIQUETA.get(u.rol, u.rol),
+            'e': 'activo' if u.is_active else 'inactivo',
+            'tel': getattr(u, 'telefono', '') or '',
+            'doc': getattr(u, 'documento', '') or '',
+            'tdoc': getattr(u, 'tipo_documento', '') or '',
+            'dir': getattr(u, 'direccion', '') or '',
+            'foto': u.foto.url if u.foto else '',
+            'notas': '',
+            'perms': [],
+            'acc': '-',
+            'cr': u.date_joined.isoformat() if hasattr(u, 'date_joined') else '',
+        }
+        for u in personal
+    ])
 
     context = {
         'vista': 'lista',
@@ -295,90 +246,163 @@ def lista_personal(request):
     return render(request, TEMPLATE_LISTA, context)
 
 
+# Etiquetas que manda el formulario web -> valores del modelo
+ROL_MAP = {
+    'Administrador': 'ADMIN',
+    'Mesero': 'MESERO',
+    'Cajero': 'CAJERO',
+    'Cocina': 'COCINERA',
+}
+ROL_ETIQUETA = {valor: etiqueta for etiqueta, valor in ROL_MAP.items()}
+
+TIPO_DOC_MAP = {
+    'Cédula de Ciudadanía': 'CC',
+    'Cédula de Extranjería': 'CE',
+    'Tarjeta de Identidad': 'TI',
+    'Pasaporte': 'PP',
+}
+
+
+# Campo del formulario Django -> clave que usa el formulario web
+CAMPO_JS = {
+    'first_name': 'nom', 'last_name': 'ape', 'username': 'user', 'email': 'email', 'rol': 'rol',
+    'tipo_documento': 'tdoc', 'documento': 'doc', 'telefono': 'tel',
+    'password': 'pw', 'password2': 'pw2',
+}
+
+
+def _errores_form(form):
+    """Lista sin repetidos de {'campo', 'mensaje'} con todos los errores del formulario."""
+    detalle = []
+    for campo, errores in form.errors.items():
+        for mensaje in errores:
+            if any(d['mensaje'] == mensaje for d in detalle):
+                continue
+            clave = CAMPO_JS.get(campo, '')
+            if clave == 'doc' and 'tipo de documento' in mensaje.lower():
+                clave = 'tdoc'
+            detalle.append({'campo': clave, 'mensaje': mensaje})
+    return detalle
+
+
+def _respuesta_errores(errores):
+    """Acepta una lista de textos o de {'campo', 'mensaje'}."""
+    detalle = [e if isinstance(e, dict) else {'campo': '', 'mensaje': e} for e in errores]
+    mensajes = [d['mensaje'] for d in detalle]
+    return JsonResponse(
+        {'ok': False, 'errores': mensajes, 'detalle': detalle, 'error': ' '.join(mensajes)},
+        status=400,
+    )
+
+
 @login_required
 @require_POST
 def crear_usuario(request):
-    if not _es_admin(request.user):
+    if request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
-
     try:
         data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+    except ValueError:
+        return _respuesta_errores(['No se pudieron leer los datos del formulario.'])
 
-    form = PersonalForm(_datos_form_desde_json(data))
+    tdoc_txt = data.get('tdoc', '')
+    form = PersonalForm({
+        'first_name': data.get('nom', ''),
+        'last_name': data.get('ape', ''),
+        'username': data.get('user', ''),
+        'email': data.get('email', ''),
+        'rol': ROL_MAP.get(data.get('rol', ''), ''),
+        'tipo_documento': TIPO_DOC_MAP.get(tdoc_txt, tdoc_txt),
+        'documento': data.get('doc', ''),
+        'telefono': data.get('tel', ''),
+        'password': data.get('pw', ''),
+        'password2': data.get('pw2', ''),
+    })
     if not form.is_valid():
-        return JsonResponse({'ok': False, 'error': _errores_a_texto(form)}, status=400)
-
-    # Acepta 'password' (nuevo) o 'pw' (anterior); ya no se usa contraseña por defecto
-    password = data.get('password') or data.get('pw') or ''
-    if len(password) < 6:
-        return JsonResponse(
-            {'ok': False, 'error': 'password: La contraseña debe tener al menos 6 caracteres.'},
-            status=400
-        )
+        return _respuesta_errores(_errores_form(form))
 
     try:
-        nuevo = form.save(commit=False)
-        nuevo.set_password(password)
-        nuevo.save()
+        nuevo = Usuario.objects.create_user(
+            username=form.cleaned_data['username'],
+            password=form.cleaned_data['password'],
+            first_name=form.cleaned_data['first_name'],
+            last_name=form.cleaned_data['last_name'],
+            email=form.cleaned_data['email'],
+            telefono=form.cleaned_data['telefono'],
+            tipo_documento=form.cleaned_data['documento'] and form.cleaned_data['tipo_documento'].upper() or 'CC',
+            documento=form.cleaned_data['documento'],   # None si no se escribió (campo único)
+            rol=form.cleaned_data['rol'],
+            is_active=data.get('e', 'activo') == 'activo',
+        )
+        if hasattr(nuevo, 'direccion'):
+            nuevo.direccion = data.get('dir', '')
+            nuevo.save()
+        return JsonResponse({
+            'ok': True, 'id': nuevo.pk,
+            'nom': nuevo.first_name, 'ape': nuevo.last_name,
+            'email': nuevo.email, 'doc': nuevo.documento or '',
+        })
     except Exception as e:
-        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
-
-    return JsonResponse({'ok': True, 'id': nuevo.pk})
+        return _respuesta_errores([str(e)])
 
 
 @login_required
 @require_POST
 def editar_usuario_json(request, id):
-    es_admin = _es_admin(request.user)
+    es_admin = request.user.rol == 'ADMIN' or request.user.is_superuser
     if not es_admin and request.user.id != id:
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403)
-
-    usuario = get_object_or_404(Usuario, pk=id)
-
     try:
         data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return JsonResponse({'ok': False, 'error': 'JSON inválido'}, status=400)
+    except ValueError:
+        return _respuesta_errores(['No se pudieron leer los datos del formulario.'])
 
-    datos = _datos_form_desde_json(data, base=usuario)
+    usuario = get_object_or_404(Usuario, pk=id)
+    rol_nuevo = ROL_MAP.get(data.get('rol', ''), usuario.rol) if es_admin else usuario.rol
+    tdoc_txt = data.get('tdoc', '')
 
-    # Un usuario que no es admin y se edita a sí mismo no puede cambiar
-    # su propio rol, usuario ni estado.
-    if not es_admin:
-        datos['rol'] = usuario.rol
-        datos['username'] = usuario.username
-        datos['is_active'] = usuario.is_active
-
-    form = PersonalForm(datos, instance=usuario)
+    form = PersonalEditarForm({
+        'first_name': data.get('nom', ''),
+        'last_name': data.get('ape', ''),
+        'email': data.get('email', ''),
+        'rol': rol_nuevo,
+        'tipo_documento': TIPO_DOC_MAP.get(tdoc_txt, tdoc_txt),
+        'documento': data.get('doc', ''),
+        'telefono': data.get('tel', ''),
+        'password': data.get('pw', ''),
+        'password2': data.get('pw2', ''),
+    }, instance=usuario)
     if not form.is_valid():
-        return JsonResponse({'ok': False, 'error': _errores_a_texto(form)}, status=400)
-
-    nuevo_pw = data.get('password') or ''
-    if nuevo_pw and len(nuevo_pw) < 6:
-        return JsonResponse(
-            {'ok': False, 'error': 'password: La contraseña debe tener al menos 6 caracteres.'},
-            status=400
-        )
+        return _respuesta_errores(_errores_form(form))
 
     try:
-        usuario = form.save(commit=False)
-        if nuevo_pw:
-            usuario.set_password(nuevo_pw)
+        usuario.first_name = form.cleaned_data['first_name']
+        usuario.last_name = form.cleaned_data['last_name']
+        usuario.email = form.cleaned_data['email']
+        usuario.telefono = form.cleaned_data['telefono']
+        usuario.documento = form.cleaned_data['documento']
+        usuario.tipo_documento = (
+            form.cleaned_data['tipo_documento'].upper() if form.cleaned_data['documento'] else usuario.tipo_documento
+        )
+        usuario.is_active = data.get('e', 'activo') == 'activo'
+        usuario.rol = rol_nuevo
+        if hasattr(usuario, 'direccion'):
+            usuario.direccion = data.get('dir', '')
+        if data.get('pw'):
+            usuario.set_password(form.cleaned_data['password'])
         usuario.save()
-        # Si el usuario cambió su propia contraseña, mantener la sesión abierta
-        if nuevo_pw and usuario.pk == request.user.pk:
-            update_session_auth_hash(request, usuario)
+        return JsonResponse({
+            'ok': True,
+            'nom': usuario.first_name, 'ape': usuario.last_name,
+            'email': usuario.email, 'doc': usuario.documento or '',
+        })
     except Exception as e:
-        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
-
-    return JsonResponse({'ok': True, 'id': usuario.pk})
+        return _respuesta_errores([str(e)])
 
 
 @login_required
 def eliminar_usuario(request, id):
-    if not _es_admin(request.user):
+    if request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return JsonResponse({'ok': False, 'error': 'Sin permisos'}, status=403) \
             if request.headers.get('Content-Type') == 'application/json' \
             else redirect('validar_permisos')
@@ -400,7 +424,7 @@ def eliminar_usuario(request, id):
 
 @login_required
 def inactivar_usuario(request):
-    if _es_admin(request.user):
+    if request.user.rol == 'ADMIN' or request.user.is_superuser:
         username = request.GET.get('username')
         if username:
             usuario = get_object_or_404(Usuario, username=username)
@@ -434,17 +458,17 @@ def acceder_sistema(request):
 
 @login_required
 def actualizar_usuario(request, pk):
-    if request.user.id != pk and not _es_admin(request.user):
+    if request.user.id != pk and request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return redirect('validar_permisos')
     usuario = get_object_or_404(Usuario, pk=pk)
     if request.method == 'POST':
         usuario.first_name = request.POST.get('first_name', usuario.first_name)
         usuario.last_name = request.POST.get('last_name', usuario.last_name)
         usuario.email = request.POST.get('email', usuario.email)
-        usuario.telefono = request.POST.get('telefono', '') or None
-        usuario.tipo_documento = request.POST.get('tipo_documento', usuario.tipo_documento)
-        usuario.documento = request.POST.get('documento', '') or None
-        if _es_admin(request.user):
+        usuario.telefono = request.POST.get('telefono', '')
+        usuario.tipo_documento = request.POST.get('tipo_documento', '')
+        usuario.documento = request.POST.get('documento', '')
+        if request.user.rol == 'ADMIN' or request.user.is_superuser:
             usuario.rol = request.POST.get('rol', usuario.rol)
         usuario.save()
         messages.success(request, 'Datos actualizados correctamente.')
@@ -459,7 +483,7 @@ def actualizar_usuario(request, pk):
 @login_required
 @require_POST
 def actualizar_foto(request, pk):
-    if request.user.id != pk and not _es_admin(request.user):
+    if request.user.id != pk and request.user.rol != 'ADMIN' and not request.user.is_superuser:
         return redirect('validar_permisos')
     usuario = get_object_or_404(Usuario, pk=pk)
     if 'foto' in request.FILES:
