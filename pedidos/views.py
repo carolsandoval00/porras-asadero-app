@@ -3,9 +3,11 @@ import csv
 import json
 from datetime import date, timedelta
 from itertools import groupby
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -194,11 +196,19 @@ def dashboard(request):
     total_categorias   = Categoria.objects.count()
     total_clientes     = Cliente.objects.count()
 
-    ultimos_pedidos = list(
+    pedidos_qs = (
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
-        .order_by('-fecha_creacion')[:5]
+        .order_by('-fecha_creacion')
     )
+
+    # Paginación: 5 pedidos por página
+    paginator = Paginator(pedidos_qs, 5)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
 
     return render(request, 'pedidos/dashboard.html', {
         'titulo': 'Pedidos y Carta',
@@ -208,7 +218,9 @@ def dashboard(request):
         'total_productos': total_productos,
         'total_categorias': total_categorias,
         'total_clientes': total_clientes,
-        'ultimos_pedidos': ultimos_pedidos,
+        'ultimos_pedidos': page_obj,
+        'page_obj': page_obj,
+        'paginas': paginas,
     })
 
 
@@ -221,14 +233,35 @@ def pedido_lista(request):
     q          = request.GET.get('q', '').strip()
     filtro     = _resolver_filtro_fecha(request)
     pedidos_qs = _pedidos_filtrados(request)
-    pedidos_lista_data = list(pedidos_qs)
+
+    # Paginación: 10 pedidos por página (dentro de cada página siguen agrupados por fecha)
+    paginator = Paginator(pedidos_qs, 10)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+
     pedidos_por_fecha  = []
-    for fecha, grupo in groupby(pedidos_lista_data, key=lambda p: p.fecha_creacion.date()):
+    for fecha, grupo in groupby(list(page_obj), key=lambda p: p.fecha_creacion.date()):
         items = list(grupo)
         pedidos_por_fecha.append({'fecha': fecha, 'pedidos': items, 'count': len(items)})
+
+    qs_filtros = urlencode({
+        'q': q,
+        'filtro_fecha': filtro['filtro_fecha'],
+        'fecha_dia': filtro['fecha_dia'],
+        'fecha_mes': filtro['fecha_mes'],
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
+    })
+
     return render(request, 'pedidos/pedido_lista.html', {
         'titulo': 'Pedidos y Carta',
         'pedidos_por_fecha': pedidos_por_fecha,
+        'page_obj': page_obj,
+        'paginas': paginas,
+        'qs_filtros': qs_filtros,
         'q': q,
         'filtro_fecha': filtro['filtro_fecha'],
         'fecha_dia': filtro['fecha_dia'],
@@ -405,13 +438,35 @@ def orden_lista(request):
     q_orden = request.GET.get('q_orden', '').strip()
     filtro = _resolver_filtro_fecha(request)
     ordenes_qs = _ordenes_filtradas(request)
-    ordenes_lista_data = list(ordenes_qs)
+
+    # Paginación: 10 órdenes por página (dentro de cada página siguen agrupadas por fecha)
+    paginator = Paginator(ordenes_qs, 10)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+
     ordenes_por_fecha  = []
-    for fecha, grupo in groupby(ordenes_lista_data, key=lambda o: o.fecha_creacion.date()):
+    for fecha, grupo in groupby(list(page_obj), key=lambda o: o.fecha_creacion.date()):
         items = list(grupo)
         ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
+
+    qs_filtros = urlencode({
+        'q_orden': q_orden,
+        'filtro_fecha': filtro['filtro_fecha'],
+        'fecha_dia': filtro['fecha_dia'],
+        'fecha_mes': filtro['fecha_mes'],
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
+    })
+
     return render(request, 'pedidos/orden_lista.html', {
-        'titulo': 'Pedidos y Carta', 'ordenes_por_fecha': ordenes_por_fecha,
+        'titulo': 'Pedidos y Carta',
+        'ordenes_por_fecha': ordenes_por_fecha,
+        'page_obj': page_obj,
+        'paginas': paginas,
+        'qs_filtros': qs_filtros,
         'q_orden': q_orden,
         'filtro_fecha': filtro['filtro_fecha'],
         'fecha_dia': filtro['fecha_dia'],
@@ -468,15 +523,30 @@ def producto_lista(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_prod  = request.GET.get('q_prod', '').strip()
     cat_sel = request.GET.get('categoria', '').strip()
-    productos_qs = Producto.objects.select_related('categoria').all()
+    productos_qs = Producto.objects.select_related('categoria').order_by('pk')
     if q_prod:
         productos_qs = productos_qs.filter(nombre__icontains=q_prod)
     if cat_sel:
         productos_qs = productos_qs.filter(categoria__id=cat_sel)
+
+    # Paginación: 10 productos por página
+    paginator = Paginator(productos_qs, 10)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+
     return render(request, 'pedidos/producto_lista.html', {
-        'titulo': 'Pedidos y Carta', 'productos': productos_qs,
-        'categorias': Categoria.objects.all(), 'q_prod': q_prod,
-        'cat_sel': cat_sel, 'seccion_activa': 'producto-lista'})
+        'titulo': 'Pedidos y Carta',
+        'productos': page_obj,
+        'page_obj': page_obj,
+        'paginas': paginas,
+        'qs_filtros': urlencode({'q_prod': q_prod, 'categoria': cat_sel}),
+        'categorias': Categoria.objects.all(),
+        'q_prod': q_prod,
+        'cat_sel': cat_sel,
+        'seccion_activa': 'producto-lista'})
 
 
 @login_required
@@ -594,12 +664,26 @@ def categoria_lista(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cat = request.GET.get('q_cat', '').strip()
-    categorias_qs = Categoria.objects.all()
+    categorias_qs = Categoria.objects.order_by('pk')
     if q_cat:
         categorias_qs = categorias_qs.filter(nombre__icontains=q_cat)
+
+    # Paginación: 10 categorías por página
+    paginator = Paginator(categorias_qs, 10)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+
     return render(request, 'pedidos/categoria_lista.html', {
-        'titulo': 'Pedidos y Carta', 'categorias': categorias_qs,
-        'q_cat': q_cat, 'seccion_activa': 'categoria-lista'})
+        'titulo': 'Pedidos y Carta',
+        'categorias': page_obj,
+        'page_obj': page_obj,
+        'paginas': paginas,
+        'qs_filtros': urlencode({'q_cat': q_cat}),
+        'q_cat': q_cat,
+        'seccion_activa': 'categoria-lista'})
 
 
 @login_required
@@ -711,13 +795,27 @@ def cliente_lista(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cli = request.GET.get('q_cli', '').strip()
-    clientes_qs = Cliente.objects.all()
+    clientes_qs = Cliente.objects.order_by('pk')
     if q_cli:
         clientes_qs = clientes_qs.filter(
             Q(nombre_completo__icontains=q_cli) | Q(documento__icontains=q_cli))
+
+    # Paginación: 10 clientes por página
+    paginator = Paginator(clientes_qs, 10)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+
     return render(request, 'pedidos/cliente_lista.html', {
-        'titulo': 'Pedidos y Carta', 'clientes': clientes_qs,
-        'q_cli': q_cli, 'seccion_activa': 'cliente-lista'})
+        'titulo': 'Pedidos y Carta',
+        'clientes': page_obj,
+        'page_obj': page_obj,
+        'paginas': paginas,
+        'qs_filtros': urlencode({'q_cli': q_cli}),
+        'q_cli': q_cli,
+        'seccion_activa': 'cliente-lista'})
 
 
 @login_required

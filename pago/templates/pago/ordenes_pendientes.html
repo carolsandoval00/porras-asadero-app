@@ -94,7 +94,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for o in ordenes_sin_pago %}
+            {% for o in ordenes_pagina %}
             <tr class="fila-pendiente">
               <td><strong>{{ o.numero_orden }}</strong></td>
               <td>{% if o.cliente %}{{ o.cliente.nombre_completo }}{% else %}<span class="pg-text-muted">Cliente de paso</span>{% endif %}</td>
@@ -121,6 +121,40 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Paginación -->
+      {% if ordenes_pagina.paginator.count %}
+      <div class="pg-paginacion">
+        <span class="pg-pag-info">
+          Mostrando {{ ordenes_pagina.start_index }}–{{ ordenes_pagina.end_index }} de {{ ordenes_pagina.paginator.count }} órdenes
+        </span>
+
+        {% if ordenes_pagina.paginator.num_pages > 1 %}
+        <div class="pg-pag-links">
+          {% if ordenes_pagina.has_previous %}
+          <a href="{% url 'pago:dashboard' %}?{{ op_qs_filtros }}&op_page={{ ordenes_pagina.previous_page_number }}"
+             class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Página anterior">← Anterior</a>
+          {% endif %}
+
+          {% for p in op_paginas %}
+            {% if p.puntos %}
+              <span class="pg-pag-puntos">…</span>
+            {% elif p.num == ordenes_pagina.number %}
+              <span class="pg-btn pg-btn-danger pg-btn-sm pg-pag-actual">{{ p.num }}</span>
+            {% else %}
+              <a href="{% url 'pago:dashboard' %}?{{ op_qs_filtros }}&op_page={{ p.num }}"
+                 class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Ir a la página {{ p.num }}">{{ p.num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if ordenes_pagina.has_next %}
+          <a href="{% url 'pago:dashboard' %}?{{ op_qs_filtros }}&op_page={{ ordenes_pagina.next_page_number }}"
+             class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Página siguiente">Siguiente →</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
     </div>
   </div>
 

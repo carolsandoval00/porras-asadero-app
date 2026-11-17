@@ -428,3 +428,41 @@ body{font-family:'Segoe UI', system-ui, sans-serif; color:var(--text); backgroun
   .mc-list-body{padding:1rem}
   .mc-list-count{margin-left:0}
 }
+
+/* ============================================
+   Paginación (lista de reservas)
+   El contenedor <div id="mc-paginacion" class="mc-paginacion">
+   lo llena reservas.js. Se estiliza el contenedor para que el
+   texto "Mostrando..." y los botones de página queden como en
+   Pedidos / Productos, sin depender de las clases internas.
+   ============================================ */
+.mc-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .8rem;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.mc-paginacion:empty { display: none; }
+.mc-paginacion > * { margin: 0; }
+.mc-paginacion .pm-btn + .pm-btn,
+.mc-paginacion .pm-btn + span,
+.mc-paginacion span + .pm-btn { margin-left: .35rem; }
+.mc-paginacion .pm-btn-primary { cursor: default; }
+.mc-paginacion .pm-btn-primary:hover { filter: none; transform: none; }
+/* Con una sola página no hace falta el botón "1": solo queda el texto */
+.mc-paginacion :is(button, a).pm-btn:only-of-type { display: none; }
+
+/* Paginación de la lista de mesas (la arma el template, no el JS) */
+.mc-pag-info   { font-size: .82rem; color: var(--muted); font-weight: 600; }
+.mc-pag-links  { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+.mc-pag-puntos { color: var(--muted); padding: 0 .25rem; font-weight: 700; }
+/* Dentro de una tarjeta sin padding (.mc-card-flush) la paginación lleva su propio margen */
+.mc-card-flush .mc-paginacion { margin: 0; padding: 1rem 1.4rem; }

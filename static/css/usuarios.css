@@ -691,3 +691,81 @@ img.av-foto-lg {
 .det-v-light-sm  { font-weight:400; font-size:.85rem; }
 .notas-txt       { font-size:.88rem; color:#6B5A3E; line-height:1.6; }
 .perfil-acciones { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:.5rem; }
+
+/* ============================================================
+   5) PAGINACIÓN de la lista de usuarios — igual que Pedidos
+   ============================================================ */
+.usr-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .8rem;
+  padding: 1rem 1.4rem;
+  border-top: 1px solid var(--gris-borde);
+}
+.usr-paginacion:empty { display: none; }
+
+.usr-pag-info {
+  font-family: 'Lato', sans-serif;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.usr-pag-links {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  flex-wrap: wrap;
+}
+.usr-pag-links .btn-ac {
+  border-radius: 50px;
+  padding: .3rem .7rem;
+  font-size: .76rem;
+  font-weight: 600;
+  margin-right: 0;
+  background: var(--gris-suave);
+  color: var(--carbon);
+  border: 1px solid var(--gris-borde);
+}
+.usr-pag-links .btn-ac:hover {
+  background: var(--gris-suave);
+  filter: brightness(1.06);
+}
+
+.usr-pag-puntos { color: var(--muted); padding: 0 .25rem; font-weight: 700; }
+
+/* Página actual: rojo, como en Pedidos */
+.usr-pag-links .usr-pag-actual {
+  background: var(--rojo);
+  color: #F5ECD7;
+  border-color: var(--rojo);
+  cursor: default;
+}
+.usr-pag-links .usr-pag-actual:hover {
+  background: var(--rojo);
+  color: #F5ECD7;
+  filter: none;
+}
+
+/* ============================================================
+   6) BOTÓN "REGRESAR AL PANEL" (lista de usuarios)
+   ============================================================ */
+.usr-tab.tab-panel {
+    margin-left: auto;
+    background: rgba(26,16,8,.05);
+    color: var(--carbon);
+    border: 1.5px solid var(--carbon);
+}
+.usr-tab.tab-panel i {
+    transition: transform .2s;
+}
+.usr-tab.tab-panel:hover {
+    background: var(--carbon);
+    color: #F5ECD7;
+    border: 1.5px solid var(--carbon);
+}
+.usr-tab.tab-panel:hover i {
+    transform: translateX(-3px);
+}

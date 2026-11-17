@@ -72,7 +72,7 @@
           <tbody>
             {% for cat in categorias %}
             <tr>
-              <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
+              <td><strong>{{ page_obj.start_index|add:forloop.counter0|stringformat:"02d" }}</strong></td>
               <td><strong>{{ cat.nombre }}</strong></td>
               <td class="pm-muted">{{ cat.descripcion|default:"—" }}</td>
               <td class="pm-td-actions">
@@ -87,6 +87,40 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Paginación -->
+      {% if page_obj.paginator.count %}
+      <div class="pm-paginacion">
+        <span class="pm-pag-info">
+          Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} categorías
+        </span>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pm-pag-links">
+          {% if page_obj.has_previous %}
+          <a href="?{{ qs_filtros }}&page={{ page_obj.previous_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página anterior">← Anterior</a>
+          {% endif %}
+
+          {% for p in paginas %}
+            {% if p.puntos %}
+              <span class="pm-pag-puntos">…</span>
+            {% elif p.num == page_obj.number %}
+              <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ p.num }}</span>
+            {% else %}
+              <a href="?{{ qs_filtros }}&page={{ p.num }}"
+                 class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Ir a la página {{ p.num }}">{{ p.num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <a href="?{{ qs_filtros }}&page={{ page_obj.next_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página siguiente">Siguiente →</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

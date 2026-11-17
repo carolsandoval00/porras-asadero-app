@@ -154,6 +154,40 @@
       {% empty %}
       <p class="pm-empty-msg">No hay pedidos aún.</p>
       {% endfor %}
+
+      <!-- Paginación -->
+      {% if page_obj.paginator.count %}
+      <div class="pm-paginacion">
+        <span class="pm-pag-info">
+          Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} pedidos
+        </span>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pm-pag-links">
+          {% if page_obj.has_previous %}
+          <a href="?{{ qs_filtros }}&page={{ page_obj.previous_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página anterior">← Anterior</a>
+          {% endif %}
+
+          {% for pg in paginas %}
+            {% if pg.puntos %}
+              <span class="pm-pag-puntos">…</span>
+            {% elif pg.num == page_obj.number %}
+              <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ pg.num }}</span>
+            {% else %}
+              <a href="?{{ qs_filtros }}&page={{ pg.num }}"
+                 class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Ir a la página {{ pg.num }}">{{ pg.num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <a href="?{{ qs_filtros }}&page={{ page_obj.next_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página siguiente">Siguiente →</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

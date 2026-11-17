@@ -451,6 +451,42 @@
     border-color: transparent transparent #1A1008 transparent;
 }
 
+/* ============================================
+   Hover de la barra de navegación:
+   - "Consultar" (y demás enlaces) -> rojo
+   - "Crear" (enlaces con "crear" en la URL) -> naranja
+   Solo afecta a los botones claros; los que ya están
+   activos (rojo/naranja) se quedan como están.
+   ============================================ */
+.pm-nav .pm-nav-group:not(:first-child) a.pm-btn-light:hover {
+    background: #C0392B;
+    border-color: #C0392B;
+    color: #F5ECD7;
+}
+.pm-nav .pm-nav-group:not(:first-child) a.pm-btn-light[href*="crear"]:hover {
+    background: #E8651A;
+    border-color: #E8651A;
+    color: #F5ECD7;
+}
+
+/* ============================================
+   Paginación (listas de productos, etc.)
+   ============================================ */
+.pm-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .8rem;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--p-border);
+}
+.pm-pag-info   { font-size: .82rem; color: var(--p-muted); font-weight: 600; }
+.pm-pag-links  { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+.pm-pag-puntos { color: var(--p-muted); padding: 0 .25rem; font-weight: 700; }
+.pm-pag-actual { cursor: default; }
+.pm-pag-actual:hover { filter: none; transform: none; }
 /* Título del encabezado: mismo tamaño que Pagos (1.8rem; baja a 1.4rem solo en celular) */
 @media(max-width:600px){
   .pm-header h1   { font-size: 1.4rem; }
