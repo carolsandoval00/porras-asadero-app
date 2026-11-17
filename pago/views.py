@@ -4,6 +4,7 @@ from datetime import date, timedelta, datetime
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Sum, Q
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
@@ -108,6 +109,81 @@ def _pagos_filtrados(request):
     return qs, filtro, q_pago
 
 
+def _paginar_pagos(request, pagos_qs, filtro, q_pago, por_pagina=10):
+    """Pagina los pagos registrados (10 por página).
+    Usa el parámetro 'page' y conserva la pestaña 'lista', la búsqueda y el
+    filtro de fechas al cambiar de página."""
+    paginator = Paginator(pagos_qs, por_pagina)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+    qs_filtros = urlencode({
+        'tab': 'lista',
+        'q_pago': q_pago,
+        'filtro_fecha': filtro['filtro_fecha'],
+        'fecha_dia': filtro['fecha_dia'],
+        'fecha_mes': filtro['fecha_mes'],
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
+    })
+    return page_obj, paginas, qs_filtros
+
+
+def _agrupar_pagos_por_fecha(pagos_pagina):
+    """Agrupa por día los pagos de la página actual."""
+    pagos_por_fecha = []
+    for fecha, grupo in groupby(list(pagos_pagina), key=lambda p: p.fecha_pago.date()):
+        items = list(grupo)
+        pagos_por_fecha.append({
+            'fecha': fecha,
+            'pagos': items,
+            'total': sum(p.monto for p in items),
+            'count': len(items),
+        })
+    return pagos_por_fecha
+
+
+def _cajas_filtradas(request):
+    """Aplica el filtro de fechas (c_desde / c_hasta) a la lista de cajas,
+    usando la fecha de apertura. Nunca permite fechas futuras."""
+    hoy = timezone.localdate().isoformat()
+    c_desde = request.GET.get('c_desde', '').strip()
+    c_hasta = request.GET.get('c_hasta', '').strip()
+
+    if c_desde and c_desde > hoy:
+        c_desde = hoy
+    if c_hasta and c_hasta > hoy:
+        c_hasta = hoy
+
+    qs = Caja.objects.select_related('cajero').order_by('fecha_apertura')
+    if c_desde:
+        qs = qs.filter(fecha_apertura__date__gte=c_desde)
+    if c_hasta:
+        qs = qs.filter(fecha_apertura__date__lte=c_hasta)
+    return qs, c_desde, c_hasta
+
+
+def _paginar_cajas(request, por_pagina=10):
+    """Pagina las cajas registradas (10 por página).
+    Usa el parámetro 'caja_page' para no chocar con las otras listas de la
+    misma pantalla, y conserva la pestaña y el filtro de fechas."""
+    cajas_qs, c_desde, c_hasta = _cajas_filtradas(request)
+    paginator = Paginator(cajas_qs, por_pagina)
+    page_obj  = paginator.get_page(request.GET.get('caja_page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+    qs_filtros = urlencode({
+        'tab': 'consultar-caja',
+        'c_desde': c_desde,
+        'c_hasta': c_hasta,
+    })
+    return page_obj, paginas, qs_filtros, c_desde, c_hasta
+
+
 def _resolver_filtro_fecha_ordenes(request):
     """Mismo esquema de filtro de fechas que _resolver_filtro_fecha, pero con
     prefijo 'op_' para no chocar con el filtro de Pagos en la misma página."""
@@ -172,6 +248,27 @@ def _ordenes_filtradas(request):
     if filtro['efectivo_hasta']:
         qs = qs.filter(fecha_creacion__date__lte=filtro['efectivo_hasta'])
     return qs, filtro
+
+
+def _paginar_ordenes(request, ordenes_qs, filtro_ordenes, por_pagina=10):
+    """Pagina las órdenes pendientes de pago (10 por página).
+    Usa el parámetro 'op_page' para no chocar con otras listas de la misma pantalla,
+    y conserva el filtro de fechas op_* al cambiar de página."""
+    paginator = Paginator(ordenes_qs, por_pagina)
+    page_obj  = paginator.get_page(request.GET.get('op_page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+    qs_filtros = urlencode({
+        'tab': 'pendientes',
+        'op_filtro_fecha': filtro_ordenes['op_filtro_fecha'],
+        'op_fecha_dia': filtro_ordenes['op_fecha_dia'],
+        'op_fecha_mes': filtro_ordenes['op_fecha_mes'],
+        'op_fecha_desde': filtro_ordenes['op_fecha_desde'],
+        'op_fecha_hasta': filtro_ordenes['op_fecha_hasta'],
+    })
+    return page_obj, paginas, qs_filtros
 
 
 def _rango_texto(request):
@@ -282,30 +379,40 @@ def pago_dashboard(request):
                 return redirect('pago:dashboard')
 
     ordenes_sin_pago, filtro_ordenes = _ordenes_filtradas(request)
-    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
-    pagos_lista_data = list(pagos_qs)
+    ordenes_pagina, op_paginas, op_qs_filtros = _paginar_ordenes(request, ordenes_sin_pago, filtro_ordenes)
 
-    pagos_por_fecha = []
-    for fecha, grupo in groupby(pagos_lista_data, key=lambda p: p.fecha_pago.date()):
-        items = list(grupo)
-        pagos_por_fecha.append({
-            'fecha': fecha,
-            'pagos': items,
-            'total': sum(p.monto for p in items),
-            'count': len(items),
-        })
+    # ★ PAGINACIÓN DE PAGOS REGISTRADOS
+    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+    pagos_page, pagos_paginas, pagos_qs_filtros = _paginar_pagos(request, pagos_qs, filtro, q_pago)
+    pagos_por_fecha = _agrupar_pagos_por_fecha(pagos_page)
+    total_pagos = pagos_page.paginator.count
+    monto_total = pagos_qs.aggregate(t=Sum('monto'))['t'] or 0
+
+    # ★ PAGINACIÓN DE CAJAS REGISTRADAS
+    cajas_page, cajas_paginas, cajas_qs_filtros, c_desde, c_hasta = _paginar_cajas(request)
 
     context = {
         'form':             form,
         'form_apertura':    form_apertura,
         'pagos_por_fecha':  pagos_por_fecha,
+        'pagos_page':       pagos_page,
+        'pagos_paginas':    pagos_paginas,
+        'pagos_qs_filtros': pagos_qs_filtros,
         'ordenes_sin_pago': ordenes_sin_pago,
-        'total_pagos':      len(pagos_lista_data),
-        'pagos_aprobados':  len(pagos_lista_data),
+        'ordenes_pagina':    ordenes_pagina,
+        'op_paginas':        op_paginas,
+        'op_qs_filtros':     op_qs_filtros,
+        'total_pagos':      total_pagos,
+        'pagos_aprobados':  total_pagos,
         'pagos_pendientes': 0,
-        'monto_total':      sum(p.monto for p in pagos_lista_data),
+        'monto_total':      monto_total,
         'nombre':           request.user.get_full_name() or request.user.username,
-        'cajas':            Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
+        'cajas':            cajas_page,
+        'cajas_page':       cajas_page,
+        'cajas_paginas':    cajas_paginas,
+        'cajas_qs_filtros': cajas_qs_filtros,
+        'c_desde':          c_desde,
+        'c_hasta':          c_hasta,
         'tab_activo':       request.GET.get('tab', 'pendientes'),
         'caja_activa':      caja_activa,
         'q_pago':           q_pago,
@@ -372,29 +479,40 @@ def caja_detalle(request, pk):
     form = PagoForm()
 
     ordenes_sin_pago, filtro_ordenes = _ordenes_filtradas(request)
-    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
-    pagos_lista_data = list(pagos_qs)
+    ordenes_pagina, op_paginas, op_qs_filtros = _paginar_ordenes(request, ordenes_sin_pago, filtro_ordenes)
 
-    pagos_por_fecha = []
-    for fecha, grupo in groupby(pagos_lista_data, key=lambda p: p.fecha_pago.date()):
-        items = list(grupo)
-        pagos_por_fecha.append({
-            'fecha': fecha,
-            'pagos': items,
-            'total': sum(p.monto for p in items),
-            'count': len(items),
-        })
+    # ★ PAGINACIÓN DE PAGOS REGISTRADOS
+    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+    pagos_page, pagos_paginas, pagos_qs_filtros = _paginar_pagos(request, pagos_qs, filtro, q_pago)
+    pagos_por_fecha = _agrupar_pagos_por_fecha(pagos_page)
+    total_pagos = pagos_page.paginator.count
+    monto_total = pagos_qs.aggregate(t=Sum('monto'))['t'] or 0
+
+    # ★ PAGINACIÓN DE CAJAS REGISTRADAS
+    cajas_page, cajas_paginas, cajas_qs_filtros, c_desde, c_hasta = _paginar_cajas(request)
 
     context = {
         'form':               form,
         'form_apertura':      form_apertura,
         'pagos_por_fecha':    pagos_por_fecha,
+        'pagos_page':         pagos_page,
+        'pagos_paginas':      pagos_paginas,
+        'pagos_qs_filtros':   pagos_qs_filtros,
         'ordenes_sin_pago':   ordenes_sin_pago,
-        'total_pagos':        len(pagos_lista_data),
-        'pagos_aprobados':    len(pagos_lista_data),
+        'ordenes_pagina':    ordenes_pagina,
+        'op_paginas':        op_paginas,
+        'op_qs_filtros':     op_qs_filtros,
+        'total_pagos':        total_pagos,
+        'pagos_aprobados':    total_pagos,
         'pagos_pendientes':   0,
-        'monto_total':        sum(p.monto for p in pagos_lista_data),
+        'monto_total':        monto_total,
         'nombre':             request.user.get_full_name() or request.user.username,
+        'cajas':              cajas_page,
+        'cajas_page':         cajas_page,
+        'cajas_paginas':      cajas_paginas,
+        'cajas_qs_filtros':   cajas_qs_filtros,
+        'c_desde':            c_desde,
+        'c_hasta':            c_hasta,
         'caja_seleccionada':  caja_seleccionada,
         'pagos_caja':         pagos_caja,
         'total_ingresos':     total_ingresos,
@@ -448,8 +566,27 @@ def recibos_lista(request):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
     pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+
+    # ★ PAGINACIÓN DE RECIBOS: 10 por página
+    paginator = Paginator(pagos_qs, 10)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+    qs_filtros = urlencode({
+        'q_pago': q_pago,
+        'filtro_fecha': 'rango',
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
+    })
+
     return render(request, 'pago/lista_recibos.html', {
-        'pagos':       pagos_qs,
+        'pagos':       page_obj,
+        'page_obj':    page_obj,
+        'paginas':     paginas,
+        'qs_filtros':  qs_filtros,
+        'total_recibos': paginator.count,
         'total':       pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'q_pago':      q_pago,
         'fecha_desde': filtro['fecha_desde'],

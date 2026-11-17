@@ -27,6 +27,10 @@
   let editandoId = null;          // id de reserva en edición
   let editandoMesaNumero = null;  // número de mesa en edición
 
+  // ★ PAGINACIÓN de la tabla de reservas (se hace en el navegador)
+  const POR_PAGINA = 10;          // reservas por página
+  let paginaActual = 1;
+
   const soloLectura = () => window.MC_PUEDE_EDITAR === false;
 
   // ─── Utilidades ───────────────────────────────────────────
@@ -227,13 +231,59 @@
     mcToggleFiltroFecha();
   };
 
-  // ─── Tabla de reservas ────────────────────────────────────
-  window.mcRenderTabla = async function () {
+  // ─── Tabla de reservas (con paginación) ───────────────────
+  // Números de página a mostrar: 1 … anterior, actual, siguiente … última
+  function numerosPagina(actual, total) {
+    const set = new Set([1, total, actual, actual - 1, actual + 1]);
+    const nums = Array.from(set).filter(n => n >= 1 && n <= total).sort((a, b) => a - b);
+    const resultado = [];
+    let previo = 0;
+    nums.forEach(n => {
+      if (n - previo > 1) resultado.push('...');
+      resultado.push(n);
+      previo = n;
+    });
+    return resultado;
+  }
+
+  // Dibuja los botones de página debajo de la tabla.
+  function mcRenderPaginacion() {
+    const cont = $('mc-paginacion');
+    if (!cont) return;
+
+    const total = reservas.length;
+    if (!total) { cont.innerHTML = ''; return; }
+
+    const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+    const inicio = (paginaActual - 1) * POR_PAGINA + 1;
+    const fin = Math.min(paginaActual * POR_PAGINA, total);
+
+    let links = '';
+    if (paginaActual > 1) {
+      links += `<button type="button" class="pm-btn pm-btn-light pm-btn-sm" onclick="mcIrPagina(${paginaActual - 1})">« Anterior</button>`;
+    }
+    numerosPagina(paginaActual, totalPaginas).forEach(n => {
+      if (n === '...') {
+        links += '<span class="mc-pag-puntos">…</span>';
+      } else if (n === paginaActual) {
+        links += `<span class="pm-btn pm-btn-primary pm-btn-sm mc-pag-actual">${n}</span>`;
+      } else {
+        links += `<button type="button" class="pm-btn pm-btn-light pm-btn-sm" onclick="mcIrPagina(${n})">${n}</button>`;
+      }
+    });
+    if (paginaActual < totalPaginas) {
+      links += `<button type="button" class="pm-btn pm-btn-light pm-btn-sm" onclick="mcIrPagina(${paginaActual + 1})">Siguiente »</button>`;
+    }
+
+    cont.innerHTML = `
+      <div class="mc-pag-info">Mostrando ${inicio}–${fin} de ${total} reserva${total !== 1 ? 's' : ''}</div>
+      <div class="mc-pag-links">${links}</div>`;
+  }
+
+  // Pinta la página actual con las reservas que ya están en memoria.
+  function pintarTabla() {
     const tb = $('mc-tbody-reservas');
     if (!tb) return;
-
-    tb.innerHTML = '<tr><td colspan="8"><div class="mc-empty"><p>Cargando…</p></div></td></tr>';
-    await cargarReservas();
 
     const contador = $('mc-contador-reservas');
     if (contador) {
@@ -245,10 +295,19 @@
         <div class="mc-empty-icon">&#128467;</div>
         <p>No se encontraron reservas con los filtros actuales</p>
       </div></td></tr>`;
+      mcRenderPaginacion();
       return;
     }
 
-    tb.innerHTML = reservas.map(r => `<tr>
+    // Si la página actual quedó fuera de rango (por ejemplo al borrar), se ajusta.
+    const totalPaginas = Math.max(1, Math.ceil(reservas.length / POR_PAGINA));
+    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+    if (paginaActual < 1) paginaActual = 1;
+
+    const desde = (paginaActual - 1) * POR_PAGINA;
+    const pagina = reservas.slice(desde, desde + POR_PAGINA);
+
+    tb.innerHTML = pagina.map(r => `<tr>
       <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).padStart(2, '0')}</td>
       <td>
         <div style="font-weight:500">${esc(r.nombre)}</div>
@@ -267,6 +326,28 @@
         ` : ''}
       </div></td>
     </tr>`).join('');
+
+    mcRenderPaginacion();
+  }
+
+  // Cambia de página SIN volver a pedir los datos al servidor.
+  window.mcIrPagina = function (n) {
+    paginaActual = n;
+    pintarTabla();
+  };
+
+  // Pide las reservas al servidor y las pinta.
+  // Sin argumentos vuelve a la página 1 (al filtrar/buscar);
+  // con `true` se queda en la página actual (al borrar, por ejemplo).
+  window.mcRenderTabla = async function (mantenerPagina) {
+    const tb = $('mc-tbody-reservas');
+    if (!tb) return;
+
+    if (mantenerPagina !== true) paginaActual = 1;
+
+    tb.innerHTML = '<tr><td colspan="8"><div class="mc-empty"><p>Cargando…</p></div></td></tr>';
+    await cargarReservas();
+    pintarTabla();
   };
 
   window.mcVerReserva = function (id) {
@@ -437,7 +518,7 @@
         try {
           await apiPost(API.reservaEliminar, { id });
           await cargarMesas();
-          await mcRenderTabla();
+          await mcRenderTabla(true);   // se queda en la misma página
           mcRenderDiagrama();
           toast('La reserva se eliminó correctamente.', 'ok', 'Reserva eliminada');
         } catch (e) {
@@ -447,6 +528,7 @@
   };
 
   // ─── Reportes de reservas ─────────────────────────────────
+  // Los reportes usan TODAS las reservas del filtro, no solo la página visible.
   window.mcExportarPDF = function () {
     if (!reservas.length) { toast('No hay reservas para exportar', 'error'); return; }
     if (!window.jspdf) { toast('No se pudo cargar la librería de PDF', 'error'); return; }

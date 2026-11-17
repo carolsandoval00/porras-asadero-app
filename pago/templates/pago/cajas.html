@@ -70,6 +70,36 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Paginación de cajas registradas (siempre visible) -->
+      {% if cajas_page.paginator.count %}
+      <div class="pg-paginacion">
+        <div class="pg-pag-info">
+          Mostrando {{ cajas_page.start_index }}–{{ cajas_page.end_index }}
+          de {{ cajas_page.paginator.count }} caja{{ cajas_page.paginator.count|pluralize }}
+        </div>
+        <div class="pg-pag-links">
+          {% if cajas_page.has_previous %}
+            <a href="?{{ cajas_qs_filtros }}&caja_page={{ cajas_page.previous_page_number }}" class="pg-btn pg-btn-light pg-btn-sm">« Anterior</a>
+          {% endif %}
+
+          {% for p in cajas_paginas %}
+            {% if p.puntos %}
+              <span class="pg-pag-puntos">…</span>
+            {% elif p.num == cajas_page.number %}
+              <span class="pg-btn pg-btn-accent pg-btn-sm pg-pag-actual">{{ p.num }}</span>
+            {% else %}
+              <a href="?{{ cajas_qs_filtros }}&caja_page={{ p.num }}" class="pg-btn pg-btn-light pg-btn-sm">{{ p.num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if cajas_page.has_next %}
+            <a href="?{{ cajas_qs_filtros }}&caja_page={{ cajas_page.next_page_number }}" class="pg-btn pg-btn-light pg-btn-sm">Siguiente »</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
     </div>
   </div>
 </div>
