@@ -87,6 +87,38 @@
 
 <script>
 /**
+ * Número de documento: solo dígitos y máximo 10.
+ * - Bloquea las letras y los símbolos mientras se escribe.
+ * - Si se pega texto, se limpia y se recorta a 10 números.
+ */
+(function () {
+    var doc = document.querySelector('[name="documento"]');
+    if (!doc) return;
+
+    var MAX = 10;
+    doc.setAttribute('maxlength', MAX);
+    doc.setAttribute('inputmode', 'numeric');
+    doc.setAttribute('pattern', '[0-9]*');
+    doc.setAttribute('autocomplete', 'off');
+
+    function limpiar() {
+        var v = doc.value.replace(/\D/g, '').slice(0, MAX);
+        if (doc.value !== v) doc.value = v;
+    }
+
+    // Bloquea teclas que no sean números (deja pasar borrar, flechas, tab, Ctrl+C/V...)
+    doc.addEventListener('keydown', function (e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault();
+    });
+    doc.addEventListener('input', limpiar);
+    doc.addEventListener('paste', function () { setTimeout(limpiar, 0); });
+    limpiar();
+})();
+</script>
+
+<script>
+/**
  * Tooltips flotantes para elementos dentro de .pm-nav.
  * Se usan porque .pm-nav tiene overflow-x:auto, lo que
  * recortaría un tooltip hecho con CSS puro (::after).

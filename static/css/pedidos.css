@@ -478,3 +478,22 @@
     border-color: #E8651A;
     color: #F5ECD7;
 }
+
+/* ============================================
+   Paginación (listas de productos, etc.)
+   ============================================ */
+.pm-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .8rem;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--p-border);
+}
+.pm-pag-info   { font-size: .82rem; color: var(--p-muted); font-weight: 600; }
+.pm-pag-links  { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+.pm-pag-puntos { color: var(--p-muted); padding: 0 .25rem; font-weight: 700; }
+.pm-pag-actual { cursor: default; }
+.pm-pag-actual:hover { filter: none; transform: none; }

@@ -120,6 +120,34 @@
           </div>
         </div>
         {% endfor %}
+
+        <!-- Paginación de pagos registrados (siempre visible) -->
+        <div class="pg-paginacion">
+          <div class="pg-pag-info">
+            Mostrando {{ pagos_page.start_index }}–{{ pagos_page.end_index }}
+            de {{ pagos_page.paginator.count }} pago{{ pagos_page.paginator.count|pluralize }}
+          </div>
+          <div class="pg-pag-links">
+            {% if pagos_page.has_previous %}
+              <a href="?{{ pagos_qs_filtros }}&page={{ pagos_page.previous_page_number }}" class="pg-btn pg-btn-light pg-btn-sm">« Anterior</a>
+            {% endif %}
+
+            {% for p in pagos_paginas %}
+              {% if p.puntos %}
+                <span class="pg-pag-puntos">…</span>
+              {% elif p.num == pagos_page.number %}
+                <span class="pg-btn pg-btn-accent pg-btn-sm pg-pag-actual">{{ p.num }}</span>
+              {% else %}
+                <a href="?{{ pagos_qs_filtros }}&page={{ p.num }}" class="pg-btn pg-btn-light pg-btn-sm">{{ p.num }}</a>
+              {% endif %}
+            {% endfor %}
+
+            {% if pagos_page.has_next %}
+              <a href="?{{ pagos_qs_filtros }}&page={{ pagos_page.next_page_number }}" class="pg-btn pg-btn-light pg-btn-sm">Siguiente »</a>
+            {% endif %}
+          </div>
+        </div>
+
         <p id="sin-resultados">
           No se encontraron pagos con ese criterio.
         </p>

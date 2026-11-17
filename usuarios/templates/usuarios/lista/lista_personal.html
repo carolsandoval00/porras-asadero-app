@@ -21,6 +21,9 @@
             <i class="bi bi-person-plus"></i> Nuevo usuario
         </button>
         {% endif %}
+        <a href="{% url 'inicio_usuarios' %}" class="usr-tab tab-panel" data-tooltip="Volver al panel principal">
+            <i class="bi bi-arrow-left"></i> Regresar al panel
+        </a>
     </div>
 
     <!-- ══ LISTA ══ -->
@@ -53,6 +56,9 @@
                     <tbody id="tbody"></tbody>
                 </table>
             </div>
+
+            <!-- Paginación (la dibuja el JavaScript de abajo) -->
+            <div id="usr-paginacion" class="usr-paginacion"></div>
         </div>
     </div>
 
@@ -205,6 +211,10 @@ const PERMS=['Ver reservas','Crear reservas','Editar reservas','Eliminar reserva
              'Ver usuarios','Gestionar usuarios','Configuración','Acceso total'];
 const COLS=['#1A1008','#C0392B','#E8651A','#8B2000','#D4A017','#633806','#C0502A'];
 
+// ★ PAGINACIÓN de la tabla de usuarios (se hace en el navegador)
+const POR_PAGINA = 10;     // usuarios por página
+let paginaActual = 1;
+
 let djangoData = [];
 try {
     djangoData = JSON.parse('{{ personal_list_json|escapejs }}');
@@ -293,7 +303,62 @@ function stats() {
          <div class="stat-box"><div class="stat-num">${ad}</div><div class="stat-lbl"><span class="s-dot" style="background:#D4A017"></span>Admins</div></div>`;
 }
 
-window.renderTabla = function() {
+// Números de página a mostrar: 1 … anterior, actual, siguiente … última
+function numerosPagina(actual, total) {
+    const set = new Set([1, total, actual, actual - 1, actual + 1]);
+    const nums = Array.from(set).filter(n => n >= 1 && n <= total).sort((a, b) => a - b);
+    const resultado = [];
+    let previo = 0;
+    nums.forEach(n => {
+        if (n - previo > 1) resultado.push('...');
+        resultado.push(n);
+        previo = n;
+    });
+    return resultado;
+}
+
+// Dibuja los botones de página debajo de la tabla.
+function pintarPaginacion(total) {
+    const cont = document.getElementById('usr-paginacion');
+    if (!cont) return;
+    if (!total) { cont.innerHTML = ''; return; }
+
+    const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+    const inicio = (paginaActual - 1) * POR_PAGINA + 1;
+    const fin = Math.min(paginaActual * POR_PAGINA, total);
+
+    let links = '';
+    if (paginaActual > 1) {
+        links += `<button type="button" class="btn-ac" onclick="irPagina(${paginaActual - 1})">« Anterior</button>`;
+    }
+    numerosPagina(paginaActual, totalPaginas).forEach(n => {
+        if (n === '...') {
+            links += '<span class="usr-pag-puntos">…</span>';
+        } else if (n === paginaActual) {
+            links += `<span class="btn-ac usr-pag-actual">${n}</span>`;
+        } else {
+            links += `<button type="button" class="btn-ac" onclick="irPagina(${n})">${n}</button>`;
+        }
+    });
+    if (paginaActual < totalPaginas) {
+        links += `<button type="button" class="btn-ac" onclick="irPagina(${paginaActual + 1})">Siguiente »</button>`;
+    }
+
+    cont.innerHTML = `
+        <div class="usr-pag-info">Mostrando ${inicio}–${fin} de ${total} usuario${total !== 1 ? 's' : ''}</div>
+        <div class="usr-pag-links">${links}</div>`;
+}
+
+// Cambia de página (mantiene búsqueda y filtros).
+window.irPagina = function(n) {
+    paginaActual = n;
+    renderTabla(true);
+};
+
+// Sin argumentos vuelve a la página 1 (al buscar o filtrar);
+// con `true` se queda en la página actual (al cambiar de página o borrar).
+window.renderTabla = function(mantenerPagina) {
+    if (mantenerPagina !== true) paginaActual = 1;
     stats();
     const q = document.getElementById('f-buscar').value.toLowerCase();
     const r = document.getElementById('f-rol').value;
@@ -305,9 +370,19 @@ window.renderTabla = function() {
     const tb = document.getElementById('tbody');
     if (!li.length) {
         tb.innerHTML = `<tr><td colspan="7"><div class="vacio"><div class="v-ic">👤</div><p>Sin resultados con esos filtros</p></div></td></tr>`;
+        pintarPaginacion(0);
         return;
     }
-    tb.innerHTML = li.map(u => `
+
+    // Si la página actual quedó fuera de rango (por ejemplo al borrar), se ajusta.
+    const totalPaginas = Math.max(1, Math.ceil(li.length / POR_PAGINA));
+    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+    if (paginaActual < 1) paginaActual = 1;
+
+    const desde = (paginaActual - 1) * POR_PAGINA;
+    const pagina = li.slice(desde, desde + POR_PAGINA);
+
+    tb.innerHTML = pagina.map(u => `
         <tr id="fila-${u.id}">
           <td><div style="display:flex;align-items:center;gap:9px">
               ${avSm(u, uList.indexOf(u))}
@@ -322,6 +397,8 @@ window.renderTabla = function() {
               <button class="btn-ac btn-del" data-tooltip="Eliminar este usuario" onclick="pedirDel(${u.id})">Eliminar</button>` : ''}
           </div></td>
         </tr>`).join('');
+
+    pintarPaginacion(li.length);
 };
 
 window.verPerfil = function(id) {
@@ -511,7 +588,8 @@ window.pedirDel = function(id) {
             .then(res => res.json().then(data => ({ ok: res.ok && data.ok, data })))
             .then(({ ok, data }) => {
                 if (ok) {
-                    setTimeout(() => { uList = uList.filter(x => x.id !== id); save(); renderTabla(); toast('Usuario eliminado correctamente', 'err'); }, 300);
+                    // renderTabla(true): se queda en la misma página después de borrar
+                    setTimeout(() => { uList = uList.filter(x => x.id !== id); save(); renderTabla(true); toast('Usuario eliminado correctamente', 'err'); }, 300);
                 } else {
                     if (fila) { fila.style.opacity = '1'; fila.style.transform = 'none'; }
                     toast(data.error || 'Error al eliminar el usuario', 'err');
