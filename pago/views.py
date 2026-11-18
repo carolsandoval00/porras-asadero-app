@@ -14,6 +14,7 @@ from urllib.parse import urlencode
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
 from pedidos.models import Pedido
+from pedidos.views import encabezado_reporte, _respuesta_excel  # logo + estilo de los reportes
 
 
 # ── DATOS DEL ASADERO (para el recibo) ──────────────────────────────
@@ -610,43 +611,24 @@ def pagos_exportar_excel(request):
     if _solo_cajero_admin(request):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment
-
     pagos = _pagos_reporte_queryset(request)
-    wb = Workbook()
-    ws = wb.active
-    ws.title = 'Pagos registrados'
-
-    encabezados = ['Orden', 'Cliente', 'Método', 'Monto', 'Referencia', 'Estado', 'Fecha', 'Hora']
-    ws.append(encabezados)
-    for col in range(1, len(encabezados) + 1):
-        celda = ws.cell(row=1, column=col)
-        celda.font      = Font(bold=True, color='F5ECD7')
-        celda.fill      = PatternFill(start_color='C0392B', end_color='C0392B', fill_type='solid')
-        celda.alignment = Alignment(horizontal='center')
-
+    filas = []
     for pg in pagos:
-        ws.append([
+        filas.append([
             pg.pedido.numero_orden if pg.pedido else '—',
             pg.pedido.cliente.nombre_completo if pg.pedido and pg.pedido.cliente else '—',
             pg.get_metodo_pago_display(),
-            float(pg.monto),
+            pg.monto,
             pg.referencia or '—',
             'Pagado',
             pg.fecha_pago.strftime('%d/%m/%Y'),
             pg.fecha_pago.strftime('%I:%M %p'),
         ])
-
-    for i, ancho in enumerate([14, 26, 16, 12, 20, 12, 14, 12], start=1):
-        ws.column_dimensions[chr(64 + i)].width = ancho
-
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename="pagos_registrados.xlsx"'
-    wb.save(response)
-    return response
+    # Mismo encabezado con logo que usa el módulo de pedidos
+    return _respuesta_excel(
+        'Reporte de Pagos', 'pagos_registrados.xlsx',
+        ['Orden', 'Cliente', 'Método', 'Monto', 'Referencia', 'Estado', 'Fecha', 'Hora'],
+        filas, [14, 26, 16, 14, 22, 12, 14, 12], cols_dinero=(3,))
 
 
 @login_required
@@ -655,28 +637,28 @@ def pagos_exportar_pdf(request):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
     from reportlab.lib import colors
-    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.units import cm
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 
     pagos = _pagos_reporte_queryset(request)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="pagos_registrados.pdf"'
 
+    # Mismos márgenes y tamaño de hoja que los PDF de pedidos
     doc = SimpleDocTemplate(
-        response, pagesize=landscape(letter),
-        topMargin=1.2*cm, bottomMargin=1.2*cm,
-        leftMargin=1.2*cm, rightMargin=1.2*cm,
+        response, pagesize=landscape(A4),
+        leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm,
     )
-    estilos   = getSampleStyleSheet()
-    elementos = [
-        Paragraph('Porras Asadero — Pagos registrados', estilos['Title']),
-        Paragraph(f'Generado el {timezone.now().strftime("%d/%m/%Y %I:%M %p")}', estilos['Normal']),
-        Paragraph(f'Rango: {_rango_texto(request)}', estilos['Normal']),
-        Spacer(1, 0.5*cm),
-    ]
+
+    # Encabezado con logo + título (igual que pedidos) y debajo el rango de fechas
+    elementos = encabezado_reporte('Reporte de Pagos')
+    estilo_rango = ParagraphStyle('RangoReporte', parent=getSampleStyleSheet()['Normal'],
+                                  fontSize=9, textColor=colors.HexColor('#555555'),
+                                  leftIndent=0.5*cm, spaceBefore=4)
+    elementos.insert(1, Paragraph(f'Rango: {_rango_texto(request)}', estilo_rango))
 
     datos = [['Orden', 'Cliente', 'Método', 'Monto', 'Referencia', 'Estado', 'Fecha', 'Hora']]
     total = 0
@@ -692,19 +674,29 @@ def pagos_exportar_pdf(request):
             pg.fecha_pago.strftime('%d/%m/%Y'),
             pg.fecha_pago.strftime('%I:%M %p'),
         ])
-    datos.append(['', '', '', f'${total:,.0f}', '', '', '', ''])
+    datos.append(['', '', 'Total', f'${total:,.0f}', '', '', '', ''])
 
-    tabla = Table(datos, repeatRows=1)
+    tabla = Table(
+        datos,
+        colWidths=[2.4*cm, 5.6*cm, 3.4*cm, 3.2*cm, 4.6*cm, 2.4*cm, 2.8*cm, 2.3*cm],
+        repeatRows=1,
+    )
     tabla.setStyle(TableStyle([
-        ('BACKGROUND',    (0, 0),  (-1, 0),  colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',     (0, 0),  (-1, 0),  colors.HexColor('#F5ECD7')),
-        ('FONTNAME',      (0, 0),  (-1, 0),  'Helvetica-Bold'),
-        ('FONTSIZE',      (0, 0),  (-1, -1), 8.5),
-        ('ALIGN',         (3, 1),  (3, -1),  'RIGHT'),
-        ('GRID',          (0, 0),  (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
-        ('ROWBACKGROUNDS',(0, 1),  (-1, -2), [colors.HexColor('#FDF7EC'), colors.HexColor('#F5ECD7')]),
-        ('FONTNAME',      (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('BACKGROUND',    (0, -1), (-1, -1), colors.HexColor('#F5ECD7')),
+        ('BACKGROUND',     (0, 0), (-1, 0),  colors.HexColor('#C0392B')),
+        ('TEXTCOLOR',      (0, 0), (-1, 0),  colors.HexColor('#F5ECD7')),
+        ('FONTNAME',       (0, 0), (-1, 0),  'Helvetica-Bold'),
+        ('FONTSIZE',       (0, 0), (-1, 0),  9),
+        ('FONTSIZE',       (0, 1), (-1, -1), 8),
+        ('ALIGN',          (3, 1), (3, -1),  'RIGHT'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.HexColor('#FDF7EC'), colors.HexColor('#EDE3C8')]),
+        ('GRID',           (0, 0), (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
+        ('VALIGN',         (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING',     (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING',  (0, 0), (-1, -1), 5),
+        ('LEFTPADDING',    (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING',   (0, 0), (-1, -1), 5),
+        ('FONTNAME',       (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('BACKGROUND',     (0, -1), (-1, -1), colors.HexColor('#F5ECD7')),
     ]))
     elementos.append(tabla)
     doc.build(elementos)

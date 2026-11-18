@@ -3,14 +3,59 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Pagos registrados — Porras Asadero</title>
+  <title>Reporte de Pagos — Porras Asadero</title>
   <link rel="stylesheet" href="{% static 'css/pago.css' %}">
+  <!-- Estilos propios de esta página: así el logo siempre sale del tamaño correcto -->
+  <style>
+    @page { size: A4 landscape; margin: 1cm; }
+
+    html, body { background: #fff; }
+    .print-body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1A1008; margin: 1cm; }
+
+    .no-print { margin-bottom: 1rem; }
+
+    /* Encabezado: logo a la izquierda, título a la derecha, línea roja debajo */
+    .print-header {
+      display: flex; align-items: center; gap: .5cm;
+      border-bottom: 1.2pt solid #C0392B; padding-bottom: 6pt; margin-bottom: .5cm;
+    }
+    /* El logo se recorta con porcentajes para quitar el espacio en blanco del PNG */
+    .print-logo { position: relative; width: 5.2cm; height: 2.617cm; overflow: hidden; flex: none; }
+    .print-logo img { position: absolute; width: 141.83%; max-width: none; left: -21.51%; top: -26.06%; }
+    .print-titulo h1 { font-size: 18pt; font-weight: 700; color: #C0392B; margin: 0 0 3pt; }
+    .print-titulo p  { font-size: 9pt; color: #555; margin: 0; }
+
+    /* Tabla con los mismos colores del PDF */
+    .print-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+    .print-table, .print-table * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-table th { background: #C0392B; color: #F5ECD7; border: 1px solid #D4C4A0;
+                      padding: 5pt; text-align: left; font-size: 8.5pt; }
+    .print-table td { border: 1px solid #D4C4A0; padding: 5pt; }
+    .print-table tbody tr:nth-child(odd) td  { background: #FDF7EC; }
+    .print-table tbody tr:nth-child(even) td { background: #EDE3C8; }
+    .print-table tfoot td { font-weight: 700; background: #F5ECD7; }
+    .print-table thead { display: table-header-group; }
+    .print-table tr { break-inside: avoid; }
+    .print-monto { text-align: right; }
+
+    @media print {
+      .no-print { display: none !important; }
+      .print-body { margin: 0; }
+    }
+  </style>
 </head>
 <body class="print-body" onload="window.print()">
-  <button class="no-print print-btn-margin" onclick="window.print()">Imprimir</button>
-  <h1 class="print-title">Porras Asadero — Pagos registrados</h1>
-  <p class="print-meta">Generado el {{ ahora|date:"d/m/Y h:i A" }}</p>
-  <p class="print-meta">Rango: {{ rango }}</p>
+  <button class="no-print" onclick="window.print()">Imprimir</button>
+
+  <!-- Encabezado con logo + título (igual que el PDF y que el módulo de pedidos) -->
+  <div class="print-header">
+    <div class="print-logo"><img src="{% static 'img/logo.png' %}" alt="Porras Asadero"></div>
+    <div class="print-titulo">
+      <h1>Reporte de Pagos</h1>
+      <p>Porras Asadero · Generado el {{ ahora|date:"d/m/Y h:i A" }}</p>
+      <p>Rango: {{ rango }}</p>
+    </div>
+  </div>
 
   <table class="print-table">
     <thead>

@@ -526,3 +526,24 @@
 @media(max-width:600px){
   .caja-form-grid { grid-template-columns:1fr; }
 }
+
+/* ══ REPORTE IMPRESO DE PAGOS: logo + título (igual que pedidos) ═══════ */
+@page { size: A4 landscape; margin: 1cm; }
+
+.print-header {
+  display: flex; align-items: center; gap: .5cm;
+  border-bottom: 1.2pt solid #C0392B; padding-bottom: 6pt; margin-bottom: .5cm;
+}
+/* El logo se recorta con porcentajes para quitar el espacio en blanco del PNG */
+.print-logo { position: relative; width: 5.2cm; aspect-ratio: 1083 / 545; overflow: hidden; flex: none; }
+.print-logo img { position: absolute; width: 141.83%; max-width: none; left: -21.51%; top: -26.06%; }
+.print-titulo h1 { font-size: 18pt; font-weight: 700; color: #C0392B; margin: 0 0 3pt; }
+.print-titulo p  { font-size: 9pt; color: #555; margin: 0; }
+
+@media print {
+  .no-print { display: none !important; }
+  .print-body { margin: 0; }
+  .print-table, .print-table * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-table thead { display: table-header-group; }
+  .print-table tr { break-inside: avoid; }
+}
