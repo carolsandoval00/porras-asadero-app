@@ -441,6 +441,49 @@ def pago_recibo(request, pk):
     })
 
 
+<<<<<<< Updated upstream
+=======
+@login_required
+def recibos_lista(request):
+    """Lista de todos los recibos (pagos) con búsqueda y filtro de fechas."""
+    if _solo_cajero_admin(request):
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
+
+    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+
+    # ★ El recibo N° 1 siempre arriba: orden ascendente por número de recibo
+    pagos_qs = pagos_qs.order_by('numero_recibo', 'pk')
+
+    # ★ PAGINACIÓN DE RECIBOS: 10 por página
+    paginator = Paginator(pagos_qs, 10)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+    qs_filtros = urlencode({
+        'q_pago': q_pago,
+        'filtro_fecha': 'rango',
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
+    })
+
+    return render(request, 'pago/lista_recibos.html', {
+        'pagos':       page_obj,
+        'page_obj':    page_obj,
+        'paginas':     paginas,
+        'qs_filtros':  qs_filtros,
+        'total_recibos': paginator.count,
+        'total':       pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
+        'q_pago':      q_pago,
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
+        'hoy':         timezone.localdate().isoformat(),
+        'nombre':      request.user.get_full_name() or request.user.username,
+    })
+
+
+>>>>>>> Stashed changes
 # ── REPORTES ────────────────────────────────────────────────────────
 
 def _pagos_reporte_queryset(request=None):
