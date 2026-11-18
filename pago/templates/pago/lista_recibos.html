@@ -48,6 +48,7 @@
             {% for pg in pagos %}
             <tr>
               <td><strong>#{{ pg.numero_recibo|default:pg.pk }}</strong></td>
+              <td><strong>#{{ pg.pk }}</strong></td>
               <td>{{ pg.pedido.numero_orden|default:"—" }}</td>
               <td>{{ pg.pedido.cliente.nombre_completo|default:"—" }}</td>
               <td>{{ pg.get_metodo_pago_display }}</td>

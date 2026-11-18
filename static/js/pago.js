@@ -58,53 +58,6 @@ function cerrarModalCierre() {
   document.getElementById('modal-cerrar-caja').classList.remove('open');
 }
 
-// ── Ventana de atención (avisos de validación) ──────────────
-function mostrarAtencion(mensaje) {
-  const modal = document.getElementById('modal-atencion');
-  if (!modal) { alert(mensaje); return; }
-  document.getElementById('modal-atencion-msg').textContent = mensaje;
-  modal.classList.add('open');
-}
-function cerrarAtencion() {
-  const modal = document.getElementById('modal-atencion');
-  if (modal) modal.classList.remove('open');
-  const monto = document.querySelector('[name="monto_inicial"]');
-  if (monto) monto.focus();
-}
-
-// ── Abrir caja: validar monto inicial (200.000 a 1.000.000) ─
-const MONTO_INICIAL_MIN = 200000;
-const MONTO_INICIAL_MAX = 1000000;
-
-function iniciarValidacionApertura() {
-  const monto = document.querySelector('[name="monto_inicial"]');
-  if (!monto || !monto.form) return;
-  const form = monto.form;
-
-  // Se desactiva la burbuja del navegador para mostrar nuestra ventana
-  form.noValidate = true;
-
-  form.addEventListener('submit', function (e) {
-    const valor = parseFloat(monto.value);
-
-    if (monto.value.trim() === '' || isNaN(valor)) {
-      e.preventDefault();
-      mostrarAtencion('El monto inicial es obligatorio.');
-      return;
-    }
-    if (valor < MONTO_INICIAL_MIN || valor > MONTO_INICIAL_MAX) {
-      e.preventDefault();
-      mostrarAtencion('El monto inicial debe estar entre $200.000 y $1.000.000.');
-      return;
-    }
-    // Resto de campos (responsable, etc.): se usa el aviso normal del navegador
-    if (!form.checkValidity()) {
-      e.preventDefault();
-      form.reportValidity();
-    }
-  });
-}
-
 // ── Editar caja (AJAX) ──────────────────────────────────────
 let _editandoCajaId = null;
 
@@ -204,7 +157,6 @@ document.getElementById('modal-eliminar').addEventListener('click',     function
 document.getElementById('modal-cerrar-caja').addEventListener('click',  function(e){ if(e.target===this) cerrarModalCierre(); });
 document.getElementById('modal-editar-caja').addEventListener('click',  function(e){ if(e.target===this) cerrarEditarCaja(); });
 document.getElementById('modal-pago-exito').addEventListener('click',   function(e){ if(e.target===this) this.classList.remove('open'); });
-document.getElementById('modal-atencion').addEventListener('click',     function(e){ if(e.target===this) cerrarAtencion(); });
 // ── Buscador de pagos (client-side) ─────────────────────────
 function filtrarPagos() {
   const texto  = document.getElementById('buscador-pagos').value.toLowerCase().trim();
@@ -239,8 +191,6 @@ function filtrarPagos() {
 // ── Init ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
 
-    iniciarValidacionApertura();
-
     if (window.pagoConfig?.formErrors) {
         showTab('crear');
     } 
@@ -251,4 +201,86 @@ document.addEventListener('DOMContentLoaded', () => {
         showTab(window.pagoConfig.tabActivo);
     }
 
+});
+
+
+// ── Foto del comprobante (solo transferencia) ───────────────
+const MAX_FOTO_MB = 8;
+
+function formatoPeso(bytes) {
+  return bytes >= 1048576
+    ? (bytes / 1048576).toFixed(1) + ' MB'
+    : Math.max(1, Math.round(bytes / 1024)) + ' KB';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const metodo   = document.querySelector('[name="metodo_pago"]');
+  const archivo  = document.getElementById('id_comprobante');
+  const bloque   = document.getElementById('bloque-comprobante');
+  if (!metodo || !archivo || !bloque) return;
+
+  const drop     = document.getElementById('upload-drop');
+  const result   = document.getElementById('upload-result');
+  const preview  = document.getElementById('preview-comprobante');
+  const nombre   = document.getElementById('upload-nombre');
+  const peso     = document.getElementById('upload-peso');
+  const errorMsg = document.getElementById('upload-error');
+  let urlActual  = null;
+
+  function mostrarError(texto) {
+    errorMsg.textContent = texto;
+    errorMsg.hidden = !texto;
+    bloque.classList.toggle('has-error', !!texto);
+  }
+
+  function limpiarFoto() {
+    archivo.value = '';
+    if (urlActual) { URL.revokeObjectURL(urlActual); urlActual = null; }
+    preview.removeAttribute('src');
+    result.hidden = true;
+    drop.hidden = false;
+  }
+
+  function actualizarVisibilidad() {
+    const esTransferencia = metodo.value === 'TRANSFERENCIA';
+    bloque.hidden = !esTransferencia;
+    if (!esTransferencia) { limpiarFoto(); mostrarError(''); }
+  }
+
+  archivo.addEventListener('change', function () {
+    const f = archivo.files && archivo.files[0];
+    if (!f) { limpiarFoto(); return; }
+
+    if (f.size > MAX_FOTO_MB * 1048576) {
+      limpiarFoto();
+      mostrarError('La foto es demasiado pesada (máximo ' + MAX_FOTO_MB + ' MB).');
+      return;
+    }
+    if (urlActual) URL.revokeObjectURL(urlActual);
+    urlActual = URL.createObjectURL(f);
+    preview.src = urlActual;
+    nombre.textContent = f.name;
+    peso.textContent = formatoPeso(f.size);
+    drop.hidden = true;
+    result.hidden = false;
+    mostrarError('');
+  });
+
+  document.getElementById('upload-cambiar').addEventListener('click', function () { archivo.click(); });
+  document.getElementById('upload-quitar').addEventListener('click', function () { limpiarFoto(); });
+
+  metodo.addEventListener('change', actualizarVisibilidad);
+
+  // Si es transferencia y no hay foto, no deja enviar (el servidor también lo valida).
+  if (archivo.form) {
+    archivo.form.addEventListener('submit', function (e) {
+      if (metodo.value === 'TRANSFERENCIA' && !(archivo.files && archivo.files.length)) {
+        e.preventDefault();
+        mostrarError('Debes tomar la foto del comprobante para pagos por transferencia.');
+        bloque.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
+  actualizarVisibilidad();
 });
