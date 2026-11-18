@@ -6,6 +6,7 @@ from itertools import groupby
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -207,6 +208,24 @@ def _productos_disponibles():
     )
 
 
+def _rango_paginas(page_obj, ventana=2):
+    """Devuelve una lista como [{'num': 1}, {'puntos': True}, {'num': 4}, ...]
+    con la primera página, la última y las cercanas a la actual.
+    La plantilla la usa para dibujar los números de la paginación."""
+    total  = page_obj.paginator.num_pages
+    actual = page_obj.number
+    mostrar = sorted(
+        {1, total} | set(range(max(1, actual - ventana), min(total, actual + ventana) + 1))
+    )
+    paginas, anterior = [], None
+    for n in mostrar:
+        if anterior is not None and n - anterior > 1:
+            paginas.append({'puntos': True})
+        paginas.append({'num': n})
+        anterior = n
+    return paginas
+
+
 def _parse_items_from_post(request):
     items_data = []
     i = 0
@@ -331,11 +350,13 @@ def dashboard(request):
     total_categorias   = Categoria.objects.count()
     total_clientes     = Cliente.objects.count()
 
-    ultimos_pedidos = list(
+    pedidos_qs = (
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
-        .order_by('-fecha_creacion')[:5]
+        .order_by('-fecha_creacion')
     )
+    paginator = Paginator(pedidos_qs, 5)  # 5 pedidos por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
 
     return render(request, 'pedidos/dashboard.html', {
         'titulo': 'Pedidos',
@@ -345,7 +366,9 @@ def dashboard(request):
         'total_productos': total_productos,
         'total_categorias': total_categorias,
         'total_clientes': total_clientes,
-        'ultimos_pedidos': ultimos_pedidos,
+        'ultimos_pedidos': page_obj,          # la plantilla itera sobre esto
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
     })
 
 
@@ -355,17 +378,31 @@ def dashboard(request):
 def pedido_lista(request):
     if _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
     q          = request.GET.get('q', '').strip()
     filtro     = _resolver_filtro_fecha(request)
-    pedidos_qs = _pedidos_filtrados(request)
-    pedidos_lista_data = list(pedidos_qs)
-    pedidos_por_fecha  = []
-    for fecha, grupo in groupby(pedidos_lista_data, key=lambda p: p.fecha_creacion.date()):
+    pedidos_qs = _pedidos_filtrados(request)  # ya viene ordenado por -fecha_creacion
+
+    # Paginación: 15 pedidos por página
+    paginator = Paginator(pedidos_qs, 15)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
+    # Agrupar por fecha solo los pedidos de la página actual
+    pedidos_por_fecha = []
+    for fecha, grupo in groupby(page_obj.object_list, key=lambda p: p.fecha_creacion.date()):
         items = list(grupo)
         pedidos_por_fecha.append({'fecha': fecha, 'pedidos': items, 'count': len(items)})
+
+    # Querystring sin "page" para conservar búsqueda y filtros al cambiar de página
+    params = request.GET.copy()
+    params.pop('page', None)
+
     return render(request, 'pedidos/pedido_lista.html', {
         'titulo': 'Pedidos',
         'pedidos_por_fecha': pedidos_por_fecha,
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': params.urlencode(),
         'q': q,
         'filtro_fecha': filtro['filtro_fecha'],
         'fecha_dia': filtro['fecha_dia'],
@@ -395,6 +432,21 @@ def pedido_marcar_listo(request, pk):
     return redirect('pedidos:orden_lista')
 
 
+# Estilo de tabla compartido por todos los reportes PDF
+def _estilo_tabla_pdf():
+    return TableStyle([
+        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
+        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
+        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
+        ('FONTSIZE',(0,1),(-1,-1),8),
+        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
+        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
+        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
+        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
+        ('RIGHTPADDING',(0,0),(-1,-1),5),
+    ])
+
+
 @login_required
 def pedido_exportar_pdf(request):
     pedidos_qs = _pedidos_filtrados(request)
@@ -411,17 +463,7 @@ def pedido_exportar_pdf(request):
             Paragraph(productos_str, styles['Normal']), p.get_estado_display(),
             f"${p.total:,.0f}", p.fecha_creacion.strftime('%d/%m/%Y %H:%M')])
     tabla = Table(data, colWidths=[1.8*cm, 4*cm, 2.5*cm, 7.5*cm, 3*cm, 2.5*cm, 4*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
-        ('FONTSIZE',(0,1),(-1,-1),8),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
-        ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
@@ -604,15 +646,32 @@ def producto_lista(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_prod  = request.GET.get('q_prod', '').strip()
     cat_sel = request.GET.get('categoria', '').strip()
-    productos_qs = Producto.objects.select_related('categoria').all()
+
+    # order_by es necesario: Paginator con un queryset sin orden da resultados inconsistentes
+    productos_qs = (Producto.objects.select_related('categoria')
+                    .order_by('categoria__nombre', 'nombre'))
     if q_prod:
         productos_qs = productos_qs.filter(nombre__icontains=q_prod)
     if cat_sel:
         productos_qs = productos_qs.filter(categoria__id=cat_sel)
+
+    paginator = Paginator(productos_qs, 10)  # 10 productos por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
+    # Querystring sin "page", para conservar el buscador y la categoría al cambiar de página
+    params = request.GET.copy()
+    params.pop('page', None)
+
     return render(request, 'pedidos/producto_lista.html', {
-        'titulo': 'Pedidos', 'productos': productos_qs,
-        'categorias': Categoria.objects.all(), 'q_prod': q_prod,
-        'cat_sel': cat_sel, 'seccion_activa': 'producto-lista'})
+        'titulo': 'Pedidos',
+        'productos': page_obj,          # la plantilla sigue iterando "productos"
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': params.urlencode(),
+        'categorias': Categoria.objects.all(),
+        'q_prod': q_prod,
+        'cat_sel': cat_sel,
+        'seccion_activa': 'producto-lista'})
 
 
 @login_required
@@ -692,17 +751,7 @@ def producto_exportar_pdf(request):
             f"${p.precio:,.0f}", Paragraph(p.descripcion or '—', styles['Normal']),
             'Sí' if p.disponible else 'No'])
     tabla = Table(data, colWidths=[1.2*cm, 5*cm, 4*cm, 2.5*cm, 8*cm, 2.5*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
-        ('FONTSIZE',(0,1),(-1,-1),8),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
-        ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
@@ -809,17 +858,7 @@ def categoria_exportar_pdf(request):
     for i, c in enumerate(categorias_qs, start=1):
         data.append([f"{i:02d}", c.nombre, Paragraph(c.descripcion or '—', styles['Normal'])])
     tabla = Table(data, colWidths=[1.2*cm, 5*cm, 14*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
-        ('FONTSIZE',(0,1),(-1,-1),8),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
-        ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
@@ -925,17 +964,7 @@ def cliente_exportar_pdf(request):
         data.append([f"{i:02d}", c.nombre_completo, c.telefono or '—',
             f"{c.tipo_documento} {c.documento}", Paragraph(c.direccion or '—', styles['Normal'])])
     tabla = Table(data, colWidths=[1.2*cm, 5*cm, 3.5*cm, 4*cm, 9*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
-        ('FONTSIZE',(0,1),(-1,-1),8),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
-        ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
@@ -993,17 +1022,7 @@ def orden_exportar_pdf(request):
             f"${o.subtotal:,.0f}", f"${o.impuesto:,.0f}", f"${o.total:,.0f}",
             o.fecha_creacion.strftime('%d/%m/%Y %H:%M')])
     tabla = Table(data, colWidths=[2.2*cm,3.5*cm,2*cm,6*cm,2.5*cm,2.2*cm,2.2*cm,2.2*cm,3.5*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
-        ('FONTSIZE',(0,1),(-1,-1),8),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
-        ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
