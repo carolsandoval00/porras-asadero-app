@@ -4,7 +4,6 @@ import os
 from datetime import date, datetime
 
 import httpx
-import ollama
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -12,17 +11,18 @@ from django.views.decorators.http import require_POST
 from reservas.models import Mesa, Reserva
 from pedidos.models import Pedido
 
-OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '')
-OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'gpt-oss:20b-cloud')
-MAX_TOKENS = 1000
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', '')   # nombre del modelo, sacado de Google AI Studio
+# Modelos de respaldo (uno o varios, separados por coma) para cuando el principal está saturado
+GEMINI_MODEL_RESPALDO = os.environ.get('GEMINI_MODEL_RESPALDO', '')
+GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent'
+MAX_TOKENS = 2000   # los modelos con "thinking" gastan parte de este límite pensando
+TIMEOUT_SEGUNDOS = 10  # espera máxima por intento
 MAX_HISTORIAL = 10  # solo los últimos N turnos, para no gastar tokens de más
 
 
-def _client_ollama():
-    return ollama.Client(
-        host='https://ollama.com',
-        headers={'Authorization': 'Bearer ' + OLLAMA_API_KEY},
-    )
+class GeminiError(Exception):
+    """Error devuelto por la API de Gemini (clave, modelo, cuota, respuesta vacía)."""
 
 
 def _construir_contexto_admin():
@@ -132,38 +132,88 @@ personal de clientes):
 """
 
 
-def _llamar_ollama(system_prompt, historial, mensaje_usuario):
-    messages = [{'role': 'system', 'content': system_prompt}]
+def _llamar_gemini(system_prompt, historial, mensaje_usuario):
+    contents = []
 
     for turno in historial[-MAX_HISTORIAL:]:
+        if not isinstance(turno, dict):
+            continue
         role = turno.get('role')
         content = turno.get('content')
         if not role or not content:
             continue
-        messages.append({
-            'role': 'assistant' if role == 'assistant' else 'user',
-            'content': str(content),
+        contents.append({
+            'role': 'model' if role == 'assistant' else 'user',
+            'parts': [{'text': str(content)}],
         })
 
-    messages.append({'role': 'user', 'content': mensaje_usuario})
+    # Gemini exige que la conversación empiece con un turno del usuario
+    while contents and contents[0]['role'] == 'model':
+        contents.pop(0)
 
-    response = _client_ollama().chat(
-        model=OLLAMA_MODEL,
-        messages=messages,
-        options={'num_predict': MAX_TOKENS},
-    )
+    contents.append({'role': 'user', 'parts': [{'text': mensaje_usuario}]})
 
-    texto = response.message.content
+    # Prueba el modelo principal y, si falla por saturación, cuota o tiempo de
+    # espera, va pasando por los de respaldo (si no hay respaldo, reintenta el mismo).
+    modelos = [GEMINI_MODEL] + [m.strip() for m in GEMINI_MODEL_RESPALDO.split(',') if m.strip()]
+    if len(modelos) == 1:
+        modelos = modelos * 2
+
+    respuesta = None
+    error_tiempo = None
+    for modelo in modelos:
+        try:
+            respuesta = httpx.post(
+                GEMINI_URL.format(modelo=modelo),
+                headers={'x-goog-api-key': GEMINI_API_KEY},
+                json={
+                    'system_instruction': {'parts': [{'text': system_prompt}]},
+                    'contents': contents,
+                    'generationConfig': {'maxOutputTokens': MAX_TOKENS},
+                },
+                timeout=TIMEOUT_SEGUNDOS,
+            )
+        except httpx.TimeoutException as e:
+            print(f"PIA: tiempo agotado con el modelo {modelo}")
+            respuesta, error_tiempo = None, e
+            continue
+        error_tiempo = None
+        if respuesta.status_code not in (429, 500, 503):
+            break  # respuesta definitiva (ok o error que reintentar no arregla)
+        print(f"PIA: {respuesta.status_code} con el modelo {modelo}")
+
+    if respuesta is None:
+        raise error_tiempo  # todos los intentos agotaron el tiempo
+
+    if respuesta.status_code != 200:
+        raise GeminiError(f'{respuesta.status_code}: {respuesta.text[:300]}')
+
+    try:
+        partes = respuesta.json()['candidates'][0]['content']['parts']
+        texto = ''.join(p.get('text', '') for p in partes)
+    except (KeyError, IndexError, ValueError):
+        texto = ''
+
     return texto or 'No obtuve una respuesta clara, ¿puedes reformular tu pregunta?'
+
+
+def _respuesta_sin_ia():
+    """Respuesta de emergencia: el estado del restaurante leído directo de la base de datos."""
+    return (
+        "Ahora mismo no puedo conectarme con la IA, pero este es el estado actual "
+        "del restaurante según el sistema:\n\n"
+        + _construir_contexto_admin()
+        + "\n\nIntenta de nuevo en un momento si necesitas otra cosa."
+    )
 
 
 @login_required
 @require_POST
 def chat_ia(request):
-    """Endpoint del panel admin: recibe un mensaje y responde con Ollama Cloud."""
-    if not OLLAMA_API_KEY:
+    """Endpoint del panel admin: recibe un mensaje y responde con Gemini."""
+    if not GEMINI_API_KEY or not GEMINI_MODEL:
         return JsonResponse(
-            {'error': 'Falta configurar OLLAMA_API_KEY en el archivo .env del servidor.'},
+            {'error': 'Falta configurar GEMINI_API_KEY y GEMINI_MODEL en el archivo .env del servidor.'},
             status=500,
         )
 
@@ -185,19 +235,15 @@ def chat_ia(request):
     system_prompt = _construir_system_prompt(nombre_usuario)
 
     try:
-        respuesta = _llamar_ollama(system_prompt, historial, mensaje)
-    except ollama.ResponseError as e:
-        detalle = getattr(e, 'error', str(e))
-        return JsonResponse(
-            {'error': 'La IA no respondió correctamente.', 'detail': detalle}, status=502
-        )
-    except httpx.ConnectError as e:
-        return JsonResponse(
-            {'error': 'No se pudo conectar con Ollama Cloud.', 'detail': str(e)}, status=502
-        )
+        respuesta = _llamar_gemini(system_prompt, historial, mensaje)
+    except GeminiError as e:
+        print("PIA error:", e)
+        return JsonResponse({'reply': _respuesta_sin_ia()})
     except httpx.TimeoutException:
-        return JsonResponse(
-            {'error': 'El asistente tardó demasiado en responder.'}, status=504
-        )
+        print("PIA error: tiempo de espera agotado en todos los intentos")
+        return JsonResponse({'reply': _respuesta_sin_ia()})
+    except httpx.HTTPError as e:
+        print("PIA error de red:", repr(e))
+        return JsonResponse({'reply': _respuesta_sin_ia()})
 
     return JsonResponse({'reply': respuesta})
