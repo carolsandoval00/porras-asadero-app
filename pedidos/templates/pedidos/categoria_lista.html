@@ -6,13 +6,32 @@
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
 
 <div class="pm-wrapper">
+  <!-- Encabezado que solo aparece al imprimir (logo + título, igual que el PDF) -->
+  <div class="pm-print-header" style="display:none">
+    <div class="pm-print-logo"><img src="{% static 'img/logo.png' %}" alt="Porras Asadero"></div>
+    <div class="pm-print-titulo">
+      <h1>Reporte de Categorías</h1>
+      <p>Porras Asadero · Generado el {% now "d/m/Y H:i" %}</p>
+    </div>
+  </div>
   <!-- Cabecera -->
   <div class="pm-header">
     <h1>{{ titulo }}</h1>
     <h2>Bienvenido, {{ nombre }}</h2>
   </div>
 
-  {# Los mensajes de Django (éxito y errores) salen en la ventanita de base 2.html #}
+  {% if messages %}
+  <div id="modal-mensaje" class="pm-modal-overlay open">
+    <div class="pm-modal-box">
+      {% for msg in messages %}
+      <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
+      {% endfor %}
+      <div class="pm-modal-actions">
+        <button class="pm-btn pm-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Navegación Compartida -->
   <div class="pm-nav">
@@ -72,7 +91,7 @@
           <tbody>
             {% for cat in categorias %}
             <tr>
-              <td><strong>{{ page_obj.start_index|add:forloop.counter0|stringformat:"02d" }}</strong></td>
+              <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
               <td><strong>{{ cat.nombre }}</strong></td>
               <td class="pm-muted">{{ cat.descripcion|default:"—" }}</td>
               <td class="pm-td-actions">
@@ -87,40 +106,6 @@
           </tbody>
         </table>
       </div>
-
-      <!-- Paginación -->
-      {% if page_obj.paginator.count %}
-      <div class="pm-paginacion">
-        <span class="pm-pag-info">
-          Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} categorías
-        </span>
-
-        {% if page_obj.paginator.num_pages > 1 %}
-        <div class="pm-pag-links">
-          {% if page_obj.has_previous %}
-          <a href="?{{ qs_filtros }}&page={{ page_obj.previous_page_number }}"
-             class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página anterior">← Anterior</a>
-          {% endif %}
-
-          {% for p in paginas %}
-            {% if p.puntos %}
-              <span class="pm-pag-puntos">…</span>
-            {% elif p.num == page_obj.number %}
-              <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ p.num }}</span>
-            {% else %}
-              <a href="?{{ qs_filtros }}&page={{ p.num }}"
-                 class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Ir a la página {{ p.num }}">{{ p.num }}</a>
-            {% endif %}
-          {% endfor %}
-
-          {% if page_obj.has_next %}
-          <a href="?{{ qs_filtros }}&page={{ page_obj.next_page_number }}"
-             class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página siguiente">Siguiente →</a>
-          {% endif %}
-        </div>
-        {% endif %}
-      </div>
-      {% endif %}
     </div>
   </div>
 </div>
