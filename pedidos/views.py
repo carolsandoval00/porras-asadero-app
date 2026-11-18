@@ -3,15 +3,12 @@ import csv
 import json
 from datetime import date, timedelta
 from itertools import groupby
-from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
-from django.shortcuts import render as _django_render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from usuarios.models import Cliente
@@ -26,17 +23,155 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 
-def render(request, template_name, context=None, *args, **kwargs):
-    """Igual que django.shortcuts.render, pero agrega a todas las pantallas del
-    módulo el nombre del usuario (para el "Bienvenido, ...") y el título por
-    defecto 'Pedidos y Carta' cuando la vista no define uno propio."""
-    context = dict(context or {})
-    user = request.user
-    if user.is_authenticated:
-        context.setdefault('nombre', user.get_full_name() or user.username)
-    if template_name.startswith('pedidos/'):
-        context.setdefault('titulo', 'Pedidos y Carta')
-    return _django_render(request, template_name, context, *args, **kwargs)
+# ── ENCABEZADO CON LOGO PARA LOS REPORTES PDF ───────────────────────
+import io
+from datetime import datetime
+
+from django.conf import settings
+from PIL import Image as PILImage
+from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.styles import ParagraphStyle
+from openpyxl import Workbook
+from openpyxl.drawing.image import Image as XLImage
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
+from reportlab.platypus import Image as RLImage
+
+_LOGO_PATH = settings.BASE_DIR / 'static' / 'img' / 'logo.png'
+_LOGO_ALTO = 2.6 * cm
+_logo_cache = {}
+
+def _logo_recortado():
+    """Abre static/img/logo.png, le quita el espacio en blanco sobrante y lo
+    reduce de tamaño para que el PDF no pese tanto. Se calcula una sola vez."""
+    if 'logo' not in _logo_cache:
+        try:
+            img = PILImage.open(_LOGO_PATH).convert('RGBA')
+            fondo = PILImage.new('RGB', img.size, (255, 255, 255))
+            fondo.paste(img, mask=img.split()[3])
+            # recorte al contenido (todo lo que no sea blanco)
+            caja = PILImage.eval(fondo.convert('L'), lambda v: 255 if v < 245 else 0).getbbox()
+            if caja:
+                fondo = fondo.crop(caja)
+            ancho = 600
+            fondo = fondo.resize((ancho, round(fondo.height * ancho / fondo.width)), PILImage.LANCZOS)
+            buf = io.BytesIO()
+            fondo.save(buf, format='PNG', optimize=True)
+            _logo_cache['logo'] = (buf.getvalue(), fondo.width / fondo.height)
+        except Exception:
+            _logo_cache['logo'] = None
+    return _logo_cache['logo']
+
+
+def encabezado_reporte(titulo):
+    """Lista inicial de elementos del PDF: logo a la izquierda, título y
+    fecha a la derecha, y una línea roja debajo."""
+    styles = getSampleStyleSheet()
+    estilo_titulo = ParagraphStyle('TituloReporte', parent=styles['Title'], alignment=TA_LEFT,
+        fontSize=18, leading=22, textColor=colors.HexColor('#C0392B'))
+    estilo_sub = ParagraphStyle('SubReporte', parent=styles['Normal'], fontSize=9,
+        textColor=colors.HexColor('#555555'))
+    texto = [
+        Paragraph(titulo, estilo_titulo),
+        Paragraph(f"Porras Asadero · Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}", estilo_sub),
+    ]
+    logo = _logo_recortado()
+    if logo:
+        datos, proporcion = logo
+        ancho_logo = _LOGO_ALTO * proporcion
+        celda_logo = RLImage(io.BytesIO(datos), width=ancho_logo, height=_LOGO_ALTO)
+    else:  # si no encuentra el logo, el reporte sale igual, solo con texto
+        ancho_logo, celda_logo = 0.1 * cm, ''
+    cabecera = Table([[celda_logo, texto]], colWidths=[ancho_logo + 0.5*cm, 26.7*cm - ancho_logo - 0.5*cm])
+    cabecera.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0), ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LINEBELOW', (0,0), (-1,0), 1.2, colors.HexColor('#C0392B')),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+    ]))
+    return [cabecera, Spacer(1, 0.5*cm)]
+
+
+
+def _respuesta_excel(titulo, nombre_archivo, encabezados, filas, anchos, cols_dinero=()):
+    """Genera un .xlsx con el logo arriba a la izquierda, el título al lado,
+    y la tabla con los mismos colores del PDF. `cols_dinero` son los índices
+    (empezando en 0) de las columnas que llevan formato $."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = titulo[:31]
+    n = len(encabezados)
+
+    for i, ancho in enumerate(anchos, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = ancho
+
+    # Logo (arriba a la izquierda)
+    ancho_logo_px = 0
+    logo = _logo_recortado()
+    if logo:
+        datos, proporcion = logo
+        img = XLImage(io.BytesIO(datos))
+        img.height = 80
+        img.width = round(80 * proporcion)
+        ws.add_image(img, 'A1')
+        ancho_logo_px = img.width
+
+    # El título va en la primera columna que quede libre a la derecha del logo
+    acumulado, col_titulo = 0, 1
+    for i, ancho in enumerate(anchos, start=1):
+        acumulado += ancho * 7 + 5
+        col_titulo = i + 1
+        if acumulado >= ancho_logo_px + 8:
+            break
+    col_titulo = min(col_titulo, max(n, 2))
+
+    ws.row_dimensions[2].height = 26
+    ws.row_dimensions[3].height = 16
+    c = ws.cell(row=2, column=col_titulo, value=titulo)
+    c.font = Font(name='Calibri', size=16, bold=True, color='C0392B')
+    c.alignment = Alignment(vertical='center')
+    c = ws.cell(row=3, column=col_titulo,
+                value=f"Porras Asadero · Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+    c.font = Font(name='Calibri', size=9, color='555555')
+
+    # Encabezados de la tabla (fila 6)
+    fila_enc = 6
+    borde = Border(*(Side(style='thin', color='D4C4A0'),) * 4)
+    for j, texto in enumerate(encabezados, start=1):
+        cel = ws.cell(row=fila_enc, column=j, value=texto)
+        cel.font = Font(name='Calibri', size=10, bold=True, color='F5ECD7')
+        cel.fill = PatternFill('solid', fgColor='C0392B')
+        cel.alignment = Alignment(vertical='center', horizontal='left')
+        cel.border = borde
+    ws.row_dimensions[fila_enc].height = 20
+
+    # Filas de datos con fondo alternado
+    claros = ('FDF7EC', 'EDE3C8')
+    for i, fila in enumerate(filas):
+        r = fila_enc + 1 + i
+        for j, valor in enumerate(fila, start=1):
+            if (j - 1) in cols_dinero and valor is not None:
+                valor = float(valor)
+            cel = ws.cell(row=r, column=j, value=valor)
+            cel.font = Font(name='Calibri', size=10)
+            cel.fill = PatternFill('solid', fgColor=claros[i % 2])
+            cel.border = borde
+            cel.alignment = Alignment(vertical='center', wrap_text=True)
+            if (j - 1) in cols_dinero:
+                cel.number_format = '"$"#,##0'
+
+    ws.freeze_panes = ws.cell(row=fila_enc + 1, column=1)
+    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.print_title_rows = f'{fila_enc}:{fila_enc}'
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+    wb.save(response)
+    return response
 
 
 # ── HELPERS DE PERMISOS ─────────────────────────────────────────────
@@ -196,31 +331,21 @@ def dashboard(request):
     total_categorias   = Categoria.objects.count()
     total_clientes     = Cliente.objects.count()
 
-    pedidos_qs = (
+    ultimos_pedidos = list(
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
-        .order_by('-fecha_creacion')
+        .order_by('-fecha_creacion')[:5]
     )
 
-    # Paginación: 5 pedidos por página
-    paginator = Paginator(pedidos_qs, 5)
-    page_obj  = paginator.get_page(request.GET.get('page'))
-    paginas = [
-        {'num': p, 'puntos': p == paginator.ELLIPSIS}
-        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
-    ]
-
     return render(request, 'pedidos/dashboard.html', {
-        'titulo': 'Pedidos y Carta',
+        'titulo': 'Pedidos',
         'total_pedidos': total_pedidos,
         'pedidos_pendientes': pedidos_pendientes,
         'total_ordenes': total_pedidos,
         'total_productos': total_productos,
         'total_categorias': total_categorias,
         'total_clientes': total_clientes,
-        'ultimos_pedidos': page_obj,
-        'page_obj': page_obj,
-        'paginas': paginas,
+        'ultimos_pedidos': ultimos_pedidos,
     })
 
 
@@ -233,35 +358,14 @@ def pedido_lista(request):
     q          = request.GET.get('q', '').strip()
     filtro     = _resolver_filtro_fecha(request)
     pedidos_qs = _pedidos_filtrados(request)
-
-    # Paginación: 10 pedidos por página (dentro de cada página siguen agrupados por fecha)
-    paginator = Paginator(pedidos_qs, 10)
-    page_obj  = paginator.get_page(request.GET.get('page'))
-    paginas = [
-        {'num': p, 'puntos': p == paginator.ELLIPSIS}
-        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
-    ]
-
+    pedidos_lista_data = list(pedidos_qs)
     pedidos_por_fecha  = []
-    for fecha, grupo in groupby(list(page_obj), key=lambda p: p.fecha_creacion.date()):
+    for fecha, grupo in groupby(pedidos_lista_data, key=lambda p: p.fecha_creacion.date()):
         items = list(grupo)
         pedidos_por_fecha.append({'fecha': fecha, 'pedidos': items, 'count': len(items)})
-
-    qs_filtros = urlencode({
-        'q': q,
-        'filtro_fecha': filtro['filtro_fecha'],
-        'fecha_dia': filtro['fecha_dia'],
-        'fecha_mes': filtro['fecha_mes'],
-        'fecha_desde': filtro['fecha_desde'],
-        'fecha_hasta': filtro['fecha_hasta'],
-    })
-
     return render(request, 'pedidos/pedido_lista.html', {
-        'titulo': 'Pedidos y Carta',
+        'titulo': 'Pedidos',
         'pedidos_por_fecha': pedidos_por_fecha,
-        'page_obj': page_obj,
-        'paginas': paginas,
-        'qs_filtros': qs_filtros,
         'q': q,
         'filtro_fecha': filtro['filtro_fecha'],
         'fecha_dia': filtro['fecha_dia'],
@@ -299,7 +403,7 @@ def pedido_exportar_pdf(request):
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles   = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Pedidos", styles['Title']), Spacer(1, 0.5*cm)]
+    elements = encabezado_reporte("Reporte de Pedidos")
     data = [['#', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Total', 'Fecha']]
     for p in pedidos_qs:
         productos_str = ', '.join(f"{it.cantidad}x {it.producto.nombre}" for it in p.items.all()) or '—'
@@ -326,16 +430,15 @@ def pedido_exportar_pdf(request):
 @login_required
 def pedido_exportar_excel(request):
     pedidos_qs = _pedidos_filtrados(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="pedidos.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['#', 'Cliente', 'Mesa', 'Productos', 'Descripción', 'Estado', 'Total', 'Fecha'])
+    filas = []
     for p in pedidos_qs:
         productos_str = ', '.join(f"{it.cantidad}x {it.producto.nombre}" for it in p.items.all()) or '—'
-        writer.writerow([p.numero_pedido, str(p.cliente), str(p.mesa) if p.mesa else '—',
+        filas.append([p.numero_pedido, str(p.cliente), str(p.mesa) if p.mesa else '—',
             productos_str, p.descripcion or '—', p.get_estado_display(),
             p.total, p.fecha_creacion.strftime('%d/%m/%Y %H:%M')])
-    return response
+    return _respuesta_excel("Reporte de Pedidos", "pedidos.xlsx",
+        ['#', 'Cliente', 'Mesa', 'Productos', 'Descripción', 'Estado', 'Total', 'Fecha'],
+        filas, [10, 24, 12, 45, 30, 16, 14, 18], cols_dinero=(6,))
 
 
 @login_required
@@ -438,35 +541,13 @@ def orden_lista(request):
     q_orden = request.GET.get('q_orden', '').strip()
     filtro = _resolver_filtro_fecha(request)
     ordenes_qs = _ordenes_filtradas(request)
-
-    # Paginación: 10 órdenes por página (dentro de cada página siguen agrupadas por fecha)
-    paginator = Paginator(ordenes_qs, 10)
-    page_obj  = paginator.get_page(request.GET.get('page'))
-    paginas = [
-        {'num': p, 'puntos': p == paginator.ELLIPSIS}
-        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
-    ]
-
+    ordenes_lista_data = list(ordenes_qs)
     ordenes_por_fecha  = []
-    for fecha, grupo in groupby(list(page_obj), key=lambda o: o.fecha_creacion.date()):
+    for fecha, grupo in groupby(ordenes_lista_data, key=lambda o: o.fecha_creacion.date()):
         items = list(grupo)
         ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
-
-    qs_filtros = urlencode({
-        'q_orden': q_orden,
-        'filtro_fecha': filtro['filtro_fecha'],
-        'fecha_dia': filtro['fecha_dia'],
-        'fecha_mes': filtro['fecha_mes'],
-        'fecha_desde': filtro['fecha_desde'],
-        'fecha_hasta': filtro['fecha_hasta'],
-    })
-
     return render(request, 'pedidos/orden_lista.html', {
-        'titulo': 'Pedidos y Carta',
-        'ordenes_por_fecha': ordenes_por_fecha,
-        'page_obj': page_obj,
-        'paginas': paginas,
-        'qs_filtros': qs_filtros,
+        'titulo': 'Pedidos', 'ordenes_por_fecha': ordenes_por_fecha,
         'q_orden': q_orden,
         'filtro_fecha': filtro['filtro_fecha'],
         'fecha_dia': filtro['fecha_dia'],
@@ -523,30 +604,15 @@ def producto_lista(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_prod  = request.GET.get('q_prod', '').strip()
     cat_sel = request.GET.get('categoria', '').strip()
-    productos_qs = Producto.objects.select_related('categoria').order_by('pk')
+    productos_qs = Producto.objects.select_related('categoria').all()
     if q_prod:
         productos_qs = productos_qs.filter(nombre__icontains=q_prod)
     if cat_sel:
         productos_qs = productos_qs.filter(categoria__id=cat_sel)
-
-    # Paginación: 10 productos por página
-    paginator = Paginator(productos_qs, 10)
-    page_obj  = paginator.get_page(request.GET.get('page'))
-    paginas = [
-        {'num': p, 'puntos': p == paginator.ELLIPSIS}
-        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
-    ]
-
     return render(request, 'pedidos/producto_lista.html', {
-        'titulo': 'Pedidos y Carta',
-        'productos': page_obj,
-        'page_obj': page_obj,
-        'paginas': paginas,
-        'qs_filtros': urlencode({'q_prod': q_prod, 'categoria': cat_sel}),
-        'categorias': Categoria.objects.all(),
-        'q_prod': q_prod,
-        'cat_sel': cat_sel,
-        'seccion_activa': 'producto-lista'})
+        'titulo': 'Pedidos', 'productos': productos_qs,
+        'categorias': Categoria.objects.all(), 'q_prod': q_prod,
+        'cat_sel': cat_sel, 'seccion_activa': 'producto-lista'})
 
 
 @login_required
@@ -619,7 +685,7 @@ def producto_exportar_pdf(request):
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Productos", styles['Title']), Spacer(1, 0.5*cm)]
+    elements = encabezado_reporte("Reporte de Productos")
     data = [['#', 'Nombre', 'Categoría', 'Precio', 'Descripción', 'Disponible']]
     for i, p in enumerate(productos_qs, start=1):
         data.append([f"{i:02d}", p.nombre, p.categoria.nombre if p.categoria else '—',
@@ -647,14 +713,13 @@ def producto_exportar_excel(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     productos_qs = _productos_filtrados(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="productos.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['#', 'Nombre', 'Categoría', 'Precio', 'Descripción', 'Disponible'])
+    filas = []
     for i, p in enumerate(productos_qs, start=1):
-        writer.writerow([f"{i:02d}", p.nombre, p.categoria.nombre if p.categoria else '—',
+        filas.append([f"{i:02d}", p.nombre, p.categoria.nombre if p.categoria else '—',
             p.precio, p.descripcion or '—', 'Sí' if p.disponible else 'No'])
-    return response
+    return _respuesta_excel("Reporte de Productos", "productos.xlsx",
+        ['#', 'Nombre', 'Categoría', 'Precio', 'Descripción', 'Disponible'],
+        filas, [6, 28, 22, 14, 50, 12], cols_dinero=(3,))
 
 
 # ── GESTIÓN DE CATEGORÍAS ──────────────────────────────────────────
@@ -664,26 +729,12 @@ def categoria_lista(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cat = request.GET.get('q_cat', '').strip()
-    categorias_qs = Categoria.objects.order_by('pk')
+    categorias_qs = Categoria.objects.all()
     if q_cat:
         categorias_qs = categorias_qs.filter(nombre__icontains=q_cat)
-
-    # Paginación: 10 categorías por página
-    paginator = Paginator(categorias_qs, 10)
-    page_obj  = paginator.get_page(request.GET.get('page'))
-    paginas = [
-        {'num': p, 'puntos': p == paginator.ELLIPSIS}
-        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
-    ]
-
     return render(request, 'pedidos/categoria_lista.html', {
-        'titulo': 'Pedidos y Carta',
-        'categorias': page_obj,
-        'page_obj': page_obj,
-        'paginas': paginas,
-        'qs_filtros': urlencode({'q_cat': q_cat}),
-        'q_cat': q_cat,
-        'seccion_activa': 'categoria-lista'})
+        'titulo': 'Pedidos', 'categorias': categorias_qs,
+        'q_cat': q_cat, 'seccion_activa': 'categoria-lista'})
 
 
 @login_required
@@ -753,7 +804,7 @@ def categoria_exportar_pdf(request):
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Categorías", styles['Title']), Spacer(1, 0.5*cm)]
+    elements = encabezado_reporte("Reporte de Categorías")
     data = [['#', 'Nombre', 'Descripción']]
     for i, c in enumerate(categorias_qs, start=1):
         data.append([f"{i:02d}", c.nombre, Paragraph(c.descripcion or '—', styles['Normal'])])
@@ -779,13 +830,10 @@ def categoria_exportar_excel(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     categorias_qs = _categorias_filtradas(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="categorias.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['#', 'Nombre', 'Descripción'])
-    for i, c in enumerate(categorias_qs, start=1):
-        writer.writerow([f"{i:02d}", c.nombre, c.descripcion or '—'])
-    return response
+    filas = [[f"{i:02d}", c.nombre, c.descripcion or '—']
+             for i, c in enumerate(categorias_qs, start=1)]
+    return _respuesta_excel("Reporte de Categorías", "categorias.xlsx",
+        ['#', 'Nombre', 'Descripción'], filas, [6, 28, 60])
 
 
 # ── GESTIÓN DE CLIENTES ─────────────────────────────────────────────
@@ -795,27 +843,13 @@ def cliente_lista(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cli = request.GET.get('q_cli', '').strip()
-    clientes_qs = Cliente.objects.order_by('pk')
+    clientes_qs = Cliente.objects.all()
     if q_cli:
         clientes_qs = clientes_qs.filter(
             Q(nombre_completo__icontains=q_cli) | Q(documento__icontains=q_cli))
-
-    # Paginación: 10 clientes por página
-    paginator = Paginator(clientes_qs, 10)
-    page_obj  = paginator.get_page(request.GET.get('page'))
-    paginas = [
-        {'num': p, 'puntos': p == paginator.ELLIPSIS}
-        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
-    ]
-
     return render(request, 'pedidos/cliente_lista.html', {
-        'titulo': 'Pedidos y Carta',
-        'clientes': page_obj,
-        'page_obj': page_obj,
-        'paginas': paginas,
-        'qs_filtros': urlencode({'q_cli': q_cli}),
-        'q_cli': q_cli,
-        'seccion_activa': 'cliente-lista'})
+        'titulo': 'Pedidos', 'clientes': clientes_qs,
+        'q_cli': q_cli, 'seccion_activa': 'cliente-lista'})
 
 
 @login_required
@@ -885,7 +919,7 @@ def cliente_exportar_pdf(request):
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Clientes", styles['Title']), Spacer(1, 0.5*cm)]
+    elements = encabezado_reporte("Reporte de Clientes")
     data = [['#', 'Nombre Completo', 'Teléfono', 'Documento', 'Dirección']]
     for i, c in enumerate(clientes_qs, start=1):
         data.append([f"{i:02d}", c.nombre_completo, c.telefono or '—',
@@ -912,14 +946,12 @@ def cliente_exportar_excel(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     clientes_qs = _clientes_filtrados(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="clientes.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['#', 'Nombre Completo', 'Teléfono', 'Tipo Documento', 'Documento', 'Dirección'])
-    for i, c in enumerate(clientes_qs, start=1):
-        writer.writerow([f"{i:02d}", c.nombre_completo, c.telefono or '—',
-            c.tipo_documento, c.documento, c.direccion or '—'])
-    return response
+    filas = [[f"{i:02d}", c.nombre_completo, c.telefono or '—',
+              c.tipo_documento, c.documento, c.direccion or '—']
+             for i, c in enumerate(clientes_qs, start=1)]
+    return _respuesta_excel("Reporte de Clientes", "clientes.xlsx",
+        ['#', 'Nombre Completo', 'Teléfono', 'Tipo Documento', 'Documento', 'Dirección'],
+        filas, [6, 30, 16, 16, 18, 45])
 
 
 # ── EXPORTACIÓN DE ÓRDENES ───────────────────────────────────────────
@@ -952,7 +984,7 @@ def orden_exportar_pdf(request):
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Órdenes Comerciales", styles['Title']), Spacer(1, 0.5*cm)]
+    elements = encabezado_reporte("Reporte de Órdenes Comerciales")
     data = [['Número', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Subtotal', 'Impuesto', 'Total', 'Fecha']]
     for o in ordenes_qs:
         productos_str = ', '.join(f"{it.cantidad}x {it.producto.nombre}" for it in o.items.all()) or '—'
@@ -982,13 +1014,12 @@ def orden_exportar_excel(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     ordenes_qs = _ordenes_filtradas(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="ordenes.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['Número','Cliente','Mesa','Productos','Estado','Subtotal','Impuesto','Total','Fecha'])
+    filas = []
     for o in ordenes_qs:
         productos_str = ', '.join(f"{it.cantidad}x {it.producto.nombre}" for it in o.items.all()) or '—'
-        writer.writerow([o.numero_orden, str(o.cliente), str(o.mesa) if o.mesa else '—',
+        filas.append([o.numero_orden, str(o.cliente), str(o.mesa) if o.mesa else '—',
             productos_str, o.get_estado_display(), o.subtotal, o.impuesto, o.total,
             o.fecha_creacion.strftime('%d/%m/%Y %H:%M')])
-    return response
+    return _respuesta_excel("Reporte de Órdenes Comerciales", "ordenes.xlsx",
+        ['Número', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Subtotal', 'Impuesto', 'Total', 'Fecha'],
+        filas, [12, 24, 12, 45, 16, 14, 14, 14, 18], cols_dinero=(5, 6, 7))

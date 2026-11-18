@@ -155,6 +155,8 @@
   .pm-form-grid   { grid-template-columns:1fr; }
   .pm-detail-grid { grid-template-columns:1fr; }
   .pm-header      { padding: 1.2rem 1.5rem 1.1rem; margin-bottom: 1.2rem; }
+  .pm-header h1   { font-size: 1.35rem; }
+  .pm-header h2   { font-size: 0.88rem; }
   .pm-stats       { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.2rem; }
   .pm-stat        { padding: 0.85rem 1rem; }
   .pm-stat .val   { font-size: 1.5rem; }
@@ -451,43 +453,50 @@
     border-color: transparent transparent #1A1008 transparent;
 }
 
-/* ============================================
-   Hover de la barra de navegación:
-   - "Consultar" (y demás enlaces) -> rojo
-   - "Crear" (enlaces con "crear" en la URL) -> naranja
-   Solo afecta a los botones claros; los que ya están
-   activos (rojo/naranja) se quedan como están.
-   ============================================ */
-.pm-nav .pm-nav-group:not(:first-child) a.pm-btn-light:hover {
-    background: #C0392B;
-    border-color: #C0392B;
-    color: #F5ECD7;
-}
-.pm-nav .pm-nav-group:not(:first-child) a.pm-btn-light[href*="crear"]:hover {
-    background: #E8651A;
-    border-color: #E8651A;
-    color: #F5ECD7;
-}
+/* ══ IMPRESIÓN: solo el listado con el logo (igual que el PDF) ══════════ */
+.pm-print-header { display: none; }
 
-/* ============================================
-   Paginación (listas de productos, etc.)
-   ============================================ */
-.pm-paginacion {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: .8rem;
-  margin-top: 1.2rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--p-border);
-}
-.pm-pag-info   { font-size: .82rem; color: var(--p-muted); font-weight: 600; }
-.pm-pag-links  { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
-.pm-pag-puntos { color: var(--p-muted); padding: 0 .25rem; font-weight: 700; }
-.pm-pag-actual { cursor: default; }
-.pm-pag-actual:hover { filter: none; transform: none; }
-/* Título del encabezado: mismo tamaño que Pagos (1.8rem; baja a 1.4rem solo en celular) */
-@media(max-width:600px){
-  .pm-header h1   { font-size: 1.4rem; }
+@media print {
+  @page { size: A4 landscape; margin: 1cm; }
+
+  /* Ocultar todo menos el listado */
+  body > *:not(.admin-shell),
+  .admin-shell aside,
+  .admin-main footer,
+  .pm-header, .pm-nav, .pm-card-header,
+  .pm-card-body form, .pm-modal-overlay,
+  .pm-table th:last-child,
+  .pm-table td:last-child:not([colspan]) { display: none !important; }
+
+  html, body { background: #fff !important; }
+  .admin-shell { display: block !important; }
+  .admin-main { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+  .admin-main > section { padding: 0 !important; }
+  .pm-wrapper { background: #fff !important; padding: 0 !important; }
+  .pm-card { box-shadow: none !important; border: none !important; background: #fff !important; }
+  .pm-card-body { padding: 0 !important; }
+  .pm-table-wrap { overflow: visible !important; }
+
+  /* Encabezado con logo */
+  .pm-print-header {
+    display: flex !important; align-items: center; gap: .5cm;
+    border-bottom: 1.2pt solid #C0392B; padding-bottom: 6pt; margin-bottom: .5cm;
+  }
+  .pm-print-logo { position: relative; width: 5.2cm; aspect-ratio: 1083 / 545; overflow: hidden; flex: none; }
+  .pm-print-logo img { position: absolute; width: 141.83%; max-width: none; left: -21.51%; top: -26.06%; }
+  .pm-print-titulo h1 { font-size: 18pt; font-weight: 700; color: #C0392B; margin: 0 0 3pt; }
+  .pm-print-titulo p  { font-size: 9pt; color: #555; margin: 0; }
+
+  /* Tabla con los mismos colores del PDF */
+  .pm-table, .pm-table *, .pm-fecha-badge, .pm-badge {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .pm-table { font-size: 8.5pt; width: 100%; border-collapse: collapse; }
+  .pm-table thead { display: table-header-group; }
+  .pm-table th { background: #C0392B !important; color: #F5ECD7 !important; border: 1px solid #D4C4A0; padding: 5pt; }
+  .pm-table td { border: 1px solid #D4C4A0; padding: 5pt; }
+  .pm-table tbody tr:nth-child(odd) td  { background: #FDF7EC !important; }
+  .pm-table tbody tr:nth-child(even) td { background: #EDE3C8 !important; }
+  .pm-table tr { break-inside: avoid; }
+  .pm-fecha-group-header { break-after: avoid; margin-top: .4cm; }
 }
