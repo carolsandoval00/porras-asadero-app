@@ -559,7 +559,6 @@ def pago_recibo(request, pk):
         'asadero': ASADERO,
     })
 
-
 @login_required
 def recibos_lista(request):
     """Lista de todos los recibos (pagos) con búsqueda y filtro de fechas."""
@@ -567,7 +566,8 @@ def recibos_lista(request):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
     pagos_qs, filtro, q_pago = _pagos_filtrados(request)
-
+    # ★ El recibo N° 1 siempre arriba: orden ascendente por número de recibo
+    pagos_qs = pagos_qs.order_by('numero_recibo', 'pk')
     # ★ PAGINACIÓN DE RECIBOS: 10 por página
     paginator = Paginator(pagos_qs, 10)
     page_obj  = paginator.get_page(request.GET.get('page'))

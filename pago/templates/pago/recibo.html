@@ -15,7 +15,7 @@
 
   <div class="pg-card">
     <div class="pg-card-header">
-      <h3>Recibo N° {{ pago.pk }}</h3>
+      <h3>Recibo N° {{ pago.numero_recibo|default:pago.pk }}</h3>
       <div class="pg-flex-gap-md">
         <button type="button" class="pg-btn pg-btn-accent pg-btn-sm" onclick="window.print()"
                 data-tooltip="Imprimir el recibo">Imprimir</button>
@@ -41,7 +41,7 @@
         <div class="rc-sep"></div>
 
         <!-- DATOS DEL PEDIDO -->
-        <div class="rc-fila"><span>Recibo N°:</span><span>{{ pago.pk }}</span></div>
+        <div class="rc-fila"><span>Recibo N°:</span><span>{{ pago.numero_recibo|default:pago.pk }}</span></div>
         <div class="rc-fila"><span>Orden:</span><span>{{ pedido.numero_orden }}</span></div>
         <div class="rc-fila"><span>Fecha:</span><span>{{ pago.fecha_pago|date:"d/m/Y h:i A" }}</span></div>
         <div class="rc-fila"><span>Mesa:</span><span>{{ pedido.mesa.numero_mesa|default:"—" }}</span></div>
