@@ -97,7 +97,7 @@
           <tbody>
             {% for prod in productos %}
             <tr>
-              <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
+              <td><strong>{{ page_obj.start_index|add:forloop.counter0|stringformat:"02d" }}</strong></td>
               <td><strong>{{ prod.nombre }}</strong></td>
               <td>{{ prod.categoria.nombre }}</td>
               <td>${{ prod.precio|floatformat:0 }}</td>
@@ -122,6 +122,38 @@
         </table>
       </div>
     </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="pm-paginacion">
+      <div class="pm-pag-info">
+        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        de {{ page_obj.paginator.count }} productos
+      </div>
+      <div class="pm-pag-links">
+        {% if page_obj.has_previous %}
+          <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm">« Anterior</a>
+        {% endif %}
+
+        {% for p in paginas %}
+          {% if p.puntos %}
+            <span class="pm-pag-puntos">…</span>
+          {% elif p.num == page_obj.number %}
+            <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ p.num }}</span>
+          {% else %}
+            <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ p.num }}"
+               class="pm-btn pm-btn-light pm-btn-sm">{{ p.num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm">Siguiente »</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
 

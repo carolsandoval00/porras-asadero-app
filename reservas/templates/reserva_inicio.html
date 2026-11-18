@@ -10,6 +10,7 @@
 <script>
   window.MC_ROL = "{{ request.user.rol }}";
   window.MC_PUEDE_EDITAR = {{ puede_editar|yesno:"true,false" }};
+  window.MC_LOGO_URL = "{% static 'img/logo.png' %}";   // logo de los reportes (PDF, Excel, imprimir)
 </script>
 
 <!-- ===== BANNER + NAV ===== -->
@@ -100,6 +101,7 @@
 </div>
 
 <div class="mc-toast" id="mc-toast"></div>
+<div class="mc-print-only" id="mc-print-area"></div>
 
 {% if messages %}
 <script>
@@ -110,7 +112,7 @@
 <!-- Librerías reportes -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js" defer></script>
 <script src="{% static 'js/reservas.js' %}" defer></script>
 
 <script src="{% static 'js/reservas_nav_tooltips.js' %}" defer></script>
