@@ -12,17 +12,19 @@ from reservas.models import Mesa, Reserva
 from pedidos.models import Pedido
 
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-GEMINI_MODEL = os.environ.get('GEMINI_MODEL', '')   # nombre del modelo, sacado de Google AI Studio
-# Modelos de respaldo (uno o varios, separados por coma) para cuando el principal está saturado
-GEMINI_MODEL_RESPALDO = os.environ.get('GEMINI_MODEL_RESPALDO', '')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-3.5-flash-lite')
+GEMINI_MODEL_RESPALDO = os.environ.get(
+    'GEMINI_MODEL_RESPALDO',
+    'gemini-3.5-flash',
+)
 GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent'
-MAX_TOKENS = 2000   # los modelos con "thinking" gastan parte de este límite pensando
-TIMEOUT_SEGUNDOS = 10  # espera máxima por intento
-MAX_HISTORIAL = 10  # solo los últimos N turnos, para no gastar tokens de más
+MAX_TOKENS = 2000
+TIMEOUT_SEGUNDOS = 60
+MAX_HISTORIAL = 10
 
 
 class GeminiError(Exception):
-    """Error devuelto por la API de Gemini (clave, modelo, cuota, respuesta vacía)."""
+    """Error devuelto por la API gratuita de Gemini."""
 
 
 def _construir_contexto_admin():
@@ -147,20 +149,17 @@ def _llamar_gemini(system_prompt, historial, mensaje_usuario):
             'parts': [{'text': str(content)}],
         })
 
-    # Gemini exige que la conversación empiece con un turno del usuario
     while contents and contents[0]['role'] == 'model':
         contents.pop(0)
 
     contents.append({'role': 'user', 'parts': [{'text': mensaje_usuario}]})
 
-    # Prueba el modelo principal y, si falla por saturación, cuota o tiempo de
-    # espera, va pasando por los de respaldo (si no hay respaldo, reintenta el mismo).
-    modelos = [GEMINI_MODEL] + [m.strip() for m in GEMINI_MODEL_RESPALDO.split(',') if m.strip()]
-    if len(modelos) == 1:
-        modelos = modelos * 2
+    modelos = [GEMINI_MODEL]
+    modelos.extend(m.strip() for m in GEMINI_MODEL_RESPALDO.split(',') if m.strip())
 
     respuesta = None
-    error_tiempo = None
+    ultimo_error = None
+
     for modelo in modelos:
         try:
             respuesta = httpx.post(
@@ -173,25 +172,27 @@ def _llamar_gemini(system_prompt, historial, mensaje_usuario):
                 },
                 timeout=TIMEOUT_SEGUNDOS,
             )
-        except httpx.TimeoutException as e:
-            print(f"PIA: tiempo agotado con el modelo {modelo}")
-            respuesta, error_tiempo = None, e
+        except httpx.TimeoutException as error:
+            ultimo_error = error
             continue
-        error_tiempo = None
+
+        if respuesta.status_code == 200:
+            break
+
+        ultimo_error = GeminiError(f'{respuesta.status_code}: {respuesta.text[:300]}')
         if respuesta.status_code not in (429, 500, 503):
-            break  # respuesta definitiva (ok o error que reintentar no arregla)
-        print(f"PIA: {respuesta.status_code} con el modelo {modelo}")
+            break
 
     if respuesta is None:
-        raise error_tiempo  # todos los intentos agotaron el tiempo
+        raise ultimo_error or GeminiError('No hubo respuesta de Gemini.')
 
     if respuesta.status_code != 200:
-        raise GeminiError(f'{respuesta.status_code}: {respuesta.text[:300]}')
+        raise ultimo_error or GeminiError(f'{respuesta.status_code}: {respuesta.text[:300]}')
 
     try:
         partes = respuesta.json()['candidates'][0]['content']['parts']
-        texto = ''.join(p.get('text', '') for p in partes)
-    except (KeyError, IndexError, ValueError):
+        texto = ''.join(parte.get('text', '') for parte in partes)
+    except (KeyError, IndexError, TypeError, ValueError):
         texto = ''
 
     return texto or 'No obtuve una respuesta clara, ¿puedes reformular tu pregunta?'
@@ -210,7 +211,7 @@ def _respuesta_sin_ia():
 @login_required
 @require_POST
 def chat_ia(request):
-    """Endpoint del panel admin: recibe un mensaje y responde con Gemini."""
+    """Endpoint del panel admin: recibe un mensaje y responde con Gemini gratuito."""
     if not GEMINI_API_KEY or not GEMINI_MODEL:
         return JsonResponse(
             {'error': 'Falta configurar GEMINI_API_KEY y GEMINI_MODEL en el archivo .env del servidor.'},
