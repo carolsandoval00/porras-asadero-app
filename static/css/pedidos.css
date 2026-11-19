@@ -434,6 +434,21 @@
   .pm-paginacion { justify-content: center; text-align: center; }
 }
 
+/* Paginación DENTRO del cuerpo de la tarjeta (listas de Órdenes, Categorías,
+   Clientes, etc.): va sin fondo ni borde redondeado, solo con una línea arriba.
+   Así convive con la paginación de pie de tarjeta de arriba. */
+.pm-card-body .pm-paginacion {
+  background: transparent;
+  border-radius: 0;
+  padding: 1rem 0 0;
+  margin-top: 1.2rem;
+  font-family: inherit;
+}
+.pm-card-body .pm-pag-info {
+  font-size: .82rem;
+  font-weight: 600;
+}
+
 /* ============================================
    Tooltip JS para elementos dentro de .pm-nav
    (o cualquier contenedor con overflow que recorte

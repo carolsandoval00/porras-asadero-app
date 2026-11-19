@@ -173,40 +173,40 @@
       {% empty %}
       <p class="pm-empty-msg">No hay pedidos aún.</p>
       {% endfor %}
-    </div>
 
-    <!-- ===== PAGINACIÓN ===== -->
-    {% if page_obj.paginator.num_pages > 1 %}
-    <div class="pm-paginacion">
-      <div class="pm-pag-info">
-        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }}
-        de {{ page_obj.paginator.count }} pedidos
-      </div>
+      <!-- ===== PAGINACIÓN ===== -->
+      {% if page_obj.paginator.count > 0 %}
+      <div class="pm-paginacion">
+        <div class="pm-pag-info">
+          Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }}
+          de {{ page_obj.paginator.count }} pedidos
+        </div>
 
-      <div class="pm-pag-links">
-        {% if page_obj.has_previous %}
-          <a class="pm-btn pm-btn-light pm-btn-sm"
-             href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">‹ Anterior</a>
-        {% endif %}
-
-        {% for pag in paginas %}
-          {% if pag.puntos %}
-            <span class="pm-pag-puntos">…</span>
-          {% elif pag.num == page_obj.number %}
-            <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ pag.num }}</span>
-          {% else %}
+        <div class="pm-pag-links">
+          {% if page_obj.has_previous %}
             <a class="pm-btn pm-btn-light pm-btn-sm"
-               href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ pag.num }}">{{ pag.num }}</a>
+               href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">‹ Anterior</a>
           {% endif %}
-        {% endfor %}
 
-        {% if page_obj.has_next %}
-          <a class="pm-btn pm-btn-light pm-btn-sm"
-             href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente ›</a>
-        {% endif %}
+          {% for pag in paginas %}
+            {% if pag.puntos %}
+              <span class="pm-pag-puntos">…</span>
+            {% elif pag.num == page_obj.number %}
+              <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ pag.num }}</span>
+            {% else %}
+              <a class="pm-btn pm-btn-light pm-btn-sm"
+                 href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ pag.num }}">{{ pag.num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+            <a class="pm-btn pm-btn-light pm-btn-sm"
+               href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente ›</a>
+          {% endif %}
+        </div>
       </div>
+      {% endif %}
     </div>
-    {% endif %}
   </div>
 </div>
 
@@ -236,15 +236,6 @@ function closeModal() { document.getElementById('modal-delete').classList.remove
 </script>
 
 <script>
-/**
- * Tooltips flotantes para elementos dentro de .pm-nav.
- * Se usan porque .pm-nav tiene overflow-x:auto, lo que
- * recortaría un tooltip hecho con CSS puro (::after).
- * Al crear el tooltip como un elemento aparte pegado al
- * <body>, con position:fixed, se evita ese recorte y
- * el tooltip aparece siempre arriba del botón (o abajo,
- * si no hay espacio arriba).
- */
 (function () {
     let bubble = null;
 
