@@ -226,6 +226,14 @@ def _rango_paginas(page_obj, ventana=2):
     return paginas
 
 
+def _querystring_sin_page(request):
+    """Querystring actual sin 'page', para conservar búsqueda y filtros
+    al cambiar de página."""
+    params = request.GET.copy()
+    params.pop('page', None)
+    return params.urlencode()
+
+
 def _parse_items_from_post(request):
     items_data = []
     i = 0
@@ -393,16 +401,12 @@ def pedido_lista(request):
         items = list(grupo)
         pedidos_por_fecha.append({'fecha': fecha, 'pedidos': items, 'count': len(items)})
 
-    # Querystring sin "page" para conservar búsqueda y filtros al cambiar de página
-    params = request.GET.copy()
-    params.pop('page', None)
-
     return render(request, 'pedidos/pedido_lista.html', {
         'titulo': 'Pedidos',
         'pedidos_por_fecha': pedidos_por_fecha,
         'page_obj': page_obj,
         'paginas': _rango_paginas(page_obj),
-        'querystring': params.urlencode(),
+        'querystring': _querystring_sin_page(request),
         'q': q,
         'filtro_fecha': filtro['filtro_fecha'],
         'fecha_dia': filtro['fecha_dia'],
@@ -580,16 +584,26 @@ def orden_lista(request):
     if _es_cajero(request) or _es_mesero(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
 
-    q_orden = request.GET.get('q_orden', '').strip()
-    filtro = _resolver_filtro_fecha(request)
-    ordenes_qs = _ordenes_filtradas(request)
-    ordenes_lista_data = list(ordenes_qs)
-    ordenes_por_fecha  = []
-    for fecha, grupo in groupby(ordenes_lista_data, key=lambda o: o.fecha_creacion.date()):
+    q_orden    = request.GET.get('q_orden', '').strip()
+    filtro     = _resolver_filtro_fecha(request)
+    ordenes_qs = _ordenes_filtradas(request)  # ya viene ordenado por -fecha_creacion
+
+    # Paginación: 15 órdenes por página
+    paginator = Paginator(ordenes_qs, 15)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
+    # Agrupar por fecha solo las órdenes de la página actual
+    ordenes_por_fecha = []
+    for fecha, grupo in groupby(page_obj.object_list, key=lambda o: o.fecha_creacion.date()):
         items = list(grupo)
         ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
+
     return render(request, 'pedidos/orden_lista.html', {
-        'titulo': 'Pedidos', 'ordenes_por_fecha': ordenes_por_fecha,
+        'titulo': 'Pedidos',
+        'ordenes_por_fecha': ordenes_por_fecha,
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': _querystring_sin_page(request),
         'q_orden': q_orden,
         'filtro_fecha': filtro['filtro_fecha'],
         'fecha_dia': filtro['fecha_dia'],
@@ -658,16 +672,12 @@ def producto_lista(request):
     paginator = Paginator(productos_qs, 10)  # 10 productos por página
     page_obj  = paginator.get_page(request.GET.get('page'))
 
-    # Querystring sin "page", para conservar el buscador y la categoría al cambiar de página
-    params = request.GET.copy()
-    params.pop('page', None)
-
     return render(request, 'pedidos/producto_lista.html', {
         'titulo': 'Pedidos',
         'productos': page_obj,          # la plantilla sigue iterando "productos"
         'page_obj': page_obj,
         'paginas': _rango_paginas(page_obj),
-        'querystring': params.urlencode(),
+        'querystring': _querystring_sin_page(request),
         'categorias': Categoria.objects.all(),
         'q_prod': q_prod,
         'cat_sel': cat_sel,
@@ -778,12 +788,25 @@ def categoria_lista(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cat = request.GET.get('q_cat', '').strip()
-    categorias_qs = Categoria.objects.all()
+
+    # order_by es necesario para que la paginación sea estable
+    categorias_qs = Categoria.objects.order_by('pk')
     if q_cat:
         categorias_qs = categorias_qs.filter(nombre__icontains=q_cat)
+
+    paginator = Paginator(categorias_qs, 10)  # 10 categorías por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    querystring = _querystring_sin_page(request)
+
     return render(request, 'pedidos/categoria_lista.html', {
-        'titulo': 'Pedidos', 'categorias': categorias_qs,
-        'q_cat': q_cat, 'seccion_activa': 'categoria-lista'})
+        'titulo': 'Pedidos',
+        'categorias': page_obj,         # la plantilla sigue iterando "categorias"
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': querystring,
+        'qs_filtros': querystring,      # nombre que usa la plantilla de categorías
+        'q_cat': q_cat,
+        'seccion_activa': 'categoria-lista'})
 
 
 @login_required
@@ -882,13 +905,26 @@ def cliente_lista(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cli = request.GET.get('q_cli', '').strip()
-    clientes_qs = Cliente.objects.all()
+
+    # order_by es necesario para que la paginación sea estable
+    clientes_qs = Cliente.objects.order_by('pk')
     if q_cli:
         clientes_qs = clientes_qs.filter(
             Q(nombre_completo__icontains=q_cli) | Q(documento__icontains=q_cli))
+
+    paginator = Paginator(clientes_qs, 10)  # 10 clientes por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    querystring = _querystring_sin_page(request)
+
     return render(request, 'pedidos/cliente_lista.html', {
-        'titulo': 'Pedidos', 'clientes': clientes_qs,
-        'q_cli': q_cli, 'seccion_activa': 'cliente-lista'})
+        'titulo': 'Pedidos',
+        'clientes': page_obj,           # la plantilla sigue iterando "clientes"
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': querystring,
+        'qs_filtros': querystring,      # nombre que usa la plantilla de clientes
+        'q_cli': q_cli,
+        'seccion_activa': 'cliente-lista'})
 
 
 @login_required
