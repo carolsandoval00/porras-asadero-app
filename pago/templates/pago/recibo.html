@@ -6,6 +6,155 @@
 
 <link rel="stylesheet" href="{% static 'css/pago.css' %}">
 
+<!-- Estilos del recibo (van aquí para no tocar pago.css,
+     que usa @page A4 horizontal para el reporte de pagos) -->
+<style>
+  /* ═══════════════ DISEÑO DEL TICKET (pantalla e impresión) ═══════════════ */
+  .rc-ticket {
+    position: relative;
+    background: #fff;
+    width: 80mm;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 18px 16px 22px;
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 4px 22px rgba(26, 16, 8, .16);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  /* Todo el texto en negro (se imprime mejor y se ve más limpio) */
+  .rc-ticket, .rc-ticket div, .rc-ticket span, .rc-ticket p, .rc-ticket strong { color: #000 !important; }
+
+  /* Logo centrado (mismo recorte que usa el reporte impreso) */
+  .rc-logo { position: relative; width: 3.8cm; aspect-ratio: 1083 / 545; overflow: hidden; margin: 0 auto 4px; }
+  .rc-logo img { position: absolute; width: 141.83%; max-width: none; left: -21.51%; top: -26.06%; }
+
+  .rc-ticket .rc-nombre { font-size: 18px; font-weight: 700; letter-spacing: 1.5px; margin: 0 0 3px; text-transform: uppercase; }
+  .rc-ticket .rc-center { text-align: center; }
+  .rc-ticket .rc-datos div { font-size: 11px; }
+
+  .rc-ticket .rc-sep { border-top: 1px dashed #000; margin: 10px 0; }
+
+  /* Título "RECIBO DE PAGO" + sello PAGADO */
+  .rc-ticket .rc-titulo { font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+  .rc-ticket .rc-pagado {
+    display: inline-block; margin-top: 6px; padding: 2px 16px;
+    border: 2px solid #000; border-radius: 4px;
+    font-size: 12px; font-weight: 700; letter-spacing: 3px;
+  }
+
+  /* Filas etiqueta / valor */
+  .rc-ticket .rc-fila { display: flex; justify-content: space-between; gap: 10px; margin: 3px 0; }
+  .rc-ticket .rc-fila > span:first-child { color: #333 !important; }
+  .rc-ticket .rc-fila > span:last-child  { text-align: right; font-weight: 700; }
+
+  /* Títulos de sección en barra negra */
+  .rc-ticket .rc-seccion {
+    background: #000 !important; color: #fff !important;
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    padding: 2px 8px; margin: 0 0 5px; border-radius: 2px;
+  }
+
+  .rc-ticket .rc-desc { word-break: break-word; }
+
+  /* Detalle de productos: Cant | Producto | Valor */
+  .rc-ticket .rc-item {
+    display: grid; grid-template-columns: 28px 1fr auto; gap: 6px;
+    align-items: start; margin: 4px 0;
+  }
+  .rc-ticket .rc-item-head {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 5px;
+  }
+  .rc-ticket .rc-item-head span:last-child,
+  .rc-ticket .rc-item-valor { text-align: right; }
+  .rc-ticket .rc-item-cant  { font-weight: 700; }
+  .rc-ticket .rc-item-valor { font-weight: 700; white-space: nowrap; }
+  .rc-ticket .rc-item-nombre { word-break: break-word; }
+  .rc-ticket .rc-item-unit  { display: block; font-size: 10px; color: #333 !important; }
+  .rc-ticket .rc-notas { margin-top: 6px; font-size: 11px; word-break: break-word; }
+
+  /* Total destacado */
+  .rc-ticket .rc-total {
+    font-size: 17px; font-weight: 700;
+    border-top: 2px solid #000; border-bottom: 2px solid #000;
+    padding: 7px 0; margin: 6px 0 8px;
+  }
+  .rc-ticket .rc-total > span:first-child { color: #000 !important; }
+
+  /* Despedida */
+  .rc-ticket .rc-gracias { font-size: 12px; font-weight: 700; margin-top: 2px; }
+  .rc-ticket .rc-adorno  { letter-spacing: 6px; font-size: 11px; margin-top: 4px; }
+
+  /* Borde en zigzag abajo (solo en pantalla) */
+  @media screen {
+    .rc-ticket::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: -9px; height: 9px;
+      background:
+        linear-gradient(-45deg, transparent 6px, #fff 0),
+        linear-gradient(45deg,  transparent 6px, #fff 0);
+      background-size: 12px 12px; background-repeat: repeat-x;
+    }
+    .rc-pagina-pantalla { padding-bottom: 1rem; }
+  }
+
+  /* ═══════════════ IMPRESIÓN ═══════════════ */
+  @media print {
+    /* Hoja vertical y margen 0: así Chrome también quita la fecha, el título y la URL */
+    @page { size: A4 portrait; margin: 0; }
+
+    /* Ocultar todo lo que no es el ticket:
+       barra superior / menú lateral, pie, botones flotantes (ayuda, accesibilidad, asistente),
+       tarjeta "Recibo de pago" y la barra con Imprimir / Volver */
+    body > *:not(.admin-shell),
+    .admin-shell > *:not(.admin-main),
+    .admin-shell aside,
+    .admin-main footer,
+    .pg-header,
+    .pg-card-header,
+    .no-print { display: none !important; }
+
+    /* Quitar alturas y rellenos del layout del panel para que no genere una 2.ª página */
+    html, body {
+      background: #fff !important;
+      height: auto !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .admin-shell  { display: block !important; height: auto !important; min-height: 0 !important; }
+    .admin-main   { display: block !important; width: 100% !important; margin: 0 !important;
+                    padding: 0 !important; height: auto !important; min-height: 0 !important; }
+    .admin-main > section { padding: 0 !important; }
+
+    .pg-wrapper   { background: #fff !important; padding: 0 !important; }
+    .pg-card      { background: #fff !important; border: none !important; box-shadow: none !important;
+                    margin: 0 !important; border-radius: 0 !important; }
+    .pg-card-body { padding: 0 !important; }
+
+    /* El ticket: 80 mm de ancho, centrado, sin sombra y sin partirse */
+    .rc-ticket {
+      width: 80mm !important;
+      max-width: 80mm !important;
+      margin: 10mm auto 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .rc-ticket::after { display: none !important; }
+    .rc-ticket, .rc-ticket * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+</style>
+
 <div class="pg-wrapper">
 
   <div class="pg-header">
@@ -24,20 +173,26 @@
       </div>
     </div>
 
-    <div class="pg-card-body">
+    <div class="pg-card-body rc-pagina-pantalla">
 
       <div class="rc-ticket">
 
-        <!-- DATOS DEL ASADERO -->
+        <!-- LOGO + DATOS DEL ASADERO -->
         <div class="rc-center">
+          <div class="rc-logo"><img src="{% static 'img/logo.png' %}" alt="Porras Asadero"></div>
           <p class="rc-nombre">{{ asadero.nombre }}</p>
-          <div>NIT: {{ asadero.nit }}</div>
-          <div>{{ asadero.direccion }}</div>
-          <div>Tel: {{ asadero.telefono }}</div>
+          <div class="rc-datos">
+            <div>NIT: {{ asadero.nit }}</div>
+            <div>{{ asadero.direccion }}</div>
+            <div>Tel: {{ asadero.telefono }}</div>
+          </div>
         </div>
 
         <div class="rc-sep"></div>
-        <div class="rc-center"><strong>RECIBO DE PAGO</strong></div>
+        <div class="rc-center">
+          <div class="rc-titulo">RECIBO DE PAGO</div>
+          <div class="rc-pagado">PAGADO</div>
+        </div>
         <div class="rc-sep"></div>
 
         <!-- DATOS DEL PEDIDO -->
@@ -61,9 +216,31 @@
 
         <div class="rc-sep"></div>
 
-        <!-- DETALLE -->
-        <div class="rc-seccion">Detalle</div>
+        <!-- DETALLE DE LOS PRODUCTOS DE LA FACTURA -->
+        <div class="rc-seccion">Detalle de productos</div>
+
+        {% if pedido.items.all %}
+        <div class="rc-item rc-item-head">
+          <span>Cant</span><span>Producto</span><span>Valor</span>
+        </div>
+        {% for it in pedido.items.all %}
+        {% widthratio it.cantidad 1 it.precio_unitario as linea %}
+        <div class="rc-item">
+          <span class="rc-item-cant">{{ it.cantidad }}</span>
+          <span class="rc-item-nombre">
+            {{ it.producto.nombre }}
+            <span class="rc-item-unit">${{ it.precio_unitario|floatformat:0 }} c/u</span>
+          </span>
+          <span class="rc-item-valor">${{ linea|floatformat:0 }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
         <div class="rc-desc">{{ pedido.descripcion|default:"—"|linebreaksbr }}</div>
+        {% endif %}
+
+        {% if pedido.items.all and pedido.descripcion %}
+        <div class="rc-notas"><strong>Notas:</strong> {{ pedido.descripcion|linebreaksbr }}</div>
+        {% endif %}
 
         <div class="rc-sep"></div>
 
@@ -75,7 +252,11 @@
         {% endif %}
 
         <div class="rc-sep"></div>
-        <div class="rc-center">¡Gracias por su compra!<br>Vuelva pronto 🍗</div>
+        <div class="rc-center">
+          <div class="rc-gracias">¡Gracias por su compra!</div>
+          <div>Vuelva pronto</div>
+          <div class="rc-adorno">★ ★ ★</div>
+        </div>
 
       </div>
 
