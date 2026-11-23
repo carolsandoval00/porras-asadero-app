@@ -463,7 +463,7 @@
   body > *:not(.admin-shell),
   .admin-shell aside,
   .admin-main footer,
-  .pm-header, .pm-nav, .pm-card-header,
+  .pm-header, .pm-nav, .pm-stats, .pm-card-header,
   .pm-card-body form, .pm-modal-overlay,
   .pm-table th:last-child,
   .pm-table td:last-child:not([colspan]) { display: none !important; }
@@ -472,8 +472,7 @@
   .admin-shell { display: block !important; }
   .admin-main { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
   .admin-main > section { padding: 0 !important; }
-  .pm-wrapper { background: #fff !important; padding: 0 !important; }
-  .pm-card { box-shadow: none !important; border: none !important; background: #fff !important; }
+  .pm-wrapper { background: #fff !important; padding: 0 !important; }  .pm-card { box-shadow: none !important; border: none !important; background: #fff !important; }
   .pm-card-body { padding: 0 !important; }
   .pm-table-wrap { overflow: visible !important; }
 
