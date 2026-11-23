@@ -399,6 +399,56 @@
 .pm-td-plato-total-label { font-weight:700; padding:.75rem 1rem; }
 .pm-td-plato-total-value { font-weight:800; font-size:1.1rem; color:#C0392B; padding:.75rem 1rem; }
 
+/* ── Paginación (pie del card) ── */
+.pm-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .8rem;
+  padding: 1rem 1.4rem;
+  background: #F5ECD7;
+  border-top: 1px solid var(--p-border);
+  border-radius: 0 0 var(--p-radius) var(--p-radius);
+  font-family: 'Lato', sans-serif;
+}
+.pm-pag-info {
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--p-muted);
+}
+.pm-pag-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem;
+}
+.pm-pag-puntos {
+  padding: 0 .3rem;
+  color: var(--p-muted);
+}
+.pm-pag-actual { cursor: default; }
+.pm-pag-actual:hover { transform: none; filter: none; }
+
+@media (max-width: 768px) {
+  .pm-paginacion { justify-content: center; text-align: center; }
+}
+
+/* Paginación DENTRO del cuerpo de la tarjeta (listas de Órdenes, Categorías,
+   Clientes, etc.): va sin fondo ni borde redondeado, solo con una línea arriba.
+   Así convive con la paginación de pie de tarjeta de arriba. */
+.pm-card-body .pm-paginacion {
+  background: transparent;
+  border-radius: 0;
+  padding: 1rem 0 0;
+  margin-top: 1.2rem;
+  font-family: inherit;
+}
+.pm-card-body .pm-pag-info {
+  font-size: .82rem;
+  font-weight: 600;
+}
+
 /* ============================================
    Tooltip JS para elementos dentro de .pm-nav
    (o cualquier contenedor con overflow que recorte
@@ -465,6 +515,7 @@
   .admin-main footer,
   .pm-header, .pm-nav, .pm-stats, .pm-card-header,
   .pm-card-body form, .pm-modal-overlay,
+  .pm-paginacion,
   .pm-table th:last-child,
   .pm-table td:last-child:not([colspan]) { display: none !important; }
 

@@ -188,6 +188,40 @@
       {% else %}
         <p class="pm-empty-msg">No hay órdenes registradas.</p>
       {% endif %}
+
+      <!-- Paginación -->
+      {% if page_obj.paginator.count %}
+      <div class="pm-paginacion">
+        <span class="pm-pag-info">
+          Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} {% if page_obj.paginator.count == 1 %}orden{% else %}órdenes{% endif %}
+        </span>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pm-pag-links">
+          {% if page_obj.has_previous %}
+          <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página anterior">← Anterior</a>
+          {% endif %}
+
+          {% for p in paginas %}
+            {% if p.puntos %}
+              <span class="pm-pag-puntos">…</span>
+            {% elif p.num == page_obj.number %}
+              <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ p.num }}</span>
+            {% else %}
+              <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ p.num }}"
+                 class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Ir a la página {{ p.num }}">{{ p.num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página siguiente">Siguiente →</a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

@@ -84,6 +84,7 @@
       <h3>Últimos pedidos</h3>
       <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm" data-tooltip="Hacer un pedido nuevo">Nuevo pedido</a>
     </div>
+
     <div class="pm-card-body">
       <div class="pm-table-wrap">
         <table class="pm-table">
@@ -110,32 +111,32 @@
           </tbody>
         </table>
       </div>
+    </div>
 
-      <!-- Paginación (siempre visible) -->
-      <div class="pm-paginacion">
-        <div class="pm-pag-info">
-          Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }}
-          de {{ page_obj.paginator.count }} pedidos
-        </div>
-        <div class="pm-pag-links">
-          {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}" class="pm-btn pm-btn-light pm-btn-sm">« Anterior</a>
+    <!-- Paginación (pegada al borde inferior del card) -->
+    <div class="pm-paginacion">
+      <div class="pm-pag-info">
+        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        de {{ page_obj.paginator.count }} pedidos
+      </div>
+      <div class="pm-pag-links">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}" class="pm-btn pm-btn-light pm-btn-sm">« Anterior</a>
+        {% endif %}
+
+        {% for p in paginas %}
+          {% if p.puntos %}
+            <span class="pm-pag-puntos">…</span>
+          {% elif p.num == page_obj.number %}
+            <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ p.num }}</span>
+          {% else %}
+            <a href="?page={{ p.num }}" class="pm-btn pm-btn-light pm-btn-sm">{{ p.num }}</a>
           {% endif %}
+        {% endfor %}
 
-          {% for p in paginas %}
-            {% if p.puntos %}
-              <span class="pm-pag-puntos">…</span>
-            {% elif p.num == page_obj.number %}
-              <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ p.num }}</span>
-            {% else %}
-              <a href="?page={{ p.num }}" class="pm-btn pm-btn-light pm-btn-sm">{{ p.num }}</a>
-            {% endif %}
-          {% endfor %}
-
-          {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}" class="pm-btn pm-btn-light pm-btn-sm">Siguiente »</a>
-          {% endif %}
-        </div>
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" class="pm-btn pm-btn-light pm-btn-sm">Siguiente »</a>
+        {% endif %}
       </div>
     </div>
   </div>
