@@ -1,0 +1,41 @@
+# Control de versiones
+.git
+.gitignore
+.gitattributes
+
+# Entornos virtuales (tu .venv es de Windows, no sirve en Linux)
+.venv
+venv
+env
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.log
+
+# Base de datos local (se crea con migrate dentro del contenedor)
+db.sqlite3
+db.sqlite3-journal
+
+# Archivos subidos por usuarios (monta un volumen)
+media/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+
+# Node (solo tienes package-lock.json, sin package.json)
+node_modules/
+package-lock.json
+
+# Documentación y reportes que no hacen falta en la imagen
+docs/
+README.md
+reporte_rubrica.html
+reporte_rubrica.pdf
