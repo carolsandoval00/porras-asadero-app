@@ -35,13 +35,16 @@
 
     </div>
 
-    {% if request.user.is_authenticated %}
-        {% include "partials/asistente_ia.html" %}
-        {% include "partials/ayuda_fab.html" %}
+    <!-- Botones flotantes (asistente, ayuda y accesibilidad).
+         El contenedor .print-fabs permite que también salgan al imprimir los reportes. -->
+    <div class="print-fabs">
+        {% if request.user.is_authenticated %}
+            {% include "partials/asistente_ia.html" %}
+            {% include "partials/ayuda_fab.html" %}
+        {% endif %}
 
-    {% endif %}
-
-    {% include "partials/accesibilidad.html" %}
+        {% include "partials/accesibilidad.html" %}
+    </div>
 
     {% if messages %}
     <div id="avisos-django" hidden>

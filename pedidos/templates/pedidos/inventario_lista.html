@@ -1,0 +1,379 @@
+{% extends "base 2.html" %}
+{% block title %}Inventario de bebidas{% endblock title %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
+<div class="pm-wrapper">
+  <!-- Cabecera -->
+  <div class="pm-header">
+    <h1>{{ titulo }}</h1>
+    <h2>Bienvenido, {{ nombre }}</h2>
+  </div>
+
+  {% if messages %}
+  <div id="modal-mensaje" class="pm-modal-overlay open">
+    <div class="pm-modal-box">
+      {% for msg in messages %}
+      <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
+      {% endfor %}
+      <div class="pm-modal-actions">
+        <button class="pm-btn pm-btn-primary" onclick="document.getElementById('modal-mensaje').classList.remove('open')">Aceptar</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Navegación Compartida -->
+  <div class="pm-nav">
+    <div class="pm-nav-group">
+      <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light" data-tooltip="Ir al inicio">Inicio</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Pedidos</span>
+      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver todos los pedidos">Consultar</a>
+      <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Hacer un pedido nuevo">Crear</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Órdenes</span>
+      <a href="{% url 'pedidos:orden_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver las órdenes">Consultar</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Productos</span>
+      <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver los productos">Consultar</a>
+      <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar un producto">Crear</a>
+      <a href="{% url 'pedidos:inventario_lista' %}" class="pm-btn pm-btn-primary" data-tooltip="Ver el inventario de bebidas">Inventario</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Categorías</span>
+      <a href="{% url 'pedidos:categoria_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver las categorías">Consultar</a>
+      <a href="{% url 'pedidos:categoria_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar una categoría">Crear</a>
+    </div>
+    <div class="pm-nav-group">
+      <span class="pm-label">Clientes</span>
+      <a href="{% url 'pedidos:cliente_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver los clientes">Consultar</a>
+      <a href="{% url 'pedidos:cliente_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar un cliente">Crear</a>
+    </div>
+  </div>
+
+  <!-- Resumen -->
+  <div class="pm-stats">
+    <div class="pm-stat">
+      <div class="val">{{ resumen.total }}</div>
+      <div class="lbl">Bebidas</div>
+    </div>
+    <div class="pm-stat pm-stat-danger">
+      <div class="val">{{ resumen.agotadas }}</div>
+      <div class="lbl">Agotadas</div>
+    </div>
+    <div class="pm-stat pm-stat-warning">
+      <div class="val">{{ resumen.bajas }}</div>
+      <div class="lbl">Por agotarse</div>
+    </div>
+    <div class="pm-stat pm-stat-info">
+      <div class="val">{{ resumen.sin_configurar }}</div>
+      <div class="lbl">Sin configurar</div>
+    </div>
+  </div>
+
+  <!-- Contenedor del Listado -->
+  <div class="pm-card">
+    <div class="pm-card-header">
+      <h3>Inventario de bebidas</h3>
+      <div class="pm-card-header-actions">
+        <button type="button" onclick="exportarPDF()" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Guardar el reporte como PDF"><i class="bi bi-download"></i> PDF</button>
+        <button type="button" onclick="exportarExcel()" class="pm-btn pm-btn-accent pm-btn-sm" style="background:#FF8A3D !important; color:#fff !important;" data-tooltip="Descargar el inventario en Excel"><i class="bi bi-download"></i> Excel</button>
+        <button type="button" onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Imprimir el reporte"><i class="bi bi-printer-fill"></i> Imprimir</button>
+        <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de productos">← Productos</a>
+      </div>
+    </div>
+    <div class="pm-card-body">
+
+      <!-- Encabezado del reporte (solo se ve al imprimir) -->
+      <div class="pm-print-header">
+        <div class="pm-print-logo">
+          <img src="{% static 'img/logo.png' %}" alt="Porras Asadero">
+        </div>
+        <div class="pm-print-titulo">
+          <h1>Reporte de Inventario de Bebidas</h1>
+          <p>Porras Asadero · Generado el {% now "d/m/Y H:i" %}</p>
+        </div>
+      </div>
+
+      <!-- Buscador -->
+      <form method="get" action="" class="pm-search-form">
+        <input class="pm-input" type="text" name="q_inv" value="{{ q_inv }}" placeholder="Buscar bebida…" data-tooltip="Escribe para buscar">
+        <select name="estado_inv" class="pm-select-filter" data-tooltip="Filtra por el estado del inventario">
+          <option value="" {% if estado_inv == '' %}selected{% endif %}>Todas</option>
+          <option value="agotadas" {% if estado_inv == 'agotadas' %}selected{% endif %}>Agotadas</option>
+          <option value="bajas" {% if estado_inv == 'bajas' %}selected{% endif %}>Por agotarse</option>
+          <option value="sin_configurar" {% if estado_inv == 'sin_configurar' %}selected{% endif %}>Sin configurar</option>
+        </select>
+        <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Buscar">Filtrar</button>
+        <a href="{% url 'pedidos:inventario_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Quitar los filtros">Limpiar</a>
+      </form>
+
+      <div class="pm-table-wrap">
+        <table class="pm-table">
+          <thead>
+            <tr><th>#</th><th>Bebida</th><th>Precio</th><th>Stock actual</th><th>Mínimo</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {% for b in bebidas %}
+            <tr>
+              <td><strong>{{ page_obj.start_index|add:forloop.counter0|stringformat:"02d" }}</strong></td>
+              <td><strong>{{ b.nombre }}</strong></td>
+              <td>${{ b.precio|floatformat:0 }}</td>
+              <td>
+                {% if b.stock_actual is None %}<span class="pm-muted">—</span>{% else %}<strong>{{ b.stock_actual }}</strong>{% endif %}
+              </td>
+              <td>
+                {% if b.stock_actual is None %}<span class="pm-muted">—</span>{% else %}{{ b.stock_minimo }}{% endif %}
+              </td>
+              <td>
+                {% if b.estado_stock == 'AGOTADO' %}
+                  <span class="pm-badge pm-badge-cancelado">Agotada</span>
+                {% elif b.estado_stock == 'BAJO' %}
+                  <span class="pm-badge pm-badge-procesando">Por agotarse</span>
+                {% elif b.estado_stock == 'OK' %}
+                  <span class="pm-badge pm-badge-listo">Disponible</span>
+                {% else %}
+                  <span class="pm-badge pm-badge-cerrada">Sin configurar</span>
+                {% endif %}
+              </td>
+              <td class="pm-td-actions">
+                <button class="pm-btn pm-btn-accent pm-btn-sm" data-tooltip="Registrar la entrada de bebidas del proveedor"
+                        onclick="abrirReabastecer({{ b.pk }}, '{{ b.nombre|escapejs }}', '{{ b.stock_actual|default_if_none:"" }}')">Reabastecer</button>
+                <button class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Corregir el stock y el mínimo después de contar"
+                        onclick="abrirAjustar({{ b.pk }}, '{{ b.nombre|escapejs }}', '{{ b.stock_actual|default_if_none:"" }}', '{{ b.stock_minimo }}')">Ajustar</button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="pm-table-empty">
+              {% if resumen.total == 0 %}
+                No hay bebidas. Crea una categoría llamada "Bebidas" y agrega productos en ella.
+              {% else %}
+                No hay bebidas con ese filtro.
+              {% endif %}
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.count %}
+    <div class="pm-paginacion">
+      <div class="pm-pag-info">
+        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        de {{ page_obj.paginator.count }} {% if page_obj.paginator.count == 1 %}bebida{% else %}bebidas{% endif %}
+      </div>
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="pm-pag-links">
+        {% if page_obj.has_previous %}
+          <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm">« Anterior</a>
+        {% endif %}
+
+        {% for p in paginas %}
+          {% if p.puntos %}
+            <span class="pm-pag-puntos">…</span>
+          {% elif p.num == page_obj.number %}
+            <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ p.num }}</span>
+          {% else %}
+            <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ p.num }}"
+               class="pm-btn pm-btn-light pm-btn-sm">{{ p.num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}"
+             class="pm-btn pm-btn-light pm-btn-sm">Siguiente »</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Ventana: Reabastecer -->
+<div id="modal-reabastecer" class="pm-modal-overlay">
+  <div class="pm-modal-box">
+    <h4>Reabastecer bebida</h4>
+    <p><strong id="reab-nombre"></strong><br>Stock actual: <span id="reab-actual"></span></p>
+    <form id="reab-form" method="post" class="pm-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <label for="reab-cantidad">Unidades que llegaron</label>
+      <input type="number" id="reab-cantidad" name="cantidad" min="1" max="100000" step="1" placeholder="Ej: 24" required>
+      <div class="pm-form-actions">
+        <button type="submit" class="pm-btn pm-btn-accent">Agregar al inventario</button>
+        <button type="button" class="pm-btn pm-btn-light" onclick="cerrarModal('modal-reabastecer')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Ventana: Ajustar -->
+<div id="modal-ajustar" class="pm-modal-overlay">
+  <div class="pm-modal-box">
+    <h4>Ajustar inventario</h4>
+    <p><strong id="ajus-nombre"></strong><br>Usa esto después de contar, o para configurar el stock por primera vez.</p>
+    <form id="ajus-form" method="post" class="pm-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <div class="pm-form-grid">
+        <div>
+          <label for="ajus-stock">Stock actual</label>
+          <input type="number" id="ajus-stock" name="stock_actual" min="0" max="100000" step="1" placeholder="Unidades">
+        </div>
+        <div>
+          <label for="ajus-minimo">Stock mínimo</label>
+          <input type="number" id="ajus-minimo" name="stock_minimo" min="0" max="100000" step="1" required>
+        </div>
+      </div>
+      <p class="pm-muted" style="margin:.8rem 0 0;font-size:.8rem">El stock actual no puede ser menor que el mínimo. Si dejas el stock vacío, esta bebida no se controla y se vende sin límite.</p>
+      <div class="pm-form-actions">
+        <button type="submit" class="pm-btn pm-btn-primary">Guardar</button>
+        <button type="button" class="pm-btn pm-btn-light" onclick="cerrarModal('modal-ajustar')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var URL_REABASTECER = "{% url 'pedidos:inventario_reabastecer' 0 %}";
+var URL_AJUSTAR     = "{% url 'pedidos:inventario_ajustar' 0 %}";
+
+function abrirReabastecer(pk, nombre, stock) {
+  document.getElementById('reab-form').action = URL_REABASTECER.replace('/0/', '/' + pk + '/');
+  document.getElementById('reab-nombre').textContent = nombre;
+  document.getElementById('reab-actual').textContent = (stock === '') ? 'sin configurar' : stock;
+  document.getElementById('reab-cantidad').value = '';
+  document.getElementById('modal-reabastecer').classList.add('open');
+  document.getElementById('reab-cantidad').focus();
+}
+function abrirAjustar(pk, nombre, stock, minimo) {
+  document.getElementById('ajus-form').action = URL_AJUSTAR.replace('/0/', '/' + pk + '/');
+  document.getElementById('ajus-nombre').textContent = nombre;
+  document.getElementById('ajus-stock').value = stock;
+  document.getElementById('ajus-minimo').value = minimo;
+  validarStockMinimo();
+  document.getElementById('modal-ajustar').classList.add('open');
+  document.getElementById('ajus-stock').focus();
+}
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Validación: el stock actual no puede ser menor que el stock mínimo.
+// (Si el stock se deja vacío, la bebida no se controla y se permite.)
+function validarStockMinimo() {
+  var stock  = document.getElementById('ajus-stock');
+  var minimo = document.getElementById('ajus-minimo');
+  var s = stock.value, m = minimo.value;
+  if (s !== '' && m !== '' && parseInt(s, 10) < parseInt(m, 10)) {
+    stock.setCustomValidity('El stock actual no puede ser menor que el stock mínimo (' + m + ').');
+  } else {
+    stock.setCustomValidity('');
+  }
+}
+document.getElementById('ajus-stock').addEventListener('input', validarStockMinimo);
+document.getElementById('ajus-minimo').addEventListener('input', validarStockMinimo);
+
+// PDF: abre el diálogo de impresión con el nombre del archivo ya puesto.
+// En "Destino" elige "Guardar como PDF".
+function exportarPDF() {
+  var tituloOriginal = document.title;
+  var hoy = new Date().toISOString().slice(0, 10);
+  document.title = 'Inventario_bebidas_' + hoy;
+  window.print();
+  document.title = tituloOriginal;
+}
+
+// Excel: descarga la tabla (sin la columna Acciones) como archivo .xls
+function exportarExcel() {
+  var tabla = document.querySelector('.pm-table');
+  var filas = [];
+  tabla.querySelectorAll('tr').forEach(function (tr) {
+    var celdas = tr.querySelectorAll('th, td');
+    if (celdas.length < 7) return;
+    var fila = [];
+    for (var i = 0; i < celdas.length - 1; i++) {
+      var txt = celdas[i].textContent.trim().replace(/\s+/g, ' ')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      fila.push('<td>' + txt + '</td>');
+    }
+    filas.push('<tr>' + fila.join('') + '</tr>');
+  });
+  var html = '<html><head><meta charset="UTF-8"></head><body><table border="1">' + filas.join('') + '</table></body></html>';
+  var blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Inventario_bebidas_' + new Date().toISOString().slice(0, 10) + '.xls';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+</script>
+
+<script>
+/**
+ * Tooltips flotantes para elementos dentro de .pm-nav.
+ * Se usan porque .pm-nav tiene overflow-x:auto, lo que
+ * recortaría un tooltip hecho con CSS puro (::after).
+ */
+(function () {
+    let bubble = null;
+
+    function showTooltip(el) {
+        const text = el.getAttribute('data-tooltip');
+        if (!text) return;
+
+        bubble = document.createElement('div');
+        bubble.className = 'js-tooltip-bubble';
+        bubble.textContent = text;
+        document.body.appendChild(bubble);
+
+        const rect = el.getBoundingClientRect();
+        const bubbleRect = bubble.getBoundingClientRect();
+
+        let left = rect.left + rect.width / 2 - bubbleRect.width / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - bubbleRect.width - 8));
+
+        const espacioArriba = rect.top - bubbleRect.height - 10;
+        let top;
+        let abajo = false;
+        if (espacioArriba < 8) {
+            top = rect.bottom + 10;
+            abajo = true;
+        } else {
+            top = espacioArriba;
+        }
+
+        bubble.classList.toggle('abajo', abajo);
+        bubble.style.left = left + 'px';
+        bubble.style.top = top + 'px';
+
+        requestAnimationFrame(() => bubble.classList.add('show'));
+    }
+
+    function hideTooltip() {
+        if (bubble) {
+            bubble.remove();
+            bubble = null;
+        }
+    }
+
+    document.querySelectorAll('.pm-nav [data-tooltip]').forEach(function (el) {
+        el.addEventListener('mouseenter', function () { showTooltip(el); });
+        el.addEventListener('mouseleave', hideTooltip);
+        el.addEventListener('focus', function () { showTooltip(el); });
+        el.addEventListener('blur', hideTooltip);
+    });
+
+    window.addEventListener('scroll', hideTooltip, true);
+})();
+</script>
+
+{% endblock %}

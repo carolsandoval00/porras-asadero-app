@@ -13,6 +13,7 @@
       <p>Porras Asadero · Generado el {% now "d/m/Y H:i" %}</p>
     </div>
   </div>
+
   <!-- Cabecera -->
   <div class="pm-header">
     <h1>{{ titulo }}</h1>
@@ -50,6 +51,7 @@
       <span class="pm-label">Productos</span>
       <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-primary" data-tooltip="Ver los productos">Consultar</a>
       <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-light" data-tooltip="Agregar un producto">Crear</a>
+      <a href="{% url 'pedidos:inventario_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Ver el inventario de bebidas">Inventario</a>
     </div>
     <div class="pm-nav-group">
       <span class="pm-label">Categorías</span>
@@ -73,54 +75,94 @@
         <a href="{% url 'pedidos:producto_exportar_excel' %}?q_prod={{ q_prod }}&categoria={{ cat_sel }}"
            class="pm-btn pm-btn-success pm-btn-sm" data-tooltip="Descargar en Excel">⬇ Excel</a>
         <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Imprimir esta lista">🖨 Imprimir</button>
-        <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm" data-tooltip="Agregar un producto">Nuevo producto</a>
+        <a href="{% url 'pedidos:inventario_lista' %}" class="pm-btn pm-btn-accent pm-btn-sm" data-tooltip="Ver el inventario de bebidas">📦 Inventario</a>
+        <a href="{% url 'pedidos:producto_crear' %}" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Agregar un producto">Nuevo producto</a>
       </div>
     </div>
+
     <div class="pm-card-body">
-      <!-- Buscador -->
-      <form method="get" action="" class="pm-search-form">
-        <input class="pm-input"
-               type="text" name="q_prod" value="{{ q_prod }}" placeholder="Buscar producto…" data-tooltip="Escribe para buscar">
-        <select name="categoria" class="pm-select-filter" data-tooltip="Filtra los productos por categoría">
+      <!-- Buscador y filtro por categoría -->
+      <form method="get" action="" class="pm-search-form pm-mb-lg">
+        <input class="pm-input" type="text" name="q_prod" value="{{ q_prod }}"
+               placeholder="Buscar producto…" data-tooltip="Escribe para buscar">
+        <select name="categoria" class="pm-select-filter" data-tooltip="Filtra por categoría">
           <option value="">Todas las categorías</option>
-          {% for cat in categorias %}
-          <option value="{{ cat.id }}" {% if cat_sel == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.nombre }}</option>
+          {% for c in categorias %}
+          <option value="{{ c.pk }}" {% if cat_sel == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
           {% endfor %}
         </select>
         <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Buscar">Filtrar</button>
       </form>
+
       <div class="pm-table-wrap">
         <table class="pm-table">
           <thead>
             <tr><th>#</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Descripción</th><th>Disponible</th><th>Acciones</th></tr>
           </thead>
           <tbody>
-            {% for prod in productos %}
+            {% for p in productos %}
             <tr>
+
+              <td><strong>{{ forloop.counter|stringformat:"02d" }}</strong></td>
               <td><strong>{{ page_obj.start_index|add:forloop.counter0|stringformat:"02d" }}</strong></td>
               <td><strong>{{ prod.nombre }}</strong></td>
               <td>{{ prod.categoria.nombre }}</td>
               <td>${{ prod.precio|floatformat:0 }}</td>
               <td class="pm-td-desc-truncate">{{ prod.descripcion|default:"—" }}</td>
+              <td><strong>{{ page_obj.start_index|add:forloop.counter0|stringformat:"02d" }}</strong></td>
+              <td><strong>{{ p.nombre }}</strong></td>
+              <td>{{ p.categoria.nombre|default:"—" }}</td>
+              <td>${{ p.precio|floatformat:0 }}</td>
+              <td class="pm-td-desc-truncate">{{ p.descripcion|default:"—" }}</td>
               <td>
-                {% if prod.disponible %}
-                  <span class="pm-badge pm-badge-completado">Sí</span>
+                {% if p.disponible %}
+                  <span class="pm-badge pm-badge-disponible">Sí</span>
                 {% else %}
-                  <span class="pm-badge pm-badge-cancelado">No</span>
+                  <span class="pm-badge pm-badge-nodisponible">No</span>
                 {% endif %}
               </td>
-              <td class="pm-td-actions">
-                <a href="{% url 'pedidos:producto_editar' prod.pk %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Editar este producto">Editar</a>
+              <td>
+                <a href="{% url 'pedidos:producto_editar' p.pk %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Editar este producto">Editar</a>
                 <button class="pm-btn pm-btn-danger pm-btn-sm" data-tooltip="Borrar este producto"
-                        onclick="confirmDelete('producto',{{ prod.pk }},'{{ prod.nombre|escapejs }}')">Eliminar</button>
+                        onclick="confirmDelete('{% url 'pedidos:producto_eliminar' p.pk %}','{{ p.nombre|escapejs }}')">Eliminar</button>
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" class="pm-table-empty">No hay productos registrados.</td></tr>
+            <tr><td colspan="7" class="pm-table-empty">No hay productos aún.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+
+      <!-- ===== PAGINACIÓN ===== -->
+      {% if page_obj.paginator.count > 0 %}
+      <div class="pm-paginacion">
+        <div class="pm-pag-info">
+          Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }}
+          de {{ page_obj.paginator.count }} productos
+        </div>
+        <div class="pm-pag-links">
+          {% if page_obj.has_previous %}
+            <a class="pm-btn pm-btn-light pm-btn-sm"
+               href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">‹ Anterior</a>
+          {% endif %}
+          {% for pag in paginas %}
+            {% if pag.puntos %}
+              <span class="pm-pag-puntos">…</span>
+            {% elif pag.num == page_obj.number %}
+              <span class="pm-btn pm-btn-primary pm-btn-sm pm-pag-actual">{{ pag.num }}</span>
+            {% else %}
+              <a class="pm-btn pm-btn-light pm-btn-sm"
+                 href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ pag.num }}">{{ pag.num }}</a>
+            {% endif %}
+          {% endfor %}
+          {% if page_obj.has_next %}
+            <a class="pm-btn pm-btn-light pm-btn-sm"
+               href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente ›</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
     </div>
 
     <!-- Paginación -->
@@ -157,7 +199,7 @@
   </div>
 </div>
 
-<!-- Modal de Confirmación Unificado -->
+<!-- Modal de Confirmación -->
 <div id="modal-delete" class="pm-modal-overlay">
   <div class="pm-modal-box">
     <h4>Confirmar eliminación</h4>
@@ -173,74 +215,43 @@
 </div>
 
 <script>
-function confirmDelete(tipo, id, nombre) {
-  var modal = document.getElementById('modal-delete');
-  document.getElementById('modal-msg').innerText = '¿Estás seguro de eliminar el ' + tipo + ' "' + nombre + '"?';
-  document.getElementById('modal-form').action = '/pedidos/' + tipo + 's/' + id + '/eliminar/';
-  modal.classList.add('open');
+function confirmDelete(url, nombre) {
+  document.getElementById('modal-msg').innerText = '¿Estás seguro de eliminar el producto "' + nombre + '"?';
+  document.getElementById('modal-form').action = url;
+  document.getElementById('modal-delete').classList.add('open');
 }
 function closeModal() { document.getElementById('modal-delete').classList.remove('open'); }
 </script>
 
 <script>
-/**
- * Tooltips flotantes para elementos dentro de .pm-nav.
- * Se usan porque .pm-nav tiene overflow-x:auto, lo que
- * recortaría un tooltip hecho con CSS puro (::after).
- * Al crear el tooltip como un elemento aparte pegado al
- * <body>, con position:fixed, se evita ese recorte y
- * el tooltip aparece siempre arriba del botón (o abajo,
- * si no hay espacio arriba).
- */
 (function () {
     let bubble = null;
-
     function showTooltip(el) {
         const text = el.getAttribute('data-tooltip');
         if (!text) return;
-
         bubble = document.createElement('div');
         bubble.className = 'js-tooltip-bubble';
         bubble.textContent = text;
         document.body.appendChild(bubble);
-
         const rect = el.getBoundingClientRect();
         const bubbleRect = bubble.getBoundingClientRect();
-
         let left = rect.left + rect.width / 2 - bubbleRect.width / 2;
         left = Math.max(8, Math.min(left, window.innerWidth - bubbleRect.width - 8));
-
         const espacioArriba = rect.top - bubbleRect.height - 10;
-        let top;
-        let abajo = false;
-        if (espacioArriba < 8) {
-            top = rect.bottom + 10;
-            abajo = true;
-        } else {
-            top = espacioArriba;
-        }
-
+        let top, abajo = false;
+        if (espacioArriba < 8) { top = rect.bottom + 10; abajo = true; } else { top = espacioArriba; }
         bubble.classList.toggle('abajo', abajo);
         bubble.style.left = left + 'px';
         bubble.style.top = top + 'px';
-
         requestAnimationFrame(() => bubble.classList.add('show'));
     }
-
-    function hideTooltip() {
-        if (bubble) {
-            bubble.remove();
-            bubble = null;
-        }
-    }
-
+    function hideTooltip() { if (bubble) { bubble.remove(); bubble = null; } }
     document.querySelectorAll('.pm-nav [data-tooltip]').forEach(function (el) {
         el.addEventListener('mouseenter', function () { showTooltip(el); });
         el.addEventListener('mouseleave', hideTooltip);
         el.addEventListener('focus', function () { showTooltip(el); });
         el.addEventListener('blur', hideTooltip);
     });
-
     window.addEventListener('scroll', hideTooltip, true);
 })();
 </script>
