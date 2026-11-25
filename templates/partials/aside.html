@@ -107,22 +107,22 @@
             <div class="collapse {% if request.resolver_match.namespace == 'pago' %}show{% endif %}" id="pagosSubmenu">
                 <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
                     <li>
-                        <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="nav-link py-1">
+                        <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'pendientes' or request.resolver_match.namespace == 'pago' and not request.GET.tab %}text-warning fw-bold{% endif %}">
                             <i class="bi bi-hourglass-split me-2"></i>Órdenes por pagar
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'pago:dashboard' %}?tab=lista" class="nav-link py-1">
+                        <a href="{% url 'pago:dashboard' %}?tab=lista" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'lista' %}text-warning fw-bold{% endif %}">
                             <i class="bi bi-list-check me-2"></i>Pagos registrados
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'pago:dashboard' %}?tab=consultar-caja" class="nav-link py-1">
+                        <a href="{% url 'pago:dashboard' %}?tab=consultar-caja" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'consultar-caja' %}text-warning fw-bold{% endif %}">
                             <i class="bi bi-cash-stack me-2"></i>Cajas
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'pago:dashboard' %}?tab=abrir-caja" class="nav-link py-1">
+                        <a href="{% url 'pago:dashboard' %}?tab=abrir-caja" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'abrir-caja' %}text-warning fw-bold{% endif %}">
                             <i class="bi bi-plus-circle me-2"></i>Abrir caja
                         </a>
                     </li>
@@ -163,10 +163,10 @@
                     </li>
                     <li>
                        <a href="{% url 'listar_mesas' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
-    <i class="bi bi-gear-fill me-2"></i>Editar Mesas
-</a>
+                            <i class="bi bi-gear-fill me-2"></i>Editar Mesas
+                        </a>
                     </li>
-                                        <li>
+                    <li>
                         <a href="{% url 'eliminar_detalle' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'eliminar_detalle' %}text-warning fw-bold{% endif %}">
                             <i class="bi bi-trash-fill me-2"></i>Eliminar Reserva
                         </a>
@@ -323,22 +323,22 @@
                 <div class="collapse {% if request.resolver_match.namespace == 'pago' %}show{% endif %}" id="m-pagosSubmenu">
                     <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
                         <li>
-                            <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="nav-link py-1" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
+                            <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'pendientes' or request.resolver_match.namespace == 'pago' and not request.GET.tab %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
                                 <i class="bi bi-hourglass-split me-2"></i>Órdenes por pagar
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'pago:dashboard' %}?tab=lista" class="nav-link py-1" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
+                            <a href="{% url 'pago:dashboard' %}?tab=lista" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'lista' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
                                 <i class="bi bi-list-check me-2"></i>Pagos registrados
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'pago:dashboard' %}?tab=consultar-caja" class="nav-link py-1" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
+                            <a href="{% url 'pago:dashboard' %}?tab=consultar-caja" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'consultar-caja' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
                                 <i class="bi bi-cash-stack me-2"></i>Cajas
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'pago:dashboard' %}?tab=abrir-caja" class="nav-link py-1" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
+                            <a href="{% url 'pago:dashboard' %}?tab=abrir-caja" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'abrir-caja' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
                                 <i class="bi bi-plus-circle me-2"></i>Abrir caja
                             </a>
                         </li>
@@ -382,7 +382,7 @@
                                 <i class="bi bi-pencil-square me-2"></i>Editar Mesa
                             </a>
                         </li>
-                                                <li>
+                        <li>
                             <a href="{% url 'eliminar_detalle' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'eliminar_detalle' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
                                 <i class="bi bi-trash-fill me-2"></i>Eliminar Reserva
                             </a>
@@ -423,4 +423,4 @@
             </div>
         </div>
     </div>
-</div> 
+</div>
