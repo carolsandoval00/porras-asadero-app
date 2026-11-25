@@ -133,8 +133,21 @@
   // Aviso en modal. `titulo` es opcional; si no se pasa se usa uno por defecto.
   function toast(msg, tipo, titulo) {
     const tit = $('mc-msg-title'), texto = $('mc-msg-text'), overlay = $('mc-msg-overlay');
+    const btn = $('mc-msg-btn');
     if (!overlay) { console.log(msg); return; }
-    tit.textContent = titulo || (tipo === 'error' ? 'Atención' : '¡Listo!');
+
+    // Los avisos de permisos usan el estilo de "Acceso Restringido"
+    const restringido = /^No tienes permisos/i.test(msg);
+    overlay.classList.toggle('restringido', restringido);
+
+    if (restringido) {
+      tit.innerHTML = 'Acceso <span>Restringido</span>';
+      if (btn) btn.textContent = 'Entendido';
+    } else {
+      tit.textContent = titulo || (tipo === 'error' ? 'Atención' : '¡Listo!');
+      if (btn) btn.textContent = 'Aceptar';
+    }
+
     texto.textContent = msg;
     overlay.classList.toggle('error', tipo === 'error');
     overlay.classList.add('open');
@@ -597,214 +610,18 @@
       });
   };
 
-  // ─── Logo y encabezado de los reportes ────────────────────
-  // Igual que en pedidos: se toma static/img/logo.png, se le quita el espacio
-  // en blanco sobrante y se reduce a 600 px de ancho. Se calcula una sola vez.
-  // Si el logo no carga, el reporte sale igual, solo con texto.
-  const LOGO_URL = window.MC_LOGO_URL || '/static/img/logo.png';
-  const COLOR_MARCA = [192, 57, 43];   // #C0392B
-  let logoPromesa = null;
-
-  function cargarLogo() {
-    if (logoPromesa) return logoPromesa;
-    logoPromesa = new Promise(resolve => {
-      const img = new Image();
-      img.onload = () => {
-        try {
-          const w = img.naturalWidth, h = img.naturalHeight;
-          const lienzo = document.createElement('canvas');
-          lienzo.width = w; lienzo.height = h;
-          const ctx = lienzo.getContext('2d');
-          ctx.fillStyle = '#fff';               // lo transparente pasa a blanco
-          ctx.fillRect(0, 0, w, h);
-          ctx.drawImage(img, 0, 0);
-          const px = ctx.getImageData(0, 0, w, h).data;
-          // recorte al contenido (todo lo que no sea casi blanco)
-          let x0 = w, y0 = h, x1 = -1, y1 = -1;
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              const i = (y * w + x) * 4;
-              if (0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2] < 245) {
-                if (x < x0) x0 = x;
-                if (x > x1) x1 = x;
-                if (y < y0) y0 = y;
-                if (y > y1) y1 = y;
-              }
-            }
-          }
-          if (x1 < 0) { x0 = 0; y0 = 0; x1 = w - 1; y1 = h - 1; }   // imagen vacía: no recortar
-          const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
-          const ancho = 600, alto = Math.round(ch * ancho / cw);
-          const salida = document.createElement('canvas');
-          salida.width = ancho; salida.height = alto;
-          const sctx = salida.getContext('2d');
-          sctx.imageSmoothingQuality = 'high';
-          sctx.drawImage(lienzo, x0, y0, cw, ch, 0, 0, ancho, alto);
-          resolve({ dataUrl: salida.toDataURL('image/png'), proporcion: ancho / alto });
-        } catch (e) {
-          resolve(null);
-        }
-      };
-      img.onerror = () => resolve(null);
-      img.src = LOGO_URL;
-    }).then(logo => {
-      if (!logo) logoPromesa = null;   // si falló, se reintenta en el próximo reporte
-      return logo;
-    });
-    return logoPromesa;
-  }
-
-  function fechaHoraReporte() {
-    const d = new Date(), p = n => String(n).padStart(2, '0');
-    return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear() +
-      ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-  }
-
-  const subtituloReporte = detalle =>
-    'Porras Asadero · Generado el ' + fechaHoraReporte() + ' · ' + detalle;
-
-  // PDF: logo a la izquierda, título y fecha a la derecha y una línea roja debajo.
-  // Devuelve la posición Y donde debe empezar la tabla.
-  function pdfEncabezado(doc, titulo, detalle, logo) {
-    const margen = 14, top = 10, altoLogo = 20;
-    const anchoPagina = doc.internal.pageSize.getWidth();
-    let x = margen;
-    if (logo) {
-      const anchoLogo = altoLogo * logo.proporcion;
-      doc.addImage(logo.dataUrl, 'PNG', margen, top, anchoLogo, altoLogo);
-      x = margen + anchoLogo + 6;
-    }
-    const centro = top + altoLogo / 2;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(...COLOR_MARCA);
-    doc.text(titulo, x, centro - 1);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(85);
-    doc.text(subtituloReporte(detalle), x, centro + 6);
-    doc.setDrawColor(...COLOR_MARCA);
-    doc.setLineWidth(0.5);
-    doc.line(margen, top + altoLogo + 3, anchoPagina - margen, top + altoLogo + 3);
-    doc.setTextColor(0);
-    return top + altoLogo + 9;
-  }
-
-  // Excel (ExcelJS, porque SheetJS no permite meter imágenes): mismo diseño que
-  // los Excel de pedidos: logo arriba a la izquierda, título al lado y la tabla
-  // con los colores del PDF. `anchos` va en caracteres de columna.
-  async function descargarExcel({ titulo, detalle, hoja, archivo, encabezados, filas, anchos }) {
-    const logo = await cargarLogo();
-    const libro = new ExcelJS.Workbook();
-    const ws = libro.addWorksheet(hoja, {
-      pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 },
-      views: [{ state: 'frozen', ySplit: 6 }],
-    });
-    ws.columns = anchos.map(width => ({ width }));
-
-    // Logo (arriba a la izquierda)
-    let anchoLogoPx = 0;
-    if (logo) {
-      const alto = 80;
-      anchoLogoPx = Math.round(alto * logo.proporcion);
-      const idImagen = libro.addImage({ base64: logo.dataUrl, extension: 'png' });
-      ws.addImage(idImagen, { tl: { col: 0, row: 0 }, ext: { width: anchoLogoPx, height: alto } });
-    }
-
-    // El título va en la primera columna que quede libre a la derecha del logo
-    let acumulado = 0, colTitulo = 1;
-    for (let i = 1; i <= anchos.length; i++) {
-      acumulado += anchos[i - 1] * 7 + 5;
-      colTitulo = i + 1;
-      if (acumulado >= anchoLogoPx + 8) break;
-    }
-    colTitulo = Math.min(colTitulo, Math.max(encabezados.length, 2));
-
-    ws.getRow(2).height = 26;
-    ws.getRow(3).height = 16;
-    const celdaTitulo = ws.getCell(2, colTitulo);
-    celdaTitulo.value = titulo;
-    celdaTitulo.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFC0392B' } };
-    celdaTitulo.alignment = { vertical: 'middle' };
-    const celdaSub = ws.getCell(3, colTitulo);
-    celdaSub.value = subtituloReporte(detalle);
-    celdaSub.font = { name: 'Calibri', size: 9, color: { argb: 'FF555555' } };
-
-    const lado = { style: 'thin', color: { argb: 'FFD4C4A0' } };
-    const borde = { top: lado, left: lado, bottom: lado, right: lado };
-
-    // Encabezados de la tabla (fila 6)
-    const filaEnc = 6;
-    encabezados.forEach((texto, j) => {
-      const c = ws.getCell(filaEnc, j + 1);
-      c.value = texto;
-      c.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFF5ECD7' } };
-      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC0392B' } };
-      c.alignment = { vertical: 'middle', horizontal: 'left' };
-      c.border = borde;
-    });
-    ws.getRow(filaEnc).height = 20;
-
-    // Filas de datos con fondo alternado
-    const claros = ['FFFDF7EC', 'FFEDE3C8'];
-    filas.forEach((fila, i) => {
-      fila.forEach((valor, j) => {
-        const c = ws.getCell(filaEnc + 1 + i, j + 1);
-        c.value = valor;
-        c.font = { name: 'Calibri', size: 10 };
-        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: claros[i % 2] } };
-        c.border = borde;
-        c.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
-      });
-    });
-    ws.pageSetup.printTitlesRow = filaEnc + ':' + filaEnc;
-
-    const buffer = await libro.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = archivo;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
-
-  // Imprimir: mismo encabezado (logo + título + fecha) y debajo la tabla.
-  async function imprimirTabla(titulo, detalle, tablaHtml) {
-    let area = $('mc-print-area');
-    if (!area) {   // por si la plantilla no lo trae
-      area = document.createElement('div');
-      area.id = 'mc-print-area';
-      area.className = 'mc-print-only';
-      document.body.appendChild(area);
-    }
-    const logo = await cargarLogo();
-    area.innerHTML = `
-      <div class="mc-print-header">
-        ${logo ? `<img class="mc-print-logo" src="${logo.dataUrl}" alt="Porras Asadero">` : ''}
-        <div class="mc-print-titulo">
-          <h1>${esc(titulo)}</h1>
-          <p>${esc(subtituloReporte(detalle))}</p>
-        </div>
-      </div>
-      ${tablaHtml}`;
-    const imagen = area.querySelector('img');
-    if (imagen && imagen.decode) { try { await imagen.decode(); } catch (e) { /* se imprime igual */ } }
-    window.print();
-  }
-
   // ─── Reportes de reservas ─────────────────────────────────
   // Los reportes usan TODAS las reservas del filtro, no solo la página visible.
-  window.mcExportarPDF = async function () {
+  window.mcExportarPDF = function () {
     if (!reservas.length) { toast('No hay reservas para exportar', 'error'); return; }
     if (!window.jspdf) { toast('No se pudo cargar la librería de PDF', 'error'); return; }
     const { jsPDF } = window.jspdf;
-    const logo = await cargarLogo();
     const doc = new jsPDF();
-    const inicioTabla = pdfEncabezado(doc, 'Reporte de Reservas', reservas.length + ' reserva(s)', logo);
+    doc.setFontSize(16);
+    doc.text('Asadero Porras — Reporte de Reservas', 14, 16);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + reservas.length + ' reserva(s)', 14, 22);
     const filas = reservas.map(r => [
       '#' + String(r.id).padStart(2, '0'),
       r.nombre, r.telefono, getMesaLabel(r.mesa),
@@ -812,7 +629,7 @@
     ]);
     doc.autoTable({
       head: [['ID', 'Cliente', 'Teléfono', 'Mesa', 'Fecha', 'Hora', 'Personas', 'Estado']],
-      body: filas, startY: inicioTabla,
+      body: filas, startY: 28,
       styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [192, 57, 43], textColor: 255 },
       alternateRowStyles: { fillColor: [245, 236, 215] },
@@ -821,33 +638,28 @@
     toast('Reporte PDF generado');
   };
 
-  window.mcExportarExcel = async function () {
+  window.mcExportarExcel = function () {
     if (!reservas.length) { toast('No hay reservas para exportar', 'error'); return; }
-    if (!window.ExcelJS) { toast('No se pudo cargar la librería de Excel', 'error'); return; }
-    try {
-      await descargarExcel({
-        titulo: 'Reporte de Reservas',
-        detalle: reservas.length + ' reserva(s)',
-        hoja: 'Reservas',
-        archivo: 'reservas_' + hoy() + '.xlsx',
-        encabezados: ['ID', 'Cliente', 'Teléfono', 'Correo', 'Mesa', 'Fecha', 'Hora',
-                      'Personas', 'Ocasión', 'Estado', 'Notas'],
-        filas: reservas.map(r => [
-          '#' + String(r.id).padStart(2, '0'),
-          r.nombre, r.telefono, r.email || '',
-          getMesaLabel(r.mesa), r.fecha, r.hora,
-          r.personas, r.ocasion || '',
-          ETIQUETA_RESERVA[r.estado] || r.estado, r.notas || '',
-        ]),
-        anchos: [8, 22, 13, 24, 22, 11, 9, 9, 18, 12, 32],
-      });
-      toast('Reporte Excel generado');
-    } catch (e) {
-      toast('No se pudo generar el Excel', 'error');
-    }
+    if (!window.XLSX) { toast('No se pudo cargar la librería de Excel', 'error'); return; }
+    const datos = reservas.map(r => ({
+      'ID': '#' + String(r.id).padStart(2, '0'),
+      'Cliente': r.nombre, 'Teléfono': r.telefono, 'Correo': r.email || '',
+      'Mesa': getMesaLabel(r.mesa), 'Fecha': r.fecha, 'Hora': r.hora,
+      'Personas': r.personas, 'Ocasión': r.ocasion || '',
+      'Estado': ETIQUETA_RESERVA[r.estado] || r.estado, 'Notas': r.notas || '',
+    }));
+    const hoja = XLSX.utils.json_to_sheet(datos);
+    hoja['!cols'] = [
+      { wch: 8 }, { wch: 22 }, { wch: 13 }, { wch: 24 }, { wch: 22 },
+      { wch: 11 }, { wch: 9 }, { wch: 9 }, { wch: 18 }, { wch: 12 }, { wch: 32 },
+    ];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Reservas');
+    XLSX.writeFile(libro, 'reservas_' + hoy() + '.xlsx');
+    toast('Reporte Excel generado');
   };
 
-  window.mcImprimir = async function () {
+  window.mcImprimir = function () {
     if (!reservas.length) { toast('No hay reservas para imprimir', 'error'); return; }
     const filas = reservas.map(r => `<tr>
         <td>#${String(r.id).padStart(2, '0')}</td>
@@ -856,14 +668,17 @@
         <td>${esc(r.fecha)}</td><td>${esc(r.hora)}</td>
         <td>${esc(r.personas)}</td><td>${ETIQUETA_RESERVA[r.estado] || r.estado}</td>
       </tr>`).join('');
-    await imprimirTabla('Reporte de Reservas', reservas.length + ' reserva(s)', `
+    $('mc-print-area').innerHTML = `
+      <h2>Asadero Porras — Reporte de Reservas</h2>
+      <p>Generado el ${new Date().toLocaleString('es-CO')} — ${reservas.length} reserva(s)</p>
       <table>
         <thead><tr>
           <th>ID</th><th>Cliente</th><th>Teléfono</th><th>Mesa</th>
           <th>Fecha</th><th>Hora</th><th>Personas</th><th>Estado</th>
         </tr></thead>
         <tbody>${filas}</tbody>
-      </table>`);
+      </table>`;
+    window.print();
   };
 
   // ─── Mesas ────────────────────────────────────────────────
@@ -1093,17 +908,19 @@
     }
   };
 
-  window.mcExportarMesasPDF = async function () {
+  window.mcExportarMesasPDF = function () {
     const lista = mcListaMesasFiltrada();
     if (!lista.length) { toast('No hay mesas para exportar', 'error'); return; }
     if (!window.jspdf) { toast('No se pudo cargar la librería de PDF', 'error'); return; }
     const { jsPDF } = window.jspdf;
-    const logo = await cargarLogo();
     const doc = new jsPDF();
-    const inicioTabla = pdfEncabezado(doc, 'Reporte de Mesas', lista.length + ' mesa(s)', logo);
+    doc.setFontSize(16);
+    doc.text('Asadero Porras — Reporte de Mesas', 14, 16);
+    doc.setFontSize(10); doc.setTextColor(100);
+    doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + lista.length + ' mesa(s)', 14, 22);
     const filas = lista.map(m => ['Mesa ' + m.numero, m.capacidad + ' pers.', m.ubicacion, ETIQUETA_MESA[m.estado] || m.estado]);
     doc.autoTable({
-      head: [['Mesa', 'Capacidad', 'Ubicación', 'Estado']], body: filas, startY: inicioTabla,
+      head: [['Mesa', 'Capacidad', 'Ubicación', 'Estado']], body: filas, startY: 28,
       styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [192, 57, 43], textColor: 255 },
       alternateRowStyles: { fillColor: [245, 236, 215] },
@@ -1112,38 +929,37 @@
     toast('Reporte PDF generado');
   };
 
-  window.mcExportarMesasExcel = async function () {
+  window.mcExportarMesasExcel = function () {
     const lista = mcListaMesasFiltrada();
     if (!lista.length) { toast('No hay mesas para exportar', 'error'); return; }
-    if (!window.ExcelJS) { toast('No se pudo cargar la librería de Excel', 'error'); return; }
-    try {
-      await descargarExcel({
-        titulo: 'Reporte de Mesas',
-        detalle: lista.length + ' mesa(s)',
-        hoja: 'Mesas',
-        archivo: 'mesas_' + hoy() + '.xlsx',
-        encabezados: ['Mesa', 'Capacidad', 'Ubicación', 'Estado'],
-        filas: lista.map(m => ['Mesa ' + m.numero, m.capacidad, m.ubicacion, ETIQUETA_MESA[m.estado] || m.estado]),
-        anchos: [12, 12, 22, 14],
-      });
-      toast('Reporte Excel generado');
-    } catch (e) {
-      toast('No se pudo generar el Excel', 'error');
-    }
+    if (!window.XLSX) { toast('No se pudo cargar la librería de Excel', 'error'); return; }
+    const datos = lista.map(m => ({
+      'Mesa': 'Mesa ' + m.numero, 'Capacidad': m.capacidad,
+      'Ubicación': m.ubicacion, 'Estado': ETIQUETA_MESA[m.estado] || m.estado,
+    }));
+    const hoja = XLSX.utils.json_to_sheet(datos);
+    hoja['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 14 }];
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Mesas');
+    XLSX.writeFile(libro, 'mesas_' + hoy() + '.xlsx');
+    toast('Reporte Excel generado');
   };
 
-  window.mcImprimirMesas = async function () {
+  window.mcImprimirMesas = function () {
     const lista = mcListaMesasFiltrada();
     if (!lista.length) { toast('No hay mesas para imprimir', 'error'); return; }
     const filas = lista.map(m => `<tr>
         <td>Mesa ${m.numero}</td><td>${m.capacidad} pers.</td>
         <td>${esc(m.ubicacion)}</td><td>${ETIQUETA_MESA[m.estado] || m.estado}</td>
       </tr>`).join('');
-    await imprimirTabla('Reporte de Mesas', lista.length + ' mesa(s)', `
+    $('mc-print-area').innerHTML = `
+      <h2>Asadero Porras — Reporte de Mesas</h2>
+      <p>Generado el ${new Date().toLocaleString('es-CO')} — ${lista.length} mesa(s)</p>
       <table>
         <thead><tr><th>Mesa</th><th>Capacidad</th><th>Ubicación</th><th>Estado</th></tr></thead>
         <tbody>${filas}</tbody>
-      </table>`);
+      </table>`;
+    window.print();
   };
 
   // ─── Validaciones del formulario de reserva ───────────────
