@@ -1,19 +1,30 @@
+<<<<<<< Updated upstream
 # Control de versiones
+=======
+
+>>>>>>> Stashed changes
 .git
 .gitignore
 .gitattributes
 
+<<<<<<< Updated upstream
 # Entornos virtuales (tu .venv es de Windows, no sirve en Linux)
+=======
+>>>>>>> Stashed changes
 .venv
 venv
 env
 .env
 
+<<<<<<< Updated upstream
 # Python
+=======
+>>>>>>> Stashed changes
 __pycache__/
 *.py[cod]
 *.log
 
+<<<<<<< Updated upstream
 # Base de datos local (se crea con migrate dentro del contenedor)
 db.sqlite3
 db.sqlite3-journal
@@ -22,10 +33,18 @@ db.sqlite3-journal
 media/
 
 # Docker
+=======
+db.sqlite3
+db.sqlite3-journal
+
+media/
+
+>>>>>>> Stashed changes
 Dockerfile
 docker-compose*.yml
 .dockerignore
 
+<<<<<<< Updated upstream
 # IDE
 .vscode/
 .idea/
@@ -39,3 +58,16 @@ docs/
 README.md
 reporte_rubrica.html
 reporte_rubrica.pdf
+=======
+.vscode/
+.idea/
+
+node_modules/
+package-lock.json
+
+docs/
+README.md
+reporte_rubrica.html
+reporte_rubrica.pdf
+
+>>>>>>> Stashed changes
