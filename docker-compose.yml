@@ -4,6 +4,8 @@ services:
     image: porras-asadero:1.0
     container_name: porras-asadero
     restart: unless-stopped
+
+    container_name: porras-asadero
     ports:
       - "8000:8000"
     env_file:
@@ -12,4 +14,8 @@ services:
       - media_data:/app/media
 
 volumes:
+  media_data:
+  
+  media_data:
+  
   media_data:

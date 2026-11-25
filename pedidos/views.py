@@ -8,9 +8,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import F, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from usuarios.models import Cliente
 
@@ -344,6 +349,63 @@ def _pedidos_filtrados(request):
     return qs
 
 
+# ── INVENTARIO DE BEBIDAS: HELPERS ──────────────────────────────────
+
+CATEGORIA_BEBIDAS = 'Bebidas'   # nombre de la categoría que se controla en el inventario
+LIMITE_STOCK      = 100000
+
+
+class StockInsuficiente(Exception):
+    """Se lanza cuando un pedido pide más unidades de las que hay en inventario."""
+
+
+def _bebidas():
+    """Productos de la categoría 'Bebidas' (sin importar mayúsculas)."""
+    return Producto.objects.filter(categoria__nombre__iexact=CATEGORIA_BEBIDAS)
+
+
+def _destino_seguro(request, por_defecto):
+    """Usa el campo 'next' del formulario solo si apunta a este mismo sitio."""
+    destino = request.POST.get('next', '')
+    if destino and url_has_allowed_host_and_scheme(
+            destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return destino
+    return reverse(por_defecto)
+
+
+def _pares_de_items(items_data):
+    """[(producto_pk, cantidad)] a partir de lo que llega del formulario."""
+    return [(it['producto'].pk, it['cantidad']) for it in items_data]
+
+
+def _pares_de_pedido(pedido):
+    """[(producto_pk, cantidad)] a partir de los items ya guardados del pedido."""
+    return [(it.producto_id, it.cantidad) for it in pedido.items.all()]
+
+
+def _mover_stock(pares, signo):
+    """Suma (signo=+1) o resta (signo=-1) unidades al inventario.
+    Solo afecta a los productos con stock configurado.
+    Debe llamarse dentro de transaction.atomic()."""
+    for pk, cantidad in pares:
+        p = Producto.objects.select_for_update().get(pk=pk)
+        if p.stock_actual is None:
+            continue
+        nuevo = p.stock_actual + signo * cantidad
+        if nuevo < 0:
+            raise StockInsuficiente(
+                f'❌ No hay suficiente "{p.nombre}": quedan {p.stock_actual}.')
+        p.stock_actual = nuevo
+        p.save(update_fields=['stock_actual'])
+
+
+def _eliminar_pedido_con_stock(pedido):
+    """Borra el pedido y devuelve al inventario las unidades que había descontado."""
+    with transaction.atomic():
+        _mover_stock(_pares_de_pedido(pedido), +1)
+        pedido.delete()
+
+
 # ── TABLERO PRINCIPAL (DASHBOARD) ──────────────────────────────────
 
 @login_required
@@ -509,11 +571,20 @@ def pedido_crear(request):
                     'seccion_activa': 'pedido-crear'})
             total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
             pedido.total = total; pedido.subtotal = total; pedido.impuestos = 0
-            pedido.save()
-            PedidoItem.objects.bulk_create([
-                PedidoItem(pedido=pedido, producto=it['producto'],
-                    cantidad=it['cantidad'], precio_unitario=it['producto'].precio)
-                for it in items_data])
+            try:
+                # Todo o nada: si falta stock de una bebida, no se guarda nada
+                with transaction.atomic():
+                    pedido.save()
+                    PedidoItem.objects.bulk_create([
+                        PedidoItem(pedido=pedido, producto=it['producto'],
+                            cantidad=it['cantidad'], precio_unitario=it['producto'].precio)
+                        for it in items_data])
+                    _mover_stock(_pares_de_items(items_data), -1)
+            except StockInsuficiente as e:
+                messages.error(request, str(e))
+                return render(request, 'pedidos/pedido_form.html', {
+                    'form': form, 'productos_disponibles': productos_disponibles,
+                    'seccion_activa': 'pedido-crear'})
             messages.success(request, f'✅ Pedido {pedido.numero_pedido} creado correctamente.')
             return redirect('pedidos:pedido_lista')
         messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
@@ -541,12 +612,24 @@ def pedido_editar(request, pk):
             p = form.save(commit=False)
             if items_data:
                 total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
-                p.total = total; p.subtotal = total; p.save()
-                pedido.items.all().delete()
-                PedidoItem.objects.bulk_create([
-                    PedidoItem(pedido=pedido, producto=it['producto'],
-                        cantidad=it['cantidad'], precio_unitario=it['producto'].precio)
-                    for it in items_data])
+                try:
+                    # Todo o nada: devuelve lo del pedido viejo, guarda el nuevo y descuenta
+                    with transaction.atomic():
+                        _mover_stock(_pares_de_pedido(pedido), +1)
+                        p.total = total; p.subtotal = total; p.save()
+                        pedido.items.all().delete()
+                        PedidoItem.objects.bulk_create([
+                            PedidoItem(pedido=pedido, producto=it['producto'],
+                                cantidad=it['cantidad'], precio_unitario=it['producto'].precio)
+                            for it in items_data])
+                        _mover_stock(_pares_de_items(items_data), -1)
+                except StockInsuficiente as e:
+                    messages.error(request, str(e))
+                    return render(request, 'pedidos/pedido_form.html', {
+                        'form': form, 'pedido': pedido,
+                        'pedido_items_json': _items_as_json(pedido),
+                        'productos_disponibles': productos_disponibles,
+                        'seccion_activa': 'pedido-editar'})
             else:
                 p.save()
             messages.success(request, 'Pedido actualizado correctamente.')
@@ -571,7 +654,7 @@ def pedido_eliminar(request, pk):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
-        pedido.delete()
+        _eliminar_pedido_con_stock(pedido)
         messages.success(request, '🗑️ Pedido eliminado.')
     return redirect('pedidos:pedido_lista')
 
@@ -647,7 +730,7 @@ def orden_eliminar(request, pk):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
-        pedido.delete()
+        _eliminar_pedido_con_stock(pedido)
         messages.success(request, '🗑️ Orden eliminada.')
     return redirect('pedidos:orden_lista')
 
@@ -779,6 +862,130 @@ def producto_exportar_excel(request):
     return _respuesta_excel("Reporte de Productos", "productos.xlsx",
         ['#', 'Nombre', 'Categoría', 'Precio', 'Descripción', 'Disponible'],
         filas, [6, 28, 22, 14, 50, 12], cols_dinero=(3,))
+
+
+# ── INVENTARIO DE BEBIDAS ────────────────────────────────────────────
+
+@login_required
+def inventario_lista(request):
+    """Lista de bebidas con su stock, buscador, filtro por estado y paginación."""
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
+    q_inv      = request.GET.get('q_inv', '').strip()
+    estado_inv = request.GET.get('estado_inv', '').strip()
+
+    base = _bebidas()
+
+    # Resumen (tarjetas de arriba): siempre sobre todas las bebidas, sin filtros
+    resumen = {
+        'total':          base.count(),
+        'agotadas':       base.filter(stock_actual__lte=0).count(),
+        'bajas':          base.filter(stock_actual__gt=0, stock_actual__lte=F('stock_minimo')).count(),
+        'sin_configurar': base.filter(stock_actual__isnull=True).count(),
+    }
+
+    bebidas_qs = base.order_by('nombre')
+    if q_inv:
+        bebidas_qs = bebidas_qs.filter(nombre__icontains=q_inv)
+    if estado_inv == 'agotadas':
+        bebidas_qs = bebidas_qs.filter(stock_actual__lte=0)
+    elif estado_inv == 'bajas':
+        bebidas_qs = bebidas_qs.filter(stock_actual__gt=0, stock_actual__lte=F('stock_minimo'))
+    elif estado_inv == 'sin_configurar':
+        bebidas_qs = bebidas_qs.filter(stock_actual__isnull=True)
+
+    paginator = Paginator(bebidas_qs, 10)  # 10 bebidas por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
+    # El estado de cada bebida (b.estado_stock) lo calcula la propiedad del modelo Producto
+
+    return render(request, 'pedidos/inventario_lista.html', {
+        'titulo': 'Pedidos',
+        'bebidas': page_obj,            # la plantilla itera sobre "bebidas"
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': _querystring_sin_page(request),
+        'resumen': resumen,
+        'q_inv': q_inv,
+        'estado_inv': estado_inv,
+        'seccion_activa': 'inventario-lista'})
+
+
+@login_required
+def inventario_reabastecer(request, pk):
+    """Suma al stock las unidades que llegaron del proveedor."""
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
+    destino = _destino_seguro(request, 'pedidos:inventario_lista')
+    if request.method != 'POST':
+        return redirect(destino)
+
+    try:
+        cantidad = int(request.POST.get('cantidad', '').strip())
+    except ValueError:
+        messages.error(request, '❌ Escribe una cantidad válida (número entero).')
+        return redirect(destino)
+    if not 1 <= cantidad <= LIMITE_STOCK:
+        messages.error(request, f'❌ La cantidad debe estar entre 1 y {LIMITE_STOCK}.')
+        return redirect(destino)
+
+    with transaction.atomic():
+        bebida = get_object_or_404(_bebidas().select_for_update(), pk=pk)
+        # Si no tenía stock configurado, empieza a controlarse desde 0 + lo que llegó
+        bebida.stock_actual = (bebida.stock_actual or 0) + cantidad
+        if bebida.stock_actual > LIMITE_STOCK:
+            messages.error(request, f'❌ El stock no puede pasar de {LIMITE_STOCK} unidades.')
+            return redirect(destino)
+        bebida.save(update_fields=['stock_actual'])
+
+    messages.success(
+        request,
+        f'✅ Se agregaron {cantidad} unidades a "{bebida.nombre}". Stock actual: {bebida.stock_actual}.')
+    return redirect(destino)
+
+
+@login_required
+def inventario_ajustar(request, pk):
+    """Corrige el stock y el mínimo (después de contar, o para configurarlo por primera vez)."""
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
+    destino = _destino_seguro(request, 'pedidos:inventario_lista')
+    if request.method != 'POST':
+        return redirect(destino)
+
+    stock_raw  = request.POST.get('stock_actual', '').strip()
+    minimo_raw = request.POST.get('stock_minimo', '').strip()
+    try:
+        stock_minimo = int(minimo_raw)
+        stock_actual = int(stock_raw) if stock_raw != '' else None   # vacío = no se controla
+    except ValueError:
+        messages.error(request, '❌ El stock y el mínimo deben ser números enteros.')
+        return redirect(destino)
+
+    if not 0 <= stock_minimo <= LIMITE_STOCK:
+        messages.error(request, f'❌ El mínimo debe estar entre 0 y {LIMITE_STOCK}.')
+        return redirect(destino)
+    if stock_actual is not None and not 0 <= stock_actual <= LIMITE_STOCK:
+        messages.error(request, f'❌ El stock debe estar entre 0 y {LIMITE_STOCK}.')
+        return redirect(destino)
+
+    with transaction.atomic():
+        bebida = get_object_or_404(_bebidas().select_for_update(), pk=pk)
+        bebida.stock_actual = stock_actual
+        bebida.stock_minimo = stock_minimo
+        bebida.save(update_fields=['stock_actual', 'stock_minimo'])
+
+    if stock_actual is None:
+        messages.success(
+            request,
+            f'✅ Mínimo de "{bebida.nombre}" guardado en {stock_minimo}. '
+            f'Aún no tiene stock configurado, así que se vende sin límite.')
+    else:
+        messages.success(request, f'✅ Inventario de "{bebida.nombre}" actualizado: {stock_actual} unidades.')
+    return redirect(destino)
 
 
 # ── GESTIÓN DE CATEGORÍAS ──────────────────────────────────────────

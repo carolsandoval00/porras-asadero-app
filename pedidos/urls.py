@@ -34,6 +34,11 @@ urlpatterns = [
     path('productos/exportar/pdf/',      views.producto_exportar_pdf,   name='producto_exportar_pdf'),
     path('productos/exportar/excel/',    views.producto_exportar_excel, name='producto_exportar_excel'),
 
+    # ── Inventario de bebidas ─────────────────────────────────
+    path('inventario/',                          views.inventario_lista,         name='inventario_lista'),
+    path('inventario/<int:pk>/reabastecer/',     views.inventario_reabastecer,   name='inventario_reabastecer'),
+    path('inventario/<int:pk>/ajustar/',         views.inventario_ajustar,       name='inventario_ajustar'),
+
     # ── Categorías ────────────────────────────────────────────
     path('categorias/',                   views.categoria_lista,    name='categoria_lista'),
     path('categorias/crear/',             views.categoria_crear,    name='categoria_crear'),
