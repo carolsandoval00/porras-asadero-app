@@ -135,24 +135,11 @@ body{font-family:'Segoe UI', system-ui, sans-serif; color:var(--text); backgroun
   .mc-print-only{
     display:block;position:absolute;top:0;left:0;width:100%;padding:20px;
   }
-  .mc-print-only{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  /* Encabezado con logo (igual que el PDF y que el reporte de pedidos) */
-  .mc-print-header{
-    display:flex;align-items:center;gap:.5cm;
-    border-bottom:1.2pt solid #C0392B;padding-bottom:6pt;margin-bottom:.5cm;
-  }
-  .mc-print-logo{height:2.6cm;width:auto;flex:none}
-  .mc-print-titulo h1{font-family:'Segoe UI', system-ui, sans-serif;font-size:18pt;font-weight:700;color:#C0392B;margin:0 0 3pt}
-  .mc-print-titulo p{font-size:9pt;color:#555;margin:0}
-  /* Tabla con los mismos colores del PDF y de la impresión de pedidos */
-  .mc-print-only table,.mc-print-only table *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .mc-print-only table{width:100%;border-collapse:collapse;font-size:11px}
-  .mc-print-only thead{display:table-header-group}
-  .mc-print-only th,.mc-print-only td{border:1px solid #D4C4A0;padding:5px 6px;text-align:left}
-  .mc-print-only th{background:#C0392B !important;color:#F5ECD7 !important}
-  .mc-print-only tbody tr:nth-child(odd) td{background:#FDF7EC !important}
-  .mc-print-only tbody tr:nth-child(even) td{background:#EDE3C8 !important}
-  .mc-print-only tr{break-inside:avoid}
+  .mc-print-only h2{font-family:'Segoe UI', system-ui, sans-serif;margin-bottom:4px}
+  .mc-print-only p{font-size:12px;color:#555;margin-bottom:16px}
+  .mc-print-only table{width:100%;border-collapse:collapse;font-size:12px}
+  .mc-print-only th,.mc-print-only td{border:1px solid #999;padding:6px 8px;text-align:left}
+  .mc-print-only th{background:#eee}
 }
 
 .mc-detail-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
@@ -479,3 +466,62 @@ body{font-family:'Segoe UI', system-ui, sans-serif; color:var(--text); backgroun
 .mc-pag-puntos { color: var(--muted); padding: 0 .25rem; font-weight: 700; }
 /* Dentro de una tarjeta sin padding (.mc-card-flush) la paginación lleva su propio margen */
 .mc-card-flush .mc-paginacion { margin: 0; padding: 1rem 1.4rem; }
+
+/* ===== Aviso de permisos: mismo estilo que "Acceso Restringido" ===== */
+.mc-msg-icono { display: none; }
+
+.mc-confirm-overlay.restringido .mc-confirm-box {
+  background: #F5ECD7;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px rgba(26, 16, 8, .18);
+  padding: 2.5rem 2.8rem;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+.mc-confirm-overlay.restringido .mc-msg-icono {
+  display: block;
+  width: 3.8rem;
+  height: 3.8rem;
+  margin: 0 auto 1rem;
+  color: #C0392B;
+}
+.mc-confirm-overlay.restringido h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.9rem;
+  color: #1A1008;
+  margin: 0 0 .35rem;
+}
+.mc-confirm-overlay.restringido h3 span { color: #E8631A; }
+.mc-confirm-overlay.restringido p {
+  font-family: 'Lato', sans-serif;
+  font-size: .88rem;
+  color: #888;
+  margin: 0 0 1.8rem;
+}
+
+.mc-confirm-overlay.restringido .mc-confirm-btns {
+  display: block !important;
+  margin-top: 1.2rem !important;
+}
+.mc-confirm-overlay.restringido .mc-confirm-btns button.mc-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background: #1A1008 !important;
+  color: #F5ECD7 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: .75rem !important;
+  font-family: 'Lato', sans-serif !important;
+  font-size: .92rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .06em !important;
+  cursor: pointer;
+}
+.mc-confirm-overlay.restringido .mc-confirm-btns button.mc-btn:hover {
+  background: #3a2a18 !important;
+}
