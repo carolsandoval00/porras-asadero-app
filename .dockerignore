@@ -26,6 +26,7 @@ Dockerfile
 docker-compose*.yml
 .dockerignore
 
+<<<<<<< Updated upstream
 # IDE
 .vscode/
 .idea/
@@ -38,5 +39,4 @@ package-lock.json
 docs/
 README.md
 reporte_rubrica.html
-reporte_rubrica.pdf
 reporte_rubrica.pdf
