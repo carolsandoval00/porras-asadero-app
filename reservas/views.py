@@ -46,6 +46,9 @@ def _solo_lectura(request):
 ACCESO_DENEGADO = {'vista': 'sin_permisos'}
 TEMPLATE_PERMISOS = 'usuarios/login.html'
 
+# Pestañas de la página principal que solo pueden usar quienes pueden editar
+TABS_SOLO_EDICION = ('crear', 'crear-mesa')
+
 
 def _error_json(mensaje, status=400):
     return JsonResponse({'ok': False, 'error': mensaje}, status=status)
@@ -132,6 +135,12 @@ def filtrar_reservas(params):
 def reserva_view(request):
     if _sin_acceso(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
+    # Quien solo puede consultar no entra a las pestañas de crear:
+    # se le muestra la tarjeta de "Acceso Restringido".
+    if request.GET.get('tab') in TABS_SOLO_EDICION and _solo_lectura(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
     return render(request, 'reserva_inicio.html', {
         'nombre': request.user.get_full_name() or request.user.username,
         'puede_editar': not _solo_lectura(request),

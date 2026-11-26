@@ -1,7 +1,9 @@
 services:
   web:
     build: .
+    image: porras-asadero:1.0
     container_name: porras-asadero
+    restart: unless-stopped
     ports:
       - "8000:8000"
     env_file:
