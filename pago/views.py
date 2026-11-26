@@ -381,10 +381,11 @@ def pago_dashboard(request):
                 pago = form.save(commit=False)
                 if caja_activa:
                     pago.caja = caja_activa
+                    pago.cajero = request.user          # ★ NUEVO: quién cobró
                     pago.save()
                     pago.pedido.estado = 'PAGADO'
                     pago.pedido.save()
-                    # ★ CAMBIO: al pagar, se abre el recibo del pago
+                    # Al pagar, se abre el recibo del pago
                     return redirect('pago:recibo', pk=pago.pk)
                 else:
                     messages.error(request, ' No puedes registrar pagos sin una caja abierta.')
@@ -561,7 +562,8 @@ def pago_recibo(request, pk):
 
     pago = get_object_or_404(
         Pago.objects.select_related(
-            'pedido', 'pedido__cliente', 'pedido__mesa', 'caja', 'caja__cajero'
+            'pedido', 'pedido__cliente', 'pedido__mesa', 'pedido__mesero',
+            'caja', 'caja__cajero', 'cajero'
         ),
         pk=pk,
     )
