@@ -1,466 +1,54 @@
+{% extends "base 2.html" %}
+{% block title %}Pagos{% endblock title %}
 {% load static %}
-<style>
-    .sidebar-user-role {
-        font-size: 0.75rem;
-        font-weight: 400;
-        margin-top: 3px;
-        color: rgba(245, 236, 215, 0.65);
-        text-transform: capitalize;
-    }
-</style>
-<!-- ── 1. ESCRITORIO: Sidebar Fijo (Visible en lg y superiores) ── -->
-<aside class="d-none d-lg-flex flex-column p-3 shadow sidebar-desktop">
-    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
-       <img src="{% static 'img/logo.png' %}" alt="Porras Asadero" class="sidebar-logo">
-    </a>
-    
-    <hr class="sidebar-divider">
-    
-    <ul class="nav nav-pills flex-column mb-auto gap-1">
-        <!-- Panel de Control (Inicio) -->
-        <li class="nav-item">
-            <a href="{% url 'inicio_admin' %}" class="nav-link {% if request.resolver_match.url_name == 'inicio_admin' %}active-custom{% endif %}">
-                <i class="bi bi-speedometer2 me-2"></i>
-                Panel de Control
-            </a>
-        </li>
 
-        <!-- Personal y Control (Colapsable) -->
-        <li>
-            <a href="#personalSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.url_name == 'lista_personal' or request.resolver_match.url_name == 'panel_perfil' %}active-custom{% endif %}" aria-expanded="{% if request.resolver_match.url_name == 'lista_personal' or request.resolver_match.url_name == 'panel_perfil' %}true{% else %}false{% endif %}">
-                <span>
-                    <i class="bi bi-people me-2"></i>
-                    Personal y Control
-                </span>
-                <i class="bi bi-chevron-down fs-7"></i>
-            </a>
-            <div class="collapse {% if request.resolver_match.url_name == 'lista_personal' or request.resolver_match.url_name == 'panel_perfil' %}show{% endif %}" id="personalSubmenu">
-                <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
-                    <li>
-                        <a href="{% url 'lista_personal' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'lista_personal' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-person-lines-fill me-2"></i>Gestión de Usuarios
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'panel_perfil' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'panel_perfil' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-person-badge me-2"></i>Mi Perfil
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </li>
+{% block content %}
 
-        <!-- Pedidos y Carta (Colapsable) -->
-        <li>
-            <a href="#pedidosSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.namespace == 'pedidos' %}active-custom{% endif %}" aria-expanded="{% if request.resolver_match.namespace == 'pedidos' %}true{% else %}false{% endif %}">
-                <span>
-                    <i class="bi bi-journal-text me-2"></i>
-                    Pedidos y Carta
-                </span>
-                <i class="bi bi-chevron-down fs-7"></i>
-            </a>
-            <div class="collapse {% if request.resolver_match.namespace == 'pedidos' %}show{% endif %}" id="pedidosSubmenu">
-                <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
-                    <li>
-                        <a href="{% url 'pedidos:dashboard' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'dashboard' and not seccion_activa %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-grid-fill me-2"></i>Tablero
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pedidos:pedido_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'pedido_lista' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-list-check me-2"></i>Ver Pedidos
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pedidos:pedido_crear' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'pedido_crear' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-plus-square me-2"></i>Crear Pedido
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pedidos:orden_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'orden_lista' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-receipt me-2"></i>Ver Órdenes
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pedidos:producto_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'producto_lista' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-egg-fried me-2"></i>Productos
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pedidos:producto_crear' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'producto_crear' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-bag-plus me-2"></i>Crear Producto
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pedidos:categoria_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'categoria_lista' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-tags me-2"></i>Categorías
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pedidos:categoria_crear' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'categoria_crear' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-folder-plus me-2"></i>Crear Categoría
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pedidos:cliente_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'cliente_lista' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-person-lines-fill me-2"></i>Clientes
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pedidos:cliente_crear' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'cliente_crear' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-person-plus me-2"></i>Crear Cliente
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </li>
+<link rel="stylesheet" href="{% static 'css/pago.css' %}">
 
-        <!-- Gestión de Pagos (Colapsable) -->
-        <li>
-            <a href="#pagosSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.namespace == 'pago' %}active-custom{% endif %}" aria-expanded="{% if request.resolver_match.namespace == 'pago' %}true{% else %}false{% endif %}">
-                <span>
-                    <i class="bi bi-credit-card me-2"></i>
-                    Gestión de Pagos
-                </span>
-                <i class="bi bi-chevron-down fs-7"></i>
-            </a>
-            <div class="collapse {% if request.resolver_match.namespace == 'pago' %}show{% endif %}" id="pagosSubmenu">
-                <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
-                    <li>
-                        <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'pendientes' or request.resolver_match.namespace == 'pago' and not request.GET.tab %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-hourglass-split me-2"></i>Órdenes por pagar
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pago:dashboard' %}?tab=lista" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'lista' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-list-check me-2"></i>Pagos registrados
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pago:dashboard' %}?tab=consultar-caja" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'consultar-caja' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-cash-stack me-2"></i>Cajas
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'pago:dashboard' %}?tab=abrir-caja" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'abrir-caja' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-plus-circle me-2"></i>Abrir caja
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </li>
+<div class="pg-wrapper">
 
-        <!-- Reservas y Mesas (Colapsable) -->
-        <li>
-            <a href="#reservasSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' or request.resolver_match.url_name == 'eliminar_detalle' %}active-custom{% endif %}" aria-expanded="{% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' or request.resolver_match.url_name == 'eliminar_detalle' %}true{% else %}false{% endif %}">
-                <span>
-                    <i class="bi bi-calendar-check me-2"></i>
-                    Reservas y Mesas
-                </span>
-                <i class="bi bi-chevron-down fs-7"></i>
-            </a>
-            <div class="collapse {% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' or request.resolver_match.url_name == 'eliminar_detalle' %}show{% endif %}" id="reservasSubmenu">
-                <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
-                    <li>
-                        <a href="{% url 'reserva_inicio' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' and not request.GET.tab %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
-                            <i class="bi bi-grid-fill me-2"></i>Tablero Reservas
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'reserva_inicio' %}?tab=crear" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' and request.GET.tab == 'crear' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
-                            <i class="bi bi-calendar-plus me-2"></i>Nueva Reserva
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'reserva_inicio' %}?tab=mesas" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' and request.GET.tab == 'mesas' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
-                            <i class="bi bi-diagram-3 me-2"></i>Diagrama Mesas
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'reserva_inicio' %}?tab=crear-mesa" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' and request.GET.tab == 'crear-mesa' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
-                            <i class="bi bi-plus-square me-2"></i>Nueva Mesa
-                        </a>
-                    </li>
-                    <li>
-                       <a href="{% url 'listar_mesas' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' %}text-warning fw-bold{% endif %}" style="color: #F5ECD7;">
-                            <i class="bi bi-gear-fill me-2"></i>Editar Mesas
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'eliminar_detalle' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'eliminar_detalle' %}text-warning fw-bold{% endif %}">
-                            <i class="bi bi-trash-fill me-2"></i>Eliminar Reserva
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </li>
+  <div class="pg-header">
+    <h1>Gestión de Pagos</h1>
+    <p>Bienvenido, {{ nombre }}</p>
+  </div>
 
-        <!-- Ayuda -->
-        <li class="nav-item">
-            <a href="{% url 'ayuda:centro_ayuda' %}" class="nav-link {% if request.resolver_match.app_name == 'ayuda' %}active-custom{% endif %}">
-                <i class="bi bi-life-preserver me-2"></i>
-                Centro de Ayuda
-            </a>
-        </li>
-    </ul>
+  {% if messages %}
+  {% for msg in messages %}
+    {% if 'modal-pago' not in msg.tags %}
+    <div class="pg-alert pg-alert-{{ msg.tags }}">{{ msg }}</div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
 
-    <hr class="sidebar-divider">
+{% include 'pago/ordenes_pendientes.html' %}
+{% include 'pago/pagos_registrados.html' %}
+{% include 'pago/cajas.html' %}
+{% include 'pago/modales.html' %}
 
-    <div class="dropdown">
-        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-circle fs-5 me-2"></i>
-            <span class="d-flex flex-column lh-sm">
-                <strong>{{ user.username|default:"Admin" }}</strong>
-                <small class="text-uppercase" style="font-size:.7rem; opacity:.75;">
-                    {% if user.rol == 'ADMIN' or user.is_superuser %}Administrador
-                    {% elif user.rol == 'MESERO' %}Mesero
-                    {% elif user.rol == 'CAJERO' %}Cajero
-                    {% elif user.rol == 'COCINERA' %}Cocina
-                    {% endif %}
-                </small>
-            </span>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser">
-            <li><a class="dropdown-item" href="{% url 'panel_perfil' %}">Mi Perfil</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
-        </ul>
-    </div>
-</aside>
+</div><!-- fin pg-wrapper -->
+<script>
+  window.pagoConfig = {
+    tabActivo: "{{ tab_activo|default:'' }}",
+    formErrors: {{ form.errors|yesno:"true,false" }},
+    aperturaErrors: {{ form_apertura.errors|yesno:"true,false" }},
+    dashboardUrl: "{% url 'pago:dashboard' %}"
+  };
+</script>
+<script src="{%static 'js/pago.js'%}" defer></script>
 
+{% if messages %}
+  {% for msg in messages %}
+    {% if 'modal-pago' in msg.tags %}
+    <script>
+      document.getElementById('modal-pago-exito-msg').textContent = "{{ msg|escapejs }}";
+      document.getElementById('modal-pago-exito').classList.add('open');
+      setTimeout(function () {
+        document.getElementById('modal-pago-exito').classList.remove('open');
+      }, 2200);
+    </script>
+    {% endif %}
+  {% endfor %}
+{% endif %}
 
-<!-- ── 2. MÓVIL/TABLET: Encabezado Superior (Visible sólo en xs, sm, md) ── -->
-<div class="d-flex d-lg-none align-items-center justify-content-between p-2 px-3 shadow w-100 sidebar-mobile-header">
-    <a href="/" class="d-flex align-items-center text-decoration-none">
-       <img src="{% static 'img/logo.png' %}" alt="Porras Asadero" class="sidebar-logo-mobile">
-    </a>
-    
-    <button class="btn btn-outline-light d-flex align-items-center justify-content-center p-1 sidebar-toggle-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar">
-        <i class="bi bi-list fs-2"></i>
-    </button>
-</div>
-
-
-<!-- ── 3. MÓVIL/TABLET: Drawer Deslizable (Offcanvas) ── -->
-<div class="offcanvas offcanvas-start d-lg-none sidebar-offcanvas" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
-    <div class="offcanvas-header border-bottom sidebar-divider-strong">
-        <h5 class="offcanvas-title fw-bold d-flex align-items-center text-naranja" id="mobileSidebarLabel">
-            <i class="bi bi-fire me-2"></i>Porras Asadero
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    
-    <div class="offcanvas-body p-3 d-flex flex-column justify-content-between sidebar-offcanvas-body">
-        
-        <ul class="nav nav-pills flex-column mb-auto gap-1">
-            <!-- Panel de Control (Inicio) -->
-            <li class="nav-item">
-                <a href="{% url 'inicio_admin' %}" class="nav-link {% if request.resolver_match.url_name == 'inicio_admin' %}active-custom{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                    <i class="bi bi-speedometer2 me-2"></i>
-                    Panel de Control
-                </a>
-            </li>
-
-            <!-- Personal y Control (Colapsable) -->
-            <li>
-                <a href="#m-personalSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.url_name == 'lista_personal' or request.resolver_match.url_name == 'panel_perfil' %}active-custom{% endif %}" aria-expanded="{% if request.resolver_match.url_name == 'lista_personal' or request.resolver_match.url_name == 'panel_perfil' %}true{% else %}false{% endif %}">
-                    <span>
-                        <i class="bi bi-people me-2"></i>
-                        Personal y Control
-                    </span>
-                    <i class="bi bi-chevron-down fs-7"></i>
-                </a>
-                <div class="collapse {% if request.resolver_match.url_name == 'lista_personal' or request.resolver_match.url_name == 'panel_perfil' %}show{% endif %}" id="m-personalSubmenu">
-                    <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
-                        <li>
-                            <a href="{% url 'lista_personal' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'lista_personal' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-person-lines-fill me-2"></i>Lista Personal
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'panel_perfil' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'panel_perfil' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-person-badge me-2"></i>Mi Perfil
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            <!-- Pedidos y Carta (Colapsable) -->
-            <li>
-                <a href="#m-pedidosSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.namespace == 'pedidos' %}active-custom{% endif %}" aria-expanded="{% if request.resolver_match.namespace == 'pedidos' %}true{% else %}false{% endif %}">
-                    <span>
-                        <i class="bi bi-journal-text me-2"></i>
-                        Pedidos y Carta
-                    </span>
-                    <i class="bi bi-chevron-down fs-7"></i>
-                </a>
-                <div class="collapse {% if request.resolver_match.namespace == 'pedidos' %}show{% endif %}" id="m-pedidosSubmenu">
-                    <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
-                        <li>
-                            <a href="{% url 'pedidos:dashboard' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'dashboard' and not seccion_activa %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-grid-fill me-2"></i>Tablero
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pedidos:pedido_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'pedido_lista' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-list-check me-2"></i>Ver Pedidos
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pedidos:pedido_crear' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'pedido_crear' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-plus-square me-2"></i>Crear Pedido
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pedidos:orden_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'orden_lista' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-receipt me-2"></i>Ver Órdenes
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pedidos:producto_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'producto_lista' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-egg-fried me-2"></i>Productos
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pedidos:producto_crear' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'producto_crear' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-bag-plus me-2"></i>Crear Producto
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pedidos:categoria_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'categoria_lista' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-tags me-2"></i>Categorías
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pedidos:categoria_crear' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'categoria_crear' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-folder-plus me-2"></i>Crear Categoría
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pedidos:cliente_lista' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'cliente_lista' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-person-lines-fill me-2"></i>Clientes
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pedidos:cliente_crear' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'cliente_crear' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-person-plus me-2"></i>Crear Cliente
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            <!-- Gestión de Pagos (Colapsable) -->
-            <li>
-                <a href="#m-pagosSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.namespace == 'pago' %}active-custom{% endif %}" aria-expanded="{% if request.resolver_match.namespace == 'pago' %}true{% else %}false{% endif %}">
-                    <span>
-                        <i class="bi bi-credit-card me-2"></i>
-                        Gestión de Pagos
-                    </span>
-                    <i class="bi bi-chevron-down fs-7"></i>
-                </a>
-                <div class="collapse {% if request.resolver_match.namespace == 'pago' %}show{% endif %}" id="m-pagosSubmenu">
-                    <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
-                        <li>
-                            <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'pendientes' or request.resolver_match.namespace == 'pago' and not request.GET.tab %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-hourglass-split me-2"></i>Órdenes por pagar
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pago:dashboard' %}?tab=lista" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'lista' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-list-check me-2"></i>Pagos registrados
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pago:dashboard' %}?tab=consultar-caja" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'consultar-caja' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-cash-stack me-2"></i>Cajas
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'pago:dashboard' %}?tab=abrir-caja" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'abrir-caja' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-plus-circle me-2"></i>Abrir caja
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            <!-- Reservas y Mesas (Colapsable) -->
-            <li>
-                <a href="#m-reservasSubmenu" data-bs-toggle="collapse" class="nav-link d-flex align-items-center justify-content-between {% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'crear_reserva' or request.resolver_match.url_name == 'diagrama_mesas' or request.resolver_match.url_name == 'gestion_mesas' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' or request.resolver_match.url_name == 'eliminar_detalle' %}active-custom{% endif %}" aria-expanded="{% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'crear_reserva' or request.resolver_match.url_name == 'diagrama_mesas' or request.resolver_match.url_name == 'gestion_mesas' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' or request.resolver_match.url_name == 'eliminar_detalle' %}true{% else %}false{% endif %}">
-                    <span>
-                        <i class="bi bi-calendar-check me-2"></i>
-                        Reservas y Mesas
-                    </span>
-                    <i class="bi bi-chevron-down fs-7"></i>
-                </a>
-                <div class="collapse {% if request.resolver_match.url_name == 'reserva_inicio' or request.resolver_match.url_name == 'crear_reserva' or request.resolver_match.url_name == 'diagrama_mesas' or request.resolver_match.url_name == 'gestion_mesas' or request.resolver_match.url_name == 'actualizar_mesa' or request.resolver_match.url_name == 'listar_mesas' or request.resolver_match.url_name == 'eliminar_detalle' %}show{% endif %}" id="m-reservasSubmenu">
-                    <ul class="nav flex-column ms-3 mt-1 gap-1 sidebar-submenu">
-                        <li>
-                            <a href="{% url 'reserva_inicio' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'reserva_inicio' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-grid-fill me-2"></i>Tablero Reservas
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'crear_reserva' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'crear_reserva' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-calendar-plus me-2"></i>Nueva Reserva
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'diagrama_mesas' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'diagrama_mesas' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-diagram-3 me-2"></i>Diagrama Mesas
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'gestion_mesas' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'gestion_mesas' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-plus-square me-2"></i>Nueva Mesa
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'listar_mesas' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'listar_mesas' or request.resolver_match.url_name == 'actualizar_mesa' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-pencil-square me-2"></i>Editar Mesa
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'eliminar_detalle' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'eliminar_detalle' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                                <i class="bi bi-trash-fill me-2"></i>Eliminar Reserva
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-
-            <!-- Ayuda -->
-            <li class="nav-item">
-                <a href="{% url 'ayuda:centro_ayuda' %}" class="nav-link {% if request.resolver_match.app_name == 'ayuda' %}active-custom{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                    <i class="bi bi-life-preserver me-2"></i>
-                    Ayuda
-                </a>
-            </li>
-        </ul>
-
-        <div class="mt-4 pt-3 border-top sidebar-divider-strong">
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="m-dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-person-circle fs-5 me-2"></i>
-                    <span class="d-flex flex-column lh-sm">
-                        <strong>{{ user.username|default:"Admin" }}</strong>
-                        <small class="text-uppercase" style="font-size:.7rem; opacity:.75;">
-                            {% if user.rol == 'ADMIN' or user.is_superuser %}Administrador
-                            {% elif user.rol == 'MESERO' %}Mesero
-                            {% elif user.rol == 'CAJERO' %}Cajero
-                            {% elif user.rol == 'COCINERA' %}Cocina
-                            {% endif %}
-                        </small>
-                    </span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="m-dropdownUser">
-                    <li><a class="dropdown-item" href="{% url 'panel_perfil' %}">Mi Perfil</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar Sesión</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
