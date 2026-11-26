@@ -187,6 +187,16 @@
                 Centro de Ayuda
             </a>
         </li>
+
+        <!-- Copia de Seguridad (solo administradores) -->
+        {% if user.rol == 'ADMIN' or user.is_superuser %}
+        <li class="nav-item">
+            <a href="{% url 'backup:backup' %}" class="nav-link {% if request.resolver_match.app_name == 'backup' %}active-custom{% endif %}">
+                <i class="bi bi-database-gear me-2"></i>
+                Copia de Seguridad
+            </a>
+        </li>
+        {% endif %}
     </ul>
 
     <hr class="sidebar-divider">
@@ -408,6 +418,16 @@
                     Ayuda
                 </a>
             </li>
+
+            <!-- Copia de Seguridad (solo administradores) -->
+            {% if user.rol == 'ADMIN' or user.is_superuser %}
+            <li class="nav-item">
+                <a href="{% url 'backup:backup' %}" class="nav-link {% if request.resolver_match.app_name == 'backup' %}active-custom{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
+                    <i class="bi bi-database-gear me-2"></i>
+                    Copia de Seguridad
+                </a>
+            </li>
+            {% endif %}
         </ul>
 
         <div class="mt-4 pt-3 border-top sidebar-divider-strong">
