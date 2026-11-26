@@ -58,13 +58,12 @@ def poblar_base_datos():
         email='admin@porras.com',
         password='@dmin123',
         first_name='Admin',
-        last_name='Staff',
         rol='ADMIN',
         tipo_documento='CC',
         documento='0000000000',
         telefono='3000000000'
     )
-    print(f"[OK] Administrador Staff creado: usuario='0000000000', contraseña='@dmin123'")
+    print(f"[OK] Administrador creado: usuario='0000000000', contraseña='@dmin123'")
 
     # Cajero de prueba
     cajero_user = Usuario.objects.create_user(
@@ -82,7 +81,7 @@ def poblar_base_datos():
 
     # Mesero de prueba
     mesero_user = Usuario.objects.create_user(
-        username='pedrito_mesero',
+        username='pedro_mesero',
         email='pedro@porras.com',
         password='admin',
         first_name='Pedro',
@@ -92,7 +91,7 @@ def poblar_base_datos():
         documento='10203040',
         telefono='3154445555'
     )
-    print(f"[OK] Mesero de prueba creado: usuario='pedrito_mesero', contraseña='admin'")
+    print(f"[OK] Mesero de prueba creado: usuario='pedro_mesero', contraseña='admin'")
 
     # 3. Siembra de Clientes (según MER)
     print("\nSembrando Clientes...")
