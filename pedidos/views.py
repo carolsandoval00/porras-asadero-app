@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from itertools import groupby
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -213,6 +214,32 @@ def _productos_disponibles():
     )
 
 
+# ── MESERO DEL PEDIDO (lista desplegable del formulario) ────────────
+
+def _meseros():
+    """Usuarios activos con rol MESERO, para la lista desplegable del formulario."""
+    Usuario = get_user_model()
+    return (
+        Usuario.objects
+        .filter(rol='MESERO', is_active=True)
+        .order_by('first_name', 'last_name', 'username')
+    )
+
+
+def _mesero_elegido(request):
+    """Devuelve el usuario MESERO elegido en el formulario (campo 'mesero'),
+    o None si no eligió ninguno o el valor no es válido."""
+    pk = request.POST.get('mesero', '').strip()
+    if pk.isdigit():
+        return _meseros().filter(pk=int(pk)).first()
+    return None
+
+
+def _ctx_mesero(seleccionado):
+    """Datos para pintar la lista de meseros en pedido_form.html."""
+    return {'meseros': _meseros(), 'mesero_sel': str(seleccionado or '')}
+
+
 def _rango_paginas(page_obj, ventana=2):
     """Devuelve una lista como [{'num': 1}, {'puntos': True}, {'num': 4}, ...]
     con la primera página, la última y las cercanas a la actual.
@@ -336,7 +363,7 @@ def _pedidos_filtrados(request):
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
         .prefetch_related('items__producto')
-        .order_by('-fecha_creacion')
+        .order_by('id')
     )
     if q:
         qs = qs.filter(
@@ -451,7 +478,7 @@ def pedido_lista(request):
 
     q          = request.GET.get('q', '').strip()
     filtro     = _resolver_filtro_fecha(request)
-    pedidos_qs = _pedidos_filtrados(request)  # ya viene ordenado por -fecha_creacion
+    pedidos_qs = _pedidos_filtrados(request)  # ya viene ordenado por id (01, 02, 03...)
 
     # Paginación: 15 pedidos por página
     paginator = Paginator(pedidos_qs, 15)
@@ -559,8 +586,20 @@ def pedido_crear(request):
     if request.method == 'POST':
         form = PedidoForm(request.POST)
         if form.is_valid():
+            # Mesero elegido en la lista desplegable. Si quien crea el pedido
+            # es un mesero y no eligió ninguno, queda él mismo.
+            mesero = _mesero_elegido(request)
+            if mesero is None and _es_mesero(request):
+                mesero = request.user
+            if mesero is None:
+                messages.error(request, '❌ Selecciona el mesero que tomó el pedido.')
+                return render(request, 'pedidos/pedido_form.html', {
+                    'form': form, 'productos_disponibles': productos_disponibles,
+                    'seccion_activa': 'pedido-crear',
+                    **_ctx_mesero(request.POST.get('mesero', ''))})
+
             pedido = form.save(commit=False)
-            pedido.mesero        = request.user
+            pedido.mesero        = mesero
             pedido.fecha_creacion = timezone.now()
             pedido.estado        = 'PREPARACION'
             items_data = _parse_items_from_post(request)
@@ -568,7 +607,8 @@ def pedido_crear(request):
                 messages.error(request, '❌ Agrega al menos un producto al pedido.')
                 return render(request, 'pedidos/pedido_form.html', {
                     'form': form, 'productos_disponibles': productos_disponibles,
-                    'seccion_activa': 'pedido-crear'})
+                    'seccion_activa': 'pedido-crear',
+                    **_ctx_mesero(mesero.pk)})
             total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
             pedido.total = total; pedido.subtotal = total; pedido.impuestos = 0
             try:
@@ -584,17 +624,22 @@ def pedido_crear(request):
                 messages.error(request, str(e))
                 return render(request, 'pedidos/pedido_form.html', {
                     'form': form, 'productos_disponibles': productos_disponibles,
-                    'seccion_activa': 'pedido-crear'})
+                    'seccion_activa': 'pedido-crear',
+                    **_ctx_mesero(mesero.pk)})
             messages.success(request, f'✅ Pedido {pedido.numero_pedido} creado correctamente.')
             return redirect('pedidos:pedido_lista')
         messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
         return render(request, 'pedidos/pedido_form.html', {
             'form': form, 'productos_disponibles': productos_disponibles,
-            'seccion_activa': 'pedido-crear'})
+            'seccion_activa': 'pedido-crear',
+            **_ctx_mesero(request.POST.get('mesero', ''))})
     form = PedidoForm()
+    # Si quien abre el formulario es un mesero, aparece preseleccionado
+    mesero_inicial = request.user.pk if _es_mesero(request) else ''
     return render(request, 'pedidos/pedido_form.html', {
         'form': form, 'productos_disponibles': productos_disponibles,
-        'seccion_activa': 'pedido-crear'})
+        'seccion_activa': 'pedido-crear',
+        **_ctx_mesero(mesero_inicial)})
 
 
 @login_required
@@ -610,6 +655,10 @@ def pedido_editar(request, pk):
         form       = PedidoForm(request.POST, instance=pedido)
         if form.is_valid():
             p = form.save(commit=False)
+            # Si eligieron otro mesero en la lista, se actualiza; si no, se conserva el actual
+            nuevo_mesero = _mesero_elegido(request)
+            if nuevo_mesero is not None:
+                p.mesero = nuevo_mesero
             if items_data:
                 total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
                 try:
@@ -629,7 +678,8 @@ def pedido_editar(request, pk):
                         'form': form, 'pedido': pedido,
                         'pedido_items_json': _items_as_json(pedido),
                         'productos_disponibles': productos_disponibles,
-                        'seccion_activa': 'pedido-editar'})
+                        'seccion_activa': 'pedido-editar',
+                        **_ctx_mesero(request.POST.get('mesero', pedido.mesero_id))})
             else:
                 p.save()
             messages.success(request, 'Pedido actualizado correctamente.')
@@ -638,13 +688,15 @@ def pedido_editar(request, pk):
             'form': form, 'pedido': pedido,
             'pedido_items_json': _items_as_json(pedido),
             'productos_disponibles': productos_disponibles,
-            'seccion_activa': 'pedido-editar'})
+            'seccion_activa': 'pedido-editar',
+            **_ctx_mesero(request.POST.get('mesero', pedido.mesero_id))})
     form = PedidoForm(instance=pedido)
     return render(request, 'pedidos/pedido_form.html', {
         'form': form, 'pedido': pedido,
         'pedido_items_json': _items_as_json(pedido),
         'productos_disponibles': productos_disponibles,
-        'seccion_activa': 'pedido-editar'})
+        'seccion_activa': 'pedido-editar',
+        **_ctx_mesero(pedido.mesero_id)})
 
 
 @login_required
@@ -669,7 +721,7 @@ def orden_lista(request):
 
     q_orden    = request.GET.get('q_orden', '').strip()
     filtro     = _resolver_filtro_fecha(request)
-    ordenes_qs = _ordenes_filtradas(request)  # ya viene ordenado por -fecha_creacion
+    ordenes_qs = _ordenes_filtradas(request)  # ya viene ordenado por id (01, 02, 03...)
 
     # Paginación: 15 órdenes por página
     paginator = Paginator(ordenes_qs, 15)
@@ -1232,7 +1284,7 @@ def _ordenes_filtradas(request):
     q_orden = request.GET.get('q_orden', '').strip()
     filtro = _resolver_filtro_fecha(request)
     qs = (Pedido.objects.select_related('cliente', 'mesero', 'mesa')
-        .prefetch_related('items__producto').order_by('-fecha_creacion'))
+        .prefetch_related('items__producto').order_by('id'))
     if q_orden:
         clean_q = q_orden.replace('ORD-', '').lstrip('0')
         if clean_q.isdigit():

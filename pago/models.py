@@ -3,8 +3,7 @@ from django.db import models, transaction
 from django.db.models import Max
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db import models
-from django.conf import settings
+
 
 class Caja(models.Model):
     ESTADO_CAJA_CHOICES = [
@@ -22,8 +21,8 @@ class Caja(models.Model):
     fecha_apertura = models.DateTimeField(auto_now_add=True)
     fecha_cierre   = models.DateTimeField(null=True, blank=True)
     estado         = models.CharField(
-                        max_length=10, 
-                        choices=ESTADO_CAJA_CHOICES, 
+                        max_length=10,
+                        choices=ESTADO_CAJA_CHOICES,
                         default='ABIERTA'
                      )
     observaciones  = models.TextField(blank=True, default='')
@@ -71,9 +70,18 @@ class Pago(models.Model):
                     related_name='pagos',
                     verbose_name='Caja'
                   )
+    # ★ NUEVO: usuario que realizó el cobro (el que tenía la sesión abierta)
+    cajero      = models.ForeignKey(
+                    settings.AUTH_USER_MODEL,
+                    on_delete=models.SET_NULL,
+                    null=True,
+                    blank=True,
+                    related_name='pagos_cobrados',
+                    verbose_name='Cajero que cobró'
+                  )
     metodo_pago = models.CharField(
-                    max_length=50, 
-                    choices=METODO_PAGO_CHOICES, 
+                    max_length=50,
+                    choices=METODO_PAGO_CHOICES,
                     default='EFECTIVO'
                   )
     monto       = models.DecimalField(max_digits=10, decimal_places=2, default=0)

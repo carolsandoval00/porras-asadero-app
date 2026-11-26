@@ -14,8 +14,8 @@
 <div class="pm-wrapper">
   <!-- Cabecera -->
   <div class="pm-header">
-    <h1>{{ titulo }}</h1>
-    <h2>Bienvenido, {{ nombre }}</h2>
+    <h1>{{ titulo|default:"Pedidos" }}</h1>
+    <h2>Bienvenido, {{ nombre|default:user.get_full_name|default:user.username }}</h2>
   </div>
 
   {# Los mensajes de Django (éxito y errores) salen en la ventanita de base 2.html #}
@@ -37,6 +37,22 @@
             <label>Cliente</label>
             {{ form.cliente }}
           </div>
+
+          {# ── MESERO: lista desplegable con los usuarios de rol MESERO ── #}
+          <div class="full">
+            <label for="id_mesero">Mesero</label>
+            <select name="mesero" id="id_mesero" class="pm-select-producto" data-tooltip="Elige el mesero que tomó el pedido">
+              <option value="">— Selecciona un mesero —</option>
+              {% for m in meseros %}
+                <option value="{{ m.pk }}" {% if mesero_sel == m.pk|stringformat:"s" %}selected{% endif %}>
+                  {% firstof m.get_full_name m.username %}
+                </option>
+              {% empty %}
+                <option value="" disabled>No hay meseros registrados</option>
+              {% endfor %}
+            </select>
+          </div>
+
           <div>
             <label>Mesa</label>
             {{ form.mesa }}
