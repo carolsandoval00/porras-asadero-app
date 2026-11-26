@@ -1,11 +1,13 @@
 import calendar
+from decimal import Decimal
 from datetime import date, timedelta, datetime
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count
+from django.db.models.functions import ExtractMonth
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from itertools import groupby
@@ -607,6 +609,125 @@ def recibos_lista(request):
         'fecha_hasta': filtro['fecha_hasta'],
         'hoy':         timezone.localdate().isoformat(),
         'nombre':      request.user.get_full_name() or request.user.username,
+    })
+
+
+# ── VENTAS POR MES ──────────────────────────────────────────────────
+
+MESES_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio',
+            'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+# Un mes es "Buena" si vende 10 % o más sobre el promedio mensual del año
+# y "Baja" si vende 10 % o más por debajo; en medio es "Regular".
+UMBRAL_VENTAS = Decimal('0.10')
+
+
+def _ventas_por_mes(anio, hoy):
+    """Resumen de ventas (suma de pagos) de cada mes de un año."""
+    filas = (
+        Pago.objects.filter(fecha_pago__year=anio)
+        .annotate(mes=ExtractMonth('fecha_pago'))
+        .values('mes')
+        .annotate(total=Sum('monto'), cantidad=Count('id'))
+    )
+    por_mes = {f['mes']: f for f in filas}
+    ultimo_mes = hoy.month if anio == hoy.year else 12
+
+    meses = []
+    for n in range(1, ultimo_mes + 1):
+        f = por_mes.get(n)
+        total = (f['total'] if f else None) or Decimal('0')
+        cantidad = f['cantidad'] if f else 0
+        meses.append({
+            'numero': n,
+            'nombre': MESES_ES[n - 1],
+            'abrev': MESES_ES[n - 1][:3],
+            'total': total,
+            'cantidad': cantidad,
+            'ticket': (total / cantidad) if cantidad else Decimal('0'),
+            'en_curso': anio == hoy.year and n == hoy.month,
+        })
+
+    # El promedio usa solo meses terminados que tuvieron ventas.
+    base = [m['total'] for m in meses if m['total'] > 0 and not m['en_curso']]
+    promedio = (sum(base) / len(base)) if base else Decimal('0')
+
+    anterior = None
+    for m in meses:
+        if m['en_curso']:
+            m['estado'], m['estado_txt'] = 'curso', 'En curso'
+        elif m['total'] <= 0:
+            m['estado'], m['estado_txt'] = 'sin', 'Sin ventas'
+        elif promedio and m['total'] >= promedio * (1 + UMBRAL_VENTAS):
+            m['estado'], m['estado_txt'] = 'buena', 'Buena'
+        elif promedio and m['total'] <= promedio * (1 - UMBRAL_VENTAS):
+            m['estado'], m['estado_txt'] = 'baja', 'Baja'
+        else:
+            m['estado'], m['estado_txt'] = 'regular', 'Regular'
+
+        # Cambio contra el mes anterior: en porcentaje y en pesos.
+        # Solo se calcula si este mes y el anterior tuvieron ventas.
+        m['variacion'] = None
+        m['diferencia_fmt'] = ''
+        m['var_nota'] = ''
+        m['var_detalle'] = ''
+        if m['total'] > 0:
+            if anterior is None:
+                m['var_nota'] = 'Sin comparación'
+                m['var_detalle'] = 'Es el primer mes del año, no hay un mes anterior con el cual comparar.'
+            elif anterior['total'] <= 0:
+                m['var_nota'] = 'Sin comparación'
+                m['var_detalle'] = 'El mes anterior no tuvo ventas, no hay con qué comparar.'
+            else:
+                dif = m['total'] - anterior['total']
+                m['variacion'] = (dif / anterior['total'] * 100).quantize(Decimal('0.1'))
+                m['diferencia_fmt'] = ('+' if dif >= 0 else '-') + '$' + _pesos(abs(dif))
+        anterior = m
+
+    cerrados = [m for m in meses if m['total'] > 0 and not m['en_curso']]
+    maximo = max([m['total'] for m in meses] or [Decimal('0')])
+    for m in meses:
+        m['altura'] = float(m['total'] / maximo * 100) if maximo else 0
+        m['total_fmt'] = _pesos(m['total'])
+        m['ticket_fmt'] = _pesos(m['ticket'])
+    return {
+        'meses': meses,
+        'total_anio': sum((m['total'] for m in meses), Decimal('0')),
+        'promedio': promedio,
+        'linea_promedio': float(promedio / maximo * 100) if maximo else 0,
+        'mejor': max(cerrados, key=lambda m: m['total']) if cerrados else None,
+        'peor': min(cerrados, key=lambda m: m['total']) if cerrados else None,
+        'total_pagos': sum(m['cantidad'] for m in meses),
+    }
+
+
+@login_required
+def ventas_mensuales(request):
+    """Cuánto se vendió cada mes y si fue un mes bueno, regular o bajo."""
+    if _solo_cajero_admin(request):
+        return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
+
+    hoy = timezone.localdate()
+    anios = sorted({d.year for d in Pago.objects.dates('fecha_pago', 'year')}, reverse=True)
+    if hoy.year not in anios:
+        anios.insert(0, hoy.year)
+
+    try:
+        anio = int(request.GET.get('anio', hoy.year))
+    except (TypeError, ValueError):
+        anio = hoy.year
+    if anio not in anios:
+        anio = hoy.year
+
+    datos = _ventas_por_mes(anio, hoy)
+    return render(request, 'pago/ventas_mensuales.html', {
+        'anio':   anio,
+        'anios':  anios,
+        'umbral': int(UMBRAL_VENTAS * 100),
+        'total_anio_fmt': _pesos(datos['total_anio']),
+        'promedio_fmt':   _pesos(datos['promedio']),
+        'nombre': request.user.get_full_name() or request.user.username,
+        **datos,
     })
 
 

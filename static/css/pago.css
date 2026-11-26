@@ -552,3 +552,52 @@
 .pg-table th.caja-th-acciones { text-align: center; }
 .caja-td-acciones { white-space: nowrap; }
 .caja-acciones { display: flex; align-items: center; justify-content: center; gap: .4rem; flex-wrap: nowrap; }
+
+/* ── Ventas por mes ───────────────────────────────────────── */
+.vm-acciones { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.vm-form-anio { display: flex; align-items: center; gap: .4rem; margin: 0; }
+.vm-form-anio label { font-size: .75rem; font-weight: 700; color: var(--p-muted); text-transform: uppercase; letter-spacing: .6px; }
+.vm-form-anio select { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 50px;
+                       padding: .3rem .8rem; font-weight: 600; color: var(--p-text); }
+
+.vm-chart-wrap { overflow-x: auto; margin-bottom: .6rem; }
+.vm-chart { position: relative; display: flex; align-items: stretch; gap: .5rem; height: 230px;
+            min-width: 440px; padding: .4rem .2rem 0; border-bottom: 1px solid var(--p-border); }
+.vm-col { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.vm-barra-zona { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.vm-barra { width: 70%; max-width: 46px; min-height: 3px; border-radius: 6px 6px 0 0; transition: filter .15s; }
+.vm-col:hover .vm-barra { filter: brightness(.92); }
+.vm-mes { font-size: .72rem; font-weight: 700; color: var(--p-muted); text-transform: uppercase; padding: .35rem 0; }
+.vm-linea-promedio { position: absolute; left: 0; right: 0; border-top: 2px dashed var(--p-muted); opacity: .55;
+                     pointer-events: none; margin-bottom: 28px; }
+.vm-linea-promedio span { position: absolute; right: 0; top: -1.2rem; font-size: .68rem; font-weight: 700; color: var(--p-muted); }
+
+.vm-buena   { background: #2E9E5B; }
+.vm-regular { background: #D4A017; }
+.vm-baja    { background: #C0392B; }
+.vm-curso   { background: #8FA9B8; }
+.vm-sin     { background: #CFC3A8; }
+
+.vm-leyenda { display: flex; flex-wrap: wrap; gap: 1rem; font-size: .78rem; color: var(--p-muted); font-weight: 600; margin-bottom: 1.4rem; }
+.vm-punto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .3rem; }
+
+.vm-badge { display: inline-flex; font-size: .73rem; font-weight: 700; padding: .25rem .7rem; border-radius: 50px; }
+.vm-badge-buena   { background: #d4edda; color: #155724; }
+.vm-badge-regular { background: #FFF3CD; color: #856404; }
+.vm-badge-baja    { background: #F8D7DA; color: #842029; }
+.vm-badge-curso   { background: #dbe7ee; color: #3d5666; }
+.vm-badge-sin     { background: #ECE4D2; color: #6B5A3E; }
+
+.vm-var { font-weight: 700; }
+.vm-var-sube { color: #1E7A45; }
+.vm-var-baja { color: #B03226; }
+
+.vm-nota { margin: 1.2rem 0 0; font-size: .8rem; color: var(--p-muted); line-height: 1.5; }
+
+.vm-var-detalle { display: block; font-size: .72rem; color: var(--p-muted); font-weight: 600; margin-top: .1rem; }
+.pg-table tr.vm-fila-sin td { opacity: .5; padding-top: .55rem; padding-bottom: .55rem; }
+.vm-ayuda { margin-top: 1.2rem; background: var(--p-surface); border: 1px solid var(--p-border);
+            border-radius: var(--p-radius); padding: .8rem 1.1rem; font-size: .85rem; }
+.vm-ayuda summary { cursor: pointer; font-weight: 700; color: var(--p-text); }
+.vm-ayuda ul { margin: .8rem 0 0; padding-left: 1.1rem; display: grid; gap: .5rem; color: var(--p-muted); line-height: 1.5; }
+.vm-ayuda strong { color: var(--p-text); }
