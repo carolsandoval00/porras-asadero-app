@@ -13,6 +13,8 @@ urlpatterns = [
     path('pagos/', include('pago.urls')), 
     path('asistente/', include('asistente.urls')),
     path('ayuda/', include('ayuda.urls')),
+    path('backup/', include('backup.urls', namespace='backup')),
+    path('app/', include(('backup.urls', 'backup'), namespace='app')),
     
     path('', inicio, name='inicio'),
     
