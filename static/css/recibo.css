@@ -1,0 +1,67 @@
+/* ── Recibo: logo, sello PAGADO, barras de sección y tabla de productos ── */
+.rc-logo {
+  display: block;
+  width: 150px;
+  max-width: 70%;
+  margin: 0 auto 6px;
+}
+.rc-titulo { letter-spacing: 2px; }
+
+.rc-sello {
+  display: block;
+  width: max-content;
+  margin: 8px auto 4px;
+  padding: 3px 22px;
+  border: 2px solid #000;
+  border-radius: 6px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+/* valores en negrita, a la derecha */
+.rc-fila span:last-child { font-weight: bold; }
+
+/* barras negras de sección */
+.rc-barra {
+  background: #000;
+  color: #fff;
+  font-weight: bold;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin: 4px 0 6px;
+}
+
+/* tabla de productos */
+.rc-items-head,
+.rc-item {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  gap: 6px;
+}
+.rc-items-head {
+  font-size: 11px;
+  font-weight: bold;
+  border-bottom: 1px solid #000;
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+}
+.rc-item { margin: 6px 0; align-items: start; }
+.rc-item-cant,
+.rc-item-valor { font-weight: bold; }
+.rc-item-valor { text-align: right; }
+.rc-item-prod small {
+  display: block;
+  font-size: 10px;
+  color: #333;
+}
+
+/* total con líneas gruesas arriba y abajo */
+.rc-total-bloque {
+  border-top: 2px solid #000;
+  border-bottom: 2px solid #000;
+  padding: 6px 0;
+  margin: 6px 0;
+}

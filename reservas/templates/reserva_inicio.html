@@ -13,7 +13,7 @@
   window.MC_PUEDE_EDITAR = {{ puede_editar|yesno:"true,false" }};
 </script>
 
-<!-- ===== BANNER + NAV ===== -->
+<!-- ===== BANNER ===== -->
 <div class="mc-wrapper">
 <div class="mc-banner-wrap">
   <div class="mc-banner-box">
@@ -22,23 +22,7 @@
       <p class="mc-banner-sub">Bienvenido, {{ nombre }}</p>
     </div>
   </div>
-  <div class="mc-nav-row">
-  <div class="mc-nav-group">
-    <span class="mc-nav-label">Reservas</span>
-    <button class="mc-nav-btn active" onclick="mcShow('reservas')" data-tooltip="Ver todas las reservas">Reservas</button>
-    <button class="mc-nav-btn" onclick="mcShow('crear')" data-tooltip="Hacer una reserva nueva">+ Nueva reserva</button>
-    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn" data-tooltip="Borrar una reserva">Eliminar reserva</a>
-  </div>
-  <div class="mc-nav-group">
-    <span class="mc-nav-label">Mesas</span>
-    <button class="mc-nav-btn" onclick="mcShow('mesas')" data-tooltip="Ver el mapa de mesas del restaurante">Diagrama de mesas</button>
-    <button class="mc-nav-btn" onclick="mcShow('crear-mesa')" data-tooltip="Agregar una mesa nueva">+ Nueva mesa</button>
-    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn" data-tooltip="Ver y editar las mesas existentes">Editar mesa</a>
-  </div>
-  </div>
 </div>
-
-<div class="mc-wrap">
 
   <!-- ===== LISTA RESERVAS ===== -->
   {% include "reservas/lista_reservas.html" %}
