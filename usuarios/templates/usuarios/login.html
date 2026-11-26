@@ -5,6 +5,7 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/terminos.css' %}?v=1">
 
 {% if vista == "login" or vista == "acceder" or not vista %}
 <div class="auth-wrap">
@@ -150,12 +151,88 @@
                 </div>
             </div>
 
+            <div class="mb-3 terminos-check">
+                <input type="checkbox" name="acepta_terminos" id="acepta-terminos" class="terminos-input" {% if form_data.acepta_terminos %}checked{% endif %}>
+                <label for="acepta-terminos">
+                    He leído y acepto los <a href="#" class="terminos-link" onclick="abrirTerminos(); return false;">Términos y Condiciones</a>
+                    y el tratamiento de mis datos personales. <span class="text-danger">*</span>
+                </label>
+            </div>
+
             <button type="submit" class="btn-auth">
                 <i class="bi bi-check-circle me-2"></i>Crear cuenta y entrar
             </button>
 
             <a href="{% url 'login' %}" class="btn-auth-outline">Ya tengo cuenta, iniciar sesión</a>
         </form>
+
+        <dialog id="modal-terminos" class="terminos-dialog" aria-labelledby="terminos-titulo">
+            <div class="terminos-caja">
+                <div class="terminos-cabecera">
+                    <h2 id="terminos-titulo">Términos y <span>Condiciones</span></h2>
+                    <button type="button" class="terminos-cerrar" onclick="cerrarTerminos()" aria-label="Cerrar">&times;</button>
+                </div>
+
+                <div class="terminos-cuerpo">
+                    <p class="terminos-fecha">Porras Asadero · Última actualización: noviembre de 2026</p>
+
+                    <h3>1. Aceptación</h3>
+                    <p>Al crear una cuenta en el sistema de Porras Asadero declaras que leíste estos términos y que estás de acuerdo con ellos. Si no los aceptas, no podrás registrarte ni usar el sistema.</p>
+
+                    <h3>2. Para qué sirve el sistema</h3>
+                    <p>El sistema es una herramienta interna del restaurante para gestionar pedidos, órdenes, pagos y recibos, caja, reservas, mesas, clientes, productos e inventario de bebidas. Solo debe usarse para las labores del negocio.</p>
+
+                    <h3>3. Registro y roles</h3>
+                    <ul>
+                        <li>Puedes registrarte como Mesero, Cajero o Cocinera. Cada rol tiene permisos distintos y solo ve las secciones que le corresponden.</li>
+                        <li>Elegir un rol no te da acceso a lo que ese rol no permite. El administrador puede cambiar o quitar tu rol, o desactivar tu cuenta, en cualquier momento.</li>
+                        <li>Debes dar tus datos reales: nombre, apellido y un correo electrónico válido.</li>
+                    </ul>
+
+                    <h3>4. Tu cuenta y tu contraseña</h3>
+                    <ul>
+                        <li>Tu usuario y tu contraseña son personales y no se comparten con nadie.</li>
+                        <li>Eres responsable de todo lo que se haga con tu usuario. Si crees que alguien más conoce tu contraseña, cámbiala y avisa al administrador.</li>
+                        <li>Cierra tu sesión cuando termines, sobre todo en equipos compartidos.</li>
+                    </ul>
+
+                    <h3>5. Uso responsable y trazabilidad</h3>
+                    <ul>
+                        <li>El sistema guarda quién atendió cada pedido, quién registró cada pago y cuándo se hizo.</li>
+                        <li>No debes crear, modificar o eliminar pedidos, pagos, reservas o inventario con información falsa, ni intentar entrar a secciones para las que no tienes permiso.</li>
+                        <li>Está prohibido usar el sistema para fines distintos a los del restaurante.</li>
+                    </ul>
+
+                    <h3>6. Tratamiento de datos personales</h3>
+                    <p>Según la Ley 1581 de 2012 de Colombia (protección de datos personales), te informamos que:</p>
+                    <ul>
+                        <li>Guardamos tus datos de registro (nombre, apellido, correo y usuario) para crear tu cuenta, identificarte y asignarte permisos.</li>
+                        <li>También se guardan los datos de clientes que registras en el sistema, que debes usar solo para atender sus pedidos, reservas y pagos.</li>
+                        <li>Tienes derecho a conocer, actualizar, corregir y pedir la eliminación de tus datos, escribiendo al administrador del establecimiento.</li>
+                        <li>Tus datos no se venden ni se comparten con terceros ajenos al restaurante, salvo que la ley lo exija.</li>
+                    </ul>
+
+                    <h3>7. Confidencialidad</h3>
+                    <p>La información de ventas, caja, clientes y proveedores es del restaurante. No debes copiarla, difundirla ni usarla para otro fin, ni durante ni después de trabajar en el establecimiento.</p>
+
+                    <h3>8. Suspensión de la cuenta</h3>
+                    <p>El administrador puede suspender o eliminar una cuenta si se incumplen estos términos o si el usuario ya no trabaja en el restaurante.</p>
+
+                    <h3>9. Cambios en estos términos</h3>
+                    <p>Estos términos pueden actualizarse. Cuando cambien, se publicará la nueva versión en esta misma ventana con su fecha de actualización.</p>
+
+                    <h3>10. Contacto</h3>
+                    <p>Para dudas sobre estos términos o sobre tus datos, habla con el administrador de Porras Asadero.</p>
+                </div>
+
+                <div class="terminos-pie">
+                    <button type="button" class="btn-auth" onclick="aceptarTerminos()">
+                        <i class="bi bi-check-circle me-2"></i>Acepto los términos
+                    </button>
+                    <button type="button" class="btn-auth-outline" onclick="cerrarTerminos()">Cerrar</button>
+                </div>
+            </div>
+        </dialog>
     </div>
 </div>
 
@@ -869,6 +946,27 @@
 </script>
 {% endverbatim %}
 <script>
+/* Términos y Condiciones (ventana del registro) */
+function abrirTerminos() {
+    const d = document.getElementById('modal-terminos');
+    if (d && d.showModal) d.showModal();
+}
+function cerrarTerminos() {
+    const d = document.getElementById('modal-terminos');
+    if (d && d.open) d.close();
+}
+function aceptarTerminos() {
+    const c = document.getElementById('acepta-terminos');
+    if (c) { c.checked = true; c.classList.remove('va-campo-error'); }
+    cerrarTerminos();
+}
+(function () {
+    const d = document.getElementById('modal-terminos');
+    if (!d) return;
+    // clic en el fondo oscuro = cerrar
+    d.addEventListener('click', function (e) { if (e.target === d) cerrarTerminos(); });
+})();
+
 function togglePassword(inputId, btn) {
     const input = document.getElementById(inputId);
     const icon  = btn.querySelector('i');
@@ -975,7 +1073,8 @@ function checkPasswordMatch(pwdId, pwd2Id, feedbackId) {
     if (!form) return;
 
     const IDS = { nom: 'reg-first-name', ape: 'reg-last-name', email: 'reg-email',
-                  user: 'reg-username', pw: 'password-registro', pw2: 'password2-registro' };
+                  user: 'reg-username', pw: 'password-registro', pw2: 'password2-registro',
+                  terminos: 'acepta-terminos' };
 
     form.addEventListener('submit', function (e) {
         if (!window.ValidacionesUsuario) return;   // sin el archivo JS, el servidor valida igual
@@ -988,6 +1087,10 @@ function checkPasswordMatch(pwdId, pwd2Id, feedbackId) {
             pw:    v('password'),
             pw2:   v('password2'),
         });
+        const acepta = form.elements['acepta_terminos'];
+        if (acepta && !acepta.checked) {
+            errores.push({ campo: 'terminos', mensaje: 'Debes aceptar los términos y condiciones para crear tu cuenta.' });
+        }
         if (errores.length) {
             e.preventDefault();
             ValidacionesUsuario.mostrarAtencion(errores, { ids: IDS });
