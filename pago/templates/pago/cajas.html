@@ -12,12 +12,10 @@
 
             <form method="get" action="{% url 'pago:dashboard' %}" class="pg-search-bar">
         <input type="hidden" name="tab" value="consultar-caja">
-        <input type="date" name="c_desde" value="{{ c_desde }}" max="{{ hoy }}"
-               data-tooltip="Fecha inicial (no se pueden elegir fechas futuras)">
-        <input type="date" name="c_hasta" value="{{ c_hasta }}" max="{{ hoy }}"
-               data-tooltip="Fecha final (no se pueden elegir fechas futuras)">
-        <button type="submit" class="pg-btn pg-btn-accent pg-btn-sm" data-tooltip="Aplicar el filtro de fechas">Filtrar</button>
-        <a href="{% url 'pago:dashboard' %}?tab=consultar-caja" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Quitar el filtro de fechas">Limpiar</a>
+        <input type="date" name="c_fecha" value="{{ c_fecha }}" max="{{ hoy }}"
+               data-tooltip="Fecha de apertura de la caja (no se pueden elegir fechas futuras)">
+        <button type="submit" class="pg-btn pg-btn-accent pg-btn-sm" data-tooltip="Filtrar las cajas por esa fecha">Filtrar</button>
+        <a href="{% url 'pago:dashboard' %}?tab=consultar-caja" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Quitar el filtro de fecha">Limpiar</a>
       </form>
 
       <div class="pg-table-wrap">
@@ -26,13 +24,13 @@
             <tr>
               <th>#</th><th>Cajero</th><th>Saldo inicial</th>
               <th>Estado</th><th>Apertura</th><th>Cierre</th>
-              <th>Observaciones</th><th>Acciones</th>
+              <th>Observaciones</th><th class="caja-th-acciones">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {% for caja in cajas %}
             <tr data-caja-pk="{{ caja.pk }}">
-              <td><strong>#{{ caja.pk }}</strong></td>
+              <td><strong>#{{ caja.numero }}</strong></td>
               <td data-col="cajero">{{ caja.cajero }}</td>
               <td><strong class="pg-text-primary">${{ caja.monto_inicial|floatformat:2 }}</strong></td>
               <td><span class="pg-badge pg-badge-{{ caja.estado|lower }}">{{ caja.get_estado_display }}</span></td>
@@ -44,7 +42,8 @@
               <td data-col="observaciones" class="pg-cell-truncate pg-text-muted">
                 {{ caja.observaciones|default:"—" }}
               </td>
-              <td class="pg-flex-gap-sm">
+              <td class="caja-td-acciones">
+                <div class="caja-acciones">
                 <a href="{% url 'pago:caja_detalle' caja.pk %}" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Ver el detalle completo de esta caja">
                    Ver detalle
                 </a>
@@ -58,12 +57,13 @@
                    Cerrar
                 </button>
                 {% endif %}
+                </div>
               </td>
             </tr>
             {% empty %}
             <tr>
               <td colspan="8" class="pg-table-empty">
-                No hay cajas registradas en ese rango.
+                No hay cajas registradas en esa fecha.
               </td>
             </tr>
             {% endfor %}
@@ -110,7 +110,7 @@
   {% if caja_seleccionada %}
   <div class="pg-card">
     <div class="pg-card-header">
-      <h3> Caja #{{ caja_seleccionada.pk }} — {{ caja_seleccionada.cajero }}</h3>
+      <h3> Caja #{{ caja_seleccionada.numero }} — {{ caja_seleccionada.cajero }}</h3>
       <div class="pg-flex-gap-md">
         <span class="pg-badge pg-badge-{{ caja_seleccionada.estado|lower }}">
           {{ caja_seleccionada.get_estado_display }}
@@ -142,7 +142,7 @@
           <div class="cmeta-icon"></div>
           <div class="cmeta-body">
             <span class="cmeta-lbl">monto inicial</span>
-            <span class="cmeta-val">${{ caja_seleccionada.monto_inicial|floatformat:0 }}</span>
+            <span class="cmeta-val">${{ monto_inicial_fmt }}</span>
           </div>
         </div>
 
@@ -150,7 +150,7 @@
           <div class="cmeta-icon"></div>
           <div class="cmeta-body">
             <span class="cmeta-lbl">pagos confirmados</span>
-            <span class="cmeta-val">${{ total_ingresos|floatformat:0 }}</span>
+            <span class="cmeta-val">${{ total_ingresos_fmt }}</span>
           </div>
         </div>
 
@@ -158,7 +158,7 @@
           <div class="cmeta-icon"></div>
           <div class="cmeta-body">
             <span class="cmeta-lbl">Pagos pendientes</span>
-            <span class="cmeta-val">${{ total_pendientes|floatformat:0 }}</span>
+            <span class="cmeta-val">${{ total_pendientes_fmt }}</span>
           </div>
         </div>
 
@@ -166,7 +166,7 @@
           <div class="cmeta-icon"></div>
           <div class="cmeta-body">
             <span class="cmeta-lbl"> Monto final</span>
-            <span class="cmeta-val">${{ saldo_final|floatformat:0 }}</span>
+            <span class="cmeta-val">${{ saldo_final_fmt }}</span>
           </div>
         </div>
 
@@ -268,7 +268,7 @@
             {% if form_apertura.monto_inicial.errors %}
               <p class="pg-field-error">{{ form_apertura.monto_inicial.errors.0 }}</p>
             {% else %}
-              <p class="pg-field-hint">Efectivo con el que inicia la caja.</p>
+              <p class="pg-field-hint">Efectivo con el que inicia la caja (entre $100.000 y $1.000.000).</p>
             {% endif %}
           </div>
 

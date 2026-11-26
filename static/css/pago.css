@@ -547,3 +547,8 @@
   .print-table thead { display: table-header-group; }
   .print-table tr { break-inside: avoid; }
 }
+
+/* ── Botones de acciones en cajas registradas (una sola línea, centrados) ── */
+.pg-table th.caja-th-acciones { text-align: center; }
+.caja-td-acciones { white-space: nowrap; }
+.caja-acciones { display: flex; align-items: center; justify-content: center; gap: .4rem; flex-wrap: nowrap; }

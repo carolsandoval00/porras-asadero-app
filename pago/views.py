@@ -27,6 +27,11 @@ ASADERO = {
 }
 
 
+def _pesos(valor):
+    """Formatea un monto con puntos de miles: 100000 -> '100.000'."""
+    return f'{int(round(valor or 0)):,}'.replace(',', '.')
+
+
 def _solo_cajero_admin(request):
     """Retorna True si el usuario NO tiene permiso (es mesero u otro rol no autorizado)."""
     return not (request.user.rol in ('ADMIN', 'CAJERO') or request.user.is_superuser)
@@ -147,30 +152,35 @@ def _agrupar_pagos_por_fecha(pagos_pagina):
 
 
 def _cajas_filtradas(request):
-    """Aplica el filtro de fechas (c_desde / c_hasta) a la lista de cajas,
-    usando la fecha de apertura. Nunca permite fechas futuras."""
-    hoy = timezone.localdate().isoformat()
-    c_desde = request.GET.get('c_desde', '').strip()
-    c_hasta = request.GET.get('c_hasta', '').strip()
+    """Filtra las cajas por UNA fecha (c_fecha), usando la fecha de apertura.
+    Nunca permite fechas futuras y ignora valores con formato inválido."""
+    hoy = timezone.localdate()
+    c_fecha = request.GET.get('c_fecha', '').strip()
 
-    if c_desde and c_desde > hoy:
-        c_desde = hoy
-    if c_hasta and c_hasta > hoy:
-        c_hasta = hoy
+    if c_fecha:
+        try:
+            fecha = date.fromisoformat(c_fecha)
+        except ValueError:
+            fecha = None
+        if fecha is None:
+            c_fecha = ''
+        elif fecha > hoy:
+            fecha = hoy
+            c_fecha = hoy.isoformat()
+    else:
+        fecha = None
 
     qs = Caja.objects.select_related('cajero').order_by('fecha_apertura')
-    if c_desde:
-        qs = qs.filter(fecha_apertura__date__gte=c_desde)
-    if c_hasta:
-        qs = qs.filter(fecha_apertura__date__lte=c_hasta)
-    return qs, c_desde, c_hasta
+    if fecha:
+        qs = qs.filter(fecha_apertura__date=fecha)
+    return qs, c_fecha
 
 
 def _paginar_cajas(request, por_pagina=10):
     """Pagina las cajas registradas (10 por página).
     Usa el parámetro 'caja_page' para no chocar con las otras listas de la
-    misma pantalla, y conserva la pestaña y el filtro de fechas."""
-    cajas_qs, c_desde, c_hasta = _cajas_filtradas(request)
+    misma pantalla, y conserva la pestaña y el filtro de fecha."""
+    cajas_qs, c_fecha = _cajas_filtradas(request)
     paginator = Paginator(cajas_qs, por_pagina)
     page_obj  = paginator.get_page(request.GET.get('caja_page'))
     paginas = [
@@ -179,10 +189,9 @@ def _paginar_cajas(request, por_pagina=10):
     ]
     qs_filtros = urlencode({
         'tab': 'consultar-caja',
-        'c_desde': c_desde,
-        'c_hasta': c_hasta,
+        'c_fecha': c_fecha,
     })
-    return page_obj, paginas, qs_filtros, c_desde, c_hasta
+    return page_obj, paginas, qs_filtros, c_fecha
 
 
 def _resolver_filtro_fecha_ordenes(request):
@@ -315,7 +324,7 @@ def pago_dashboard(request):
             if caja_activa:
                 messages.error(
                     request,
-                    f'Ya hay una caja abierta (Caja #{caja_activa.pk} — {caja_activa.cajero}. '
+                    f'Ya hay una caja abierta (Caja #{caja_activa.numero} — {caja_activa.cajero}. '
                     f'Debes cerrarla antes de abrir una nueva.'
                 )
                 return redirect('pago:dashboard')
@@ -327,6 +336,8 @@ def pago_dashboard(request):
                 messages.success(request, ' Caja abierta correctamente.')
                 return redirect('pago:dashboard')
             else:
+                for error in form_apertura.non_field_errors():
+                    messages.error(request, f' {error}')
                 messages.error(request, ' Revisa los campos e intenta de nuevo.')
 
         elif action == 'cerrar_caja':
@@ -390,7 +401,7 @@ def pago_dashboard(request):
     monto_total = pagos_qs.aggregate(t=Sum('monto'))['t'] or 0
 
     # ★ PAGINACIÓN DE CAJAS REGISTRADAS
-    cajas_page, cajas_paginas, cajas_qs_filtros, c_desde, c_hasta = _paginar_cajas(request)
+    cajas_page, cajas_paginas, cajas_qs_filtros, c_fecha = _paginar_cajas(request)
 
     context = {
         'form':             form,
@@ -412,8 +423,7 @@ def pago_dashboard(request):
         'cajas_page':       cajas_page,
         'cajas_paginas':    cajas_paginas,
         'cajas_qs_filtros': cajas_qs_filtros,
-        'c_desde':          c_desde,
-        'c_hasta':          c_hasta,
+        'c_fecha':          c_fecha,
         'tab_activo':       request.GET.get('tab', 'pendientes'),
         'caja_activa':      caja_activa,
         'q_pago':           q_pago,
@@ -490,7 +500,7 @@ def caja_detalle(request, pk):
     monto_total = pagos_qs.aggregate(t=Sum('monto'))['t'] or 0
 
     # ★ PAGINACIÓN DE CAJAS REGISTRADAS
-    cajas_page, cajas_paginas, cajas_qs_filtros, c_desde, c_hasta = _paginar_cajas(request)
+    cajas_page, cajas_paginas, cajas_qs_filtros, c_fecha = _paginar_cajas(request)
 
     context = {
         'form':               form,
@@ -512,12 +522,15 @@ def caja_detalle(request, pk):
         'cajas_page':         cajas_page,
         'cajas_paginas':      cajas_paginas,
         'cajas_qs_filtros':   cajas_qs_filtros,
-        'c_desde':            c_desde,
-        'c_hasta':            c_hasta,
+        'c_fecha':            c_fecha,
         'caja_seleccionada':  caja_seleccionada,
         'pagos_caja':         pagos_caja,
         'total_ingresos':     total_ingresos,
         'total_pendientes':   total_pendientes,
+        'monto_inicial_fmt':    _pesos(caja_seleccionada.monto_inicial),
+        'total_ingresos_fmt':   _pesos(total_ingresos),
+        'total_pendientes_fmt': _pesos(total_pendientes),
+        'saldo_final_fmt':      _pesos(caja_seleccionada.monto_inicial + total_ingresos),
         'saldo_final':        caja_seleccionada.monto_inicial + total_ingresos,
         'tab_activo':         'detalle-caja',
         'caja_activa':        Caja.objects.filter(estado='ABIERTA').first(),

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -8,6 +10,11 @@ from pedidos.models import Pedido
 from .models import Pago, Caja
 
 MAX_FOTO_BYTES = 8 * 1024 * 1024  # 8 MB
+
+# Límites del monto inicial al abrir caja (pesos)
+MONTO_INICIAL_MIN = Decimal('100000')
+MONTO_INICIAL_MAX = Decimal('1000000')
+MAX_OBSERVACIONES = 500
 
 _INPUT = (
     'width:100%;padding:.55rem .85rem;border:1px solid #D4C4A0;'
@@ -106,16 +113,41 @@ class PagoForm(forms.ModelForm):
         return cleaned_data
 
 
+class MontoMilesWidget(forms.TextInput):
+    """Campo de monto con puntos de miles (100.000). El navegador los pone
+    solos al escribir; aquí se quitan antes de validar para que el servidor
+    reciba siempre un número limpio."""
+
+    def value_from_datadict(self, data, files, name):
+        valor = data.get(name)
+        if isinstance(valor, str):
+            valor = valor.replace('$', '').replace(' ', '').replace('.', '').replace(',', '.')
+        return valor
+
+    def format_value(self, value):
+        if value in (None, ''):
+            return ''
+        try:
+            numero = Decimal(str(value))
+        except Exception:
+            return str(value)
+        if numero == numero.to_integral_value():
+            return f'{int(numero):,}'.replace(',', '.')
+        return str(value)
+
+
 class CajaForm(forms.ModelForm):
     class Meta:
         model  = Caja
         fields = ['monto_inicial', 'cajero', 'observaciones']
         widgets = {
-            'monto_inicial': forms.NumberInput(attrs={
+            'monto_inicial': MontoMilesWidget(attrs={
                 'style': _INPUT,
-                'placeholder': '0.00',
-                'step': '0.01',
-                'min': '0',
+                'placeholder': '100.000',
+                'inputmode': 'numeric',
+                'autocomplete': 'off',
+                'maxlength': '9',
+                'data-miles': '1',
             }),
             'cajero': forms.Select(attrs={'style': _INPUT}),
             'observaciones': forms.Textarea(attrs={
@@ -128,6 +160,7 @@ class CajaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['observaciones'].required = False
+        self.fields['observaciones'].widget.attrs['maxlength'] = MAX_OBSERVACIONES
 
         # Responsable de la caja: solo administradores y cajeros activos
         # (el mismo criterio que decide quién puede entrar al módulo de pagos).
@@ -154,8 +187,10 @@ class CajaForm(forms.ModelForm):
         monto = self.cleaned_data.get('monto_inicial')
         if monto is None:
             raise ValidationError('El monto inicial es obligatorio.')
-        if monto < 0:
-            raise ValidationError('El monto inicial no puede ser negativo.')
+        if monto < MONTO_INICIAL_MIN or monto > MONTO_INICIAL_MAX:
+            raise ValidationError(
+                'El monto inicial debe estar entre $100.000 y $1.000.000.'
+            )
         return monto
 
     def clean_cajero(self):
@@ -163,3 +198,23 @@ class CajaForm(forms.ModelForm):
         if not cajero:
             raise ValidationError('Debes seleccionar un cajero.')
         return cajero
+
+    def clean_observaciones(self):
+        observaciones = (self.cleaned_data.get('observaciones') or '').strip()
+        if len(observaciones) > MAX_OBSERVACIONES:
+            raise ValidationError(
+                f'Las observaciones no pueden superar {MAX_OBSERVACIONES} caracteres.'
+            )
+        return observaciones
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # Solo puede existir una caja abierta a la vez (se valida en el
+        # servidor, no depende de la vista ni del navegador).
+        caja_abierta = Caja.objects.filter(estado='ABIERTA').first()
+        if caja_abierta:
+            raise ValidationError(
+                f'Ya hay una caja abierta (Caja #{caja_abierta.numero}). '
+                'Debes cerrarla antes de abrir una nueva.'
+            )
+        return cleaned_data
