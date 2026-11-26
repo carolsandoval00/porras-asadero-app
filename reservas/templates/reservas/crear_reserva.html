@@ -7,7 +7,7 @@
       <div class="mc-card-title">Información del cliente</div>
       <div class="mc-form-row">
         <div class="mc-form-group">
-          <label class="mc-label">Nombre completo *</label>
+          <label class="mc-label">Nombre completo <span class="req-star" style="color:#C0392B;">*</span></label>
           <input type="text" class="mc-input" id="mc-c-nombre" placeholder="Ej: María García" data-tooltip="Nombre del cliente que reserva">
         </div>
         <div class="mc-form-group">
@@ -21,7 +21,7 @@
           <input type="email" class="mc-input" id="mc-c-email" placeholder="correo@ejemplo.com" data-tooltip="Correo del cliente (opcional)">
         </div>
         <div class="mc-form-group">
-          <label class="mc-label">N.° de personas *</label>
+          <label class="mc-label">N.° de personas <span class="req-star" style="color:#C0392B;">*</span></label>
           <input type="number" class="mc-input" id="mc-c-personas" min="1" max="30" placeholder="2" data-tooltip="Cuántas personas asistirán">
         </div>
       </div>
@@ -30,15 +30,15 @@
       <div class="mc-card-title">Detalles de la reserva</div>
       <div class="mc-form-row three">
         <div class="mc-form-group">
-          <label class="mc-label">Fecha *</label>
+          <label class="mc-label">Fecha <span class="req-star" style="color:#C0392B;">*</span></label>
           <input type="date" class="mc-input" id="mc-c-fecha" onchange="mcPoblarMesas()" data-tooltip="Fecha de la reserva">
         </div>
         <div class="mc-form-group">
-          <label class="mc-label">Hora *</label>
+          <label class="mc-label">Hora <span class="req-star" style="color:#C0392B;">*</span></label>
           <input type="time" class="mc-input" id="mc-c-hora" step="1800" onchange="mcPoblarMesas()" data-tooltip="Hora de la reserva">
         </div>
         <div class="mc-form-group">
-          <label class="mc-label">Mesa *</label>
+          <label class="mc-label">Mesa <span class="req-star" style="color:#C0392B;">*</span></label>
           <select class="mc-select" id="mc-c-mesa" data-tooltip="Elige una mesa disponible"><option value="">— Seleccionar mesa —</option></select>
         </div>
       </div>
