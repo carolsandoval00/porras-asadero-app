@@ -1,0 +1,659 @@
+{% extends 'base 2.html' %}
+{% block title %}Copia de Seguridad y Restauración{% endblock title %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* =========================================================
+       ESTILOS PERSONALIZADOS - COPIA DE SEGURIDAD PORRAS ASADERO
+       ========================================================= */
+    .bk-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Hero / Banner Superior */
+    .bk-banner {
+        background: linear-gradient(135deg, #1f140e 0%, #140d09 60%, #0d0805 100%);
+        border: 1px solid rgba(212, 160, 23, 0.25);
+        border-radius: 12px;
+        padding: 1.75rem 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bk-banner::after {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 180px;
+        height: 180px;
+        background: radial-gradient(circle, rgba(232, 101, 26, 0.18) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .bk-title {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 700;
+        color: #F5ECD7;
+        font-size: 1.85rem;
+        margin-bottom: 0.35rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .bk-title i {
+        color: #E8651A;
+        font-size: 2rem;
+    }
+
+    .bk-subtitle {
+        color: rgba(245, 236, 215, 0.75);
+        font-size: 0.95rem;
+        margin-bottom: 1.25rem;
+    }
+
+    /* Estado de Conexión */
+    .bk-status-bar {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: rgba(15, 10, 7, 0.75);
+        border: 1px solid rgba(212, 160, 23, 0.25);
+        border-radius: 50px;
+        padding: 0.45rem 1.15rem;
+        font-size: 0.88rem;
+    }
+
+    .bk-status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .bk-status-dot.online {
+        background-color: #2ecc71;
+        box-shadow: 0 0 10px #2ecc71;
+    }
+
+    .bk-status-dot.offline {
+        background-color: #e74c3c;
+        box-shadow: 0 0 10px #e74c3c;
+    }
+
+    .bk-status-text {
+        color: #F5ECD7;
+        font-weight: 500;
+    }
+
+    .bk-status-badge {
+        background: rgba(232, 101, 26, 0.2);
+        color: #E8651A;
+        border: 1px solid rgba(232, 101, 26, 0.4);
+        padding: 0.15rem 0.55rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    /* Tarjetas de Acción */
+    .bk-card {
+        background: #18110b;
+        border: 1px solid rgba(212, 160, 23, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        height: 100%;
+        display: flex;
+        flex-column: column;
+    }
+
+    .bk-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(232, 101, 26, 0.5);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+    }
+
+    .bk-card-header {
+        padding: 1.1rem 1.35rem;
+        border-bottom: 1px solid rgba(212, 160, 23, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-family: 'Oswald', sans-serif;
+        font-size: 1.15rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .bk-card-header.header-download {
+        background: linear-gradient(90deg, rgba(232, 101, 26, 0.18) 0%, rgba(24, 17, 11, 0) 100%);
+        color: #E8651A;
+    }
+
+    .bk-card-header.header-restore {
+        background: linear-gradient(90deg, rgba(46, 204, 113, 0.15) 0%, rgba(24, 17, 11, 0) 100%);
+        color: #2ecc71;
+    }
+
+    .bk-card-body {
+        padding: 1.75rem 1.5rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .bk-card-icon-wrap {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        margin: 0 auto 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+    }
+
+    .bk-icon-download {
+        background: rgba(232, 101, 26, 0.12);
+        color: #E8651A;
+        border: 1px solid rgba(232, 101, 26, 0.3);
+    }
+
+    .bk-icon-restore {
+        background: rgba(46, 204, 113, 0.12);
+        color: #2ecc71;
+        border: 1px solid rgba(46, 204, 113, 0.3);
+    }
+
+    .bk-card-text {
+        color: rgba(245, 236, 215, 0.85);
+        font-size: 0.95rem;
+        line-height: 1.55;
+        text-align: center;
+        margin-bottom: 1.25rem;
+    }
+
+    .bk-meta-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 6px;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        color: rgba(245, 236, 215, 0.65);
+        text-align: center;
+        margin-bottom: 1.5rem;
+        width: 100%;
+    }
+
+    /* Botón de Descarga */
+    .btn-bk-download {
+        background: linear-gradient(135deg, #E8651A 0%, #C0502A 100%);
+        color: #fff !important;
+        font-family: 'Oswald', sans-serif;
+        font-size: 1.05rem;
+        letter-spacing: 0.75px;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 8px;
+        padding: 0.85rem 1.5rem;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        box-shadow: 0 4px 14px rgba(232, 101, 26, 0.35);
+        transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+        cursor: pointer;
+    }
+
+    .btn-bk-download:hover {
+        background: linear-gradient(135deg, #f0742b 0%, #cf572e 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(232, 101, 26, 0.5);
+    }
+
+    /* Zona de Carga / Drag and Drop */
+    .bk-dropzone {
+        border: 2px dashed rgba(212, 160, 23, 0.35);
+        background: rgba(15, 10, 7, 0.55);
+        border-radius: 10px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+    }
+
+    .bk-dropzone:hover, .bk-dropzone.dragover {
+        border-color: #E8651A;
+        background: rgba(232, 101, 26, 0.08);
+        box-shadow: inset 0 0 16px rgba(232, 101, 26, 0.15);
+    }
+
+    .bk-dropzone i {
+        font-size: 2.4rem;
+        color: #D4A017;
+        margin-bottom: 0.5rem;
+        display: block;
+        transition: transform 0.25s;
+    }
+
+    .bk-dropzone:hover i {
+        transform: translateY(-3px) scale(1.08);
+        color: #E8651A;
+    }
+
+    .bk-dropzone-title {
+        color: #F5ECD7;
+        font-weight: 600;
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .bk-dropzone-hint {
+        color: rgba(245, 236, 215, 0.5);
+        font-size: 0.8rem;
+        margin-bottom: 0;
+    }
+
+    /* Caja de Aviso Restauración */
+    .bk-warning-box {
+        background: rgba(192, 57, 43, 0.12);
+        border: 1px solid rgba(192, 57, 43, 0.35);
+        border-radius: 6px;
+        padding: 0.55rem 0.85rem;
+        color: #ff9999;
+        font-size: 0.82rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-align: left;
+    }
+
+    /* Archivo Seleccionado y Barra de Progreso */
+    .bk-file-preview {
+        display: none;
+        background: rgba(212, 160, 23, 0.1);
+        border: 1px solid rgba(212, 160, 23, 0.3);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin-top: 1rem;
+        text-align: left;
+    }
+
+    .btn-bk-restore {
+        background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%);
+        color: #fff !important;
+        font-family: 'Oswald', sans-serif;
+        font-size: 1rem;
+        letter-spacing: 0.75px;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        width: 100%;
+        margin-top: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-bk-restore:hover {
+        background: linear-gradient(135deg, #2ecc71 0%, #229954 100%);
+        box-shadow: 0 4px 14px rgba(46, 204, 113, 0.4);
+    }
+
+    /* Card de Información y Guía */
+    .bk-info-card {
+        background: #140e09;
+        border: 1px solid rgba(212, 160, 23, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem 1.75rem;
+        margin-top: 2rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .bk-info-title {
+        font-family: 'Oswald', sans-serif;
+        color: #D4A017;
+        font-size: 1.15rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .bk-info-list {
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 0;
+    }
+
+    .bk-info-list li {
+        color: rgba(245, 236, 215, 0.8);
+        font-size: 0.88rem;
+        margin-bottom: 0.65rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .bk-info-list li i {
+        color: #E8651A;
+        font-size: 1rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+</style>
+
+<div class="bk-container">
+
+    <!-- ══ CABECERA / HERO BANNER ══ -->
+    <div class="bk-banner">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="bk-title">
+                    <i class="bi bi-database-fill-gear"></i> Copia de Seguridad y Restauración
+                </h1>
+                <p class="bk-subtitle">
+                    Administra los respaldos estructurales y de datos del sistema. Protege la información de órdenes, mesas, usuarios y ventas.
+                </p>
+                <div class="bk-status-bar">
+                    <span class="bk-status-dot {% if info_db.conectado %}online{% else %}offline{% endif %}"></span>
+                    <span class="bk-status-text">
+                        {% if info_db.conectado %}
+                            Motor Activo: <strong>{{ info_db.motor }}</strong> ({{ info_db.nombre }})
+                        {% else %}
+                            Error de Conexión: <strong>{{ info_db.motor }}</strong>
+                        {% endif %}
+                    </span>
+                    <span class="bk-status-badge">
+                        {% if info_db.conectado %}OPERATIVO{% else %}DESCONECTADO{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <span class="text-white-50 small d-block mb-1">
+                    <i class="bi bi-clock-history me-1"></i> Servidor: {{ ahora|date:"d/m/Y H:i" }}
+                </span>
+                <span class="text-white-50 small d-block">
+                    <i class="bi bi-shield-check me-1 text-dorado"></i> Acceso Administrador Autorizado
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ CUADÍCULA DE ACCIONES PRINCIPALES ══ -->
+    <div class="row g-4">
+        
+        <!-- TARJETA 1: DESCARGAR RESPALDO -->
+        <div class="col-md-6">
+            <div class="bk-card">
+                <div class="bk-card-header header-download">
+                    <i class="bi bi-cloud-arrow-down-fill"></i> Descargar Respaldo Completo
+                </div>
+                <div class="bk-card-body">
+                    <div>
+                        <div class="bk-card-icon-wrap bk-icon-download">
+                            <i class="bi bi-database-down"></i>
+                        </div>
+                        <h4 class="text-center text-crema ff-oswald fs-5 mb-2">Exportar Base de Datos</h4>
+                        <p class="bk-card-text">
+                            Genera un archivo <strong>.sql</strong> con todas las definiciones de tablas (DDL) y la totalidad de los datos registrados (DML).
+                        </p>
+                        <div class="bk-meta-badge">
+                            <i class="bi bi-file-earmark-code me-1 text-dorado"></i> Formato SQL estándar · Estructura + Registros
+                        </div>
+                    </div>
+
+                    {% if info_db.conectado %}
+                        <form method="post" action="{% url 'backup:backup' %}" id="form-descargar-backup">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" value="backup_completo">
+                            <button type="submit" class="btn-bk-download" id="btn-descarga">
+                                <i class="bi bi-download"></i> Descargar Respaldo .SQL
+                            </button>
+                        </form>
+                    {% else %}
+                        <button type="button" class="btn-bk-download" style="opacity: 0.5; cursor: not-allowed;" disabled>
+                            <i class="bi bi-x-circle"></i> Base de Datos no Disponible
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- TARJETA 2: RESTAURAR BASE DE DATOS -->
+        <div class="col-md-6">
+            <div class="bk-card">
+                <div class="bk-card-header header-restore">
+                    <i class="bi bi-cloud-arrow-up-fill"></i> Restaurar Base de Datos
+                </div>
+                <div class="bk-card-body">
+                    <div>
+                        <div class="bk-card-icon-wrap bk-icon-restore">
+                            <i class="bi bi-database-up"></i>
+                        </div>
+                        <h4 class="text-center text-crema ff-oswald fs-5 mb-2">Importar Archivo SQL</h4>
+                        
+                        <div class="bk-warning-box">
+                            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                            <div>
+                                <strong>Precaución:</strong> Al restaurar se sobrescribirá la información actual con la del archivo cargado.
+                            </div>
+                        </div>
+
+                        <!-- ZONA DRAG AND DROP -->
+                        <div class="bk-dropzone" id="zona-carga">
+                            <input type="file" id="archivo-respaldo" accept=".sql" style="display: none;">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            <div class="bk-dropzone-title">Arrastra un archivo .sql aquí</div>
+                            <p class="bk-dropzone-hint">o haz clic para explorar en tu equipo (máx. 120MB)</p>
+                        </div>
+
+                        <!-- VISTA PREVIA ARCHIVO SELECCIONADO -->
+                        <div class="bk-file-preview" id="preview-archivo">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <strong class="text-crema d-block small" id="nombre-archivo-sel">archivo.sql</strong>
+                                    <span class="text-white-50" style="font-size: 0.75rem;" id="peso-archivo-sel">0 KB</span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="btn-cancelar-sel" title="Quitar archivo">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                            <button type="button" class="btn-bk-restore" id="btn-iniciar-restauracion">
+                                <i class="bi bi-check-circle-fill"></i> Confirmar y Restaurar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ══ INFORMACIÓN TÉCNICA Y BUENAS PRÁCTICAS ══ -->
+    <div class="bk-info-card">
+        <h5 class="bk-info-title">
+            <i class="bi bi-info-circle-fill"></i> Especificaciones y Consideraciones Técnicas
+        </h5>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <h6 class="text-crema ff-oswald small text-uppercase">Configuración del Motor</h6>
+                <ul class="bk-info-list">
+                    <li><i class="bi bi-hdd-network"></i> Motor actual: <strong>{{ info_db.motor }}</strong></li>
+                    <li><i class="bi bi-folder2-open"></i> Origen: {{ info_db.detalles }}</li>
+                    <li><i class="bi bi-check2-circle text-success"></i> Soporte multi-motor (SQLite / MySQL)</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-crema ff-oswald small text-uppercase">Archivos de Respaldo</h6>
+                <ul class="bk-info-list">
+                    <li><i class="bi bi-filetype-sql"></i> Formato estándar con comandos DDL y DML</li>
+                    <li><i class="bi bi-calendar-check"></i> Nomenclatura con marca de tiempo precisa</li>
+                    <li><i class="bi bi-lock-fill"></i> Copia transaccional íntegra</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-crema ff-oswald small text-uppercase">Recomendaciones</h6>
+                <ul class="bk-info-list">
+                    <li><i class="bi bi-shield-shaded"></i> Realiza un respaldo antes de cualquier actualización</li>
+                    <li><i class="bi bi-clock"></i> Evita restaurar en horas pico de servicio en sala</li>
+                    <li><i class="bi bi-arrow-repeat"></i> El sistema crea un punto de retorno temporal automático</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- SCRIPT DE INTERACCIÓN -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const zonaC = document.getElementById('zona-carga');
+    const inputArchivo = document.getElementById('archivo-respaldo');
+    const previewArchivo = document.getElementById('preview-archivo');
+    const nombreArchivoSel = document.getElementById('nombre-archivo-sel');
+    const pesoArchivoSel = document.getElementById('peso-archivo-sel');
+    const btnCancelarSel = document.getElementById('btn-cancelar-sel');
+    const btnRestaurar = document.getElementById('btn-iniciar-restauracion');
+
+    let archivoSeleccionado = null;
+
+    if (zonaC && inputArchivo) {
+        // Clic en la zona
+        zonaC.addEventListener('click', () => inputArchivo.click());
+
+        // Eventos Drag and Drop
+        zonaC.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zonaC.classList.add('dragover');
+        });
+
+        zonaC.addEventListener('dragleave', () => {
+            zonaC.classList.remove('dragover');
+        });
+
+        zonaC.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zonaC.classList.remove('dragover');
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                gestionarArchivo(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Cambio manual en input
+        inputArchivo.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                gestionarArchivo(e.target.files[0]);
+            }
+        });
+    }
+
+    if (btnCancelarSel) {
+        btnCancelarSel.addEventListener('click', function () {
+            archivoSeleccionado = null;
+            inputArchivo.value = '';
+            previewArchivo.style.display = 'none';
+            zonaC.style.display = 'block';
+        });
+    }
+
+    function gestionarArchivo(archivo) {
+        if (!archivo.name.toLowerCase().endsWith('.sql')) {
+            if (window.mostrarAviso) {
+                mostrarAviso('Por favor, selecciona un archivo SQL válido con extensión .sql', 'Formato Inválido', 'danger');
+            } else {
+                alert('Por favor, selecciona un archivo SQL válido con extensión .sql');
+            }
+            return;
+        }
+
+        if (archivo.size > 120 * 1024 * 1024) {
+            if (window.mostrarAviso) {
+                mostrarAviso('El archivo de respaldo supera el límite máximo permitido (120MB).', 'Archivo Excedido', 'danger');
+            } else {
+                alert('El archivo supera el límite de 120MB.');
+            }
+            return;
+        }
+
+        archivoSeleccionado = archivo;
+        nombreArchivoSel.textContent = archivo.name;
+        pesoArchivoSel.textContent = (archivo.size / (1024 * 1024)).toFixed(2) + ' MB';
+        zonaC.style.display = 'none';
+        previewArchivo.style.display = 'block';
+    }
+
+    if (btnRestaurar) {
+        btnRestaurar.addEventListener('click', function () {
+            if (!archivoSeleccionado) return;
+
+            const confirmar = confirm('¿Estás seguro de que deseas restaurar la base de datos?\n\nEsta acción sobrescribirá todos los registros actuales con el contenido del respaldo.');
+            if (!confirmar) return;
+
+            const formData = new FormData();
+            formData.append('archivo', archivoSeleccionado);
+
+            // Estado cargando
+            btnRestaurar.disabled = true;
+            btnRestaurar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Restaurando base de datos...';
+
+            fetch('{% url "backup:restaurar_datos" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.exito) {
+                    if (window.mostrarAviso) {
+                        mostrarAviso(data.mensaje, 'Restauración Exitosa', 'success');
+                    } else {
+                        alert(data.mensaje);
+                    }
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    btnRestaurar.disabled = false;
+                    btnRestaurar.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirmar y Restaurar';
+                    if (window.mostrarAviso) {
+                        mostrarAviso(data.error || 'Ocurrió un error inesperado al restaurar.', 'Error al Restaurar', 'danger');
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                }
+            })
+            .catch(err => {
+                btnRestaurar.disabled = false;
+                btnRestaurar.innerHTML = '<i class="bi bi-check-circle-fill"></i> Confirmar y Restaurar';
+                if (window.mostrarAviso) {
+                    mostrarAviso('Fallo de conexión al enviar el archivo de respaldo: ' + err, 'Error de Conexión', 'danger');
+                } else {
+                    alert('Error en la conexión: ' + err);
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

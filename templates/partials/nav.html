@@ -12,6 +12,13 @@
                 <li class="nav-item"><a class="nav-link ff-oswald fw-light text-uppercase small text-crema nav-link-spaced" href="#menu" data-tooltip="Ver nuestro menú">Menú</a></li>
                 <li class="nav-item"><a class="nav-link ff-oswald fw-light text-uppercase small text-crema nav-link-spaced" href="#nosotros" data-tooltip="Conocer nuestra historia">Nosotros</a></li>
                 <li class="nav-item"><a class="nav-link ff-oswald fw-light text-uppercase small text-crema nav-link-spaced" href="#contacto" data-tooltip="Ver datos de contacto">Contáctanos</a></li>
+                {% if request.user.is_authenticated and request.user.rol == 'ADMIN' or request.user.is_superuser %}
+                <li class="nav-item">
+                    <a class="nav-link ff-oswald fw-light text-uppercase small text-dorado nav-link-spaced" href="{% url 'backup:backup' %}" data-tooltip="Copia de Seguridad y Restauración">
+                        <i class="bi bi-database me-1"></i> Respaldo
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </div>

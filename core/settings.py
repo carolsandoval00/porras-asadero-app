@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'pago',
     'asistente',
     'ayuda',
+    'backup',
 ]
 
 MIDDLEWARE = [

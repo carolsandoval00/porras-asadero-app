@@ -33,6 +33,12 @@ class Caja(models.Model):
         verbose_name = 'Caja'
         verbose_name_plural = 'Cajas'
 
+    @property
+    def numero(self):
+        """Número consecutivo de la caja según el orden de apertura: 01, 02, 03..."""
+        n = Caja.objects.filter(pk__lt=self.pk).count() + 1
+        return f'{n:02d}'
+
     def __str__(self):
         cajero_str = self.cajero.username if self.cajero else "Sin Cajero"
         return f'Caja #{self.pk} – {cajero_str} – {self.get_estado_display()}'
