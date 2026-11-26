@@ -155,6 +155,8 @@
   .pm-form-grid   { grid-template-columns:1fr; }
   .pm-detail-grid { grid-template-columns:1fr; }
   .pm-header      { padding: 1.2rem 1.5rem 1.1rem; margin-bottom: 1.2rem; }
+  .pm-header h1   { font-size: 1.35rem; }
+  .pm-header h2   { font-size: 0.88rem; }
   .pm-stats       { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.2rem; }
   .pm-stat        { padding: 0.85rem 1rem; }
   .pm-stat .val   { font-size: 1.5rem; }
@@ -397,6 +399,56 @@
 .pm-td-plato-total-label { font-weight:700; padding:.75rem 1rem; }
 .pm-td-plato-total-value { font-weight:800; font-size:1.1rem; color:#C0392B; padding:.75rem 1rem; }
 
+/* ── Paginación (pie del card) ── */
+.pm-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .8rem;
+  padding: 1rem 1.4rem;
+  background: #F5ECD7;
+  border-top: 1px solid var(--p-border);
+  border-radius: 0 0 var(--p-radius) var(--p-radius);
+  font-family: 'Lato', sans-serif;
+}
+.pm-pag-info {
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--p-muted);
+}
+.pm-pag-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem;
+}
+.pm-pag-puntos {
+  padding: 0 .3rem;
+  color: var(--p-muted);
+}
+.pm-pag-actual { cursor: default; }
+.pm-pag-actual:hover { transform: none; filter: none; }
+
+@media (max-width: 768px) {
+  .pm-paginacion { justify-content: center; text-align: center; }
+}
+
+/* Paginación DENTRO del cuerpo de la tarjeta (listas de Órdenes, Categorías,
+   Clientes, etc.): va sin fondo ni borde redondeado, solo con una línea arriba.
+   Así convive con la paginación de pie de tarjeta de arriba. */
+.pm-card-body .pm-paginacion {
+  background: transparent;
+  border-radius: 0;
+  padding: 1rem 0 0;
+  margin-top: 1.2rem;
+  font-family: inherit;
+}
+.pm-card-body .pm-pag-info {
+  font-size: .82rem;
+  font-weight: 600;
+}
+
 /* ============================================
    Tooltip JS para elementos dentro de .pm-nav
    (o cualquier contenedor con overflow que recorte
@@ -451,7 +503,50 @@
     border-color: transparent transparent #1A1008 transparent;
 }
 
-/* Título del encabezado: mismo tamaño que Pagos (1.8rem; baja a 1.4rem solo en celular) */
-@media(max-width:600px){
-  .pm-header h1   { font-size: 1.4rem; }
+/* ══ IMPRESIÓN: solo el listado con el logo (igual que el PDF) ══════════ */
+.pm-print-header { display: none; }
+
+@media print {
+  @page { size: A4 landscape; margin: 1cm; }
+
+  /* Ocultar todo menos el listado */
+  body > *:not(.admin-shell),
+  .admin-shell aside,
+  .admin-main footer,
+  .pm-header, .pm-nav, .pm-stats, .pm-card-header,
+  .pm-card-body form, .pm-modal-overlay,
+  .pm-paginacion,
+  .pm-table th:last-child,
+  .pm-table td:last-child:not([colspan]) { display: none !important; }
+
+  html, body { background: #fff !important; }
+  .admin-shell { display: block !important; }
+  .admin-main { display: block !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+  .admin-main > section { padding: 0 !important; }
+  .pm-wrapper { background: #fff !important; padding: 0 !important; }  .pm-card { box-shadow: none !important; border: none !important; background: #fff !important; }
+  .pm-card-body { padding: 0 !important; }
+  .pm-table-wrap { overflow: visible !important; }
+
+  /* Encabezado con logo */
+  .pm-print-header {
+    display: flex !important; align-items: center; gap: .5cm;
+    border-bottom: 1.2pt solid #C0392B; padding-bottom: 6pt; margin-bottom: .5cm;
+  }
+  .pm-print-logo { position: relative; width: 5.2cm; aspect-ratio: 1083 / 545; overflow: hidden; flex: none; }
+  .pm-print-logo img { position: absolute; width: 141.83%; max-width: none; left: -21.51%; top: -26.06%; }
+  .pm-print-titulo h1 { font-size: 18pt; font-weight: 700; color: #C0392B; margin: 0 0 3pt; }
+  .pm-print-titulo p  { font-size: 9pt; color: #555; margin: 0; }
+
+  /* Tabla con los mismos colores del PDF */
+  .pm-table, .pm-table *, .pm-fecha-badge, .pm-badge {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .pm-table { font-size: 8.5pt; width: 100%; border-collapse: collapse; }
+  .pm-table thead { display: table-header-group; }
+  .pm-table th { background: #C0392B !important; color: #F5ECD7 !important; border: 1px solid #D4C4A0; padding: 5pt; }
+  .pm-table td { border: 1px solid #D4C4A0; padding: 5pt; }
+  .pm-table tbody tr:nth-child(odd) td  { background: #FDF7EC !important; }
+  .pm-table tbody tr:nth-child(even) td { background: #EDE3C8 !important; }
+  .pm-table tr { break-inside: avoid; }
+  .pm-fecha-group-header { break-after: avoid; margin-top: .4cm; }
 }

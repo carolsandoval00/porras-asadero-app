@@ -4,7 +4,8 @@
 {% block content %}
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="{% static 'css/reservas.css' %}">
+<link rel="stylesheet" href="{% static 'css/reservas.css' %}?v=4">
+
 
 <!-- ROL del usuario para el JS -->
 <script>
@@ -12,7 +13,7 @@
   window.MC_PUEDE_EDITAR = {{ puede_editar|yesno:"true,false" }};
 </script>
 
-<!-- ===== BANNER + NAV ===== -->
+<!-- ===== BANNER ===== -->
 <div class="mc-wrapper">
 <div class="mc-banner-wrap">
   <div class="mc-banner-box">
@@ -21,23 +22,7 @@
       <p class="mc-banner-sub">Bienvenido, {{ nombre }}</p>
     </div>
   </div>
-  <div class="mc-nav-row">
-  <div class="mc-nav-group">
-    <span class="mc-nav-label">Reservas</span>
-    <button class="mc-nav-btn active" onclick="mcShow('reservas')" data-tooltip="Ver todas las reservas">Reservas</button>
-    <button class="mc-nav-btn" onclick="mcShow('crear')" data-tooltip="Hacer una reserva nueva">+ Nueva reserva</button>
-    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn" data-tooltip="Borrar una reserva">Eliminar reserva</a>
-  </div>
-  <div class="mc-nav-group">
-    <span class="mc-nav-label">Mesas</span>
-    <button class="mc-nav-btn" onclick="mcShow('mesas')" data-tooltip="Ver el mapa de mesas del restaurante">Diagrama de mesas</button>
-    <button class="mc-nav-btn" onclick="mcShow('crear-mesa')" data-tooltip="Agregar una mesa nueva">+ Nueva mesa</button>
-    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn" data-tooltip="Ver y editar las mesas existentes">Editar mesa</a>
-  </div>
-  </div>
 </div>
-
-<div class="mc-wrap">
 
   <!-- ===== LISTA RESERVAS ===== -->
   {% include "reservas/lista_reservas.html" %}
@@ -91,10 +76,14 @@
 <!-- ===== MODAL DE AVISOS (reserva creada / actualizada / eliminada) ===== -->
 <div class="mc-confirm-overlay" id="mc-msg-overlay" onclick="if (event.target === this) mcCloseMsg()">
   <div class="mc-confirm-box" role="alertdialog" aria-labelledby="mc-msg-title" aria-describedby="mc-msg-text">
+    <svg class="mc-msg-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6l-8-3z"/>
+      <path d="m9.2 9.2 5.6 5.6M14.8 9.2l-5.6 5.6"/>
+    </svg>
     <h3 id="mc-msg-title">¡Listo!</h3>
     <p id="mc-msg-text"></p>
     <div class="mc-confirm-btns">
-      <button type="button" class="mc-btn mc-btn-primary" onclick="mcCloseMsg()">Aceptar</button>
+      <button type="button" id="mc-msg-btn" class="mc-btn mc-btn-primary" onclick="mcCloseMsg()">Aceptar</button>
     </div>
   </div>
 </div>
@@ -111,7 +100,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
-<script src="{% static 'js/reservas.js' %}" defer></script>
+<script src="{% static 'js/reservas.js' %}?v=4" defer></script>
 
 <script src="{% static 'js/reservas_nav_tooltips.js' %}" defer></script>
 

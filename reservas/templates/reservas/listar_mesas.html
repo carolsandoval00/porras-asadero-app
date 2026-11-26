@@ -13,20 +13,6 @@
       <p class="mc-banner-sub">Consulta y edita las mesas del restaurante</p>
     </div>
   </div>
-  <div class="mc-nav-row">
-  <div class="mc-nav-group">
-    <span class="mc-nav-label">Reservas</span>
-    <a href="{% url 'reserva_inicio' %}" class="mc-nav-btn" data-tooltip="Ver todas las reservas">Reservas</a>
-    <a href="{% url 'reserva_inicio' %}?tab=crear" class="mc-nav-btn" data-tooltip="Hacer una reserva nueva">+ Nueva reserva</a>
-    <a href="{% url 'eliminar_detalle' %}" class="mc-nav-btn" data-tooltip="Borrar una reserva">Eliminar reserva</a>
-  </div>
-  <div class="mc-nav-group">
-    <span class="mc-nav-label">Mesas</span>
-    <a href="{% url 'reserva_inicio' %}?tab=mesas" class="mc-nav-btn" data-tooltip="Ver el mapa de mesas del restaurante">Diagrama de mesas</a>
-    <a href="{% url 'reserva_inicio' %}?tab=crear-mesa" class="mc-nav-btn" data-tooltip="Agregar una mesa nueva">+ Nueva mesa</a>
-    <a href="{% url 'listar_mesas' %}" class="mc-nav-btn active" data-tooltip="Ver y editar las mesas existentes">Editar mesa</a>
-  </div>
-  </div>
 </div>
 
 <div class="mc-wrap">
@@ -83,6 +69,40 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.count %}
+    <div class="mc-paginacion">
+      <span class="mc-pag-info">
+        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} {% if page_obj.paginator.count == 1 %}mesa{% else %}mesas{% endif %}
+      </span>
+
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="mc-pag-links">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}"
+           class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página anterior">← Anterior</a>
+        {% endif %}
+
+        {% for p in paginas %}
+          {% if p.puntos %}
+            <span class="mc-pag-puntos">…</span>
+          {% elif p.num == page_obj.number %}
+            <span class="pm-btn pm-btn-primary pm-btn-sm">{{ p.num }}</span>
+          {% else %}
+            <a href="?page={{ p.num }}"
+               class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Ir a la página {{ p.num }}">{{ p.num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}"
+           class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Página siguiente">Siguiente →</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 </div>
 </div><!-- /.mc-wrapper -->

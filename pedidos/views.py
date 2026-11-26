@@ -6,11 +6,16 @@ from itertools import groupby
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Q
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import F, Q
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect
-from django.shortcuts import render as _django_render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from usuarios.models import Cliente
 
@@ -24,17 +29,155 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 
-def render(request, template_name, context=None, *args, **kwargs):
-    """Igual que django.shortcuts.render, pero agrega a todas las pantallas del
-    módulo el nombre del usuario (para el "Bienvenido, ...") y el título por
-    defecto 'Pedidos y Carta' cuando la vista no define uno propio."""
-    context = dict(context or {})
-    user = request.user
-    if user.is_authenticated:
-        context.setdefault('nombre', user.get_full_name() or user.username)
-    if template_name.startswith('pedidos/'):
-        context.setdefault('titulo', 'Pedidos y Carta')
-    return _django_render(request, template_name, context, *args, **kwargs)
+# ── ENCABEZADO CON LOGO PARA LOS REPORTES PDF ───────────────────────
+import io
+from datetime import datetime
+
+from django.conf import settings
+from PIL import Image as PILImage
+from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.styles import ParagraphStyle
+from openpyxl import Workbook
+from openpyxl.drawing.image import Image as XLImage
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
+from reportlab.platypus import Image as RLImage
+
+_LOGO_PATH = settings.BASE_DIR / 'static' / 'img' / 'logo.png'
+_LOGO_ALTO = 2.6 * cm
+_logo_cache = {}
+
+def _logo_recortado():
+    """Abre static/img/logo.png, le quita el espacio en blanco sobrante y lo
+    reduce de tamaño para que el PDF no pese tanto. Se calcula una sola vez."""
+    if 'logo' not in _logo_cache:
+        try:
+            img = PILImage.open(_LOGO_PATH).convert('RGBA')
+            fondo = PILImage.new('RGB', img.size, (255, 255, 255))
+            fondo.paste(img, mask=img.split()[3])
+            # recorte al contenido (todo lo que no sea blanco)
+            caja = PILImage.eval(fondo.convert('L'), lambda v: 255 if v < 245 else 0).getbbox()
+            if caja:
+                fondo = fondo.crop(caja)
+            ancho = 600
+            fondo = fondo.resize((ancho, round(fondo.height * ancho / fondo.width)), PILImage.LANCZOS)
+            buf = io.BytesIO()
+            fondo.save(buf, format='PNG', optimize=True)
+            _logo_cache['logo'] = (buf.getvalue(), fondo.width / fondo.height)
+        except Exception:
+            _logo_cache['logo'] = None
+    return _logo_cache['logo']
+
+
+def encabezado_reporte(titulo):
+    """Lista inicial de elementos del PDF: logo a la izquierda, título y
+    fecha a la derecha, y una línea roja debajo."""
+    styles = getSampleStyleSheet()
+    estilo_titulo = ParagraphStyle('TituloReporte', parent=styles['Title'], alignment=TA_LEFT,
+        fontSize=18, leading=22, textColor=colors.HexColor('#C0392B'))
+    estilo_sub = ParagraphStyle('SubReporte', parent=styles['Normal'], fontSize=9,
+        textColor=colors.HexColor('#555555'))
+    texto = [
+        Paragraph(titulo, estilo_titulo),
+        Paragraph(f"Porras Asadero · Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}", estilo_sub),
+    ]
+    logo = _logo_recortado()
+    if logo:
+        datos, proporcion = logo
+        ancho_logo = _LOGO_ALTO * proporcion
+        celda_logo = RLImage(io.BytesIO(datos), width=ancho_logo, height=_LOGO_ALTO)
+    else:  # si no encuentra el logo, el reporte sale igual, solo con texto
+        ancho_logo, celda_logo = 0.1 * cm, ''
+    cabecera = Table([[celda_logo, texto]], colWidths=[ancho_logo + 0.5*cm, 26.7*cm - ancho_logo - 0.5*cm])
+    cabecera.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('LEFTPADDING', (0,0), (-1,-1), 0), ('RIGHTPADDING', (0,0), (-1,-1), 0),
+        ('LINEBELOW', (0,0), (-1,0), 1.2, colors.HexColor('#C0392B')),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+    ]))
+    return [cabecera, Spacer(1, 0.5*cm)]
+
+
+
+def _respuesta_excel(titulo, nombre_archivo, encabezados, filas, anchos, cols_dinero=()):
+    """Genera un .xlsx con el logo arriba a la izquierda, el título al lado,
+    y la tabla con los mismos colores del PDF. `cols_dinero` son los índices
+    (empezando en 0) de las columnas que llevan formato $."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = titulo[:31]
+    n = len(encabezados)
+
+    for i, ancho in enumerate(anchos, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = ancho
+
+    # Logo (arriba a la izquierda)
+    ancho_logo_px = 0
+    logo = _logo_recortado()
+    if logo:
+        datos, proporcion = logo
+        img = XLImage(io.BytesIO(datos))
+        img.height = 80
+        img.width = round(80 * proporcion)
+        ws.add_image(img, 'A1')
+        ancho_logo_px = img.width
+
+    # El título va en la primera columna que quede libre a la derecha del logo
+    acumulado, col_titulo = 0, 1
+    for i, ancho in enumerate(anchos, start=1):
+        acumulado += ancho * 7 + 5
+        col_titulo = i + 1
+        if acumulado >= ancho_logo_px + 8:
+            break
+    col_titulo = min(col_titulo, max(n, 2))
+
+    ws.row_dimensions[2].height = 26
+    ws.row_dimensions[3].height = 16
+    c = ws.cell(row=2, column=col_titulo, value=titulo)
+    c.font = Font(name='Calibri', size=16, bold=True, color='C0392B')
+    c.alignment = Alignment(vertical='center')
+    c = ws.cell(row=3, column=col_titulo,
+                value=f"Porras Asadero · Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+    c.font = Font(name='Calibri', size=9, color='555555')
+
+    # Encabezados de la tabla (fila 6)
+    fila_enc = 6
+    borde = Border(*(Side(style='thin', color='D4C4A0'),) * 4)
+    for j, texto in enumerate(encabezados, start=1):
+        cel = ws.cell(row=fila_enc, column=j, value=texto)
+        cel.font = Font(name='Calibri', size=10, bold=True, color='F5ECD7')
+        cel.fill = PatternFill('solid', fgColor='C0392B')
+        cel.alignment = Alignment(vertical='center', horizontal='left')
+        cel.border = borde
+    ws.row_dimensions[fila_enc].height = 20
+
+    # Filas de datos con fondo alternado
+    claros = ('FDF7EC', 'EDE3C8')
+    for i, fila in enumerate(filas):
+        r = fila_enc + 1 + i
+        for j, valor in enumerate(fila, start=1):
+            if (j - 1) in cols_dinero and valor is not None:
+                valor = float(valor)
+            cel = ws.cell(row=r, column=j, value=valor)
+            cel.font = Font(name='Calibri', size=10)
+            cel.fill = PatternFill('solid', fgColor=claros[i % 2])
+            cel.border = borde
+            cel.alignment = Alignment(vertical='center', wrap_text=True)
+            if (j - 1) in cols_dinero:
+                cel.number_format = '"$"#,##0'
+
+    ws.freeze_panes = ws.cell(row=fila_enc + 1, column=1)
+    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.print_title_rows = f'{fila_enc}:{fila_enc}'
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+    wb.save(response)
+    return response
 
 
 # ── HELPERS DE PERMISOS ─────────────────────────────────────────────
@@ -68,6 +211,32 @@ def _productos_disponibles():
         .select_related('categoria')
         .order_by('categoria__nombre', 'nombre')
     )
+
+
+def _rango_paginas(page_obj, ventana=2):
+    """Devuelve una lista como [{'num': 1}, {'puntos': True}, {'num': 4}, ...]
+    con la primera página, la última y las cercanas a la actual.
+    La plantilla la usa para dibujar los números de la paginación."""
+    total  = page_obj.paginator.num_pages
+    actual = page_obj.number
+    mostrar = sorted(
+        {1, total} | set(range(max(1, actual - ventana), min(total, actual + ventana) + 1))
+    )
+    paginas, anterior = [], None
+    for n in mostrar:
+        if anterior is not None and n - anterior > 1:
+            paginas.append({'puntos': True})
+        paginas.append({'num': n})
+        anterior = n
+    return paginas
+
+
+def _querystring_sin_page(request):
+    """Querystring actual sin 'page', para conservar búsqueda y filtros
+    al cambiar de página."""
+    params = request.GET.copy()
+    params.pop('page', None)
+    return params.urlencode()
 
 
 def _parse_items_from_post(request):
@@ -180,6 +349,63 @@ def _pedidos_filtrados(request):
     return qs
 
 
+# ── INVENTARIO DE BEBIDAS: HELPERS ──────────────────────────────────
+
+CATEGORIA_BEBIDAS = 'Bebidas'   # nombre de la categoría que se controla en el inventario
+LIMITE_STOCK      = 100000
+
+
+class StockInsuficiente(Exception):
+    """Se lanza cuando un pedido pide más unidades de las que hay en inventario."""
+
+
+def _bebidas():
+    """Productos de la categoría 'Bebidas' (sin importar mayúsculas)."""
+    return Producto.objects.filter(categoria__nombre__iexact=CATEGORIA_BEBIDAS)
+
+
+def _destino_seguro(request, por_defecto):
+    """Usa el campo 'next' del formulario solo si apunta a este mismo sitio."""
+    destino = request.POST.get('next', '')
+    if destino and url_has_allowed_host_and_scheme(
+            destino, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return destino
+    return reverse(por_defecto)
+
+
+def _pares_de_items(items_data):
+    """[(producto_pk, cantidad)] a partir de lo que llega del formulario."""
+    return [(it['producto'].pk, it['cantidad']) for it in items_data]
+
+
+def _pares_de_pedido(pedido):
+    """[(producto_pk, cantidad)] a partir de los items ya guardados del pedido."""
+    return [(it.producto_id, it.cantidad) for it in pedido.items.all()]
+
+
+def _mover_stock(pares, signo):
+    """Suma (signo=+1) o resta (signo=-1) unidades al inventario.
+    Solo afecta a los productos con stock configurado.
+    Debe llamarse dentro de transaction.atomic()."""
+    for pk, cantidad in pares:
+        p = Producto.objects.select_for_update().get(pk=pk)
+        if p.stock_actual is None:
+            continue
+        nuevo = p.stock_actual + signo * cantidad
+        if nuevo < 0:
+            raise StockInsuficiente(
+                f'❌ No hay suficiente "{p.nombre}": quedan {p.stock_actual}.')
+        p.stock_actual = nuevo
+        p.save(update_fields=['stock_actual'])
+
+
+def _eliminar_pedido_con_stock(pedido):
+    """Borra el pedido y devuelve al inventario las unidades que había descontado."""
+    with transaction.atomic():
+        _mover_stock(_pares_de_pedido(pedido), +1)
+        pedido.delete()
+
+
 # ── TABLERO PRINCIPAL (DASHBOARD) ──────────────────────────────────
 
 @login_required
@@ -194,21 +420,25 @@ def dashboard(request):
     total_categorias   = Categoria.objects.count()
     total_clientes     = Cliente.objects.count()
 
-    ultimos_pedidos = list(
+    pedidos_qs = (
         Pedido.objects
         .select_related('cliente', 'mesero', 'mesa')
-        .order_by('-fecha_creacion')[:5]
+        .order_by('-fecha_creacion')
     )
+    paginator = Paginator(pedidos_qs, 5)  # 5 pedidos por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
 
     return render(request, 'pedidos/dashboard.html', {
-        'titulo': 'Pedidos y Carta',
+        'titulo': 'Pedidos',
         'total_pedidos': total_pedidos,
         'pedidos_pendientes': pedidos_pendientes,
         'total_ordenes': total_pedidos,
         'total_productos': total_productos,
         'total_categorias': total_categorias,
         'total_clientes': total_clientes,
-        'ultimos_pedidos': ultimos_pedidos,
+        'ultimos_pedidos': page_obj,          # la plantilla itera sobre esto
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
     })
 
 
@@ -218,17 +448,27 @@ def dashboard(request):
 def pedido_lista(request):
     if _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
     q          = request.GET.get('q', '').strip()
     filtro     = _resolver_filtro_fecha(request)
-    pedidos_qs = _pedidos_filtrados(request)
-    pedidos_lista_data = list(pedidos_qs)
-    pedidos_por_fecha  = []
-    for fecha, grupo in groupby(pedidos_lista_data, key=lambda p: p.fecha_creacion.date()):
+    pedidos_qs = _pedidos_filtrados(request)  # ya viene ordenado por -fecha_creacion
+
+    # Paginación: 15 pedidos por página
+    paginator = Paginator(pedidos_qs, 15)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
+    # Agrupar por fecha solo los pedidos de la página actual
+    pedidos_por_fecha = []
+    for fecha, grupo in groupby(page_obj.object_list, key=lambda p: p.fecha_creacion.date()):
         items = list(grupo)
         pedidos_por_fecha.append({'fecha': fecha, 'pedidos': items, 'count': len(items)})
+
     return render(request, 'pedidos/pedido_lista.html', {
-        'titulo': 'Pedidos y Carta',
+        'titulo': 'Pedidos',
         'pedidos_por_fecha': pedidos_por_fecha,
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': _querystring_sin_page(request),
         'q': q,
         'filtro_fecha': filtro['filtro_fecha'],
         'fecha_dia': filtro['fecha_dia'],
@@ -258,23 +498,9 @@ def pedido_marcar_listo(request, pk):
     return redirect('pedidos:orden_lista')
 
 
-@login_required
-def pedido_exportar_pdf(request):
-    pedidos_qs = _pedidos_filtrados(request)
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="pedidos.pdf"'
-    doc = SimpleDocTemplate(response, pagesize=landscape(A4),
-        leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
-    styles   = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Pedidos", styles['Title']), Spacer(1, 0.5*cm)]
-    data = [['#', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Total', 'Fecha']]
-    for p in pedidos_qs:
-        productos_str = ', '.join(f"{it.cantidad}x {it.producto.nombre}" for it in p.items.all()) or '—'
-        data.append([p.numero_pedido, str(p.cliente), str(p.mesa) if p.mesa else '—',
-            Paragraph(productos_str, styles['Normal']), p.get_estado_display(),
-            f"${p.total:,.0f}", p.fecha_creacion.strftime('%d/%m/%Y %H:%M')])
-    tabla = Table(data, colWidths=[1.8*cm, 4*cm, 2.5*cm, 7.5*cm, 3*cm, 2.5*cm, 4*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
+# Estilo de tabla compartido por todos los reportes PDF
+def _estilo_tabla_pdf():
+    return TableStyle([
         ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
         ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
         ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
@@ -284,7 +510,26 @@ def pedido_exportar_pdf(request):
         ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
         ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
         ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    ])
+
+
+@login_required
+def pedido_exportar_pdf(request):
+    pedidos_qs = _pedidos_filtrados(request)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="pedidos.pdf"'
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4),
+        leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    styles   = getSampleStyleSheet()
+    elements = encabezado_reporte("Reporte de Pedidos")
+    data = [['#', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Total', 'Fecha']]
+    for p in pedidos_qs:
+        productos_str = ', '.join(f"{it.cantidad}x {it.producto.nombre}" for it in p.items.all()) or '—'
+        data.append([p.numero_pedido, str(p.cliente), str(p.mesa) if p.mesa else '—',
+            Paragraph(productos_str, styles['Normal']), p.get_estado_display(),
+            f"${p.total:,.0f}", p.fecha_creacion.strftime('%d/%m/%Y %H:%M')])
+    tabla = Table(data, colWidths=[1.8*cm, 4*cm, 2.5*cm, 7.5*cm, 3*cm, 2.5*cm, 4*cm], repeatRows=1)
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
@@ -293,16 +538,15 @@ def pedido_exportar_pdf(request):
 @login_required
 def pedido_exportar_excel(request):
     pedidos_qs = _pedidos_filtrados(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="pedidos.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['#', 'Cliente', 'Mesa', 'Productos', 'Descripción', 'Estado', 'Total', 'Fecha'])
+    filas = []
     for p in pedidos_qs:
         productos_str = ', '.join(f"{it.cantidad}x {it.producto.nombre}" for it in p.items.all()) or '—'
-        writer.writerow([p.numero_pedido, str(p.cliente), str(p.mesa) if p.mesa else '—',
+        filas.append([p.numero_pedido, str(p.cliente), str(p.mesa) if p.mesa else '—',
             productos_str, p.descripcion or '—', p.get_estado_display(),
             p.total, p.fecha_creacion.strftime('%d/%m/%Y %H:%M')])
-    return response
+    return _respuesta_excel("Reporte de Pedidos", "pedidos.xlsx",
+        ['#', 'Cliente', 'Mesa', 'Productos', 'Descripción', 'Estado', 'Total', 'Fecha'],
+        filas, [10, 24, 12, 45, 30, 16, 14, 18], cols_dinero=(6,))
 
 
 @login_required
@@ -327,11 +571,20 @@ def pedido_crear(request):
                     'seccion_activa': 'pedido-crear'})
             total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
             pedido.total = total; pedido.subtotal = total; pedido.impuestos = 0
-            pedido.save()
-            PedidoItem.objects.bulk_create([
-                PedidoItem(pedido=pedido, producto=it['producto'],
-                    cantidad=it['cantidad'], precio_unitario=it['producto'].precio)
-                for it in items_data])
+            try:
+                # Todo o nada: si falta stock de una bebida, no se guarda nada
+                with transaction.atomic():
+                    pedido.save()
+                    PedidoItem.objects.bulk_create([
+                        PedidoItem(pedido=pedido, producto=it['producto'],
+                            cantidad=it['cantidad'], precio_unitario=it['producto'].precio)
+                        for it in items_data])
+                    _mover_stock(_pares_de_items(items_data), -1)
+            except StockInsuficiente as e:
+                messages.error(request, str(e))
+                return render(request, 'pedidos/pedido_form.html', {
+                    'form': form, 'productos_disponibles': productos_disponibles,
+                    'seccion_activa': 'pedido-crear'})
             messages.success(request, f'✅ Pedido {pedido.numero_pedido} creado correctamente.')
             return redirect('pedidos:pedido_lista')
         messages.error(request, '❌ Corrige los errores en el formulario de pedido.')
@@ -359,12 +612,24 @@ def pedido_editar(request, pk):
             p = form.save(commit=False)
             if items_data:
                 total = sum(it['producto'].precio * it['cantidad'] for it in items_data)
-                p.total = total; p.subtotal = total; p.save()
-                pedido.items.all().delete()
-                PedidoItem.objects.bulk_create([
-                    PedidoItem(pedido=pedido, producto=it['producto'],
-                        cantidad=it['cantidad'], precio_unitario=it['producto'].precio)
-                    for it in items_data])
+                try:
+                    # Todo o nada: devuelve lo del pedido viejo, guarda el nuevo y descuenta
+                    with transaction.atomic():
+                        _mover_stock(_pares_de_pedido(pedido), +1)
+                        p.total = total; p.subtotal = total; p.save()
+                        pedido.items.all().delete()
+                        PedidoItem.objects.bulk_create([
+                            PedidoItem(pedido=pedido, producto=it['producto'],
+                                cantidad=it['cantidad'], precio_unitario=it['producto'].precio)
+                            for it in items_data])
+                        _mover_stock(_pares_de_items(items_data), -1)
+                except StockInsuficiente as e:
+                    messages.error(request, str(e))
+                    return render(request, 'pedidos/pedido_form.html', {
+                        'form': form, 'pedido': pedido,
+                        'pedido_items_json': _items_as_json(pedido),
+                        'productos_disponibles': productos_disponibles,
+                        'seccion_activa': 'pedido-editar'})
             else:
                 p.save()
             messages.success(request, 'Pedido actualizado correctamente.')
@@ -389,7 +654,7 @@ def pedido_eliminar(request, pk):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
-        pedido.delete()
+        _eliminar_pedido_con_stock(pedido)
         messages.success(request, '🗑️ Pedido eliminado.')
     return redirect('pedidos:pedido_lista')
 
@@ -402,16 +667,26 @@ def orden_lista(request):
     if _es_cajero(request) or _es_mesero(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
 
-    q_orden = request.GET.get('q_orden', '').strip()
-    filtro = _resolver_filtro_fecha(request)
-    ordenes_qs = _ordenes_filtradas(request)
-    ordenes_lista_data = list(ordenes_qs)
-    ordenes_por_fecha  = []
-    for fecha, grupo in groupby(ordenes_lista_data, key=lambda o: o.fecha_creacion.date()):
+    q_orden    = request.GET.get('q_orden', '').strip()
+    filtro     = _resolver_filtro_fecha(request)
+    ordenes_qs = _ordenes_filtradas(request)  # ya viene ordenado por -fecha_creacion
+
+    # Paginación: 15 órdenes por página
+    paginator = Paginator(ordenes_qs, 15)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
+    # Agrupar por fecha solo las órdenes de la página actual
+    ordenes_por_fecha = []
+    for fecha, grupo in groupby(page_obj.object_list, key=lambda o: o.fecha_creacion.date()):
         items = list(grupo)
         ordenes_por_fecha.append({'fecha': fecha, 'ordenes': items, 'count': len(items)})
+
     return render(request, 'pedidos/orden_lista.html', {
-        'titulo': 'Pedidos y Carta', 'ordenes_por_fecha': ordenes_por_fecha,
+        'titulo': 'Pedidos',
+        'ordenes_por_fecha': ordenes_por_fecha,
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': _querystring_sin_page(request),
         'q_orden': q_orden,
         'filtro_fecha': filtro['filtro_fecha'],
         'fecha_dia': filtro['fecha_dia'],
@@ -455,7 +730,7 @@ def orden_eliminar(request, pk):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     pedido = get_object_or_404(Pedido, pk=pk)
     if request.method == 'POST':
-        pedido.delete()
+        _eliminar_pedido_con_stock(pedido)
         messages.success(request, '🗑️ Orden eliminada.')
     return redirect('pedidos:orden_lista')
 
@@ -468,15 +743,28 @@ def producto_lista(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_prod  = request.GET.get('q_prod', '').strip()
     cat_sel = request.GET.get('categoria', '').strip()
-    productos_qs = Producto.objects.select_related('categoria').all()
+
+    # order_by es necesario: Paginator con un queryset sin orden da resultados inconsistentes
+    productos_qs = (Producto.objects.select_related('categoria')
+                    .order_by('categoria__nombre', 'nombre'))
     if q_prod:
         productos_qs = productos_qs.filter(nombre__icontains=q_prod)
     if cat_sel:
         productos_qs = productos_qs.filter(categoria__id=cat_sel)
+
+    paginator = Paginator(productos_qs, 10)  # 10 productos por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
     return render(request, 'pedidos/producto_lista.html', {
-        'titulo': 'Pedidos y Carta', 'productos': productos_qs,
-        'categorias': Categoria.objects.all(), 'q_prod': q_prod,
-        'cat_sel': cat_sel, 'seccion_activa': 'producto-lista'})
+        'titulo': 'Pedidos',
+        'productos': page_obj,          # la plantilla sigue iterando "productos"
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': _querystring_sin_page(request),
+        'categorias': Categoria.objects.all(),
+        'q_prod': q_prod,
+        'cat_sel': cat_sel,
+        'seccion_activa': 'producto-lista'})
 
 
 @login_required
@@ -549,24 +837,14 @@ def producto_exportar_pdf(request):
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Productos", styles['Title']), Spacer(1, 0.5*cm)]
+    elements = encabezado_reporte("Reporte de Productos")
     data = [['#', 'Nombre', 'Categoría', 'Precio', 'Descripción', 'Disponible']]
     for i, p in enumerate(productos_qs, start=1):
         data.append([f"{i:02d}", p.nombre, p.categoria.nombre if p.categoria else '—',
             f"${p.precio:,.0f}", Paragraph(p.descripcion or '—', styles['Normal']),
             'Sí' if p.disponible else 'No'])
     tabla = Table(data, colWidths=[1.2*cm, 5*cm, 4*cm, 2.5*cm, 8*cm, 2.5*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
-        ('FONTSIZE',(0,1),(-1,-1),8),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
-        ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
@@ -577,14 +855,137 @@ def producto_exportar_excel(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     productos_qs = _productos_filtrados(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="productos.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['#', 'Nombre', 'Categoría', 'Precio', 'Descripción', 'Disponible'])
+    filas = []
     for i, p in enumerate(productos_qs, start=1):
-        writer.writerow([f"{i:02d}", p.nombre, p.categoria.nombre if p.categoria else '—',
+        filas.append([f"{i:02d}", p.nombre, p.categoria.nombre if p.categoria else '—',
             p.precio, p.descripcion or '—', 'Sí' if p.disponible else 'No'])
-    return response
+    return _respuesta_excel("Reporte de Productos", "productos.xlsx",
+        ['#', 'Nombre', 'Categoría', 'Precio', 'Descripción', 'Disponible'],
+        filas, [6, 28, 22, 14, 50, 12], cols_dinero=(3,))
+
+
+# ── INVENTARIO DE BEBIDAS ────────────────────────────────────────────
+
+@login_required
+def inventario_lista(request):
+    """Lista de bebidas con su stock, buscador, filtro por estado y paginación."""
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
+    q_inv      = request.GET.get('q_inv', '').strip()
+    estado_inv = request.GET.get('estado_inv', '').strip()
+
+    base = _bebidas()
+
+    # Resumen (tarjetas de arriba): siempre sobre todas las bebidas, sin filtros
+    resumen = {
+        'total':          base.count(),
+        'agotadas':       base.filter(stock_actual__lte=0).count(),
+        'bajas':          base.filter(stock_actual__gt=0, stock_actual__lte=F('stock_minimo')).count(),
+        'sin_configurar': base.filter(stock_actual__isnull=True).count(),
+    }
+
+    bebidas_qs = base.order_by('nombre')
+    if q_inv:
+        bebidas_qs = bebidas_qs.filter(nombre__icontains=q_inv)
+    if estado_inv == 'agotadas':
+        bebidas_qs = bebidas_qs.filter(stock_actual__lte=0)
+    elif estado_inv == 'bajas':
+        bebidas_qs = bebidas_qs.filter(stock_actual__gt=0, stock_actual__lte=F('stock_minimo'))
+    elif estado_inv == 'sin_configurar':
+        bebidas_qs = bebidas_qs.filter(stock_actual__isnull=True)
+
+    paginator = Paginator(bebidas_qs, 10)  # 10 bebidas por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
+
+    # El estado de cada bebida (b.estado_stock) lo calcula la propiedad del modelo Producto
+
+    return render(request, 'pedidos/inventario_lista.html', {
+        'titulo': 'Pedidos',
+        'bebidas': page_obj,            # la plantilla itera sobre "bebidas"
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': _querystring_sin_page(request),
+        'resumen': resumen,
+        'q_inv': q_inv,
+        'estado_inv': estado_inv,
+        'seccion_activa': 'inventario-lista'})
+
+
+@login_required
+def inventario_reabastecer(request, pk):
+    """Suma al stock las unidades que llegaron del proveedor."""
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
+    destino = _destino_seguro(request, 'pedidos:inventario_lista')
+    if request.method != 'POST':
+        return redirect(destino)
+
+    try:
+        cantidad = int(request.POST.get('cantidad', '').strip())
+    except ValueError:
+        messages.error(request, '❌ Escribe una cantidad válida (número entero).')
+        return redirect(destino)
+    if not 1 <= cantidad <= LIMITE_STOCK:
+        messages.error(request, f'❌ La cantidad debe estar entre 1 y {LIMITE_STOCK}.')
+        return redirect(destino)
+
+    with transaction.atomic():
+        bebida = get_object_or_404(_bebidas().select_for_update(), pk=pk)
+        # Si no tenía stock configurado, empieza a controlarse desde 0 + lo que llegó
+        bebida.stock_actual = (bebida.stock_actual or 0) + cantidad
+        if bebida.stock_actual > LIMITE_STOCK:
+            messages.error(request, f'❌ El stock no puede pasar de {LIMITE_STOCK} unidades.')
+            return redirect(destino)
+        bebida.save(update_fields=['stock_actual'])
+
+    messages.success(
+        request,
+        f'✅ Se agregaron {cantidad} unidades a "{bebida.nombre}". Stock actual: {bebida.stock_actual}.')
+    return redirect(destino)
+
+
+@login_required
+def inventario_ajustar(request, pk):
+    """Corrige el stock y el mínimo (después de contar, o para configurarlo por primera vez)."""
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+
+    destino = _destino_seguro(request, 'pedidos:inventario_lista')
+    if request.method != 'POST':
+        return redirect(destino)
+
+    stock_raw  = request.POST.get('stock_actual', '').strip()
+    minimo_raw = request.POST.get('stock_minimo', '').strip()
+    try:
+        stock_minimo = int(minimo_raw)
+        stock_actual = int(stock_raw) if stock_raw != '' else None   # vacío = no se controla
+    except ValueError:
+        messages.error(request, '❌ El stock y el mínimo deben ser números enteros.')
+        return redirect(destino)
+
+    if not 0 <= stock_minimo <= LIMITE_STOCK:
+        messages.error(request, f'❌ El mínimo debe estar entre 0 y {LIMITE_STOCK}.')
+        return redirect(destino)
+    if stock_actual is not None and not 0 <= stock_actual <= LIMITE_STOCK:
+        messages.error(request, f'❌ El stock debe estar entre 0 y {LIMITE_STOCK}.')
+        return redirect(destino)
+
+    with transaction.atomic():
+        bebida = get_object_or_404(_bebidas().select_for_update(), pk=pk)
+        bebida.stock_actual = stock_actual
+        bebida.stock_minimo = stock_minimo
+        bebida.save(update_fields=['stock_actual', 'stock_minimo'])
+
+    if stock_actual is None:
+        messages.success(
+            request,
+            f'✅ Mínimo de "{bebida.nombre}" guardado en {stock_minimo}. '
+            f'Aún no tiene stock configurado, así que se vende sin límite.')
+    else:
+        messages.success(request, f'✅ Inventario de "{bebida.nombre}" actualizado: {stock_actual} unidades.')
+    return redirect(destino)
 
 
 # ── GESTIÓN DE CATEGORÍAS ──────────────────────────────────────────
@@ -594,12 +995,25 @@ def categoria_lista(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cat = request.GET.get('q_cat', '').strip()
-    categorias_qs = Categoria.objects.all()
+
+    # order_by es necesario para que la paginación sea estable
+    categorias_qs = Categoria.objects.order_by('pk')
     if q_cat:
         categorias_qs = categorias_qs.filter(nombre__icontains=q_cat)
+
+    paginator = Paginator(categorias_qs, 10)  # 10 categorías por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    querystring = _querystring_sin_page(request)
+
     return render(request, 'pedidos/categoria_lista.html', {
-        'titulo': 'Pedidos y Carta', 'categorias': categorias_qs,
-        'q_cat': q_cat, 'seccion_activa': 'categoria-lista'})
+        'titulo': 'Pedidos',
+        'categorias': page_obj,         # la plantilla sigue iterando "categorias"
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': querystring,
+        'qs_filtros': querystring,      # nombre que usa la plantilla de categorías
+        'q_cat': q_cat,
+        'seccion_activa': 'categoria-lista'})
 
 
 @login_required
@@ -669,22 +1083,12 @@ def categoria_exportar_pdf(request):
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Categorías", styles['Title']), Spacer(1, 0.5*cm)]
+    elements = encabezado_reporte("Reporte de Categorías")
     data = [['#', 'Nombre', 'Descripción']]
     for i, c in enumerate(categorias_qs, start=1):
         data.append([f"{i:02d}", c.nombre, Paragraph(c.descripcion or '—', styles['Normal'])])
     tabla = Table(data, colWidths=[1.2*cm, 5*cm, 14*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
-        ('FONTSIZE',(0,1),(-1,-1),8),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
-        ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
@@ -695,13 +1099,10 @@ def categoria_exportar_excel(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     categorias_qs = _categorias_filtradas(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="categorias.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['#', 'Nombre', 'Descripción'])
-    for i, c in enumerate(categorias_qs, start=1):
-        writer.writerow([f"{i:02d}", c.nombre, c.descripcion or '—'])
-    return response
+    filas = [[f"{i:02d}", c.nombre, c.descripcion or '—']
+             for i, c in enumerate(categorias_qs, start=1)]
+    return _respuesta_excel("Reporte de Categorías", "categorias.xlsx",
+        ['#', 'Nombre', 'Descripción'], filas, [6, 28, 60])
 
 
 # ── GESTIÓN DE CLIENTES ─────────────────────────────────────────────
@@ -711,13 +1112,26 @@ def cliente_lista(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     q_cli = request.GET.get('q_cli', '').strip()
-    clientes_qs = Cliente.objects.all()
+
+    # order_by es necesario para que la paginación sea estable
+    clientes_qs = Cliente.objects.order_by('pk')
     if q_cli:
         clientes_qs = clientes_qs.filter(
             Q(nombre_completo__icontains=q_cli) | Q(documento__icontains=q_cli))
+
+    paginator = Paginator(clientes_qs, 10)  # 10 clientes por página
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    querystring = _querystring_sin_page(request)
+
     return render(request, 'pedidos/cliente_lista.html', {
-        'titulo': 'Pedidos y Carta', 'clientes': clientes_qs,
-        'q_cli': q_cli, 'seccion_activa': 'cliente-lista'})
+        'titulo': 'Pedidos',
+        'clientes': page_obj,           # la plantilla sigue iterando "clientes"
+        'page_obj': page_obj,
+        'paginas': _rango_paginas(page_obj),
+        'querystring': querystring,
+        'qs_filtros': querystring,      # nombre que usa la plantilla de clientes
+        'q_cli': q_cli,
+        'seccion_activa': 'cliente-lista'})
 
 
 @login_required
@@ -787,23 +1201,13 @@ def cliente_exportar_pdf(request):
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Clientes", styles['Title']), Spacer(1, 0.5*cm)]
+    elements = encabezado_reporte("Reporte de Clientes")
     data = [['#', 'Nombre Completo', 'Teléfono', 'Documento', 'Dirección']]
     for i, c in enumerate(clientes_qs, start=1):
         data.append([f"{i:02d}", c.nombre_completo, c.telefono or '—',
             f"{c.tipo_documento} {c.documento}", Paragraph(c.direccion or '—', styles['Normal'])])
     tabla = Table(data, colWidths=[1.2*cm, 5*cm, 3.5*cm, 4*cm, 9*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
-        ('FONTSIZE',(0,1),(-1,-1),8),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
-        ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
@@ -814,14 +1218,12 @@ def cliente_exportar_excel(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     clientes_qs = _clientes_filtrados(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="clientes.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['#', 'Nombre Completo', 'Teléfono', 'Tipo Documento', 'Documento', 'Dirección'])
-    for i, c in enumerate(clientes_qs, start=1):
-        writer.writerow([f"{i:02d}", c.nombre_completo, c.telefono or '—',
-            c.tipo_documento, c.documento, c.direccion or '—'])
-    return response
+    filas = [[f"{i:02d}", c.nombre_completo, c.telefono or '—',
+              c.tipo_documento, c.documento, c.direccion or '—']
+             for i, c in enumerate(clientes_qs, start=1)]
+    return _respuesta_excel("Reporte de Clientes", "clientes.xlsx",
+        ['#', 'Nombre Completo', 'Teléfono', 'Tipo Documento', 'Documento', 'Dirección'],
+        filas, [6, 30, 16, 16, 18, 45])
 
 
 # ── EXPORTACIÓN DE ÓRDENES ───────────────────────────────────────────
@@ -854,7 +1256,7 @@ def orden_exportar_pdf(request):
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
-    elements = [Paragraph("Reporte de Órdenes Comerciales", styles['Title']), Spacer(1, 0.5*cm)]
+    elements = encabezado_reporte("Reporte de Órdenes Comerciales")
     data = [['Número', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Subtotal', 'Impuesto', 'Total', 'Fecha']]
     for o in ordenes_qs:
         productos_str = ', '.join(f"{it.cantidad}x {it.producto.nombre}" for it in o.items.all()) or '—'
@@ -863,17 +1265,7 @@ def orden_exportar_pdf(request):
             f"${o.subtotal:,.0f}", f"${o.impuesto:,.0f}", f"${o.total:,.0f}",
             o.fecha_creacion.strftime('%d/%m/%Y %H:%M')])
     tabla = Table(data, colWidths=[2.2*cm,3.5*cm,2*cm,6*cm,2.5*cm,2.2*cm,2.2*cm,2.2*cm,3.5*cm], repeatRows=1)
-    tabla.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.HexColor('#F5ECD7')),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'), ('FONTSIZE',(0,0),(-1,0),9),
-        ('FONTSIZE',(0,1),(-1,-1),8),
-        ('ROWBACKGROUNDS',(0,1),(-1,-1),[colors.HexColor('#FDF7EC'),colors.HexColor('#EDE3C8')]),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#D4C4A0')),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'), ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5), ('LEFTPADDING',(0,0),(-1,-1),5),
-        ('RIGHTPADDING',(0,0),(-1,-1),5),
-    ]))
+    tabla.setStyle(_estilo_tabla_pdf())
     elements.append(tabla)
     doc.build(elements)
     return response
@@ -884,13 +1276,12 @@ def orden_exportar_excel(request):
     if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     ordenes_qs = _ordenes_filtradas(request)
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="ordenes.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['Número','Cliente','Mesa','Productos','Estado','Subtotal','Impuesto','Total','Fecha'])
+    filas = []
     for o in ordenes_qs:
         productos_str = ', '.join(f"{it.cantidad}x {it.producto.nombre}" for it in o.items.all()) or '—'
-        writer.writerow([o.numero_orden, str(o.cliente), str(o.mesa) if o.mesa else '—',
+        filas.append([o.numero_orden, str(o.cliente), str(o.mesa) if o.mesa else '—',
             productos_str, o.get_estado_display(), o.subtotal, o.impuesto, o.total,
             o.fecha_creacion.strftime('%d/%m/%Y %H:%M')])
-    return response
+    return _respuesta_excel("Reporte de Órdenes Comerciales", "ordenes.xlsx",
+        ['Número', 'Cliente', 'Mesa', 'Productos', 'Estado', 'Subtotal', 'Impuesto', 'Total', 'Fecha'],
+        filas, [12, 24, 12, 45, 16, 14, 14, 14, 18], cols_dinero=(5, 6, 7))

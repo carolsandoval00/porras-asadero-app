@@ -5,6 +5,7 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/pago.css' %}">
+<link rel="stylesheet" href="{% static 'css/recibo.css' %}?v=1">
 
 <div class="pg-wrapper">
 
@@ -30,14 +31,16 @@
 
         <!-- DATOS DEL ASADERO -->
         <div class="rc-center">
-          <p class="rc-nombre">{{ asadero.nombre }}</p>
+          <img class="rc-logo" src="{% static 'img/logo.png' %}" alt="Porras Asadero">
+          <p class="rc-nombre">{{ asadero.nombre|upper }}</p>
           <div>NIT: {{ asadero.nit }}</div>
           <div>{{ asadero.direccion }}</div>
           <div>Tel: {{ asadero.telefono }}</div>
         </div>
 
         <div class="rc-sep"></div>
-        <div class="rc-center"><strong>RECIBO DE PAGO</strong></div>
+        <div class="rc-center"><strong class="rc-titulo">RECIBO DE PAGO</strong></div>
+        <span class="rc-sello">PAGADO</span>
         <div class="rc-sep"></div>
 
         <!-- DATOS DEL PEDIDO -->
@@ -45,12 +48,13 @@
         <div class="rc-fila"><span>Orden:</span><span>{{ pedido.numero_orden }}</span></div>
         <div class="rc-fila"><span>Fecha:</span><span>{{ pago.fecha_pago|date:"d/m/Y h:i A" }}</span></div>
         <div class="rc-fila"><span>Mesa:</span><span>{{ pedido.mesa.numero_mesa|default:"—" }}</span></div>
+        <div class="rc-fila"><span>Mesero:</span><span>{{ pedido.mesero.get_full_name|default:pedido.mesero.username }}</span></div>
         <div class="rc-fila"><span>Cajero:</span><span>{{ pago.caja.cajero.get_full_name|default:pago.caja.cajero.username }}</span></div>
 
         <div class="rc-sep"></div>
 
         <!-- DATOS DEL CLIENTE -->
-        <div class="rc-seccion">Cliente</div>
+        <div class="rc-barra">Cliente</div>
         <div class="rc-fila"><span>Nombre:</span><span>{{ cliente.nombre_completo|default:"—" }}</span></div>
         {% if cliente.telefono %}
         <div class="rc-fila"><span>Teléfono:</span><span>{{ cliente.telefono }}</span></div>
@@ -61,14 +65,26 @@
 
         <div class="rc-sep"></div>
 
-        <!-- DETALLE -->
-        <div class="rc-seccion">Detalle</div>
+        <!-- DETALLE DE PRODUCTOS -->
+        <div class="rc-barra">Detalle de productos</div>
+        <div class="rc-items-head"><span>CANT</span><span>PRODUCTO</span><span>VALOR</span></div>
+        {% for item in pedido.items.all %}
+        <div class="rc-item">
+          <span class="rc-item-cant">{{ item.cantidad }}</span>
+          <span class="rc-item-prod">
+            {{ item.producto.nombre }}
+            <small>${{ item.precio_unitario|floatformat:0 }} c/u</small>
+          </span>
+          <span class="rc-item-valor">${{ item.subtotal|floatformat:0 }}</span>
+        </div>
+        {% empty %}
         <div class="rc-desc">{{ pedido.descripcion|default:"—"|linebreaksbr }}</div>
+        {% endfor %}
 
         <div class="rc-sep"></div>
 
         <!-- TOTAL Y MÉTODO DE PAGO -->
-        <div class="rc-fila rc-total"><span>TOTAL</span><span>${{ pago.monto|floatformat:0 }}</span></div>
+        <div class="rc-fila rc-total rc-total-bloque"><span>TOTAL</span><span>${{ pago.monto|floatformat:0 }}</span></div>
         <div class="rc-fila"><span>Método:</span><span>{{ pago.get_metodo_pago_display }}</span></div>
         {% if pago.referencia %}
         <div class="rc-fila"><span>Referencia:</span><span>{{ pago.referencia }}</span></div>

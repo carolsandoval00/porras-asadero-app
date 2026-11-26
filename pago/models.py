@@ -1,3 +1,8 @@
+from decimal import Decimal
+from django.db import models, transaction
+from django.db.models import Max
+from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.conf import settings
 
@@ -28,6 +33,12 @@ class Caja(models.Model):
         verbose_name = 'Caja'
         verbose_name_plural = 'Cajas'
 
+    @property
+    def numero(self):
+        """Número consecutivo de la caja según el orden de apertura: 01, 02, 03..."""
+        n = Caja.objects.filter(pk__lt=self.pk).count() + 1
+        return f'{n:02d}'
+
     def __str__(self):
         cajero_str = self.cajero.username if self.cajero else "Sin Cajero"
         return f'Caja #{self.pk} – {cajero_str} – {self.get_estado_display()}'
@@ -39,7 +50,15 @@ class Pago(models.Model):
         ('TARJETA', 'Tarjeta'),
         ('TRANSFERENCIA', 'Transferencia'),
     ]
-    id          = models.AutoField(primary_key=True)
+    id            = models.AutoField(primary_key=True)
+    # Número de recibo consecutivo (1, 2, 3...), independiente del id
+    numero_recibo = models.PositiveIntegerField(
+                      unique=True,
+                      null=True,
+                      blank=True,
+                      editable=False,
+                      verbose_name='Número de recibo'
+                    )
     pedido      = models.ForeignKey(
                     'pedidos.Pedido',
                     on_delete=models.CASCADE,
@@ -71,5 +90,14 @@ class Pago(models.Model):
     class Meta:
         ordering = ['-fecha_pago']
 
+    def save(self, *args, **kwargs):
+        # Al crear el pago, asigna el siguiente número de recibo
+        if self.numero_recibo is None:
+            with transaction.atomic():
+                ultimo = Pago.objects.aggregate(m=Max('numero_recibo'))['m'] or 0
+                self.numero_recibo = ultimo + 1
+                return super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
+
     def __str__(self):
-        return f'Pago #{self.pk} – ${self.monto}'
+        return f'Recibo #{self.numero_recibo or self.pk} – ${self.monto}'

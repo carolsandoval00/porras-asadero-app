@@ -5,7 +5,6 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/usuarios.css' %}">
-...
 
 <div class="perfil-wrap">
     <div class="perfil-card">
@@ -124,7 +123,7 @@
                             <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
                             <div class="perm-item"><div class="perm-check"></div> Crear pedidos</div>
                             <div class="perm-item"><div class="perm-check"></div> Reservas y mesas</div>
-                        {% elif usuario.rol == 'COCINA' %}
+                        {% elif usuario.rol == 'COCINERA' %}
                             <div class="perm-item"><div class="perm-check"></div> Ver pedidos</div>
                             <div class="perm-item"><div class="perm-check"></div> Actualizar estado pedido</div>
                         {% elif usuario.rol == 'CAJA' or usuario.rol == 'CAJERO' %}
@@ -149,7 +148,7 @@
 
             <!-- FOOTER -->
             <div class="perfil-footer">
-                <a href="{% url 'login' %}?vista=inicio" class="btn-volver" data-tooltip="Volver al panel">← Volver</a>
+                <a href="{% url 'inicio_usuarios' %}" class="btn-volver" data-tooltip="Volver al panel">← Volver</a>
                 <a href="{% url 'actualizar_usuarios' usuario.id %}" class="btn-editar" data-tooltip="Editar tus datos">✎ Editar mis datos</a>
             </div>
 

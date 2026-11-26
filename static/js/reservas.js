@@ -22,10 +22,15 @@
   };
 
   // Estado en memoria: copia de lo que devolvió el servidor.
-  let reservas = [];
+  let reservas = [];          // reservas de la tabla (respetan los filtros de la tabla)
+  let reservasDiagrama = [];  // TODAS las reservas, sin filtros (para el diagrama y el detalle de mesa)
   let mesas = [];
   let editandoId = null;          // id de reserva en edición
   let editandoMesaNumero = null;  // número de mesa en edición
+
+  // ★ PAGINACIÓN de la tabla de reservas (se hace en el navegador)
+  const POR_PAGINA = 10;          // reservas por página
+  let paginaActual = 1;
 
   const soloLectura = () => window.MC_PUEDE_EDITAR === false;
 
@@ -81,7 +86,16 @@
   // ─── Etiquetas y clases de estado ─────────────────────────
   const ETIQUETA_RESERVA = { PENDIENTE: 'Pendiente', CONFIRMADA: 'Confirmada', CANCELADA: 'Cancelada' };
   const ETIQUETA_MESA    = { LIBRE: 'Disponible', RESERVADA: 'Reservada', OCUPADA: 'Ocupada' };
+  // Clase CSS de cada estado de mesa (definidas en reservas.css: .mc-mesa.disponible, etc.)
   const CLASE_MESA       = { LIBRE: 'disponible', RESERVADA: 'reservada', OCUPADA: 'ocupada' };
+
+  // Colores en línea para el borde/fondo de cada mesa: así el color sale aunque el CSS
+  // esté en caché o lo pise otra regla.
+  const ESTILO_MESA = {
+    LIBRE:     'background:#DFF5E1;border-color:#3B6D11;color:#1A6B2A;',
+    RESERVADA: 'background:#FAEEDA;border-color:#E8651A;color:#8B4000;',
+    OCUPADA:   'background:#FAE0DC;border-color:#C0392B;color:#C0392B;',
+  };
 
   function badgeClass(estado) {
     if (estado === 'CONFIRMADA' || estado === 'LIBRE') return 'mc-badge-ok';
@@ -89,15 +103,51 @@
     return 'mc-badge-danger';
   }
 
-  function getMesa(numero)      { return mesas.find(m => m.numero === numero); }
+  // Normaliza lo que llega del servidor para que no importe si viene como
+  // "LIBRE", "libre" o "Disponible": internamente siempre es LIBRE/RESERVADA/OCUPADA.
+  function normalizarEstadoMesa(e) {
+    const v = String(e == null ? '' : e).trim().toUpperCase();
+    if (v === 'DISPONIBLE') return 'LIBRE';
+    return v;
+  }
+
+  function normalizarMesa(m) {
+    return Object.assign({}, m, {
+      numero:    Number(m.numero),
+      capacidad: Number(m.capacidad),
+      estado:    normalizarEstadoMesa(m.estado),
+    });
+  }
+
+  function normalizarReserva(r) {
+    return Object.assign({}, r, {
+      estado: String(r.estado == null ? '' : r.estado).trim().toUpperCase(),
+      mesa:   (r.mesa == null || r.mesa === '') ? null : Number(r.mesa),
+    });
+  }
+
+  function getMesa(numero)      { return mesas.find(m => m.numero === Number(numero)); }
   function getMesaLabel(numero) { const m = getMesa(numero); return m ? 'Mesa ' + m.numero : '—'; }
 
   // ─── Modales / avisos ─────────────────────────────────────
   // Aviso en modal. `titulo` es opcional; si no se pasa se usa uno por defecto.
   function toast(msg, tipo, titulo) {
     const tit = $('mc-msg-title'), texto = $('mc-msg-text'), overlay = $('mc-msg-overlay');
+    const btn = $('mc-msg-btn');
     if (!overlay) { console.log(msg); return; }
-    tit.textContent = titulo || (tipo === 'error' ? 'Atención' : '¡Listo!');
+
+    // Los avisos de permisos usan el estilo de "Acceso Restringido"
+    const restringido = /^No tienes permisos/i.test(msg);
+    overlay.classList.toggle('restringido', restringido);
+
+    if (restringido) {
+      tit.innerHTML = 'Acceso <span>Restringido</span>';
+      if (btn) btn.textContent = 'Entendido';
+    } else {
+      tit.textContent = titulo || (tipo === 'error' ? 'Atención' : '¡Listo!');
+      if (btn) btn.textContent = 'Aceptar';
+    }
+
     texto.textContent = msg;
     overlay.classList.toggle('error', tipo === 'error');
     overlay.classList.add('open');
@@ -141,7 +191,8 @@
     });
 
     if (id === 'reservas')   mcRenderTabla();
-    if (id === 'mesas')      mcRenderDiagrama();
+    // El diagrama se muestra "en tiempo real": se vuelven a pedir las mesas al servidor.
+    if (id === 'mesas')      cargarMesas().then(() => mcRenderDiagrama());
     if (id === 'crear-mesa') mcRenderTablaMesas();
     if (id === 'crear' && !editandoId) { mcLimpiar(); }
   };
@@ -174,7 +225,7 @@
   async function cargarReservas() {
     try {
       const data = await apiGet(API.reservas, filtrosActuales());
-      reservas = data.reservas;
+      reservas = data.reservas.map(normalizarReserva);
       return true;
     } catch (e) {
       console.error(e);
@@ -183,16 +234,50 @@
     }
   }
 
+  // Todas las reservas SIN filtros: las usa el diagrama (tooltip) y el detalle de cada mesa,
+  // para que no dependan de los filtros que haya puesto el usuario en la tabla de reservas.
+  async function cargarReservasDiagrama() {
+    try {
+      const data = await apiGet(API.reservas);
+      reservasDiagrama = data.reservas.map(normalizarReserva);
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  }
+
   async function cargarMesas() {
     try {
       const data = await apiGet(API.mesas);
-      mesas = data.mesas;
+      mesas = data.mesas.map(normalizarMesa);
       return true;
     } catch (e) {
       console.error(e);
       toast('No se pudieron cargar las mesas: ' + e.message, 'error');
       return false;
     }
+  }
+
+  // Reservas vigentes (no canceladas, de hoy en adelante) de una mesa, ordenadas por fecha y hora.
+  function reservasVigentesDeMesa(numero) {
+    const hoyStr = hoy();
+    return reservasDiagrama
+      .filter(r => r.mesa === Number(numero) && r.estado !== 'CANCELADA' && String(r.fecha) >= hoyStr)
+      .sort((a, b) => (String(a.fecha) + String(a.hora)).localeCompare(String(b.fecha) + String(b.hora)));
+  }
+
+  // Estado con el que se PINTA la mesa en el diagrama, calculado a partir de sus reservas:
+  //   1. Si la mesa está OCUPADA (alguien sentado), se queda OCUPADA.
+  //   2. Si tiene una reserva vigente (pendiente o confirmada) para HOY, se pinta RESERVADA.
+  //   3. En cualquier otro caso se usa el estado guardado en la mesa.
+  function estadoEfectivoMesa(m) {
+    if (m.estado === 'OCUPADA') return 'OCUPADA';
+    const hoyStr = hoy();
+    const tieneHoy = reservasVigentesDeMesa(m.numero)
+      .some(r => String(r.fecha).slice(0, 10) === hoyStr);
+    if (tieneHoy) return 'RESERVADA';
+    return m.estado;
   }
 
   // ─── Filtro por fechas ────────────────────────────────────
@@ -227,13 +312,59 @@
     mcToggleFiltroFecha();
   };
 
-  // ─── Tabla de reservas ────────────────────────────────────
-  window.mcRenderTabla = async function () {
+  // ─── Tabla de reservas (con paginación) ───────────────────
+  // Números de página a mostrar: 1 … anterior, actual, siguiente … última
+  function numerosPagina(actual, total) {
+    const set = new Set([1, total, actual, actual - 1, actual + 1]);
+    const nums = Array.from(set).filter(n => n >= 1 && n <= total).sort((a, b) => a - b);
+    const resultado = [];
+    let previo = 0;
+    nums.forEach(n => {
+      if (n - previo > 1) resultado.push('...');
+      resultado.push(n);
+      previo = n;
+    });
+    return resultado;
+  }
+
+  // Dibuja los botones de página debajo de la tabla.
+  function mcRenderPaginacion() {
+    const cont = $('mc-paginacion');
+    if (!cont) return;
+
+    const total = reservas.length;
+    if (!total) { cont.innerHTML = ''; return; }
+
+    const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+    const inicio = (paginaActual - 1) * POR_PAGINA + 1;
+    const fin = Math.min(paginaActual * POR_PAGINA, total);
+
+    let links = '';
+    if (paginaActual > 1) {
+      links += `<button type="button" class="pm-btn pm-btn-light pm-btn-sm" onclick="mcIrPagina(${paginaActual - 1})">« Anterior</button>`;
+    }
+    numerosPagina(paginaActual, totalPaginas).forEach(n => {
+      if (n === '...') {
+        links += '<span class="mc-pag-puntos">…</span>';
+      } else if (n === paginaActual) {
+        links += `<span class="pm-btn pm-btn-primary pm-btn-sm mc-pag-actual">${n}</span>`;
+      } else {
+        links += `<button type="button" class="pm-btn pm-btn-light pm-btn-sm" onclick="mcIrPagina(${n})">${n}</button>`;
+      }
+    });
+    if (paginaActual < totalPaginas) {
+      links += `<button type="button" class="pm-btn pm-btn-light pm-btn-sm" onclick="mcIrPagina(${paginaActual + 1})">Siguiente »</button>`;
+    }
+
+    cont.innerHTML = `
+      <div class="mc-pag-info">Mostrando ${inicio}–${fin} de ${total} reserva${total !== 1 ? 's' : ''}</div>
+      <div class="mc-pag-links">${links}</div>`;
+  }
+
+  // Pinta la página actual con las reservas que ya están en memoria.
+  function pintarTabla() {
     const tb = $('mc-tbody-reservas');
     if (!tb) return;
-
-    tb.innerHTML = '<tr><td colspan="8"><div class="mc-empty"><p>Cargando…</p></div></td></tr>';
-    await cargarReservas();
 
     const contador = $('mc-contador-reservas');
     if (contador) {
@@ -245,10 +376,19 @@
         <div class="mc-empty-icon">&#128467;</div>
         <p>No se encontraron reservas con los filtros actuales</p>
       </div></td></tr>`;
+      mcRenderPaginacion();
       return;
     }
 
-    tb.innerHTML = reservas.map(r => `<tr>
+    // Si la página actual quedó fuera de rango (por ejemplo al borrar), se ajusta.
+    const totalPaginas = Math.max(1, Math.ceil(reservas.length / POR_PAGINA));
+    if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+    if (paginaActual < 1) paginaActual = 1;
+
+    const desde = (paginaActual - 1) * POR_PAGINA;
+    const pagina = reservas.slice(desde, desde + POR_PAGINA);
+
+    tb.innerHTML = pagina.map(r => `<tr>
       <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).padStart(2, '0')}</td>
       <td>
         <div style="font-weight:500">${esc(r.nombre)}</div>
@@ -267,10 +407,33 @@
         ` : ''}
       </div></td>
     </tr>`).join('');
+
+    mcRenderPaginacion();
+  }
+
+  // Cambia de página SIN volver a pedir los datos al servidor.
+  window.mcIrPagina = function (n) {
+    paginaActual = n;
+    pintarTabla();
+  };
+
+  // Pide las reservas al servidor y las pinta.
+  // Sin argumentos vuelve a la página 1 (al filtrar/buscar);
+  // con `true` se queda en la página actual (al borrar, por ejemplo).
+  window.mcRenderTabla = async function (mantenerPagina) {
+    const tb = $('mc-tbody-reservas');
+    if (!tb) return;
+
+    if (mantenerPagina !== true) paginaActual = 1;
+
+    tb.innerHTML = '<tr><td colspan="8"><div class="mc-empty"><p>Cargando…</p></div></td></tr>';
+    await cargarReservas();
+    pintarTabla();
   };
 
   window.mcVerReserva = function (id) {
-    const r = reservas.find(x => x.id === id);
+    // Se busca en la tabla y, si no está (por los filtros), en la lista completa.
+    const r = reservas.find(x => x.id === id) || reservasDiagrama.find(x => x.id === id);
     if (!r) return;
     $('mc-modal-r-title').textContent = 'Reserva — ' + r.nombre;
     $('mc-modal-r-body').innerHTML = `
@@ -315,6 +478,7 @@
       try {
         const data = await apiGet(API.reservas, { fecha: 'dia', dia: fecha });
         data.reservas
+          .map(normalizarReserva)
           .filter(r => r.estado !== 'CANCELADA' && r.id !== editandoId &&
                        (!hora || r.hora.slice(0, 2) === hora.slice(0, 2)))
           .forEach(r => ocupadas.add(r.mesa));
@@ -403,7 +567,7 @@
 
   window.mcEditarReserva = async function (id) {
     if (soloLectura()) { toast('No tienes permisos para realizar esta acción', 'error'); return; }
-    const r = reservas.find(x => x.id === id);
+    const r = reservas.find(x => x.id === id) || reservasDiagrama.find(x => x.id === id);
     if (!r) return;
 
     editandoId = id;
@@ -437,7 +601,7 @@
         try {
           await apiPost(API.reservaEliminar, { id });
           await cargarMesas();
-          await mcRenderTabla();
+          await mcRenderTabla(true);   // se queda en la misma página
           mcRenderDiagrama();
           toast('La reserva se eliminó correctamente.', 'ok', 'Reserva eliminada');
         } catch (e) {
@@ -447,6 +611,7 @@
   };
 
   // ─── Reportes de reservas ─────────────────────────────────
+  // Los reportes usan TODAS las reservas del filtro, no solo la página visible.
   window.mcExportarPDF = function () {
     if (!reservas.length) { toast('No hay reservas para exportar', 'error'); return; }
     if (!window.jspdf) { toast('No se pudo cargar la librería de PDF', 'error'); return; }
@@ -578,15 +743,16 @@
       tb.innerHTML = '<tr><td colspan="5"><div class="mc-empty"><p>No se encontraron mesas</p></div></td></tr>';
       return;
     }
+    // Ver / Editar trabajan con el NÚMERO de mesa (getMesa busca por número).
     tb.innerHTML = lista.map(m => `<tr>
       <td style="font-weight:500">Mesa ${m.numero}</td>
       <td>${m.capacidad} pers.</td>
       <td style="font-size:12px;color:var(--muted)">${esc(m.ubicacion)}</td>
       <td><span class="mc-badge ${badgeClass(m.estado)}">${ETIQUETA_MESA[m.estado] || m.estado}</span></td>
       <td><div class="mc-action-btns">
-        <button class="mc-icon-btn" data-tooltip="Ver el detalle de esta mesa" onclick="mcVerMesa(${m.id})">Ver</button>
+        <button class="mc-icon-btn" data-tooltip="Ver el detalle de esta mesa" onclick="mcVerMesa(${m.numero})">Ver</button>
         ${!soloLectura() ? `
-          <button class="mc-icon-btn edit" data-tooltip="Editar esta mesa" onclick="mcEditarMesa(${m.id})">Editar</button>
+          <button class="mc-icon-btn edit" data-tooltip="Editar esta mesa" onclick="mcEditarMesa(${m.numero})">Editar</button>
         ` : ''}
       </div></td>
     </tr>`).join('');
@@ -610,20 +776,25 @@
     if (boton) boton.textContent = 'Actualizar mesa';
   };
 
-  window.mcRenderDiagrama = function () {
+  // ─── Diagrama de mesas ────────────────────────────────────
+  window.mcRenderDiagrama = async function () {
     const cont = $('mc-floor-mesas');
     const wrap = $('mc-floor');
     if (!cont || !wrap) return;
 
+    // Reservas sin filtros, para mostrar la próxima reserva en el tooltip.
+    await cargarReservasDiagrama();
+
     const fe = $('mc-filtro-diagrama') ? $('mc-filtro-diagrama').value : '';
     const fu = $('mc-filtro-zona') ? $('mc-filtro-zona').value : '';
+    // El filtro y el resumen usan el estado calculado con las reservas de hoy.
     let lista = mesas;
-    if (fe) lista = lista.filter(m => m.estado === fe);
+    if (fe) lista = lista.filter(m => estadoEfectivoMesa(m) === fe);
     if (fu) lista = lista.filter(m => m.ubicacion === fu);
 
-    const d = mesas.filter(m => m.estado === 'LIBRE').length;
-    const r = mesas.filter(m => m.estado === 'RESERVADA').length;
-    const o = mesas.filter(m => m.estado === 'OCUPADA').length;
+    const d = mesas.filter(m => estadoEfectivoMesa(m) === 'LIBRE').length;
+    const r = mesas.filter(m => estadoEfectivoMesa(m) === 'RESERVADA').length;
+    const o = mesas.filter(m => estadoEfectivoMesa(m) === 'OCUPADA').length;
     if ($('mc-resumen')) $('mc-resumen').textContent = `${d} disponibles · ${r} reservadas · ${o} ocupadas`;
     if ($('mc-floor-count')) $('mc-floor-count').textContent = lista.length + ' mesa' + (lista.length !== 1 ? 's' : '') + ' mostradas';
     if ($('mc-zone-label')) $('mc-zone-label').textContent = fu || 'Todas las zonas';
@@ -633,15 +804,28 @@
       wrap.style.minHeight = '200px';
       return;
     }
-    const cols=4,size=92,gap=18,offX=28,offY=46;
-    const rows=Math.ceil(lista.length/cols);
-    wrap.style.minHeight=(rows*(size+gap)+offY+36)+'px';
-    cont.innerHTML=lista.map((m,i)=>{
-      const col=i%cols,row=Math.floor(i/cols);
-      const x=offX+col*(size+gap), y=offY+row*(size+gap);
-      const ra=reservas.find(r=>r.mesaId===m.id&&r.estado==='confirmada');
-      const tip=(m.estado==='reservada'&&ra?`${ra.nombre} · ${ra.fecha} ${ra.hora}`:`${m.capacidad} personas · ${m.ubicacion}`).replace(/"/g,'&quot;');
-      return `<div class="mc-mesa ${m.estado}" style="left:${x}px;top:${y}px;width:${size}px;height:76px" data-tooltip="${tip}" onclick="mcVerMesa(${m.id})">
+
+    const cols = 4, size = 92, gap = 18, offX = 28, offY = 46;
+    const rows = Math.ceil(lista.length / cols);
+    wrap.style.minHeight = (rows * (size + gap) + offY + 36) + 'px';
+
+    cont.innerHTML = lista.map((m, i) => {
+      const col = i % cols, row = Math.floor(i / cols);
+      const x = offX + col * (size + gap), y = offY + row * (size + gap);
+
+      // Color según el estado calculado (clase + estilo en línea de respaldo).
+      const est = estadoEfectivoMesa(m);
+      if (!CLASE_MESA[est]) console.warn('Estado de mesa desconocido:', m.numero, m.estado);
+      const clase = CLASE_MESA[est] || '';
+      const colores = ESTILO_MESA[est] || '';
+
+      // Tooltip: si está reservada, muestra la próxima reserva; si no, capacidad y zona.
+      const proxima = reservasVigentesDeMesa(m.numero)[0];
+      const tip = (est === 'RESERVADA' && proxima)
+        ? `${proxima.nombre} · ${proxima.fecha} ${proxima.hora}`
+        : `${m.capacidad} personas · ${m.ubicacion}`;
+
+      return `<div class="mc-mesa ${clase}" data-estado="${est}" style="${colores}left:${x}px;top:${y}px;width:${size}px;height:76px" data-tooltip="${esc(tip)}" onclick="mcVerMesa(${m.numero})">
         <div class="mc-mesa-num">Mesa ${m.numero}</div>
         <div class="mc-mesa-cap">${m.capacidad} pers.</div>
         <div class="mc-mesa-dot"></div>
@@ -649,10 +833,18 @@
     }).join('');
   };
 
-  window.mcVerMesa = function (numero) {
+  // Detalle de una mesa (se abre al hacer clic en el diagrama o en "Ver" de la tabla).
+  window.mcVerMesa = async function (numero) {
     const m = getMesa(numero);
     if (!m) return;
-    const ras = reservas.filter(r => r.mesa === numero && r.estado !== 'CANCELADA');
+
+    // Se piden las reservas al servidor para que el detalle esté siempre al día
+    // y no dependa de los filtros de la tabla de reservas.
+    await cargarReservasDiagrama();
+    const ras = reservasVigentesDeMesa(m.numero);
+    const efectivo = estadoEfectivoMesa(m);
+    const hoyStr = hoy();
+
     $('mc-modal-m-title').textContent = 'Mesa ' + m.numero;
     $('mc-modal-m-body').innerHTML = `
       <div class="mc-detail-row">
@@ -661,15 +853,24 @@
       </div>
       <div class="mc-detail-row">
         <div class="mc-detail-item"><div class="mc-detail-key">Ubicación</div><div class="mc-detail-val">${esc(m.ubicacion)}</div></div>
-        <div class="mc-detail-item"><div class="mc-detail-key">Estado</div><div class="mc-detail-val"><span class="mc-badge ${badgeClass(m.estado)}">${ETIQUETA_MESA[m.estado] || m.estado}</span></div></div>
+        <div class="mc-detail-item"><div class="mc-detail-key">Estado</div><div class="mc-detail-val"><span class="mc-badge ${badgeClass(efectivo)}">${ETIQUETA_MESA[efectivo] || efectivo}</span></div></div>
       </div>
       ${ras.length ? `
-        <div style="margin:14px 0 10px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Reservas activas (${ras.length})</div>
-        ${ras.map(r => `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px">
-          <div><div style="font-weight:500">${esc(r.nombre)}</div><div style="font-size:12px;color:var(--muted)">${r.personas} pers. · ${r.fecha} ${r.hora}</div></div>
-          <span class="mc-badge ${badgeClass(r.estado)}">${ETIQUETA_RESERVA[r.estado] || r.estado}</span>
+        <div style="margin:14px 0 10px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)">Reservas de esta mesa (${ras.length})</div>
+        ${ras.map(r => `<div style="padding:10px 12px;margin-bottom:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);font-size:13px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+            <div style="font-weight:600">${esc(r.nombre)}${String(r.fecha).slice(0, 10) === hoyStr ? ' <span class="mc-badge mc-badge-info" style="margin-left:4px">Hoy</span>' : ''}</div>
+            <span class="mc-badge ${badgeClass(r.estado)}">${ETIQUETA_RESERVA[r.estado] || r.estado}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(r.fecha)} · ${esc(r.hora)} · ${esc(r.personas)} pers. · Tel. ${esc(r.telefono)}</div>
+          ${r.ocasion ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">Ocasión: ${esc(r.ocasion)}</div>` : ''}
+          ${r.notas ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">Notas: ${esc(r.notas)}</div>` : ''}
+          <div class="mc-action-btns" style="margin-top:8px">
+            <button class="mc-icon-btn" onclick="mcCloseModal('mc-modal-mesa');mcVerReserva(${r.id})">Ver reserva</button>
+            ${!soloLectura() ? `<button class="mc-icon-btn edit" onclick="mcCloseModal('mc-modal-mesa');mcEditarReserva(${r.id})">Editar</button>` : ''}
+          </div>
         </div>`).join('')}`
-        : '<p style="font-size:13px;color:var(--muted);margin:12px 0">Sin reservas activas en esta mesa (según los filtros actuales).</p>'}
+        : '<p style="font-size:13px;color:var(--muted);margin:12px 0">Esta mesa no tiene reservas vigentes.</p>'}
       ${!soloLectura() ? `
       <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)">
         <label class="mc-label" style="display:block;margin-bottom:7px">Cambiar estado</label>
@@ -679,7 +880,7 @@
             <option value="RESERVADA" ${m.estado === 'RESERVADA' ? 'selected' : ''}>Reservada</option>
             <option value="OCUPADA"   ${m.estado === 'OCUPADA' ? 'selected' : ''}>Ocupada</option>
           </select>
-          <button class="mc-btn mc-btn-primary" data-tooltip="Guardar el nuevo estado" onclick="mcCambiarEstadoMesa(${m.id},${m.numero})">Actualizar</button>
+          <button class="mc-btn mc-btn-primary" data-tooltip="Guardar el nuevo estado" onclick="mcCambiarEstadoMesa(${m.numero})">Actualizar</button>
         </div>
       </div>` : ''}
       <div class="mc-btn-row">
@@ -856,12 +1057,12 @@
 
 /**
  * Tooltips flotantes delegados para botones dentro de modales
- * (.mc-modal, .mc-confirm-box). Estos contenedores tienen
- * overflow-y:auto y recortarían un tooltip CSS normal, así que
- * el tooltip se crea con JS y se pega al <body>. Usa delegación
- * de eventos en document para funcionar también con botones
- * que se agregan después vía innerHTML (como "Actualizar" y
- * "Cerrar" dentro de mcVerMesa).
+ * (.mc-modal, .mc-confirm-box) y para las mesas del diagrama
+ * (.mc-floor-container). Estos contenedores recortarían un
+ * tooltip CSS normal, así que el tooltip se crea con JS y se
+ * pega al <body>. Usa delegación de eventos en document para
+ * funcionar también con elementos que se agregan después vía
+ * innerHTML (como "Actualizar" y "Cerrar" dentro de mcVerMesa).
  */
 (function () {
     let bubble = null;

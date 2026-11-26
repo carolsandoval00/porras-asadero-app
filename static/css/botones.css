@@ -1,0 +1,93 @@
+/* ===== Botones unificados ===== */
+:root {
+    --btn-color: #C0392B;
+    --btn-color-hover: #A93226;
+    --btn-text: #F5ECD7;
+}
+
+:is(.btn-primary, .btn-success, .btn-danger, .btn-warning, .btn-info, .btn-secondary, .btn-dark) {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color) !important;
+    border-color: var(--btn-color) !important;
+}
+
+:is(.btn-primary, .btn-success, .btn-danger, .btn-warning, .btn-info, .btn-secondary, .btn-dark):is(:hover, :focus, :active) {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color-hover) !important;
+    border-color: var(--btn-color-hover) !important;
+}
+
+:is(.btn-outline-primary, .btn-outline-success, .btn-outline-danger, .btn-outline-warning, .btn-outline-info, .btn-outline-secondary, .btn-outline-dark) {
+    color: var(--btn-color) !important;
+    background-color: transparent !important;
+    border-color: var(--btn-color) !important;
+}
+
+:is(.btn-outline-primary, .btn-outline-success, .btn-outline-danger, .btn-outline-warning, .btn-outline-info, .btn-outline-secondary, .btn-outline-dark):is(:hover, :focus, :active) {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color) !important;
+    border-color: var(--btn-color) !important;
+}
+/* ===== Botones de acciones en tablas (Ver, Editar, etc.) ===== */
+.mc-action-btns > a,
+.mc-action-btns > button {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color) !important;
+    border-color: var(--btn-color) !important;
+}
+
+.mc-action-btns > a:is(:hover, :focus, :active),
+.mc-action-btns > button:is(:hover, :focus, :active) {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color-hover) !important;
+    border-color: var(--btn-color-hover) !important;
+}
+
+/* ===== Botones del módulo pago (pg-) ===== */
+.pg-btn-pago,
+.pg-btn-accent {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color) !important;
+    border-color: var(--btn-color) !important;
+}
+
+.pg-btn-pago:is(:hover, :focus, :active),
+.pg-btn-accent:is(:hover, :focus, :active) {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color-hover) !important;
+    border-color: var(--btn-color-hover) !important;
+}
+
+/* ===== Botones del módulo pedidos (pm-) ===== */
+.pm-btn-accent {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color) !important;
+    border-color: var(--btn-color) !important;
+}
+
+.pm-btn-accent:is(:hover, :focus, :active) {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color-hover) !important;
+    border-color: var(--btn-color-hover) !important;
+}
+
+/* ===== Botones del módulo usuarios ===== */
+.btn-editar,
+.btn-volver,
+.btn-ac.btn-ver,
+.btn-ac.btn-edit,
+.btn-ac.btn-del {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color) !important;
+    border-color: var(--btn-color) !important;
+}
+/* usuarios */
+.btn-editar:is(:hover, :focus, :active),
+.btn-volver:is(:hover, :focus, :active),
+.btn-ac.btn-ver:is(:hover, :focus, :active),
+.btn-ac.btn-edit:is(:hover, :focus, :active),
+.btn-ac.btn-del:is(:hover, :focus, :active) {
+    color: var(--btn-text) !important;
+    background-color: var(--btn-color-hover) !important;
+    border-color: var(--btn-color-hover) !important;
+}

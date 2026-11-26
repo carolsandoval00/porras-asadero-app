@@ -4,6 +4,7 @@ from datetime import date, timedelta, datetime
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Sum, Q
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
@@ -13,6 +14,7 @@ from urllib.parse import urlencode
 from .models import Pago, Caja
 from .forms import PagoForm, CajaForm
 from pedidos.models import Pedido
+from pedidos.views import encabezado_reporte, _respuesta_excel  # logo + estilo de los reportes
 
 
 # ── DATOS DEL ASADERO (para el recibo) ──────────────────────────────
@@ -23,6 +25,11 @@ ASADERO = {
     'direccion': 'Calle 00 # 00-00',
     'telefono':  '300 000 0000',
 }
+
+
+def _pesos(valor):
+    """Formatea un monto con puntos de miles: 100000 -> '100.000'."""
+    return f'{int(round(valor or 0)):,}'.replace(',', '.')
 
 
 def _solo_cajero_admin(request):
@@ -108,6 +115,85 @@ def _pagos_filtrados(request):
     return qs, filtro, q_pago
 
 
+def _paginar_pagos(request, pagos_qs, filtro, q_pago, por_pagina=10):
+    """Pagina los pagos registrados (10 por página).
+    Usa el parámetro 'page' y conserva la pestaña 'lista', la búsqueda y el
+    filtro de fechas al cambiar de página."""
+    paginator = Paginator(pagos_qs, por_pagina)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+    qs_filtros = urlencode({
+        'tab': 'lista',
+        'q_pago': q_pago,
+        'filtro_fecha': filtro['filtro_fecha'],
+        'fecha_dia': filtro['fecha_dia'],
+        'fecha_mes': filtro['fecha_mes'],
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
+    })
+    return page_obj, paginas, qs_filtros
+
+
+def _agrupar_pagos_por_fecha(pagos_pagina):
+    """Agrupa por día los pagos de la página actual."""
+    pagos_por_fecha = []
+    for fecha, grupo in groupby(list(pagos_pagina), key=lambda p: p.fecha_pago.date()):
+        items = list(grupo)
+        pagos_por_fecha.append({
+            'fecha': fecha,
+            'pagos': items,
+            'total': sum(p.monto for p in items),
+            'count': len(items),
+        })
+    return pagos_por_fecha
+
+
+def _cajas_filtradas(request):
+    """Filtra las cajas por UNA fecha (c_fecha), usando la fecha de apertura.
+    Nunca permite fechas futuras y ignora valores con formato inválido."""
+    hoy = timezone.localdate()
+    c_fecha = request.GET.get('c_fecha', '').strip()
+
+    if c_fecha:
+        try:
+            fecha = date.fromisoformat(c_fecha)
+        except ValueError:
+            fecha = None
+        if fecha is None:
+            c_fecha = ''
+        elif fecha > hoy:
+            fecha = hoy
+            c_fecha = hoy.isoformat()
+    else:
+        fecha = None
+
+    qs = Caja.objects.select_related('cajero').order_by('fecha_apertura')
+    if fecha:
+        qs = qs.filter(fecha_apertura__date=fecha)
+    return qs, c_fecha
+
+
+def _paginar_cajas(request, por_pagina=10):
+    """Pagina las cajas registradas (10 por página).
+    Usa el parámetro 'caja_page' para no chocar con las otras listas de la
+    misma pantalla, y conserva la pestaña y el filtro de fecha."""
+    cajas_qs, c_fecha = _cajas_filtradas(request)
+    paginator = Paginator(cajas_qs, por_pagina)
+    page_obj  = paginator.get_page(request.GET.get('caja_page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+    qs_filtros = urlencode({
+        'tab': 'consultar-caja',
+        'c_fecha': c_fecha,
+    })
+    return page_obj, paginas, qs_filtros, c_fecha
+
+
 def _resolver_filtro_fecha_ordenes(request):
     """Mismo esquema de filtro de fechas que _resolver_filtro_fecha, pero con
     prefijo 'op_' para no chocar con el filtro de Pagos en la misma página."""
@@ -174,6 +260,27 @@ def _ordenes_filtradas(request):
     return qs, filtro
 
 
+def _paginar_ordenes(request, ordenes_qs, filtro_ordenes, por_pagina=10):
+    """Pagina las órdenes pendientes de pago (10 por página).
+    Usa el parámetro 'op_page' para no chocar con otras listas de la misma pantalla,
+    y conserva el filtro de fechas op_* al cambiar de página."""
+    paginator = Paginator(ordenes_qs, por_pagina)
+    page_obj  = paginator.get_page(request.GET.get('op_page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+    qs_filtros = urlencode({
+        'tab': 'pendientes',
+        'op_filtro_fecha': filtro_ordenes['op_filtro_fecha'],
+        'op_fecha_dia': filtro_ordenes['op_fecha_dia'],
+        'op_fecha_mes': filtro_ordenes['op_fecha_mes'],
+        'op_fecha_desde': filtro_ordenes['op_fecha_desde'],
+        'op_fecha_hasta': filtro_ordenes['op_fecha_hasta'],
+    })
+    return page_obj, paginas, qs_filtros
+
+
 def _rango_texto(request):
     """Describe en texto legible el rango de fechas aplicado a los pagos,
     para mostrarlo en el encabezado del PDF/impresión."""
@@ -217,7 +324,7 @@ def pago_dashboard(request):
             if caja_activa:
                 messages.error(
                     request,
-                    f'Ya hay una caja abierta (Caja #{caja_activa.pk} — {caja_activa.cajero}. '
+                    f'Ya hay una caja abierta (Caja #{caja_activa.numero} — {caja_activa.cajero}. '
                     f'Debes cerrarla antes de abrir una nueva.'
                 )
                 return redirect('pago:dashboard')
@@ -229,6 +336,8 @@ def pago_dashboard(request):
                 messages.success(request, ' Caja abierta correctamente.')
                 return redirect('pago:dashboard')
             else:
+                for error in form_apertura.non_field_errors():
+                    messages.error(request, f' {error}')
                 messages.error(request, ' Revisa los campos e intenta de nuevo.')
 
         elif action == 'cerrar_caja':
@@ -282,30 +391,39 @@ def pago_dashboard(request):
                 return redirect('pago:dashboard')
 
     ordenes_sin_pago, filtro_ordenes = _ordenes_filtradas(request)
-    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
-    pagos_lista_data = list(pagos_qs)
+    ordenes_pagina, op_paginas, op_qs_filtros = _paginar_ordenes(request, ordenes_sin_pago, filtro_ordenes)
 
-    pagos_por_fecha = []
-    for fecha, grupo in groupby(pagos_lista_data, key=lambda p: p.fecha_pago.date()):
-        items = list(grupo)
-        pagos_por_fecha.append({
-            'fecha': fecha,
-            'pagos': items,
-            'total': sum(p.monto for p in items),
-            'count': len(items),
-        })
+    # ★ PAGINACIÓN DE PAGOS REGISTRADOS
+    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+    pagos_page, pagos_paginas, pagos_qs_filtros = _paginar_pagos(request, pagos_qs, filtro, q_pago)
+    pagos_por_fecha = _agrupar_pagos_por_fecha(pagos_page)
+    total_pagos = pagos_page.paginator.count
+    monto_total = pagos_qs.aggregate(t=Sum('monto'))['t'] or 0
+
+    # ★ PAGINACIÓN DE CAJAS REGISTRADAS
+    cajas_page, cajas_paginas, cajas_qs_filtros, c_fecha = _paginar_cajas(request)
 
     context = {
         'form':             form,
         'form_apertura':    form_apertura,
         'pagos_por_fecha':  pagos_por_fecha,
+        'pagos_page':       pagos_page,
+        'pagos_paginas':    pagos_paginas,
+        'pagos_qs_filtros': pagos_qs_filtros,
         'ordenes_sin_pago': ordenes_sin_pago,
-        'total_pagos':      len(pagos_lista_data),
-        'pagos_aprobados':  len(pagos_lista_data),
+        'ordenes_pagina':    ordenes_pagina,
+        'op_paginas':        op_paginas,
+        'op_qs_filtros':     op_qs_filtros,
+        'total_pagos':      total_pagos,
+        'pagos_aprobados':  total_pagos,
         'pagos_pendientes': 0,
-        'monto_total':      sum(p.monto for p in pagos_lista_data),
+        'monto_total':      monto_total,
         'nombre':           request.user.get_full_name() or request.user.username,
-        'cajas':            Caja.objects.select_related('cajero').all().order_by('fecha_apertura'),
+        'cajas':            cajas_page,
+        'cajas_page':       cajas_page,
+        'cajas_paginas':    cajas_paginas,
+        'cajas_qs_filtros': cajas_qs_filtros,
+        'c_fecha':          c_fecha,
         'tab_activo':       request.GET.get('tab', 'pendientes'),
         'caja_activa':      caja_activa,
         'q_pago':           q_pago,
@@ -372,33 +490,47 @@ def caja_detalle(request, pk):
     form = PagoForm()
 
     ordenes_sin_pago, filtro_ordenes = _ordenes_filtradas(request)
-    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
-    pagos_lista_data = list(pagos_qs)
+    ordenes_pagina, op_paginas, op_qs_filtros = _paginar_ordenes(request, ordenes_sin_pago, filtro_ordenes)
 
-    pagos_por_fecha = []
-    for fecha, grupo in groupby(pagos_lista_data, key=lambda p: p.fecha_pago.date()):
-        items = list(grupo)
-        pagos_por_fecha.append({
-            'fecha': fecha,
-            'pagos': items,
-            'total': sum(p.monto for p in items),
-            'count': len(items),
-        })
+    # ★ PAGINACIÓN DE PAGOS REGISTRADOS
+    pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+    pagos_page, pagos_paginas, pagos_qs_filtros = _paginar_pagos(request, pagos_qs, filtro, q_pago)
+    pagos_por_fecha = _agrupar_pagos_por_fecha(pagos_page)
+    total_pagos = pagos_page.paginator.count
+    monto_total = pagos_qs.aggregate(t=Sum('monto'))['t'] or 0
+
+    # ★ PAGINACIÓN DE CAJAS REGISTRADAS
+    cajas_page, cajas_paginas, cajas_qs_filtros, c_fecha = _paginar_cajas(request)
 
     context = {
         'form':               form,
         'form_apertura':      form_apertura,
         'pagos_por_fecha':    pagos_por_fecha,
+        'pagos_page':         pagos_page,
+        'pagos_paginas':      pagos_paginas,
+        'pagos_qs_filtros':   pagos_qs_filtros,
         'ordenes_sin_pago':   ordenes_sin_pago,
-        'total_pagos':        len(pagos_lista_data),
-        'pagos_aprobados':    len(pagos_lista_data),
+        'ordenes_pagina':    ordenes_pagina,
+        'op_paginas':        op_paginas,
+        'op_qs_filtros':     op_qs_filtros,
+        'total_pagos':        total_pagos,
+        'pagos_aprobados':    total_pagos,
         'pagos_pendientes':   0,
-        'monto_total':        sum(p.monto for p in pagos_lista_data),
+        'monto_total':        monto_total,
         'nombre':             request.user.get_full_name() or request.user.username,
+        'cajas':              cajas_page,
+        'cajas_page':         cajas_page,
+        'cajas_paginas':      cajas_paginas,
+        'cajas_qs_filtros':   cajas_qs_filtros,
+        'c_fecha':            c_fecha,
         'caja_seleccionada':  caja_seleccionada,
         'pagos_caja':         pagos_caja,
         'total_ingresos':     total_ingresos,
         'total_pendientes':   total_pendientes,
+        'monto_inicial_fmt':    _pesos(caja_seleccionada.monto_inicial),
+        'total_ingresos_fmt':   _pesos(total_ingresos),
+        'total_pendientes_fmt': _pesos(total_pendientes),
+        'saldo_final_fmt':      _pesos(caja_seleccionada.monto_inicial + total_ingresos),
         'saldo_final':        caja_seleccionada.monto_inicial + total_ingresos,
         'tab_activo':         'detalle-caja',
         'caja_activa':        Caja.objects.filter(estado='ABIERTA').first(),
@@ -440,7 +572,6 @@ def pago_recibo(request, pk):
         'asadero': ASADERO,
     })
 
-
 @login_required
 def recibos_lista(request):
     """Lista de todos los recibos (pagos) con búsqueda y filtro de fechas."""
@@ -448,8 +579,28 @@ def recibos_lista(request):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
     pagos_qs, filtro, q_pago = _pagos_filtrados(request)
+    # ★ El recibo N° 1 siempre arriba: orden ascendente por número de recibo
+    pagos_qs = pagos_qs.order_by('numero_recibo', 'pk')
+    # ★ PAGINACIÓN DE RECIBOS: 10 por página
+    paginator = Paginator(pagos_qs, 10)
+    page_obj  = paginator.get_page(request.GET.get('page'))
+    paginas = [
+        {'num': p, 'puntos': p == paginator.ELLIPSIS}
+        for p in paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
+    ]
+    qs_filtros = urlencode({
+        'q_pago': q_pago,
+        'filtro_fecha': 'rango',
+        'fecha_desde': filtro['fecha_desde'],
+        'fecha_hasta': filtro['fecha_hasta'],
+    })
+
     return render(request, 'pago/lista_recibos.html', {
-        'pagos':       pagos_qs,
+        'pagos':       page_obj,
+        'page_obj':    page_obj,
+        'paginas':     paginas,
+        'qs_filtros':  qs_filtros,
+        'total_recibos': paginator.count,
         'total':       pagos_qs.aggregate(t=Sum('monto'))['t'] or 0,
         'q_pago':      q_pago,
         'fecha_desde': filtro['fecha_desde'],
@@ -473,43 +624,24 @@ def pagos_exportar_excel(request):
     if _solo_cajero_admin(request):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
-    from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment
-
     pagos = _pagos_reporte_queryset(request)
-    wb = Workbook()
-    ws = wb.active
-    ws.title = 'Pagos registrados'
-
-    encabezados = ['Orden', 'Cliente', 'Método', 'Monto', 'Referencia', 'Estado', 'Fecha', 'Hora']
-    ws.append(encabezados)
-    for col in range(1, len(encabezados) + 1):
-        celda = ws.cell(row=1, column=col)
-        celda.font      = Font(bold=True, color='F5ECD7')
-        celda.fill      = PatternFill(start_color='C0392B', end_color='C0392B', fill_type='solid')
-        celda.alignment = Alignment(horizontal='center')
-
+    filas = []
     for pg in pagos:
-        ws.append([
+        filas.append([
             pg.pedido.numero_orden if pg.pedido else '—',
             pg.pedido.cliente.nombre_completo if pg.pedido and pg.pedido.cliente else '—',
             pg.get_metodo_pago_display(),
-            float(pg.monto),
+            pg.monto,
             pg.referencia or '—',
             'Pagado',
             pg.fecha_pago.strftime('%d/%m/%Y'),
             pg.fecha_pago.strftime('%I:%M %p'),
         ])
-
-    for i, ancho in enumerate([14, 26, 16, 12, 20, 12, 14, 12], start=1):
-        ws.column_dimensions[chr(64 + i)].width = ancho
-
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename="pagos_registrados.xlsx"'
-    wb.save(response)
-    return response
+    # Mismo encabezado con logo que usa el módulo de pedidos
+    return _respuesta_excel(
+        'Reporte de Pagos', 'pagos_registrados.xlsx',
+        ['Orden', 'Cliente', 'Método', 'Monto', 'Referencia', 'Estado', 'Fecha', 'Hora'],
+        filas, [14, 26, 16, 14, 22, 12, 14, 12], cols_dinero=(3,))
 
 
 @login_required
@@ -518,28 +650,28 @@ def pagos_exportar_pdf(request):
         return render(request, 'usuarios/login.html', {'vista': 'sin_permisos'})
 
     from reportlab.lib import colors
-    from reportlab.lib.pagesizes import letter, landscape
+    from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.units import cm
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 
     pagos = _pagos_reporte_queryset(request)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="pagos_registrados.pdf"'
 
+    # Mismos márgenes y tamaño de hoja que los PDF de pedidos
     doc = SimpleDocTemplate(
-        response, pagesize=landscape(letter),
-        topMargin=1.2*cm, bottomMargin=1.2*cm,
-        leftMargin=1.2*cm, rightMargin=1.2*cm,
+        response, pagesize=landscape(A4),
+        leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm,
     )
-    estilos   = getSampleStyleSheet()
-    elementos = [
-        Paragraph('Porras Asadero — Pagos registrados', estilos['Title']),
-        Paragraph(f'Generado el {timezone.now().strftime("%d/%m/%Y %I:%M %p")}', estilos['Normal']),
-        Paragraph(f'Rango: {_rango_texto(request)}', estilos['Normal']),
-        Spacer(1, 0.5*cm),
-    ]
+
+    # Encabezado con logo + título (igual que pedidos) y debajo el rango de fechas
+    elementos = encabezado_reporte('Reporte de Pagos')
+    estilo_rango = ParagraphStyle('RangoReporte', parent=getSampleStyleSheet()['Normal'],
+                                  fontSize=9, textColor=colors.HexColor('#555555'),
+                                  leftIndent=0.5*cm, spaceBefore=4)
+    elementos.insert(1, Paragraph(f'Rango: {_rango_texto(request)}', estilo_rango))
 
     datos = [['Orden', 'Cliente', 'Método', 'Monto', 'Referencia', 'Estado', 'Fecha', 'Hora']]
     total = 0
@@ -555,19 +687,29 @@ def pagos_exportar_pdf(request):
             pg.fecha_pago.strftime('%d/%m/%Y'),
             pg.fecha_pago.strftime('%I:%M %p'),
         ])
-    datos.append(['', '', '', f'${total:,.0f}', '', '', '', ''])
+    datos.append(['', '', 'Total', f'${total:,.0f}', '', '', '', ''])
 
-    tabla = Table(datos, repeatRows=1)
+    tabla = Table(
+        datos,
+        colWidths=[2.4*cm, 5.6*cm, 3.4*cm, 3.2*cm, 4.6*cm, 2.4*cm, 2.8*cm, 2.3*cm],
+        repeatRows=1,
+    )
     tabla.setStyle(TableStyle([
-        ('BACKGROUND',    (0, 0),  (-1, 0),  colors.HexColor('#C0392B')),
-        ('TEXTCOLOR',     (0, 0),  (-1, 0),  colors.HexColor('#F5ECD7')),
-        ('FONTNAME',      (0, 0),  (-1, 0),  'Helvetica-Bold'),
-        ('FONTSIZE',      (0, 0),  (-1, -1), 8.5),
-        ('ALIGN',         (3, 1),  (3, -1),  'RIGHT'),
-        ('GRID',          (0, 0),  (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
-        ('ROWBACKGROUNDS',(0, 1),  (-1, -2), [colors.HexColor('#FDF7EC'), colors.HexColor('#F5ECD7')]),
-        ('FONTNAME',      (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('BACKGROUND',    (0, -1), (-1, -1), colors.HexColor('#F5ECD7')),
+        ('BACKGROUND',     (0, 0), (-1, 0),  colors.HexColor('#C0392B')),
+        ('TEXTCOLOR',      (0, 0), (-1, 0),  colors.HexColor('#F5ECD7')),
+        ('FONTNAME',       (0, 0), (-1, 0),  'Helvetica-Bold'),
+        ('FONTSIZE',       (0, 0), (-1, 0),  9),
+        ('FONTSIZE',       (0, 1), (-1, -1), 8),
+        ('ALIGN',          (3, 1), (3, -1),  'RIGHT'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.HexColor('#FDF7EC'), colors.HexColor('#EDE3C8')]),
+        ('GRID',           (0, 0), (-1, -1), 0.5, colors.HexColor('#D4C4A0')),
+        ('VALIGN',         (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING',     (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING',  (0, 0), (-1, -1), 5),
+        ('LEFTPADDING',    (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING',   (0, 0), (-1, -1), 5),
+        ('FONTNAME',       (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('BACKGROUND',     (0, -1), (-1, -1), colors.HexColor('#F5ECD7')),
     ]))
     elementos.append(tabla)
     doc.build(elementos)

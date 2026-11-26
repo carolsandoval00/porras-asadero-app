@@ -25,8 +25,6 @@ load_dotenv(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-clave-fija-para-desarrollo-12345')
-
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-7grlfzyd0wu80+!9vmzdzc66^1ajqqiiuzwdgyu85#%zgo_i%o')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -146,9 +144,6 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'inicio_usuarios'
 LOGOUT_REDIRECT_URL = '/usuarios/login/'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -158,10 +153,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Configuración de correo (Gmail SMTP)
+# Las credenciales van en el archivo .env (no se suben a Git):
+#   EMAIL_HOST_USER=tu_correo@gmail.com
+#   EMAIL_HOST_PASSWORD=contraseña_de_aplicacion_sin_espacios
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'deisyvalentinamoramorales@gmail.com'
-EMAIL_HOST_PASSWORD = 'jvpl sroc trza lxib  '  # Coloca aquí los 16 caracteres
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

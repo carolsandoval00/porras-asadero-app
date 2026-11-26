@@ -13,6 +13,7 @@
     <link href="{% static "css/base2_bootstrap_icons.css"%}" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <link rel="stylesheet" href="{% static 'css/accesibilidad.css' %}">
+    <link rel="stylesheet" href="{% static 'css/botones.css' %}">
 </head>
 <body class="admin-body-shell">
 
@@ -34,13 +35,16 @@
 
     </div>
 
-    {% if request.user.is_authenticated %}
-        {% include "partials/asistente_ia.html" %}
-        {% include "partials/ayuda_fab.html" %}
+    <!-- Botones flotantes (asistente, ayuda y accesibilidad).
+         El contenedor .print-fabs permite que también salgan al imprimir los reportes. -->
+    <div class="print-fabs">
+        {% if request.user.is_authenticated %}
+            {% include "partials/asistente_ia.html" %}
+            {% include "partials/ayuda_fab.html" %}
+        {% endif %}
 
-    {% endif %}
-
-    {% include "partials/accesibilidad.html" %}
+        {% include "partials/accesibilidad.html" %}
+    </div>
 
     {% if messages %}
     <div id="avisos-django" hidden>

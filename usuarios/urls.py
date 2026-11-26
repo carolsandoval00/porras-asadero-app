@@ -1,10 +1,5 @@
 from django.urls import path
-from django.contrib.auth import views as auth_views
 from . import views
-
-
-
-    
 
 
 urlpatterns = [
@@ -15,6 +10,8 @@ urlpatterns = [
     path('acceder/',     views.acceder_sistema,        name='acceder_sistema'),
     path('redireccion/', views.redireccion_post_login, name='redireccion'),
     path('inicio/',      views.inicio_usuarios,        name='inicio_usuarios'),
+
+    # RECUPERACIÓN DE CONTRASEÑA
     path('recuperar/', views.recuperar_password, name='recuperar_password'),
     path('restablecer/<uidb64>/<token>/', views.restablecer_password, name='restablecer_password'),
 
@@ -32,25 +29,4 @@ urlpatterns = [
 
     # FOTO DE PERFIL
     path('foto/<int:pk>/', views.actualizar_foto, name='actualizar_foto'),
-
-    # RECUPERACIÓN DE CONTRASEÑA
-    path('recuperar/', auth_views.PasswordResetView.as_view(
-        template_name='usuarios/login.html',
-        extra_context={'vista': 'recuperar'}
-    ), name='password_reset'),
-
-    path('recuperar_enviado/', auth_views.PasswordResetDoneView.as_view(
-        template_name='usuarios/login.html',
-        extra_context={'vista': 'recuperar_enviado'}
-    ), name='password_reset_done'),
-
-    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
-        template_name='usuarios/login.html',
-        extra_context={'vista': 'recuperar_confirmar'}
-    ), name='password_reset_confirm'),
-
-    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
-        template_name='usuarios/login.html',
-        extra_context={'vista': 'recuperar_terminado'}
-    ), name='password_reset_complete'),
 ]

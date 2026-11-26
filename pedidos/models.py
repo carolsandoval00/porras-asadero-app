@@ -23,6 +23,16 @@ class Producto(models.Model):
     disponible  = models.BooleanField(default=True)
     creado_en   = models.DateTimeField(auto_now_add=True)
 
+    # ── Inventario (solo se usa en las bebidas) ──────────────────────
+    # stock_actual = None  →  la bebida todavía no tiene inventario configurado:
+    #                         se vende sin límite y no se descuenta nada.
+    stock_actual = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name='Stock actual',
+        help_text='Unidades disponibles. Vacío = sin control de inventario.')
+    stock_minimo = models.PositiveIntegerField(
+        default=5, verbose_name='Stock mínimo',
+        help_text='Por debajo de este número se avisa que la bebida se está agotando.')
+
     class Meta:
         db_table = 'mod_producto'
         ordering = ['categoria', 'nombre']
@@ -31,6 +41,28 @@ class Producto(models.Model):
 
     def __str__(self):
         return f'{self.nombre} (${self.precio})'
+
+    @property
+    def es_bebida(self):
+        """Una bebida es cualquier producto de la categoría que empiece por 'Bebida'."""
+        return (self.categoria.nombre or '').strip().lower().startswith('bebida')
+
+    @property
+    def controla_stock(self):
+        return self.es_bebida and self.stock_actual is not None
+
+    @property
+    def estado_stock(self):
+        """'NA' (no es bebida), 'SIN_CONFIGURAR', 'AGOTADO', 'BAJO' u 'OK'."""
+        if not self.es_bebida:
+            return 'NA'
+        if self.stock_actual is None:
+            return 'SIN_CONFIGURAR'
+        if self.stock_actual == 0:
+            return 'AGOTADO'
+        if self.stock_actual <= self.stock_minimo:
+            return 'BAJO'
+        return 'OK'
 
 
 class Pedido(models.Model):
