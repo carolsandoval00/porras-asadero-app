@@ -48,8 +48,8 @@
         <div class="rc-fila"><span>Orden:</span><span>{{ pedido.numero_orden }}</span></div>
         <div class="rc-fila"><span>Fecha:</span><span>{{ pago.fecha_pago|date:"d/m/Y h:i A" }}</span></div>
         <div class="rc-fila"><span>Mesa:</span><span>{{ pedido.mesa.numero_mesa|default:"—" }}</span></div>
-        <div class="rc-fila"><span>Mesero:</span><span>{{ pedido.mesero.get_full_name|default:pedido.mesero.username }}</span></div>
-        <div class="rc-fila"><span>Cajero:</span><span>{{ pago.caja.cajero.get_full_name|default:pago.caja.cajero.username }}</span></div>
+        <div class="rc-fila"><span>Mesero:</span><span>{% firstof pedido.mesero.get_full_name pedido.mesero.username "—" %}</span></div>
+        <div class="rc-fila"><span>Cajero:</span><span>{% firstof pago.cajero.get_full_name pago.cajero.username pago.caja.cajero.get_full_name pago.caja.cajero.username "—" %}</span></div>
 
         <div class="rc-sep"></div>
 
