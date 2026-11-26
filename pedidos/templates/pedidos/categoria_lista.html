@@ -14,8 +14,8 @@
   </div>
 
   <div class="pm-header">
-    <h1>{{ titulo }}</h1>
-    <h2>Bienvenido, {{ nombre }}</h2>
+    <h1>{{ titulo|default:"Pedidos" }}</h1>
+    <h2>Bienvenido, {{ nombre|default:user.get_full_name|default:user.username }}</h2>
   </div>
 
   {% if messages %}
