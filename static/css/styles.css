@@ -1093,8 +1093,5 @@ html.admin-html, body.admin-body-shell {
     outline-offset: 2px;
 }
 
-/* Mensajes de éxito: título y botón en verde */
-.aviso-exito .aviso-titulo { color: #2E7D32; }
-.aviso-exito .aviso-boton { background: #2E7D32; }
-.aviso-exito .aviso-boton:hover { background: #256628; }
-.aviso-exito .aviso-boton:focus-visible { outline-color: rgba(46, 125, 50, .35); }
+/* Todos los avisos (éxito, error, información) usan el mismo rojo.
+   Se quitó el verde de .aviso-exito. */
