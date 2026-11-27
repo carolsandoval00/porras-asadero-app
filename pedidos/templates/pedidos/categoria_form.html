@@ -26,7 +26,7 @@
         {% csrf_token %}
         <div class="pm-form-grid">
           <div class="full">
-            <label>Nombre de la Categoría</label>
+            <label>Nombre de la Categoría <span class="req-star" style="color:#C0392B;">*</span></label>
             {{ form_categoria.nombre }}
           </div>
           <div class="full"><label>Descripción</label>{{ form_categoria.descripcion }}</div>

@@ -34,13 +34,13 @@
 
         <div class="pm-form-grid pm-form-grid-mb">
           <div class="full">
-            <label>Cliente</label>
+            <label>Cliente <span class="req-star" style="color:#C0392B;">*</span></label>
             {{ form.cliente }}
           </div>
 
           {# ── MESERO: lista desplegable con los usuarios de rol MESERO ── #}
           <div class="full">
-            <label for="id_mesero">Mesero</label>
+            <label for="id_mesero">Mesero <span class="req-star" style="color:#C0392B;">*</span></label>
             <select name="mesero" id="id_mesero" class="pm-select-producto" data-tooltip="Elige el mesero que tomó el pedido">
               <option value="">— Selecciona un mesero —</option>
               {% for m in meseros %}
@@ -58,7 +58,7 @@
             {{ form.mesa }}
           </div>
           <div>
-            <label>Tipo de Pedido</label>
+            <label>Tipo de Pedido <span class="req-star" style="color:#C0392B;">*</span></label>
             {{ form.tipo_pedido }}
           </div>
           <div>

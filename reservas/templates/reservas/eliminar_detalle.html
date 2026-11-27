@@ -100,7 +100,7 @@
 
       <form method="post" id="ed-form-eliminar">
         {% csrf_token %}
-        <label class="mc-label" for="ed-select">Reserva *</label>
+        <label class="mc-label" for="ed-select">Reserva <span class="req-star" style="color:#C0392B;">*</span></label>
         <select class="mc-select" name="detalle" id="ed-select" required>
           <option value="">— Seleccionar —</option>
           {% for r in detalles %}
