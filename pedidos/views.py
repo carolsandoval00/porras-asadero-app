@@ -100,6 +100,15 @@ def encabezado_reporte(titulo):
 
 
 
+def _cabecera_pdf(request, response, nombre):
+    """Cabeceras del PDF. Normalmente se descarga; con ?ver=1 se muestra en línea
+    (lo usa el botón Imprimir para imprimir este mismo PDF). SAMEORIGIN deja que
+    la propia página lo cargue en un iframe oculto."""
+    modo = 'inline' if request.GET.get('ver') else 'attachment'
+    response['Content-Disposition'] = f'{modo}; filename="{nombre}"'
+    response['X-Frame-Options'] = 'SAMEORIGIN'
+
+
 def _respuesta_excel(titulo, nombre_archivo, encabezados, filas, anchos, cols_dinero=()):
     """Genera un .xlsx con el logo arriba a la izquierda, el título al lado,
     y la tabla con los mismos colores del PDF. `cols_dinero` son los índices
@@ -544,7 +553,7 @@ def _estilo_tabla_pdf():
 def pedido_exportar_pdf(request):
     pedidos_qs = _pedidos_filtrados(request)
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="pedidos.pdf"'
+    _cabecera_pdf(request, response, "pedidos.pdf")
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles   = getSampleStyleSheet()
@@ -885,7 +894,7 @@ def producto_exportar_pdf(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     productos_qs = _productos_filtrados(request)
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="productos.pdf"'
+    _cabecera_pdf(request, response, "productos.pdf")
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
@@ -1040,6 +1049,79 @@ def inventario_ajustar(request, pk):
     return redirect(destino)
 
 
+# ── EXPORTACIÓN DEL INVENTARIO DE BEBIDAS ───────────────────────────
+
+_TEXTO_ESTADO_STOCK = {
+    'AGOTADO': 'Agotada',
+    'BAJO':    'Por agotarse',
+    'OK':      'Disponible',
+}
+
+
+def _bebidas_filtradas(request):
+    """Mismas bebidas que ve la pantalla (buscador + estado), pero sin paginar,
+    para que el PDF y el Excel salgan completos."""
+    q_inv      = request.GET.get('q_inv', '').strip()
+    estado_inv = request.GET.get('estado_inv', '').strip()
+
+    qs = _bebidas().order_by('nombre')
+    if q_inv:
+        qs = qs.filter(nombre__icontains=q_inv)
+    if estado_inv == 'agotadas':
+        qs = qs.filter(stock_actual__lte=0)
+    elif estado_inv == 'bajas':
+        qs = qs.filter(stock_actual__gt=0, stock_actual__lte=F('stock_minimo'))
+    elif estado_inv == 'sin_configurar':
+        qs = qs.filter(stock_actual__isnull=True)
+    return qs
+
+
+def _fila_inventario(i, b):
+    """Valores de una bebida para el reporte: #, nombre, precio, stock, mínimo, estado."""
+    sin_stock = b.stock_actual is None
+    return [
+        f"{i:02d}",
+        b.nombre,
+        b.precio,
+        '—' if sin_stock else b.stock_actual,
+        '—' if sin_stock else b.stock_minimo,
+        _TEXTO_ESTADO_STOCK.get(b.estado_stock, 'Sin configurar'),
+    ]
+
+
+@login_required
+def inventario_exportar_pdf(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+    hoy = timezone.localdate().isoformat()
+    response = HttpResponse(content_type='application/pdf')
+    _cabecera_pdf(request, response, f"Inventario_bebidas_{hoy}.pdf")
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4),
+        leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    elements = encabezado_reporte("Reporte de Inventario de Bebidas")
+    data = [['#', 'Bebida', 'Precio', 'Stock actual', 'Mínimo', 'Estado']]
+    for i, b in enumerate(_bebidas_filtradas(request), start=1):
+        f = _fila_inventario(i, b)
+        f[2] = f"${b.precio:,.0f}"
+        data.append(f)
+    tabla = Table(data, colWidths=[1.5*cm, 9*cm, 3.5*cm, 3.5*cm, 3*cm, 4.5*cm], repeatRows=1)
+    tabla.setStyle(_estilo_tabla_pdf())
+    elements.append(tabla)
+    doc.build(elements)
+    return response
+
+
+@login_required
+def inventario_exportar_excel(request):
+    if _es_cajero(request) or _es_mesero(request) or _es_cocinera(request):
+        return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
+    hoy = timezone.localdate().isoformat()
+    filas = [_fila_inventario(i, b) for i, b in enumerate(_bebidas_filtradas(request), start=1)]
+    return _respuesta_excel("Reporte de Inventario de Bebidas", f"Inventario_bebidas_{hoy}.xlsx",
+        ['#', 'Bebida', 'Precio', 'Stock actual', 'Mínimo', 'Estado'],
+        filas, [6, 32, 14, 14, 12, 18], cols_dinero=(2,))
+
+
 # ── GESTIÓN DE CATEGORÍAS ──────────────────────────────────────────
 
 @login_required
@@ -1131,7 +1213,7 @@ def categoria_exportar_pdf(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     categorias_qs = _categorias_filtradas(request)
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="categorias.pdf"'
+    _cabecera_pdf(request, response, "categorias.pdf")
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
@@ -1249,7 +1331,7 @@ def cliente_exportar_pdf(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     clientes_qs = _clientes_filtrados(request)
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="clientes.pdf"'
+    _cabecera_pdf(request, response, "clientes.pdf")
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
@@ -1304,7 +1386,7 @@ def orden_exportar_pdf(request):
         return render(request, TEMPLATE_PERMISOS, ACCESO_DENEGADO)
     ordenes_qs = _ordenes_filtradas(request)
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="ordenes.pdf"'
+    _cabecera_pdf(request, response, "ordenes.pdf")
     doc = SimpleDocTemplate(response, pagesize=landscape(A4),
         leftMargin=1*cm, rightMargin=1*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
