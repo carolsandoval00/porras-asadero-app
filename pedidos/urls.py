@@ -38,6 +38,8 @@ urlpatterns = [
     path('inventario/',                          views.inventario_lista,         name='inventario_lista'),
     path('inventario/<int:pk>/reabastecer/',     views.inventario_reabastecer,   name='inventario_reabastecer'),
     path('inventario/<int:pk>/ajustar/',         views.inventario_ajustar,       name='inventario_ajustar'),
+    path('inventario/exportar/pdf/',             views.inventario_exportar_pdf,   name='inventario_exportar_pdf'),
+    path('inventario/exportar/excel/',           views.inventario_exportar_excel, name='inventario_exportar_excel'),
 
     # ── Categorías ────────────────────────────────────────────
     path('categorias/',                   views.categoria_lista,    name='categoria_lista'),

@@ -621,35 +621,122 @@
       });
   };
 
-  // ─── Reportes de reservas ─────────────────────────────────
+  // ─── Reportes (PDF con el mismo diseño de los reportes del sistema) ───
+  function ahoraTexto() {
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  // ¿Está abierta la pantalla de mesas ("Nueva mesa")? Si es así, los botones
+  // PDF / Excel / Imprimir de esa pantalla trabajan con las mesas.
+  function enPantallaMesas() {
+    const sec = $('mc-crear-mesa');
+    return !!(sec && sec.classList.contains('active'));
+  }
+
+  // Carga static/img/logo.png, le quita el espacio en blanco sobrante y lo
+  // deja listo para el PDF. Se calcula una sola vez; si falla, el PDF sale sin logo.
+  let logoCache;   // undefined = aún no se pide, null = no se pudo cargar
+  function cargarLogo() {
+    if (logoCache !== undefined) return Promise.resolve(logoCache);
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth; c.height = img.naturalHeight;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0);
+          const px = ctx.getImageData(0, 0, c.width, c.height).data;
+          let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+          for (let y = 0; y < c.height; y++) {
+            for (let x = 0; x < c.width; x++) {
+              const i = (y * c.width + x) * 4;
+              if (px[i] < 245 || px[i + 1] < 245 || px[i + 2] < 245) {
+                if (x < x0) x0 = x; if (x > x1) x1 = x;
+                if (y < y0) y0 = y; if (y > y1) y1 = y;
+              }
+            }
+          }
+          if (x1 < 0) { x0 = 0; y0 = 0; x1 = c.width - 1; y1 = c.height - 1; }
+          const w = x1 - x0 + 1, h = y1 - y0 + 1;
+          const ancho = Math.min(600, w);
+          const out = document.createElement('canvas');
+          out.width = ancho; out.height = Math.round(h * ancho / w);
+          out.getContext('2d').drawImage(c, x0, y0, w, h, 0, 0, out.width, out.height);
+          logoCache = { data: out.toDataURL('image/png'), proporcion: w / h };
+        } catch (e) {
+          console.error(e);
+          logoCache = null;
+        }
+        resolve(logoCache);
+      };
+      img.onerror = () => { logoCache = null; resolve(null); };
+      img.src = '/static/img/logo.png';
+    });
+  }
+
+  // PDF horizontal: logo a la izquierda, título rojo y fecha a la derecha,
+  // línea roja debajo y tabla con encabezado rojo y filas alternadas.
+  async function generarPDF(archivo, titulo, encabezados, filas) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const margen = 10, altoLogo = 26;
+
+    const logo = await cargarLogo();
+    let xTexto = margen;
+    if (logo) {
+      const ancho = altoLogo * logo.proporcion;
+      doc.addImage(logo.data, 'PNG', margen, margen, ancho, altoLogo);
+      xTexto = margen + ancho + 6;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(192, 57, 43);
+    doc.text(titulo, xTexto, margen + altoLogo / 2 - 1);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(85);
+    doc.text('Porras Asadero · Generado el ' + ahoraTexto(), xTexto, margen + altoLogo / 2 + 5);
+
+    const yLinea = margen + altoLogo + 3;
+    doc.setDrawColor(192, 57, 43);
+    doc.setLineWidth(0.5);
+    doc.line(margen, yLinea, 297 - margen, yLinea);
+
+    doc.autoTable({
+      head: [encabezados],
+      body: filas,
+      startY: yLinea + 6,
+      margin: { left: margen, right: margen },
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 8, cellPadding: 2, lineColor: [212, 196, 160], lineWidth: 0.1, textColor: [34, 34, 34] },
+      headStyles: { fillColor: [192, 57, 43], textColor: [245, 236, 215], fontStyle: 'bold' },
+      bodyStyles: { fillColor: [253, 247, 236] },
+      alternateRowStyles: { fillColor: [237, 227, 200] },
+    });
+    doc.save(archivo);
+  }
+
   // Los reportes usan TODAS las reservas del filtro, no solo la página visible.
-  window.mcExportarPDF = function () {
+  window.mcExportarPDF = async function () {
+    if (enPantallaMesas()) return window.mcExportarMesasPDF();
     if (!reservas.length) { toast('No hay reservas para exportar', 'error'); return; }
     if (!window.jspdf) { toast('No se pudo cargar la librería de PDF', 'error'); return; }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Asadero Porras — Reporte de Reservas', 14, 16);
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + reservas.length + ' reserva(s)', 14, 22);
-    const filas = reservas.map(r => [
-      '#' + String(r.id).padStart(2, '0'),
-      r.nombre, r.telefono, getMesaLabel(r.mesa),
-      r.fecha, r.hora, String(r.personas), ETIQUETA_RESERVA[r.estado] || r.estado,
-    ]);
-    doc.autoTable({
-      head: [['ID', 'Cliente', 'Teléfono', 'Mesa', 'Fecha', 'Hora', 'Personas', 'Estado']],
-      body: filas, startY: 28,
-      styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [192, 57, 43], textColor: 255 },
-      alternateRowStyles: { fillColor: [245, 236, 215] },
-    });
-    doc.save('reservas_' + hoy() + '.pdf');
-    toast('Reporte PDF generado');
+    await generarPDF(
+      'reservas_' + hoy() + '.pdf',
+      'Reporte de Reservas',
+      ['ID', 'Cliente', 'Teléfono', 'Mesa', 'Fecha', 'Hora', 'Personas', 'Estado'],
+      reservas.map(r => [
+        '#' + String(r.id).padStart(2, '0'), r.nombre, r.telefono, getMesaLabel(r.mesa),
+        r.fecha, r.hora, String(r.personas), ETIQUETA_RESERVA[r.estado] || r.estado,
+      ])
+    );
   };
 
   window.mcExportarExcel = function () {
+    if (enPantallaMesas()) return window.mcExportarMesasExcel();
     if (!reservas.length) { toast('No hay reservas para exportar', 'error'); return; }
     if (!window.XLSX) { toast('No se pudo cargar la librería de Excel', 'error'); return; }
     const datos = reservas.map(r => ({
@@ -667,29 +754,75 @@
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Reservas');
     XLSX.writeFile(libro, 'reservas_' + hoy() + '.xlsx');
-    toast('Reporte Excel generado');
   };
 
+  // Imprime el reporte armado en un iframe oculto (logo, título y tabla roja,
+  // igual que los PDF). No depende del CSS ni del HTML de la página.
+  let marcoImpresion = null;
+  function imprimirReporte(titulo, encabezados, datos) {
+    const logo = window.location.origin + '/static/img/logo.png';
+    const cabecera = encabezados.map(h => `<th>${esc(h)}</th>`).join('');
+    const cuerpo = datos.map(f => `<tr>${f.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>${esc(titulo)}</title>
+<style>
+  @page { size: A4 landscape; margin: 1.5cm 1cm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #222; margin: 0; }
+  .cab { display: flex; align-items: center; gap: 18px; padding-bottom: 8px;
+         border-bottom: 2px solid #C0392B; margin-bottom: 14px; }
+  .cab img { height: 2.6cm; width: auto; }
+  .cab h1 { margin: 0 0 4px; font-size: 20px; color: #C0392B; }
+  .cab p { margin: 0; font-size: 11px; color: #555; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { background: #C0392B; color: #F5ECD7; text-align: left; padding: 6px; border: 1px solid #D4C4A0; }
+  td { padding: 6px; border: 1px solid #D4C4A0; }
+  tbody tr:nth-child(odd)  td { background: #FDF7EC; }
+  tbody tr:nth-child(even) td { background: #EDE3C8; }
+  tr { page-break-inside: avoid; }
+  thead { display: table-header-group; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+</style></head><body>
+  <div class="cab">
+    <img src="${logo}" alt="" onerror="this.style.display='none'">
+    <div>
+      <h1>${esc(titulo)}</h1>
+      <p>Porras Asadero · Generado el ${esc(ahoraTexto())}</p>
+    </div>
+  </div>
+  <table><thead><tr>${cabecera}</tr></thead><tbody>${cuerpo}</tbody></table>
+</body></html>`;
+
+    if (marcoImpresion) marcoImpresion.remove();
+    marcoImpresion = document.createElement('iframe');
+    marcoImpresion.setAttribute('aria-hidden', 'true');
+    marcoImpresion.tabIndex = -1;
+    marcoImpresion.style.cssText =
+      'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
+    marcoImpresion.onload = function () {
+      try {
+        marcoImpresion.contentWindow.focus();
+        marcoImpresion.contentWindow.print();
+      } catch (e) {
+        console.error(e);
+        toast('No se pudo abrir la impresión', 'error');
+      }
+    };
+    marcoImpresion.srcdoc = html;
+    document.body.appendChild(marcoImpresion);
+  }
+
   window.mcImprimir = function () {
+    if (enPantallaMesas()) return window.mcImprimirMesas();
     if (!reservas.length) { toast('No hay reservas para imprimir', 'error'); return; }
-    const filas = reservas.map(r => `<tr>
-        <td>#${String(r.id).padStart(2, '0')}</td>
-        <td>${esc(r.nombre)}</td><td>${esc(r.telefono)}</td>
-        <td>${esc(getMesaLabel(r.mesa))}</td>
-        <td>${esc(r.fecha)}</td><td>${esc(r.hora)}</td>
-        <td>${esc(r.personas)}</td><td>${ETIQUETA_RESERVA[r.estado] || r.estado}</td>
-      </tr>`).join('');
-    $('mc-print-area').innerHTML = `
-      <h2>Asadero Porras — Reporte de Reservas</h2>
-      <p>Generado el ${new Date().toLocaleString('es-CO')} — ${reservas.length} reserva(s)</p>
-      <table>
-        <thead><tr>
-          <th>ID</th><th>Cliente</th><th>Teléfono</th><th>Mesa</th>
-          <th>Fecha</th><th>Hora</th><th>Personas</th><th>Estado</th>
-        </tr></thead>
-        <tbody>${filas}</tbody>
-      </table>`;
-    window.print();
+    imprimirReporte(
+      'Reporte de Reservas',
+      ['ID', 'Cliente', 'Teléfono', 'Mesa', 'Fecha', 'Hora', 'Personas', 'Estado'],
+      reservas.map(r => [
+        '#' + String(r.id).padStart(2, '0'), r.nombre, r.telefono, getMesaLabel(r.mesa),
+        r.fecha, r.hora, r.personas, ETIQUETA_RESERVA[r.estado] || r.estado,
+      ])
+    );
   };
 
   // ─── Mesas ────────────────────────────────────────────────
@@ -919,25 +1052,16 @@
     }
   };
 
-  window.mcExportarMesasPDF = function () {
+  window.mcExportarMesasPDF = async function () {
     const lista = mcListaMesasFiltrada();
     if (!lista.length) { toast('No hay mesas para exportar', 'error'); return; }
     if (!window.jspdf) { toast('No se pudo cargar la librería de PDF', 'error'); return; }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text('Asadero Porras — Reporte de Mesas', 14, 16);
-    doc.setFontSize(10); doc.setTextColor(100);
-    doc.text('Generado el ' + new Date().toLocaleString('es-CO') + '  •  ' + lista.length + ' mesa(s)', 14, 22);
-    const filas = lista.map(m => ['Mesa ' + m.numero, m.capacidad + ' pers.', m.ubicacion, ETIQUETA_MESA[m.estado] || m.estado]);
-    doc.autoTable({
-      head: [['Mesa', 'Capacidad', 'Ubicación', 'Estado']], body: filas, startY: 28,
-      styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [192, 57, 43], textColor: 255 },
-      alternateRowStyles: { fillColor: [245, 236, 215] },
-    });
-    doc.save('mesas_' + hoy() + '.pdf');
-    toast('Reporte PDF generado');
+    await generarPDF(
+      'mesas_' + hoy() + '.pdf',
+      'Reporte de Mesas',
+      ['Mesa', 'Capacidad', 'Ubicación', 'Estado'],
+      lista.map(m => ['Mesa ' + m.numero, m.capacidad + ' pers.', m.ubicacion, ETIQUETA_MESA[m.estado] || m.estado])
+    );
   };
 
   window.mcExportarMesasExcel = function () {
@@ -953,24 +1077,16 @@
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, hoja, 'Mesas');
     XLSX.writeFile(libro, 'mesas_' + hoy() + '.xlsx');
-    toast('Reporte Excel generado');
   };
 
   window.mcImprimirMesas = function () {
     const lista = mcListaMesasFiltrada();
     if (!lista.length) { toast('No hay mesas para imprimir', 'error'); return; }
-    const filas = lista.map(m => `<tr>
-        <td>Mesa ${m.numero}</td><td>${m.capacidad} pers.</td>
-        <td>${esc(m.ubicacion)}</td><td>${ETIQUETA_MESA[m.estado] || m.estado}</td>
-      </tr>`).join('');
-    $('mc-print-area').innerHTML = `
-      <h2>Asadero Porras — Reporte de Mesas</h2>
-      <p>Generado el ${new Date().toLocaleString('es-CO')} — ${lista.length} mesa(s)</p>
-      <table>
-        <thead><tr><th>Mesa</th><th>Capacidad</th><th>Ubicación</th><th>Estado</th></tr></thead>
-        <tbody>${filas}</tbody>
-      </table>`;
-    window.print();
+    imprimirReporte(
+      'Reporte de Mesas',
+      ['Mesa', 'Capacidad', 'Ubicación', 'Estado'],
+      lista.map(m => ['Mesa ' + m.numero, m.capacidad + ' pers.', m.ubicacion, ETIQUETA_MESA[m.estado] || m.estado])
+    );
   };
 
   // ─── Validaciones del formulario de reserva ───────────────

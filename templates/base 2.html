@@ -270,5 +270,44 @@
         document.addEventListener('visibilitychange', hideTooltip);
     })();
     </script>
+
+    <!-- ============================================
+         Imprimir reportes
+         Si la página tiene un botón "PDF" (enlace a .../exportar/pdf/),
+         "Imprimir" imprime ESE mismo PDF (con logo, título y tabla roja)
+         en vez de imprimir la pantalla. Respeta la búsqueda y los filtros
+         porque usa el mismo enlace del botón PDF.
+         Si la página no tiene botón PDF, imprime normal.
+         ============================================ -->
+    <script>
+    (function () {
+        var imprimirNormal = window.print.bind(window);
+        var marco = null;
+
+        window.print = function () {
+            var enlace = document.querySelector('.pm-card-header-actions a[href*="/exportar/pdf/"]');
+            if (!enlace) { imprimirNormal(); return; }
+
+            var url = new URL(enlace.getAttribute('href'), window.location.href);
+            url.searchParams.set('ver', '1');   // mostrar en línea, no descargar
+
+            if (marco) marco.remove();
+            marco = document.createElement('iframe');
+            marco.setAttribute('aria-hidden', 'true');
+            marco.tabIndex = -1;
+            marco.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none;';
+            marco.onload = function () {
+                try {
+                    marco.contentWindow.focus();
+                    marco.contentWindow.print();
+                } catch (e) {
+                    window.open(url.href, '_blank');   // plan B: abrir el PDF en otra pestaña
+                }
+            };
+            marco.src = url.href;
+            document.body.appendChild(marco);
+        };
+    })();
+    </script>
 </body>
 </html>
