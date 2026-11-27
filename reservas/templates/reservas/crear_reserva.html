@@ -1,7 +1,10 @@
 <div id="mc-crear" class="mc-section">
-    <div class="mc-sec-header">
+    <div class="mc-sec-header mc-sec-header-row">
+      <div>
       <h2 id="mc-crear-titulo">Nueva reserva</h2>
       <p id="mc-crear-sub">Completa los datos para registrar la reserva</p>
+    </div>
+      <a href="{% url 'reserva_inicio' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver al tablero de reservas">← Volver</a>
     </div>
     <div class="mc-card">
       <div class="mc-card-title">Información del cliente</div>
@@ -66,7 +69,6 @@
         <textarea class="mc-textarea" id="mc-c-notas" placeholder="Alergias, preferencias, solicitudes especiales..." data-tooltip="Detalles extra sobre la reserva"></textarea>
       </div>
       <div class="mc-btn-row">
-        <button class="mc-btn mc-btn-secondary" onclick="mcLimpiar();mcShow('reservas')" data-tooltip="Volver sin guardar">← Volver</button>
         <button class="mc-btn mc-btn-secondary" onclick="mcLimpiar()" data-tooltip="Borrar lo escrito en el formulario">Limpiar</button>
         <button class="mc-btn mc-btn-primary" onclick="mcGuardarReserva()" id="mc-btn-guardar" data-tooltip="Guardar esta reserva">Guardar reserva</button>
       </div>

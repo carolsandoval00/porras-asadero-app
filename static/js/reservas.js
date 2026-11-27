@@ -225,7 +225,8 @@
   async function cargarReservas() {
     try {
       const data = await apiGet(API.reservas, filtrosActuales());
-      reservas = data.reservas.map(normalizarReserva);
+      // La reserva más reciente (id más alto) aparece arriba.
+      reservas = data.reservas.map(normalizarReserva).sort((x, y) => y.id - x.id);
       return true;
     } catch (e) {
       console.error(e);
@@ -388,10 +389,18 @@
     const desde = (paginaActual - 1) * POR_PAGINA;
     const pagina = reservas.slice(desde, desde + POR_PAGINA);
 
+    // Número consecutivo (01, 02, 03...) según el orden de creación, sin huecos por reservas borradas.
+    const base = reservasDiagrama.length ? reservasDiagrama : reservas;
+    const idsOrdenados = base.map(x => x.id).sort((x, y) => x - y);
+    const numeroDe = id => {
+      const i = idsOrdenados.indexOf(id);
+      return String((i >= 0 ? i : idsOrdenados.length) + 1).padStart(2, '0');
+    };
+
     tb.innerHTML = pagina.map(r => `<tr>
-      <td style="font-family:monospace;font-size:11px;color:var(--hint)">#${String(r.id).padStart(2, '0')}</td>
+      <td><strong>${numeroDe(r.id)}</strong></td>
       <td>
-        <div style="font-weight:500">${esc(r.nombre)}</div>
+        <div>${esc(r.nombre)}</div>
         <div style="font-size:12px;color:var(--muted)">${esc(r.telefono)}</div>
       </td>
       <td>${esc(getMesaLabel(r.mesa))}</td>
@@ -428,6 +437,8 @@
 
     tb.innerHTML = '<tr><td colspan="8"><div class="mc-empty"><p>Cargando…</p></div></td></tr>';
     await cargarReservas();
+    // Lista completa (sin filtros) para que el número consecutivo no cambie al filtrar.
+    await cargarReservasDiagrama();
     pintarTabla();
   };
 

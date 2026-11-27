@@ -42,16 +42,19 @@
             </button>
         </form>
 
+        <div class="mb-3 mt-3 text-end">
+            <a href="{% url 'recuperar_password' %}" class="text-decoration-none" style="font-size:0.9rem;">
+                ¿Olvidaste tu contraseña?
+            </a>
+        </div>
+
         <div class="auth-divider">o</div>
         <a href="{% url 'registro' %}" class="btn-auth-outline">
             <i class="bi bi-person-plus me-2"></i>Crear usuario
         </a>
-        <div class="mb-3 text-end">
-    <a href="{% url 'recuperar_password' %}" class="text-decoration-none" style="font-size:0.9rem;">
-        ¿Olvidaste tu contraseña?
-    </a>
-</div>
-
+        <a href="/" class="btn-auth-outline">
+            <i class="bi bi-arrow-left me-2"></i>Volver a la página web
+        </a>
     </div>
 </div>
 

@@ -525,3 +525,7 @@ body{font-family:'Segoe UI', system-ui, sans-serif; color:var(--text); backgroun
 .mc-confirm-overlay.restringido .mc-confirm-btns button.mc-btn:hover {
   background: #3a2a18 !important;
 }
+
+/* ===== Botón "← Volver" arriba a la derecha (igual que Pagos y Pedidos) ===== */
+.mc-sec-header-row{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;flex-wrap:wrap}
+.mc-volver-bar{display:flex;justify-content:flex-end;margin-bottom:1rem}

@@ -25,16 +25,17 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>Pedidos</h3>
-      {% if request.user.rol == 'ADMIN' or request.user.is_superuser %}
       <div class="pm-card-header-actions">
+        {% if request.user.rol == 'ADMIN' or request.user.is_superuser %}
         <a href="{% url 'pedidos:pedido_exportar_pdf' %}?q={{ q }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
            class="pm-btn pm-btn-danger pm-btn-sm" data-tooltip="Descargar en PDF">⬇ PDF</a>
         <a href="{% url 'pedidos:pedido_exportar_excel' %}?q={{ q }}&filtro_fecha={{ filtro_fecha }}&fecha_dia={{ fecha_dia }}&fecha_mes={{ fecha_mes }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
            class="pm-btn pm-btn-success pm-btn-sm" data-tooltip="Descargar en Excel">⬇ Excel</a>
         <button onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Imprimir esta lista">🖨 Imprimir</button>
         <a href="{% url 'pedidos:pedido_crear' %}" class="pm-btn pm-btn-accent pm-btn-sm" data-tooltip="Hacer un pedido nuevo">Nuevo pedido</a>
+        {% endif %}
+        <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver al tablero">← Volver</a>
       </div>
-      {% endif %}
     </div>
 
     <div class="pm-card-body">

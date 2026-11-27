@@ -24,7 +24,7 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>{% if pedido %}Editar Pedido #{{ pedido.posicion_secuencial|stringformat:"02d" }}{% else %}Crear Pedido{% endif %}</h3>
-      <a href="{% url 'pedidos:pedido_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de pedidos">← Volver</a>
+      <a href="{% if pedido %}{% url 'pedidos:pedido_lista' %}{% else %}{% url 'pedidos:dashboard' %}{% endif %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="{% if pedido %}Volver a la lista de pedidos{% else %}Volver al tablero{% endif %}">← Volver</a>
     </div>
     <div class="pm-card-body">
       {# novalidate: evita las burbujas del navegador para que los avisos salgan en la ventanita #}
@@ -34,13 +34,13 @@
 
         <div class="pm-form-grid pm-form-grid-mb">
           <div class="full">
-            <label>Cliente <span class="req-star" style="color:#C0392B;">*</span></label>
+            <label>Cliente</label>
             {{ form.cliente }}
           </div>
 
           {# ── MESERO: lista desplegable con los usuarios de rol MESERO ── #}
           <div class="full">
-            <label for="id_mesero">Mesero <span class="req-star" style="color:#C0392B;">*</span></label>
+            <label for="id_mesero">Mesero</label>
             <select name="mesero" id="id_mesero" class="pm-select-producto" data-tooltip="Elige el mesero que tomó el pedido">
               <option value="">— Selecciona un mesero —</option>
               {% for m in meseros %}
@@ -58,7 +58,7 @@
             {{ form.mesa }}
           </div>
           <div>
-            <label>Tipo de Pedido <span class="req-star" style="color:#C0392B;">*</span></label>
+            <label>Tipo de Pedido</label>
             {{ form.tipo_pedido }}
           </div>
           <div>
