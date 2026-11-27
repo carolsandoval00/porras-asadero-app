@@ -151,6 +151,11 @@
                             <i class="bi bi-plus-circle me-2"></i>Abrir caja
                         </a>
                     </li>
+                    <li>
+                        <a href="{% url 'pago:ventas_mensuales' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'ventas_mensuales' %}text-warning fw-bold{% endif %}">
+                            <i class="bi bi-bar-chart-line me-2"></i>Ventas por mes
+                        </a>
+                    </li>
                 </ul>
             </div>
         </li>
@@ -410,6 +415,11 @@
                         <li>
                             <a href="{% url 'pago:dashboard' %}?tab=abrir-caja" class="nav-link py-1 {% if request.resolver_match.namespace == 'pago' and request.GET.tab == 'abrir-caja' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
                                 <i class="bi bi-plus-circle me-2"></i>Abrir caja
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'pago:ventas_mensuales' %}" class="nav-link py-1 {% if request.resolver_match.url_name == 'ventas_mensuales' %}text-warning fw-bold{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
+                                <i class="bi bi-bar-chart-line me-2"></i>Ventas por mes
                             </a>
                         </li>
                     </ul>
