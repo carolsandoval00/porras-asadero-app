@@ -48,6 +48,44 @@
 .pia-fab:active { transform: scale(.96); }
 .pia-fab:focus-visible { outline: 3px solid var(--pia-ink); outline-offset: 3px; }
 
+/* ---------- Animación del botón (igual que el de accesibilidad) ---------- */
+.pia-fab {
+  animation: pia-fab-float 3.6s ease-in-out infinite, pia-fab-glow 3.6s ease-in-out infinite;
+}
+
+@keyframes pia-fab-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+@keyframes pia-fab-glow {
+  0%, 100% { box-shadow: 0 6px 18px rgba(26, 16, 8, .35); }
+  50%      { box-shadow: 0 8px 26px rgba(26, 16, 8, .45); }
+}
+
+/* Dos aros que se expanden y se desvanecen */
+.pia-fab::before,
+.pia-fab::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid #D4A24C;
+  opacity: 0;
+  pointer-events: none;
+  animation: pia-fab-ping 3.2s ease-out infinite;
+}
+.pia-fab::after {
+  border-color: var(--pia-orange);
+  animation-delay: 1.1s;
+}
+
+@keyframes pia-fab-ping {
+  0%   { transform: scale(0.85); opacity: 0.55; }
+  70%  { transform: scale(1.45); opacity: 0; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+
 .pia-fab-badge {
   position: absolute;
   top: 0;
