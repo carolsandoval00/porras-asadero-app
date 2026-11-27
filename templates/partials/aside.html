@@ -213,11 +213,11 @@
             </a>
         </li>
 
-        <!-- Copia de Seguridad (Sólo Admin) -->
+        <!-- Copia de Seguridad (solo administradores) -->
         {% if user.rol == 'ADMIN' or user.is_superuser %}
         <li class="nav-item">
             <a href="{% url 'backup:backup' %}" class="nav-link {% if request.resolver_match.app_name == 'backup' %}active-custom{% endif %}">
-                <i class="bi bi-database-fill-gear me-2"></i>
+                <i class="bi bi-database-gear me-2"></i>
                 Copia de Seguridad
             </a>
         </li>
@@ -479,11 +479,11 @@
                 </a>
             </li>
 
-            <!-- Copia de Seguridad (Sólo Admin) -->
+            <!-- Copia de Seguridad (solo administradores) -->
             {% if user.rol == 'ADMIN' or user.is_superuser %}
             <li class="nav-item">
                 <a href="{% url 'backup:backup' %}" class="nav-link {% if request.resolver_match.app_name == 'backup' %}active-custom{% endif %}" onclick="bootstrap.Offcanvas.getInstance(document.getElementById('mobileSidebar')).hide();">
-                    <i class="bi bi-database-fill-gear me-2"></i>
+                    <i class="bi bi-database-gear me-2"></i>
                     Copia de Seguridad
                 </a>
             </li>
