@@ -38,8 +38,8 @@
     <div class="pm-card-header">
       <h3>Inventario de bebidas</h3>
       <div class="pm-card-header-actions">
-        <button type="button" onclick="exportarPDF()" class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Guardar el reporte como PDF"><i class="bi bi-download"></i> PDF</button>
-        <button type="button" onclick="exportarExcel()" class="pm-btn pm-btn-accent pm-btn-sm" style="background:#FF8A3D !important; color:#fff !important;" data-tooltip="Descargar el inventario en Excel"><i class="bi bi-download"></i> Excel</button>
+        <a href="{% url 'pedidos:inventario_exportar_pdf' %}{% if querystring %}?{{ querystring }}{% endif %}" download class="pm-btn pm-btn-primary pm-btn-sm" data-tooltip="Descargar el inventario en PDF"><i class="bi bi-download"></i> PDF</a>
+        <a href="{% url 'pedidos:inventario_exportar_excel' %}{% if querystring %}?{{ querystring }}{% endif %}" download class="pm-btn pm-btn-accent pm-btn-sm" style="background:#FF8A3D !important; color:#fff !important;" data-tooltip="Descargar el inventario en Excel"><i class="bi bi-download"></i> Excel</a>
         <button type="button" onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Imprimir el reporte"><i class="bi bi-printer-fill"></i> Imprimir</button>
         <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de productos">← Productos</a>
         <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver al tablero">← Volver</a>
@@ -238,41 +238,6 @@ function validarStockMinimo() {
 }
 document.getElementById('ajus-stock').addEventListener('input', validarStockMinimo);
 document.getElementById('ajus-minimo').addEventListener('input', validarStockMinimo);
-
-// PDF: abre el diálogo de impresión con el nombre del archivo ya puesto.
-// En "Destino" elige "Guardar como PDF".
-function exportarPDF() {
-  var tituloOriginal = document.title;
-  var hoy = new Date().toISOString().slice(0, 10);
-  document.title = 'Inventario_bebidas_' + hoy;
-  window.print();
-  document.title = tituloOriginal;
-}
-
-// Excel: descarga la tabla (sin la columna Acciones) como archivo .xls
-function exportarExcel() {
-  var tabla = document.querySelector('.pm-table');
-  var filas = [];
-  tabla.querySelectorAll('tr').forEach(function (tr) {
-    var celdas = tr.querySelectorAll('th, td');
-    if (celdas.length < 7) return;
-    var fila = [];
-    for (var i = 0; i < celdas.length - 1; i++) {
-      var txt = celdas[i].textContent.trim().replace(/\s+/g, ' ')
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      fila.push('<td>' + txt + '</td>');
-    }
-    filas.push('<tr>' + fila.join('') + '</tr>');
-  });
-  var html = '<html><head><meta charset="UTF-8"></head><body><table border="1">' + filas.join('') + '</table></body></html>';
-  var blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel;charset=utf-8' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'Inventario_bebidas_' + new Date().toISOString().slice(0, 10) + '.xls';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
 </script>
 
 {% endblock %}
