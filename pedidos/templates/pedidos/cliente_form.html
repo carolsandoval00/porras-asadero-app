@@ -26,19 +26,19 @@
         {% csrf_token %}
         <div class="pm-form-grid">
           <div class="full">
-            <label>Nombre Completo</label>
+            <label>Nombre Completo <span class="req-star" style="color:#C0392B;">*</span></label>
             {{ form_cliente.nombre_completo }}
           </div>
           <div>
-            <label>Tipo de Documento</label>
+            <label>Tipo de Documento <span class="req-star" style="color:#C0392B;">*</span></label>
             {{ form_cliente.tipo_documento }}
           </div>
           <div>
-            <label>Número de Documento</label>
+            <label>Número de Documento <span class="req-star" style="color:#C0392B;">*</span></label>
             {{ form_cliente.documento }}
           </div>
           <div>
-            <label>Teléfono de Contacto</label>
+            <label>Teléfono de Contacto <span class="req-star" style="color:#C0392B;">*</span></label>
             {{ form_cliente.telefono }}
           </div>
           <div class="full"><label>Dirección física (domicilios)</label>{{ form_cliente.direccion }}</div>
