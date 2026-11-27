@@ -1,11 +1,12 @@
 """Asistente virtual del panel administrativo (PIA para Porras Asadero)."""
 import json
 import os
-from datetime import date, datetime
+from datetime import date
 
 import httpx
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from reservas.models import Mesa, Reserva
@@ -22,9 +23,24 @@ MAX_TOKENS = 2000
 TIMEOUT_SEGUNDOS = 60
 MAX_HISTORIAL = 10
 
+DIAS_ES = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+MESES_ES = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+]
+
 
 class GeminiError(Exception):
     """Error devuelto por la API gratuita de Gemini."""
+
+
+def fecha_es(fecha=None):
+    """Devuelve la fecha en español sin depender del idioma del sistema.
+
+    Ejemplo: 'jueves 26 de noviembre de 2026'.
+    """
+    fecha = fecha or timezone.localdate()
+    return f"{DIAS_ES[fecha.weekday()]} {fecha.day} de {MESES_ES[fecha.month - 1]} de {fecha.year}"
 
 
 def _construir_contexto_admin():
@@ -56,7 +72,7 @@ def _construir_contexto_admin():
     ).count()
 
     return (
-        f"Fecha de hoy: {hoy.strftime('%A %d de %B de %Y')}.\n"
+        f"Fecha de hoy: {fecha_es(hoy)}.\n"
         f"Mesas: {total_mesas} en total — {libres} libres, {ocupadas} ocupadas, "
         f"{reservadas_mesa} reservadas.\n"
         f"Reservas de hoy: {reservas_hoy_count} en total "
@@ -67,7 +83,7 @@ def _construir_contexto_admin():
 
 
 def _construir_system_prompt(nombre_usuario):
-    fecha_hoy = datetime.now().strftime('%A, %d de %B de %Y')
+    fecha_hoy = fecha_es()
     contexto_datos = _construir_contexto_admin()
 
     return f"""Te llamas PIA (Porras IA), el Asistente Virtual del panel administrativo de
