@@ -14,6 +14,7 @@
 </div>
 
 <div class="mc-wrap">
+  <div class="mc-volver-bar"><a href="{% url 'reserva_inicio' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver al tablero de reservas">← Volver</a></div>
 
   {% if messages %}
     {% for msg in messages %}
@@ -60,7 +61,6 @@
         </select>
       </div>
       <div class="mc-btn-row">
-        <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary" data-tooltip="Volver sin guardar">← Volver</a>
         <button type="submit" class="mc-btn mc-btn-primary" data-tooltip="Guardar los cambios de esta mesa">Guardar cambios</button>
       </div>
     </form>

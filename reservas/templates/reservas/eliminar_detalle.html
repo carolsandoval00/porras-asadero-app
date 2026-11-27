@@ -16,6 +16,7 @@
 </div>
 
 <div class="mc-wrap">
+  <div class="mc-volver-bar"><a href="{% url 'reserva_inicio' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver al tablero de reservas">← Volver</a></div>
 
   {% if messages %}
     {% for msg in messages %}
@@ -122,7 +123,6 @@
         </div>
 
         <div class="mc-btn-row" id="ed-btn-row">
-          <a href="{% url 'reserva_inicio' %}" class="mc-btn mc-btn-secondary">← Volver</a>
           <button type="button" class="mc-btn mc-btn-primary" onclick="edPedirConfirmacion()">Eliminar reserva</button>
         </div>
       </form>

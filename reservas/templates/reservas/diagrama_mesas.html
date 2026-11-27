@@ -1,7 +1,10 @@
 <div id="mc-mesas" class="mc-section">
-    <div class="mc-sec-header">
+    <div class="mc-sec-header mc-sec-header-row">
+      <div>
       <h2>Diagrama de mesas</h2>
       <p>Vista del salón en tiempo real — haz clic en una mesa para ver detalles o cambiar su estado</p>
+    </div>
+      <a href="{% url 'reserva_inicio' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver al tablero de reservas">← Volver</a>
     </div>
     <div class="mc-filter-bar">
       <select class="mc-select" id="mc-filtro-diagrama" onchange="mcRenderDiagrama()" data-tooltip="Filtra las mesas por estado">
