@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{%load static%}
+{% load static %}
 {% block content %}
 
 <section id="menu" class="bg-humo py-5 px-4 px-md-5">
@@ -7,8 +7,6 @@
         <p class="ff-oswald fw-light text-uppercase text-naranja mb-2 section-subtitle">Lo Mejor de Nuestro Asadero</p>
         <h2 class="ff-playfair fw-bold text-crema display-4">Nuestro Menú</h2>
         <div class="gold-line mb-5"></div>
-       
-
 
         <div class="row g-1">
             {% for cat in categorias_menu %}
@@ -26,7 +24,7 @@
                         {% endif %}
                     </div>
                     <p class="ff-oswald fw-bold text-dorado text-uppercase mb-4 menu-card-title">{{ cat.nombre }}</p>
-                    
+
                     {% for prod in cat.productos.all %}
                         {% if prod.disponible %}
                         <div class="d-flex justify-content-between align-items-baseline {% if not forloop.last %}border-bottom border-secondary border-opacity-10 pb-2 mb-3{% endif %}">
@@ -56,13 +54,30 @@
         <div class="row g-5 align-items-center">
 
             <div class="col-lg-5">
-                <div class="nosotros-img-container position-relative overflow-hidden w-100" onclick="openLightbox(document.getElementById('restauranteImg'))">
-                    <img id="restauranteImg" src="{% static 'img/restaurante.png' %}" class="w-100 h-100 object-fit-cover nosotros-img-zoom" alt="Nuestra Historia - Asadero Porras">
-                    <div class="position-absolute top-0 start-0 w-100 h-100 nosotros-img-overlay pointer-events-none"></div>
+                <div id="carruselNosotros" class="carousel slide nosotros-img-container position-relative overflow-hidden w-100" data-bs-ride="carousel" data-bs-interval="4000">
+                    <div class="carousel-inner h-100">
+                        <div class="carousel-item active h-100">
+                            <img src="{% static 'img/carrusel/restaurante.jpeg' %}" class="d-block w-100 h-100 object-fit-cover nosotros-img-zoom" alt="Nuestro salón principal" onclick="openLightbox(this)">
+                        </div>
+                        <div class="carousel-item h-100">
+                            <img src="{% static 'img/carrusel/salon_eventos_1.jpeg' %}" class="d-block w-100 h-100 object-fit-cover nosotros-img-zoom" alt="Espacio para tus celebraciones" onclick="openLightbox(this)">
+                        </div>
+                        <div class="carousel-item h-100">
+                            <img src="{% static 'img/carrusel/salon_eventos_2.jpeg' %}" class="d-block w-100 h-100 object-fit-cover nosotros-img-zoom" alt="Decoración para cada ocasión" onclick="openLightbox(this)">
+                        </div>
+                    </div>
+
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carruselNosotros" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carruselNosotros" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Siguiente</span>
+                    </button>
                 </div>
             </div>
 
-           
             <div class="col-lg-7">
                 <p class="ff-oswald fw-light text-uppercase text-naranja mb-2 section-subtitle">Quiénes Somos</p>
                 <h2 class="ff-playfair fw-bold text-crema display-4 lh-1 mb-3">Nuestra<br>Historia</h2>
@@ -70,14 +85,13 @@
                 <p class="text-white-50 lh-lg mb-3">En Asadero Porras, creemos que el fuego y la familia son el alma de la buena mesa. Lo que comenzó como un sueño compartido por llevar el sabor auténtico del campo a la ciudad, se ha convertido hoy en el punto de encuentro favorito de quienes buscan calidad y tradición.</p>
                 <p class="text-white-50 lh-lg mb-3">Aquí, el secreto no es otro que el respeto por el producto: cortes de carne seleccionados asados lentamente al fuego y sopas preparadas con el tiempo y el cariño de las recetas de casa. En nuestra cocina, cada plato es un homenaje a nuestras raíces y cada cliente, un invitado de honor en nuestra mesa.</p>
                 <p class="fst-italic text-white-50 mb-4">¡Bienvenidos al sabor que nos une!</p>
-             
-                
-
-    
+            </div>
 
         </div>
     </div>
 </section>
+
+        
 
 <section id="contacto" class="bg-humo py-5 px-4 px-md-5 text-center">
     <div class="container-xl">
@@ -117,7 +131,7 @@
         </div>
 
         <div class="row g-4 mt-5 text-start justify-content-center align-items-stretch">
-            
+
             <div class="col-lg-5 text-start d-flex flex-column">
                 <div class="p-4 p-md-5 bg-negro border h-100 d-flex flex-column justify-content-center whatsapp-cta-card">
                     <div class="d-flex align-items-center gap-3 mb-3">
@@ -125,82 +139,83 @@
                         <h3 class="ff-oswald fw-bold text-dorado text-uppercase mb-0 whatsapp-cta-title">Pedidos y Reservas</h3>
                     </div>
                     <p class="text-white-50 mb-4 lh-lg">¿Listo para saborear la mejor parrilla de Sogamoso? Escríbenos directamente a nuestro WhatsApp. Atendemos tus reservas, pedidos a domicilio y consultas especiales al instante.</p>
-<!-- Botón flotante de WhatsApp -->
-<a href="https://wa.me/573123883777?text=Hola!%20Quiero%20hacer%20un%20pedido%20en%20Asadero%20Porras."target="_blank" rel="noopener noreferrer"class="whatsapp-float" aria-label="Escríbenos por WhatsApp"data-tip="Escríbenos por WhatsApp">
-    <i class="bi bi-whatsapp"></i>
-</a>
 
-<style>
-    .whatsapp-float {
-        position: fixed;
-        right: 28px;
-        bottom: 24px; /* debajo del botón de accesibilidad */
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: #25d366;
-        color: #fff;
-        font-size: 1.9rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-        z-index: 1050;
-        transition: transform 0.2s ease;
-    }
-    .whatsapp-float:hover {
-        transform: scale(1.1);
-        color: #fff;
-    }
+                    <!-- Botón flotante de WhatsApp -->
+                    <a href="https://wa.me/573123883777?text=Hola!%20Quiero%20hacer%20un%20pedido%20en%20Asadero%20Porras." target="_blank" rel="noopener noreferrer" class="whatsapp-float" aria-label="Escríbenos por WhatsApp" data-tip="Escríbenos por WhatsApp">
+                        <i class="bi bi-whatsapp"></i>
+                    </a>
 
-    /* Tooltip */
-.whatsapp-float::after {
-    content: attr(data-tip);
-    position: absolute;
-    right: 72px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 130px;
-    background: #1f130b;
-    color: #f5e6c8;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-family: 'Crimson Text', Georgia, serif;
-    font-size: 0.8rem;
-    font-weight: 400;
-    line-height: 1.25;
-    text-align: left;
-    white-space: normal;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-}
+                    <style>
+                        .whatsapp-float {
+                            position: fixed;
+                            right: 28px;
+                            bottom: 24px; /* debajo del botón de accesibilidad */
+                            width: 56px;
+                            height: 56px;
+                            border-radius: 50%;
+                            background: #25d366;
+                            color: #fff;
+                            font-size: 1.9rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            text-decoration: none;
+                            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+                            z-index: 1050;
+                            transition: transform 0.2s ease;
+                        }
+                        .whatsapp-float:hover {
+                            transform: scale(1.1);
+                            color: #fff;
+                        }
 
-/* Flecha naranja hacia el botón */
-.whatsapp-float::before {
-    content: "";
-    position: absolute;
-    right: 60px;
-    top: 50%;
-    transform: translateY(-50%);
-    border-style: solid;
-    border-width: 6px 0 6px 10px;
-    border-color: transparent transparent transparent #e8730c;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-    z-index: 1;
-}
+                        /* Tooltip */
+                        .whatsapp-float::after {
+                            content: attr(data-tip);
+                            position: absolute;
+                            right: 72px;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            width: 130px;
+                            background: #1f130b;
+                            color: #f5e6c8;
+                            padding: 10px 14px;
+                            border-radius: 8px;
+                            font-family: 'Crimson Text', Georgia, serif;
+                            font-size: 0.8rem;
+                            font-weight: 400;
+                            line-height: 1.25;
+                            text-align: left;
+                            white-space: normal;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                            opacity: 0;
+                            pointer-events: none;
+                            transition: opacity 0.2s ease;
+                        }
 
-    .whatsapp-float:hover::after,
-    .whatsapp-float:hover::before,
-    .whatsapp-float:focus-visible::after,
-    .whatsapp-float:focus-visible::before {
-        opacity: 1;
-    }
-</style>
+                        /* Flecha naranja hacia el botón */
+                        .whatsapp-float::before {
+                            content: "";
+                            position: absolute;
+                            right: 60px;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            border-style: solid;
+                            border-width: 6px 0 6px 10px;
+                            border-color: transparent transparent transparent #e8730c;
+                            opacity: 0;
+                            pointer-events: none;
+                            transition: opacity 0.2s ease;
+                            z-index: 1;
+                        }
+
+                        .whatsapp-float:hover::after,
+                        .whatsapp-float:hover::before,
+                        .whatsapp-float:focus-visible::after,
+                        .whatsapp-float:focus-visible::before {
+                            opacity: 1;
+                        }
+                    </style>
                 </div>
             </div>
 
@@ -214,35 +229,34 @@
     </div>
 </section>
 
-    <!-- Image Lightbox Modal -->
-    <div id="imageLightbox" class="lightbox-modal" onclick="closeLightbox()">
-        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
-        <img class="lightbox-content" id="lightboxImg">
-        <div id="lightboxCaption" class="lightbox-caption"></div>
-    </div>
+<!-- Image Lightbox Modal -->
+<div id="imageLightbox" class="lightbox-modal" onclick="closeLightbox()">
+    <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+    <img class="lightbox-content" id="lightboxImg">
+    <div id="lightboxCaption" class="lightbox-caption"></div>
+</div>
 
-    <script>
-        function openLightbox(element) {
-            const lightbox = document.getElementById('imageLightbox');
-            const lightboxImg = document.getElementById('lightboxImg');
-            const lightboxCaption = document.getElementById('lightboxCaption');
-            
-            lightboxImg.src = element.src;
-            lightboxCaption.innerHTML = element.alt || 'Asadero Porras';
-            lightbox.style.display = 'flex';
-            setTimeout(() => {
-                lightbox.classList.add('show');
-            }, 10);
-        }
+<script>
+    function openLightbox(element) {
+        const lightbox = document.getElementById('imageLightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        const lightboxCaption = document.getElementById('lightboxCaption');
 
-        function closeLightbox() {
-            const lightbox = document.getElementById('imageLightbox');
-            lightbox.classList.remove('show');
-            setTimeout(() => {
-                lightbox.style.display = 'none';
-            }, 300);
-        }
-    </script>
+        lightboxImg.src = element.src;
+        lightboxCaption.innerHTML = element.alt || 'Asadero Porras';
+        lightbox.style.display = 'flex';
+        setTimeout(() => {
+            lightbox.classList.add('show');
+        }, 10);
+    }
 
+    function closeLightbox() {
+        const lightbox = document.getElementById('imageLightbox');
+        lightbox.classList.remove('show');
+        setTimeout(() => {
+            lightbox.style.display = 'none';
+        }, 300);
+    }
+</script>
 
 {% endblock content %}
