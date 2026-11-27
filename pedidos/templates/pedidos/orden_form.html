@@ -1,10 +1,9 @@
 {% extends "base 2.html" %}
-{% block title %}Órdenes{% endblock title %}
+{% block title %}Productos{% endblock title %}
 {% load static %}
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/pedidos.css' %}">
-
 <div class="pm-wrapper">
   <!-- Cabecera -->
   <div class="pm-header">
@@ -12,99 +11,46 @@
     <h2>Bienvenido, {{ nombre|default:user.get_full_name|default:user.username }}</h2>
   </div>
 
-  {% if messages %}
-    {% for msg in messages %}
-    <div class="pm-alert pm-alert-{{ msg.tags }}">{{ msg }}</div>
-    {% endfor %}
-  {% endif %}
+  {# Los mensajes de Django (éxito y errores) salen en la ventanita de base 2.html #}
 
   <!-- Formulario -->
   <div class="pm-card">
     <div class="pm-card-header">
-      <h3>Editar Orden: {{ orden_editando.numero_orden }}</h3>
-      <a href="{% url 'pedidos:orden_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de órdenes">← Volver</a>
+      <h3>{% if producto_editando %}Editar Producto: {{ producto_editando.nombre }}{% else %}Crear Producto{% endif %}</h3>
+      <a href="{% if producto_editando %}{% url 'pedidos:producto_lista' %}{% else %}{% url 'pedidos:dashboard' %}{% endif %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="{% if producto_editando %}Volver a la lista de productos{% else %}Volver al tablero{% endif %}">← Volver</a>
     </div>
     <div class="pm-card-body">
-      <form method="post" action="" class="pm-form">
+      {# novalidate: evita las burbujas del navegador para que los avisos salgan en la ventanita #}
+      <form method="post" action="" class="pm-form" novalidate>
         {% csrf_token %}
         <div class="pm-form-grid">
           <div class="full">
-            <label>Cliente</label>
-            {{ form_orden.cliente }}
-            {% for error in form_orden.cliente.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
-          </div>
-          <div class="full">
-            <label>Mesa</label>
-            {{ form_orden.mesa }}
-            {% for error in form_orden.mesa.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
+            <label>Nombre del Producto</label>
+            {{ form_producto.nombre }}
           </div>
           <div>
-            <label>Tipo de Pedido</label>
-            {{ form_orden.tipo_pedido }}
-            {% for error in form_orden.tipo_pedido.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
+            <label>Categoría</label>
+            {{ form_producto.categoria }}
           </div>
           <div>
-            <label>Estado</label>
-            {{ form_orden.estado }}
-            {% for error in form_orden.estado.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
+            <label>Precio ($)</label>
+            {{ form_producto.precio }}
           </div>
-          <div>
-            <label>Subtotal ($)</label>
-            {{ form_orden.subtotal }}
-            {% for error in form_orden.subtotal.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
-          </div>
-          <div>
-            <label>Impuestos ($)</label>
-            {{ form_orden.impuestos }}
-            {% for error in form_orden.impuestos.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
-          </div>
-          <div>
-            <label>Total ($)</label>
-            {{ form_orden.total }}
-            {% for error in form_orden.total.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
-          </div>
-          <div class="full">
-            <label>Notas</label>
-            {{ form_orden.descripcion }}
-            {% for error in form_orden.descripcion.errors %}
-              <div class="pm-field-error">{{ error }}</div>
-            {% endfor %}
+          <div class="full"><label>Descripción</label>{{ form_producto.descripcion }}</div>
+          <div class="pm-check-row">
+            {{ form_producto.disponible }}
+            <label data-tooltip="Si lo desmarcas, el producto no aparecerá disponible para la venta">Disponible para venta</label>
           </div>
         </div>
         <div class="pm-form-actions">
-          <button type="submit" class="pm-btn pm-btn-primary" data-tooltip="Guardar los cambios de esta orden">Actualizar Orden</button>
-          <a href="{% url 'pedidos:orden_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Descartar los cambios y volver">Cancelar</a>
+          <button type="submit" class="pm-btn pm-btn-accent" data-tooltip="Guardar este producto">
+            {% if producto_editando %}Actualizar Producto{% else %}Crear Producto{% endif %}
+          </button>
+          <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light" data-tooltip="Descartar los cambios y volver">Cancelar</a>
         </div>
       </form>
     </div>
   </div>
 </div>
-
-<script>
-  function soloLectura(input) {
-    if (!input) return;
-    input.setAttribute('readonly', 'readonly');
-    input.style.background = 'var(--p-surface)';
-    input.style.cursor = 'not-allowed';
-    input.style.color = 'var(--p-muted)';
-  }
-  soloLectura(document.getElementById('id_subtotal'));
-  soloLectura(document.getElementById('id_impuestos'));
-  soloLectura(document.getElementById('id_total'));
-</script>
 
 {% endblock %}

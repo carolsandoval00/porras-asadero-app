@@ -18,7 +18,7 @@
   <div class="pm-card">
     <div class="pm-card-header">
       <h3>{% if cliente_editando %}Editar Cliente: {{ cliente_editando.nombre_completo }}{% else %}Registrar Cliente{% endif %}</h3>
-      <a href="{% url 'pedidos:cliente_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de clientes">← Volver</a>
+      <a href="{% if cliente_editando %}{% url 'pedidos:cliente_lista' %}{% else %}{% url 'pedidos:dashboard' %}{% endif %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="{% if cliente_editando %}Volver a la lista de clientes{% else %}Volver al tablero{% endif %}">← Volver</a>
     </div>
     <div class="pm-card-body">
       {# novalidate: evita las burbujas del navegador para que los avisos salgan en la ventanita #}
@@ -26,19 +26,19 @@
         {% csrf_token %}
         <div class="pm-form-grid">
           <div class="full">
-            <label>Nombre Completo <span class="req-star" style="color:#C0392B;">*</span></label>
+            <label>Nombre Completo</label>
             {{ form_cliente.nombre_completo }}
           </div>
           <div>
-            <label>Tipo de Documento <span class="req-star" style="color:#C0392B;">*</span></label>
+            <label>Tipo de Documento</label>
             {{ form_cliente.tipo_documento }}
           </div>
           <div>
-            <label>Número de Documento <span class="req-star" style="color:#C0392B;">*</span></label>
+            <label>Número de Documento</label>
             {{ form_cliente.documento }}
           </div>
           <div>
-            <label>Teléfono de Contacto <span class="req-star" style="color:#C0392B;">*</span></label>
+            <label>Teléfono de Contacto</label>
             {{ form_cliente.telefono }}
           </div>
           <div class="full"><label>Dirección física (domicilios)</label>{{ form_cliente.direccion }}</div>
