@@ -1,0 +1,148 @@
+{% extends "base 2.html" %}
+{% block title %}Ventas por mes{% endblock title %}
+{% load static %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/pago.css' %}">
+
+<div class="pg-wrapper">
+
+  <div class="pg-header">
+    <h1>Ventas por mes</h1>
+    <p>Bienvenido, {{ nombre }}</p>
+  </div>
+
+  <div class="pg-card">
+    <div class="pg-card-header">
+      <h3>Resumen de {{ anio }}</h3>
+      <div class="vm-acciones">
+        <form method="get" class="vm-form-anio">
+          <label for="vm-anio">Año</label>
+          <select id="vm-anio" name="anio" onchange="this.form.submit()">
+            {% for a in anios %}
+            <option value="{{ a }}"{% if a == anio %} selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+          </select>
+          <noscript><button type="submit" class="pg-btn pg-btn-accent pg-btn-sm">Ver</button></noscript>
+        </form>
+        <a href="{% url 'pago:dashboard' %}" class="pg-btn pg-btn-light pg-btn-sm"
+           data-tooltip="Volver al panel de pagos">← Volver</a>
+      </div>
+    </div>
+
+    <div class="pg-card-body">
+
+      <div class="pg-stats">
+        <div class="pg-stat red">
+          <div class="val">${{ total_anio_fmt }}</div>
+          <div class="lbl">Total vendido en {{ anio }}</div>
+        </div>
+        <div class="pg-stat">
+          <div class="val">${{ promedio_fmt }}</div>
+          <div class="lbl">Promedio mensual</div>
+        </div>
+        <div class="pg-stat">
+          <div class="val">{% if mejor %}{{ mejor.nombre }}{% else %}—{% endif %}</div>
+          <div class="lbl">Mejor mes{% if mejor %} · ${{ mejor.total_fmt }}{% endif %}</div>
+        </div>
+        <div class="pg-stat">
+          <div class="val">{% if peor %}{{ peor.nombre }}{% else %}—{% endif %}</div>
+          <div class="lbl">Mes más bajo{% if peor %} · ${{ peor.total_fmt }}{% endif %}</div>
+        </div>
+      </div>
+
+      {% if total_pagos %}
+      <div class="vm-chart-wrap">
+        <div class="vm-chart">
+          {% if linea_promedio %}
+          <div class="vm-linea-promedio" style="bottom: {{ linea_promedio|floatformat:2 }}%;" data-tooltip="Promedio mensual">
+            <span>Promedio</span>
+          </div>
+          {% endif %}
+          {% for m in meses %}
+          <div class="vm-col" data-tooltip="{{ m.nombre }}: ${{ m.total_fmt }} ({{ m.estado_txt }})">
+            <div class="vm-barra-zona">
+              <div class="vm-barra vm-{{ m.estado }}" style="height: {{ m.altura|floatformat:2 }}%;"></div>
+            </div>
+            <span class="vm-mes">{{ m.abrev }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="vm-leyenda">
+        <span><i class="vm-punto vm-buena"></i> Buena</span>
+        <span><i class="vm-punto vm-regular"></i> Regular</span>
+        <span><i class="vm-punto vm-baja"></i> Baja</span>
+        <span><i class="vm-punto vm-curso"></i> En curso</span>
+      </div>
+      {% endif %}
+
+      <div class="pg-table-wrap">
+        <table class="pg-table">
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th data-tooltip="Suma de todos los pagos registrados en el mes">Ventas</th>
+              <th data-tooltip="Cantidad de pagos registrados en el mes">Pagos</th>
+              <th data-tooltip="Ventas del mes divididas entre la cantidad de pagos">Pago promedio</th>
+              <th data-tooltip="Cuánto subieron o bajaron las ventas frente al mes anterior">Variación</th>
+              <th data-tooltip="Comparación del mes con el promedio mensual del año">Resultado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in meses %}
+            <tr{% if m.estado == 'sin' %} class="vm-fila-sin"{% endif %}>
+              <td><strong>{{ m.nombre }}</strong></td>
+              <td><strong class="pg-text-primary">${{ m.total_fmt }}</strong></td>
+              <td>{{ m.cantidad }}</td>
+              <td>{% if m.cantidad %}${{ m.ticket_fmt }}{% else %}<span class="pg-text-muted">—</span>{% endif %}</td>
+              <td>
+                {% if m.variacion is not None %}
+                  {% if m.variacion > 0 %}
+                    <span class="vm-var vm-var-sube">▲ {{ m.variacion }} %</span>
+                  {% elif m.variacion < 0 %}
+                    <span class="vm-var vm-var-baja">▼ {{ m.variacion }} %</span>
+                  {% else %}
+                    <span class="vm-var">= 0 %</span>
+                  {% endif %}
+                  <small class="vm-var-detalle">{{ m.diferencia_fmt }}{% if m.en_curso %} · mes en curso{% endif %}</small>
+                {% elif m.var_nota %}
+                  <small class="vm-var-detalle" data-tooltip="{{ m.var_detalle }}">{{ m.var_nota }}</small>
+                {% else %}
+                  <span class="pg-text-muted">—</span>
+                {% endif %}
+              </td>
+              <td><span class="vm-badge vm-badge-{{ m.estado }}">{{ m.estado_txt }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <details class="vm-ayuda">
+        <summary>¿Cómo se lee esta tabla?</summary>
+        <ul>
+          <li><strong>Ventas:</strong> la suma de todos los pagos registrados ese mes.</li>
+          <li><strong>Pagos:</strong> cuántos pagos se registraron ese mes.</li>
+          <li><strong>Pago promedio:</strong> las ventas del mes divididas entre la cantidad de pagos. Dice cuánto se pagó en promedio cada vez. Ejemplo: $1.000.000 en 10 pagos son $100.000 por pago.</li>
+          <li><strong>Variación:</strong> cuánto subieron (▲) o bajaron (▼) las ventas frente al mes de antes, en porcentaje y en pesos. Ejemplo: si octubre vendió $1.000.000 y noviembre $1.200.000, noviembre muestra ▲ 20 % y +$200.000. Si el mes anterior no tuvo ventas aparece "Sin comparación".</li>
+          <li><strong>Resultado:</strong> compara el mes con el promedio mensual del año (Buena, Regular o Baja).</li>
+        </ul>
+      </details>
+
+      <p class="vm-nota">
+        Las ventas son la suma de los pagos registrados en cada mes. Un mes es
+        <strong>Buena</strong> si vendió {{ umbral }} % o más por encima del promedio mensual,
+        <strong>Baja</strong> si vendió {{ umbral }} % o más por debajo, y
+        <strong>Regular</strong> en los demás casos. El mes en curso no se califica
+        hasta que termine.
+      </p>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock content %}

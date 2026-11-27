@@ -6,6 +6,7 @@
       <div class="pg-flex-gap-md">
         <a href="{% url 'pago:recibos' %}" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Ver todos los recibos de pago">Ver recibos</a>
         <button class="pg-btn pg-btn-accent pg-btn-sm" onclick="showTab('abrir-caja')" data-tooltip="Abrir una nueva caja">+ Abrir caja</button>
+        <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Volver a órdenes por pagar">← Volver</a>
       </div>
     </div>
     <div class="pg-card-body">
@@ -252,7 +253,7 @@
   <div class="pg-card">
     <div class="pg-card-header">
       <h3>Abrir caja</h3>
-      <button class="pg-btn pg-btn-light pg-btn-sm" onclick="showTab('pendientes')" data-tooltip="Cancelar y volver">← Volver</button>
+      <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Volver a órdenes por pagar">← Volver</a>
     </div>
     <div class="pg-card-body">
       <form method="post" action="{% url 'pago:dashboard' %}" class="pg-form caja-form">
@@ -312,7 +313,7 @@
         {% endif %}
         <div class="pg-form-actions">
           <button type="submit" class="pg-btn pg-btn-accent" data-tooltip="Guardar la apertura de esta caja">Abrir caja</button>
-          <button type="button" class="pg-btn pg-btn-light" onclick="showTab('pendientes')" data-tooltip="Descartar y volver">Cancelar</button>
+          <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="pg-btn pg-btn-light" data-tooltip="Descartar y volver a órdenes por pagar">Cancelar</a>
         </div>
       </form>
     </div>

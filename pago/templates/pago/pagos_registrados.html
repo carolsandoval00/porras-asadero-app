@@ -13,6 +13,7 @@
     <a href="{% url 'pago:pagos_imprimir' %}{% if filtro_pagos_qs %}?{{ filtro_pagos_qs }}{% endif %}" class="pg-btn pg-btn-imprimir pg-btn-sm" target="_blank" data-tooltip="Imprimir esta lista">
       <i class="bi bi-printer"></i> Imprimir
     </a>
+    <a href="{% url 'pago:dashboard' %}?tab=pendientes" class="pg-btn pg-btn-light pg-btn-sm" data-tooltip="Volver a órdenes por pagar">← Volver</a>
   </div>
 </div>
     <div class="pg-card-body">

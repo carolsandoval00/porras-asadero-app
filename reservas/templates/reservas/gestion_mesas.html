@@ -1,8 +1,11 @@
 <div id="mc-crear-mesa" class="mc-section">
-  <div class="mc-sec-header">
+  <div class="mc-sec-header mc-sec-header-row">
+      <div>
     <h2>Gestión de mesas</h2>
     <p>Agrega y administra las mesas del restaurante</p>
   </div>
+      <a href="{% url 'reserva_inicio' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver al tablero de reservas">← Volver</a>
+    </div>
 
   <div class="mc-mgr-grid">
     <div>
@@ -10,12 +13,12 @@
         <div class="mc-card-title">Agregar mesa</div>
 
         <div class="mc-form-group mc-mb-12">
-          <label class="mc-label">Número de mesa *</label>
+          <label class="mc-label">Número de mesa <span class="req-star" style="color:#C0392B;">*</span></label>
           <input type="number" class="mc-input" id="mc-m-numero" min="1" placeholder="Ej: 7">
         </div>
 
         <div class="mc-form-group mc-mb-12">
-          <label class="mc-label">Capacidad (personas) *</label>
+          <label class="mc-label">Capacidad (personas) <span class="req-star" style="color:#C0392B;">*</span></label>
           <input type="number" class="mc-input" id="mc-m-capacidad" min="1" max="30" placeholder="Ej: 4">
         </div>
 

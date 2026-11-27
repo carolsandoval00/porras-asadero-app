@@ -7,9 +7,10 @@
   --pia-orange: #E8651A;
   --pia-orange-dark: #C9520F;
   --pia-ink: #1A1008;
-  --pia-bg: #FFFFFF;
-  --pia-surface: #F6F1EC;
-  --pia-border: #E7DED5;
+  --pia-bg: #F5ECD7;
+  --pia-surface: #F5ECD7;
+  --pia-card: #FBF5E6;
+  --pia-border: #DCCFB0;
   --pia-muted: #7A6B5F;
   --pia-z: 2147483000;
 
@@ -55,7 +56,7 @@
   height: 14px;
   border-radius: 50%;
   background: #E53935;
-  border: 2px solid #fff;
+  border: 2px solid var(--pia-bg);
   transform: scale(0);
   transition: transform .2s ease;
   pointer-events: none;
@@ -69,7 +70,7 @@
   bottom: 16px;
   padding: 7px 12px;
   background: var(--pia-ink);
-  color: #fff;
+  color: var(--pia-bg);
   border-radius: 8px;
   font-size: 13px;
   white-space: nowrap;
@@ -92,7 +93,7 @@
   bottom: 12px;
   max-width: 220px;
   padding: 10px 14px;
-  background: #fff;
+  background: var(--pia-bg);
   border: 1px solid var(--pia-border);
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
@@ -196,7 +197,7 @@
 }
 .pia-msg.from-bot {
   align-self: flex-start;
-  background: #fff;
+  background: var(--pia-card);
   border: 1px solid var(--pia-border);
   border-bottom-left-radius: 4px;
 }
@@ -249,14 +250,14 @@
   padding: 6px 11px;
   border: 1px solid var(--pia-orange);
   border-radius: 999px;
-  background: #fff;
+  background: var(--pia-card);
   color: var(--pia-ink);
   font: inherit;
   font-size: 12.5px;
   cursor: pointer;
   transition: background .15s ease;
 }
-.pia-chip:hover { background: #FFE9DA; }
+.pia-chip:hover { background: #F7DFC4; }
 .pia-chip:focus-visible { outline: 2px solid var(--pia-orange); outline-offset: 2px; }
 
 /* Barra de entrada */
@@ -265,7 +266,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--pia-bg);
   border-top: 1px solid var(--pia-border);
 }
 .pia-input-bar input {
@@ -274,7 +275,7 @@
   padding: 10px 14px;
   border: 1px solid var(--pia-border);
   border-radius: 999px;
-  background: var(--pia-surface);
+  background: var(--pia-card);
   color: var(--pia-ink);
   font: inherit;
   outline: none;

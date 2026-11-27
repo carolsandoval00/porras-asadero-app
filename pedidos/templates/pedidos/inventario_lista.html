@@ -42,6 +42,7 @@
         <button type="button" onclick="exportarExcel()" class="pm-btn pm-btn-accent pm-btn-sm" style="background:#FF8A3D !important; color:#fff !important;" data-tooltip="Descargar el inventario en Excel"><i class="bi bi-download"></i> Excel</button>
         <button type="button" onclick="window.print()" class="pm-btn pm-btn-info pm-btn-sm" data-tooltip="Imprimir el reporte"><i class="bi bi-printer-fill"></i> Imprimir</button>
         <a href="{% url 'pedidos:producto_lista' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver a la lista de productos">← Productos</a>
+        <a href="{% url 'pedidos:dashboard' %}" class="pm-btn pm-btn-light pm-btn-sm" data-tooltip="Volver al tablero">← Volver</a>
       </div>
     </div>
     <div class="pm-card-body">
